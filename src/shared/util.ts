@@ -77,6 +77,11 @@ export function initialConfig(): Config {
             dbSyncingOnlineTriggerDelay: ONE_SECOND_MS * 3,
             dbSyncingFiredTriggerDebounce: ONE_SECOND_MS * 5,
             shouldRequestDbMetadataReset: "initial",
+            dbCompression: {
+                type: BUILD_ENVIRONMENT === "e2e" ? "zstd" : "gzip",
+                level: 6 /* zlib.Z_DEFAULT_COMPRESSION */,
+                mailsPortionSize: {min: 800, max: 1000},
+            },
             // base
             calendarNotification: false,
             checkUpdateAndNotify: false,

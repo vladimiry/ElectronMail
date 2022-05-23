@@ -1,3 +1,4 @@
+import fsExtra from "fs-extra";
 import {mapValues} from "remeda";
 import path from "path";
 import TerserPlugin from "terser-webpack-plugin";
@@ -34,6 +35,14 @@ export const srcRelativePath = (...value: string[]): string => {
 
 export const outputRelativePath = (...value: string[]): string => {
     return rootRelativePath(ENVIRONMENT_STATE.development ? "./app-dev" : "./app", ...value);
+};
+
+export const resolveExistingFile = (file: string): string => {
+    const result = path.resolve(file);
+    if (!fsExtra.pathExistsSync(result)) {
+        throw new Error(`File "${file}" doesn't exist`);
+    }
+    return result;
 };
 
 const definePluginValue = mapValues(

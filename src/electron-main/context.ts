@@ -276,19 +276,25 @@ export function initContext(
         locations,
         deferredEndpoints: new Deferred(),
         ...((): NoExtraProps<Pick<Context, "db" | "sessionDb">> => {
-            const encryption = {
-                async keyResolver() {
-                    const {databaseEncryptionKey} = await ctx.settingsStore.readExisting();
-                    return databaseEncryptionKey;
+            const commonOptions = {
+                encryption: {
+                    async resolveKey() {
+                        const {databaseEncryptionKey} = await ctx.settingsStore.readExisting();
+                        return databaseEncryptionKey;
+                    },
+                    async resolvePreset() {
+                        const {encryptionPreset: {encryption}} = await configStore.readExisting();
+                        return {encryption};
+                    },
                 },
-                async presetResolver() {
-                    const {encryptionPreset: {encryption}} = await configStore.readExisting();
-                    return {encryption};
+                async dbCompression(): Promise<Config["dbCompression"]> {
+                    const {dbCompression} = await configStore.readExisting();
+                    return dbCompression;
                 },
             } as const;
             return {
-                db: new Database({file: path.join(locations.userDataDir, "database.bin"), encryption}),
-                sessionDb: new Database({file: path.join(locations.userDataDir, "database-session.bin"), encryption}),
+                db: new Database({...commonOptions, file: path.join(locations.userDataDir, "database.bin")}),
+                sessionDb: new Database({...commonOptions, file: path.join(locations.userDataDir, "database-session.bin")}),
             };
         })(),
         ...((): NoExtraProps<Pick<Context, "sessionStorage">> => {

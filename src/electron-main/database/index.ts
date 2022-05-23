@@ -6,7 +6,8 @@ import * as FsJsonStore from "fs-json-store";
 import path from "path";
 
 import {buildAccountFoldersResolver, patchMetadata} from "src/electron-main/database/util";
-import {buildSerializer} from "src/electron-main/database/serialization";
+import {buildSerializer} from "./serialization";
+import {Config} from "src/shared/model/options";
 import {curryFunctionMembers} from "src/shared/util";
 import {DATABASE_VERSION, DB_INSTANCE_PROP_NAME} from "./constants";
 import {DB_DATA_CONTAINER_FIELDS, DbAccountPk, FsDb, FsDbAccount} from "src/shared/model/database";
@@ -121,9 +122,10 @@ export class Database {
         public readonly options: Readonly<{
             file: string;
             encryption: Readonly<{
-                keyResolver: () => Promise<string>;
-                presetResolver: () => Promise<KeyBasedPreset>;
+                resolveKey: () => Promise<string>;
+                resolvePreset: () => Promise<KeyBasedPreset>;
             }>;
+            dbCompression: () => Promise<Config["dbCompression"]>;
         }>
     ) {
         this.serializer = buildSerializer(this.options.file);
@@ -205,6 +207,7 @@ export class Database {
             await this.serializer.write(
                 await this.buildEncryptionAdapter(),
                 dataToStore,
+                await this.options.dbCompression(),
             );
 
             this.logStats("saveToFile", duration);
@@ -281,10 +284,10 @@ export class Database {
     }
 
     private async buildEncryptionAdapter(): Promise<EncryptionAdapter> {
-        const key = Buffer.from(await this.options.encryption.keyResolver(), BASE64_ENCODING);
+        const key = Buffer.from(await this.options.encryption.resolveKey(), BASE64_ENCODING);
         if (key.length !== KEY_BYTES_32) {
             throw new Error(`Invalid encryption key length, expected: ${KEY_BYTES_32}, actual: ${key.length}`);
         }
-        return new EncryptionAdapter({key, preset: await this.options.encryption.presetResolver()});
+        return new EncryptionAdapter({key, preset: await this.options.encryption.resolvePreset()});
     }
 }

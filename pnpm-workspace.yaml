@@ -1,0 +1,3 @@
+packages:
+  - '.'
+  - './src/electron-main/database/serialization/zstd-native'

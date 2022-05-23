@@ -1,0 +1,11 @@
+{
+  "name": "zstd-native",
+  "version": "0.1.0",
+  "main": "index.node",
+  "scripts": {
+    "build": "napi build --release --strip"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "2.9.0"
+  }
+}

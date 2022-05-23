@@ -18,6 +18,7 @@ files:
 compression: normal
 asar: true
 asarUnpack:
+  - 'electron-main/**/*.node'
   - '**/node_modules/desktop-idle/**/*'
   - '**/node_modules/keytar/**/*'
   - '**/node_modules/msgpackr-extract/**/*'

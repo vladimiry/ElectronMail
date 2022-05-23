@@ -1,6 +1,6 @@
 import _logger from "electron-log";
 import {Deferred} from "ts-deferred";
-import {EncryptionAdapter, KeyBasedFileHeader} from "fs-json-store-encryption-adapter";
+import type {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 import fs from "fs";
 import fsBackwardsStream from "fs-backwards-stream";
 import * as msgpack from "@msgpack/msgpack";
@@ -11,9 +11,11 @@ import {Readable} from "stream";
 import WriteStreamAtomic from "fs-write-stream-atomic";
 import zlib from "zlib";
 
+import type {Config} from "src/shared/model/options";
 import {curryFunctionMembers, getRandomInt} from "src/shared/util";
-import {Database} from "./";
-import {FsDb} from "src/shared/model/database";
+import {Database} from "src/electron-main/database";
+import type {FsDb} from "src/shared/model/database";
+import * as Model from "./model";
 import {ONE_MB_BYTES} from "src/shared/constants";
 
 const logger = curryFunctionMembers(_logger, __filename);
@@ -25,30 +27,8 @@ const fsAsync = { // TODO use "fs/promises" (at the moment there is no "read" fu
     close: promisify(fs.close),
 } as const;
 
-type DataMapSerializationHeaderPart = DeepReadonly<{
-    type: "msgpack"
-    dataMap?: {
-        compression?: "gzip"
-        items: Array<{ byteLength: number }>
-    }
-}>;
-
-type DataMapItemSerializationHeaderPart = DeepReadonly<{ dataMapItem?: boolean }>;
-
-type SerializationHeader = DeepReadonly<{
-    serialization?: DataMapSerializationHeaderPart | DataMapItemSerializationHeaderPart
-} & {
-    [k in keyof KeyBasedFileHeader]?: KeyBasedFileHeader[k]
-}>;
-
-type buildSerializerType = (file: string) => {
-    read: (encryptionAdapter: EncryptionAdapter) => Promise<FsDb>
-    write: (encryptionAdapter: EncryptionAdapter, data: DeepReadonly<FsDb>) => Promise<void>
-};
-
-export const buildSerializer: buildSerializerType = (() => {
-    const constants = {
-        gzip: "gzip",
+export const buildSerializer: Model.buildSerializerType = (() => {
+    const CONST = {
         zero: 0,
         minusOne: -1,
         fileReadFlag: "r",
@@ -56,51 +36,77 @@ export const buildSerializer: buildSerializerType = (() => {
         headerReadingBufferSize: 50,
         dataReadingBufferSize: ONE_MB_BYTES,
         dataWritingBufferSize: ONE_MB_BYTES,
-        mailsPortionSize: {min: 800, max: 1000}, // TODO make the mails portion size configurable
+        mailsPortionSize: {min: 400, max: 5000},
+        compressionLevels: {gzip: 6, zstd: 8}, // TODO consider making compression type/level configurable via interface
     } as const;
+    const zstdNative = (() => {
+        let value: typeof import("./zstd-native") | undefined;
+        return async () => value ??= await import("./zstd-native");
+    })();
+    const bufferToReadable = (input: Buffer): Readable => Readable.from(input, {highWaterMark: CONST.dataReadingBufferSize});
     const decryptBuffer = async (
         data: Buffer,
         encryptionAdapter: EncryptionAdapter,
-        compression?: typeof constants.gzip,
+        compressionType?: Config["dbCompression"]["type"],
     ): Promise<Readable> => {
-        const decrypted = Readable.from(
-            await encryptionAdapter.read(data),
-            {highWaterMark: constants.dataReadingBufferSize},
-        );
-        return compression === constants.gzip
-            ? decrypted.pipe(zlib.createGunzip())
-            : decrypted;
+        const decryptedBuffer = await encryptionAdapter.read(data);
+        const decryptedReadable = bufferToReadable(decryptedBuffer);
+        return compressionType === "gzip"
+            ? decryptedReadable.pipe(zlib.createGunzip())
+            : compressionType === "zstd"
+                ? bufferToReadable( // TODO use stream-based "zstd" decompression
+                    await (await zstdNative()).decompress(decryptedBuffer),
+                )
+                : decryptedReadable;
     };
     const serializeDataMapItem = async (
         data: DeepReadonly<FsDb> | DeepReadonly<FsDb["accounts"]>,
         encryptionAdapter: EncryptionAdapter,
-        compression: typeof constants.gzip,
+        compressionType: Config["dbCompression"]["type"],
+        level: Config["dbCompression"]["level"],
     ): Promise<Buffer> => {
-        const msgpacked = msgpack.encode(data);
-        const msgpackBuffer = Buffer.from(msgpacked.buffer, msgpacked.byteOffset, msgpacked.byteLength);
+        if (typeof level !== "number"
+            ||
+            level < 1
+            ||
+            (
+                compressionType === "gzip" && level > 9
+            )
+            ||
+            (
+                compressionType === "zstd" && level > 22
+            )
+        ) {
+            level = CONST.compressionLevels[compressionType];
+            logger.error(`Invalid "${nameof(level)}" value, falling back to the default value: ${level}`);
+        }
+        const serializedData = msgpack.encode(data);
+        const serializedDataBuffer = Buffer.from(serializedData.buffer, serializedData.byteOffset, serializedData.byteLength);
         const encryptedData = await encryptionAdapter.write(
-            compression === constants.gzip
-                ? await promisify(zlib[constants.gzip])(msgpackBuffer)
-                : msgpackBuffer,
+            compressionType === "gzip"
+                ? await promisify(zlib.gzip)(serializedDataBuffer, {level})
+                : compressionType === "zstd"
+                    ? await (await zstdNative()).compress(serializedDataBuffer, level)
+                    : serializedDataBuffer
         );
-        const encryptionHeaderBuffer = encryptedData.slice(constants.zero, encryptedData.indexOf(constants.headerZeroByteMark));
-        const encryptionHeader = JSON.parse(encryptionHeaderBuffer.toString()) as Required<SerializationHeader>["encryption"];
-        const serializationHeader: SerializationHeader = {...encryptionHeader, serialization: {dataMapItem: true}};
+        const encryptionHeaderBuffer = encryptedData.slice(CONST.zero, encryptedData.indexOf(CONST.headerZeroByteMark));
+        const encryptionHeader = JSON.parse(encryptionHeaderBuffer.toString()) as Required<Model.SerializationHeader>["encryption"];
+        const serializationHeader: Model.SerializationHeader = {...encryptionHeader, serialization: {dataMapItem: true}};
         return Buffer.concat([
             Buffer.from(JSON.stringify(serializationHeader)),
-            constants.headerZeroByteMark,
+            CONST.headerZeroByteMark,
             encryptedData.slice(encryptionHeaderBuffer.length + 1),
         ]);
     };
     const readFileBytes = async (
         file: string,
-        {byteCountToRead, fileOffsetStart = constants.zero}: { byteCountToRead: number, fileOffsetStart?: number },
+        {byteCountToRead, fileOffsetStart = CONST.zero}: { byteCountToRead: number, fileOffsetStart?: number },
     ): Promise<Buffer> => {
         // TODO consider reusing the buffer with dynamic size increasing if previously used is too small (GC doesn't kick in immediately)
         const result = Buffer.alloc(byteCountToRead);
-        const fileHandle: number = await fsAsync.open(file, constants.fileReadFlag);
+        const fileHandle: number = await fsAsync.open(file, CONST.fileReadFlag);
         try {
-            await fsAsync.read(fileHandle, result, constants.zero, byteCountToRead, fileOffsetStart);
+            await fsAsync.read(fileHandle, result, CONST.zero, byteCountToRead, fileOffsetStart);
         } finally {
             try {
                 await fsAsync.close(fileHandle);
@@ -113,7 +119,7 @@ export const buildSerializer: buildSerializerType = (() => {
     const readSummaryHeader = async (
         file: string,
         headerPosition?: "start" | "end",
-    ): Promise<{ value: SerializationHeader, payloadOffsetStart: number }> => {
+    ): Promise<{ value: Model.SerializationHeader, payloadOffsetStart: number }> => {
         if (!headerPosition) {
             const startHeader = await readSummaryHeader(file, "start");
             const {serialization} = startHeader.value;
@@ -128,7 +134,7 @@ export const buildSerializer: buildSerializerType = (() => {
             return startHeader;
         }
 
-        const {headerReadingBufferSize: highWaterMark, headerZeroByteMark} = constants;
+        const {headerReadingBufferSize: highWaterMark, headerZeroByteMark} = CONST;
         const fromEnd = headerPosition === "end";
         const stream = fromEnd
             ? fsBackwardsStream(file, {block: highWaterMark}) // this stream is not iterable, so "await-for-of" can't be used
@@ -141,14 +147,14 @@ export const buildSerializer: buildSerializerType = (() => {
             });
             stream.on("data", (fileChunk: Buffer) => {
                 const index = fileChunk[fromEnd ? "lastIndexOf" : "indexOf"](headerZeroByteMark);
-                const found = index !== constants.minusOne;
+                const found = index !== CONST.minusOne;
                 const concatParts = [
                     buffer,
                     found
                         ? (
                             fromEnd
                                 ? fileChunk.slice(index + 1)
-                                : fileChunk.slice(constants.zero, index)
+                                : fileChunk.slice(CONST.zero, index)
                         )
                         : fileChunk
                 ];
@@ -159,7 +165,7 @@ export const buildSerializer: buildSerializerType = (() => {
                     resolve({
                         value: JSON.parse(buffer.toString()), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
                         payloadOffsetStart: fromEnd
-                            ? constants.zero
+                            ? CONST.zero
                             : buffer.byteLength + headerZeroByteMark.byteLength,
                     });
                     return;
@@ -189,7 +195,7 @@ export const buildSerializer: buildSerializerType = (() => {
             stream.destroy();
         });
     };
-    const result: buildSerializerType = (file) => {
+    const result: Model.buildSerializerType = (file) => {
         const {readLogger, writeLogger} = (() => {
             return {
                 readLogger: curryFunctionMembers(logger, path.basename(file), "read"),
@@ -281,14 +287,14 @@ export const buildSerializer: buildSerializerType = (() => {
 
                 return resultDb as FsDb;
             },
-            async write(encryptionAdapter, inputDb) {
+            async write(encryptionAdapter, inputDb, compressionOpts) {
                 writeLogger.verbose("start");
 
-                type DataMap = NoExtraProps<Required<DataMapSerializationHeaderPart["dataMap"]>>;
+                type DataMap = NoExtraProps<Required<Model.DataMapSerializationHeaderPart["dataMap"]>>;
                 const dataMap: Pick<DataMap, "compression"> & import("ts-essentials").DeepWritable<Pick<DataMap, "items">> =
-                    {compression: constants.gzip /* TODO make "compression" configurable */, items: []};
+                    {compression: compressionOpts.type, items: []};
                 const fileStream = (() => {
-                    const stream = new WriteStreamAtomic(file, {highWaterMark: constants.dataWritingBufferSize, encoding: "binary"});
+                    const stream = new WriteStreamAtomic(file, {highWaterMark: CONST.dataWritingBufferSize, encoding: "binary"});
                     const streamErrorDeferred = new Deferred<void>();
                     const writeToStream = async (chunk: Buffer): Promise<void> => {
                         return new Promise<void>((resolve, reject) => {
@@ -313,7 +319,7 @@ export const buildSerializer: buildSerializerType = (() => {
                         async finish(): Promise<void> {
                             await writeToStream(
                                 Buffer.concat([
-                                    constants.headerZeroByteMark,
+                                    CONST.headerZeroByteMark,
                                     Buffer.from(
                                         JSON.stringify({serialization: {type: "msgpack", dataMap}}),
                                     ),
@@ -330,7 +336,7 @@ export const buildSerializer: buildSerializerType = (() => {
                     } as const;
                 })();
                 const writeDataMapItem = async (data: DeepReadonly<FsDb> | DeepReadonly<FsDb["accounts"]>): Promise<void> => {
-                    const serializedDb = await serializeDataMapItem(data, encryptionAdapter, dataMap.compression);
+                    const serializedDb = await serializeDataMapItem(data, encryptionAdapter, dataMap.compression, compressionOpts.level);
                     await fileStream.write(serializedDb);
                     dataMap.items.push({byteLength: serializedDb.byteLength});
                 };
@@ -359,13 +365,24 @@ export const buildSerializer: buildSerializerType = (() => {
                                     readonly portionSizeLimit: number
                                 } = {
                                     bufferDb: {},
-                                    portionSizeCounter: constants.zero,
-                                    portionSizeLimit: getRandomInt(constants.mailsPortionSize.min, constants.mailsPortionSize.max),
+                                    portionSizeCounter: CONST.zero,
+                                    portionSizeLimit: (() => {
+                                        const clampInRangeLimit = (value: number): number => Math.min(
+                                            Math.max(value, CONST.mailsPortionSize.min),
+                                            CONST.mailsPortionSize.max,
+                                        );
+                                        const min = clampInRangeLimit(compressionOpts.mailsPortionSize.min);
+                                        const max = clampInRangeLimit(compressionOpts.mailsPortionSize.max);
+                                        return getRandomInt(
+                                            Math.min(min, max),
+                                            Math.max(min, max),
+                                        );
+                                    })(),
                                 };
                                 const writeMailsPortion = async (): Promise<void> => {
                                     await writeDataMapItem(mailsPortion.bufferDb);
                                     mailsPortion.bufferDb = {};
-                                    mailsPortion.portionSizeCounter = constants.zero;
+                                    mailsPortion.portionSizeCounter = CONST.zero;
                                 };
 
                                 for (const [login, account] of Object.entries(inputDb.accounts)) {

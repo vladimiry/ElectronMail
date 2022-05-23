@@ -363,6 +363,14 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             }
         }
     },
+    "4.15.1": (config) => {
+        {
+            const key = "dbCompression";
+            if (typeof config[key] === "undefined") {
+                config[key] = INITIAL_STORES.config()[key];
+            }
+        }
+    },
     // WARN needs to be the last updater
     "100.0.0": (config) => {
         // ensuring default base props are set

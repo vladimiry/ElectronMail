@@ -79,6 +79,11 @@ export class DbViewMonacoEditorComponent extends AbstractMonacoEditorComponent i
         super(injector, () => this.codeSnippets[0]?.value ?? "");
     }
 
+    protected parentElSelectorForGettingWidth(): string {
+        // TODO don't hardcode the component's tag name but resolve it from selector "meta" information
+        return "electron-mail-db-view-entry";
+    }
+
     ngOnInit(): void {
         super.ngOnInit();
 

@@ -22,9 +22,6 @@ export abstract class AbstractMonacoEditorComponent extends NgChangesObservableC
     @Output()
     readonly content = new EventEmitter<{ codeEditorContent?: string }>();
 
-    @Input()
-    readonly widthBySelector: string = "";
-
     folders$: Observable<Array<Pick<View.Folder, "id" | "unread" | "type" | "name">>> = of([]);
 
     editorInstance?: ReturnType<typeof monacoEditor.create>;
@@ -88,6 +85,8 @@ export abstract class AbstractMonacoEditorComponent extends NgChangesObservableC
         return value;
     }
 
+    protected abstract parentElSelectorForGettingWidth(): string;
+
     protected updateMonacoEditorWidth(): void {
         const {editorInstance} = this;
 
@@ -95,11 +94,19 @@ export abstract class AbstractMonacoEditorComponent extends NgChangesObservableC
             return;
         }
 
-        const widthBy = document.querySelector<HTMLElement>(this.widthBySelector)?.offsetWidth;
-
-        if (!widthBy) {
-            throw new Error(`Failed to locate the element by "${this.widthBySelector}" selector!`);
-        }
+        const widthBy = ((): number => {
+            const stopSelector = this.parentElSelectorForGettingWidth();
+            let iterationAllowed = 20;
+            let el: HTMLElement | null = this.elementRef.nativeElement;
+            while (el && iterationAllowed) {
+                if (el.matches(stopSelector)) {
+                    return el.offsetWidth;
+                }
+                iterationAllowed--;
+                el = el.parentElement;
+            }
+            throw new Error(`Failed to locate the element by "${stopSelector}" selector!`);
+        })();
 
         try {
             editorInstance.layout({

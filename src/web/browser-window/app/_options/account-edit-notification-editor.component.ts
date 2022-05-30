@@ -34,9 +34,6 @@ export class AccountEditNotificationEditorComponent extends AbstractMonacoEditor
     @Input()
     initialContent?: string;
 
-    // TODO don't hardcode the component's selector
-    readonly widthBySelector = "electron-mail-account-edit";
-
     // TODO turn the hardcoded code samples library into the user-editable list of snippets
     protected readonly codeSnippets = ([
         {
@@ -81,6 +78,11 @@ export class AccountEditNotificationEditorComponent extends AbstractMonacoEditor
                     takeUntil(this.ngOnDestroy$),
                 );
         }
+    }
+
+    protected parentElSelectorForGettingWidth(): string {
+        // TODO don't hardcode the component's tag name but resolve it from selector "meta" information
+        return "electron-mail-account-edit";
     }
 
     protected updateMonacoEditorWidthPostprocessing(value: number): number {

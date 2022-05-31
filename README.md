@@ -9,6 +9,15 @@ It is written in [TypeScript](http://www.typescriptlang.org) and uses [Angular](
 [![License](https://img.shields.io/github/license/vladimiry/ElectronMail.svg?style=flat-square&label=License)](https://github.com/vladimiry/ElectronMail/blob/master/LICENSE)
 [![GitHub top language](https://img.shields.io/github/languages/top/vladimiry/ElectronMail.svg?style=flat-square&label=TypeScript)](https://github.com/vladimiry/ElectronMail/search?l=typescript)
 
+![AUR version](https://img.shields.io/aur/version/electronmail-bin)
+![Snapcraft version](https://badgen.net/snapcraft/v/electron-mail)
+![Flathub version](https://img.shields.io/flathub/v/com.github.vladimiry.ElectronMail)
+![MPR version](https://repology.org/badge/latest-versions/electronmail.svg?header=MPR)
+![Chocolatey version](https://img.shields.io/chocolatey/v/electron-mail)
+![nixpkgs stable 21.11 version](https://repology.org/badge/version-for-repo/nix_stable_21_11/electronmail.svg?header=nixpkgs%20stable%2021.11)
+![nixpkgs unstable version](https://repology.org/badge/version-for-repo/nix_unstable/electronmail.svg?header=nixpkgs%20unstable)
+![pacstall version](https://repology.org/badge/version-for-repo/pacstall/electronmail.svg?header=pacstall)
+
 ![view-toggling](images/search2.gif)
 
 ## Download

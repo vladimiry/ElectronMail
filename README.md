@@ -14,6 +14,7 @@ It is written in [TypeScript](http://www.typescriptlang.org) and uses [Angular](
 ![Flathub version](https://img.shields.io/flathub/v/com.github.vladimiry.ElectronMail)
 ![MPR version](https://repology.org/badge/latest-versions/electronmail.svg?header=MPR)
 ![Chocolatey version](https://img.shields.io/chocolatey/v/electron-mail)
+![Homebrew cask version](https://badgen.net/homebrew/cask/v/electronmail)
 ![nixpkgs stable 21.11 version](https://repology.org/badge/version-for-repo/nix_stable_21_11/electronmail.svg?header=nixpkgs%20stable%2021.11)
 ![nixpkgs unstable version](https://repology.org/badge/version-for-repo/nix_unstable/electronmail.svg?header=nixpkgs%20unstable)
 ![pacstall version](https://repology.org/badge/version-for-repo/pacstall/electronmail.svg?header=pacstall)

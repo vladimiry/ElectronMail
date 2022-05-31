@@ -5,9 +5,9 @@
 ElectronMail is an [Electron](https://electronjs.org)-based unofficial desktop client for [ProtonMail](https://protonmail.com/). The app aims to provide enhanced desktop user experience enabling features that are not supported by the official in-browser web clients.
 It is written in [TypeScript](http://www.typescriptlang.org) and uses [Angular](https://angular.io).
 
-[![GitHub Actions CI](https://img.shields.io/github/workflow/status/vladimiry/ElectronMail/GitHub%20Actions%20CI?branch=master&style=flat-square&logo=github&label=GitHub%20Actions%20CI)](https://github.com/vladimiry/ElectronMail/actions)
-[![License](https://img.shields.io/github/license/vladimiry/ElectronMail.svg?style=flat-square&label=License)](https://github.com/vladimiry/ElectronMail/blob/master/LICENSE)
-[![GitHub top language](https://img.shields.io/github/languages/top/vladimiry/ElectronMail.svg?style=flat-square&label=TypeScript)](https://github.com/vladimiry/ElectronMail/search?l=typescript)
+[![GitHub Actions CI](https://img.shields.io/github/workflow/status/vladimiry/ElectronMail/GitHub%20Actions%20CI?branch=master&logo=github&label=GitHub%20Actions%20CI)](https://github.com/vladimiry/ElectronMail/actions)
+[![License](https://img.shields.io/github/license/vladimiry/ElectronMail.svg?label=License)](https://github.com/vladimiry/ElectronMail/blob/master/LICENSE)
+[![GitHub top language](https://img.shields.io/github/languages/top/vladimiry/ElectronMail.svg?label=TypeScript)](https://github.com/vladimiry/ElectronMail/search?l=typescript)
 
 ![view-toggling](images/search2.gif)
 
@@ -19,15 +19,11 @@ The way of verifying that the installation packages attached to the [releases](h
 
 Some package types are available for installing from the repositories (`AUR/Pacman` and `Snap` repositories are being maintained by [@joshirio](https://github.com/joshirio) and `MPR/Debian` repo by [@hiddeninthesand](https://github.com/hiddeninthesand)):
 
-[![Get it from the AUR](images/aurlogo.png)](https://aur.archlinux.org/packages/electronmail-bin)
-
-[![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-black.svg)](https://snapcraft.io/electron-mail)
-
-<a href="https://flathub.org/apps/details/com.github.vladimiry.ElectronMail"><img width="182" alt="Get it from the Flathub" src="https://flathub.org/assets/badges/flathub-badge-en.png"/></a>
-
-<a href="https://mpr.makedeb.org/packages/electronmail-bin"><img width="182" alt="Get it from the MPR/Debian repository" src="https://user-images.githubusercontent.com/1560781/154258196-697224c7-958c-49a2-a0ac-f94ef4ef45dd.png"/></a>
-
-<a href="https://community.chocolatey.org/packages/electron-mail"><img width="182" alt="Get it from the Chocolatey" src="https://rawcdn.githack.com/chocolatey/choco-theme/545caa1ccdb57d5d2313f43e14e435f8d9745523/images/global-shared/logo-square.svg"/></a>
+[![AUR version](https://img.shields.io/aur/version/electronmail-bin?label=AUR)](https://aur.archlinux.org/packages/electronmail-bin)
+[![Snapcraft version](https://badgen.net/snapcraft/v/electron-mail?label=Snap)](https://snapcraft.io/electron-mail)
+[![Flathub version](https://img.shields.io/flathub/v/com.github.vladimiry.ElectronMail?label=Flathub)](https://flathub.org/apps/details/com.github.vladimiry.ElectronMail)
+[![MPR version](https://repology.org/badge/latest-versions/electronmail.svg?header=MPR)](https://mpr.makedeb.org/packages/electronmail-bin)
+[![Chocolatey version](https://img.shields.io/chocolatey/v/electron-mail?label=Chocolatey)](https://community.chocolatey.org/packages/electron-mail)
 
 ## Features
 

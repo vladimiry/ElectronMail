@@ -108,7 +108,7 @@ index 375be1b51..a6bd8390e 100644
   * Verify the extracted `signature` of a decryption result against its `decryptedRawContent`
 
 diff --git a/applications/mail/src/app/logic/messages/messagesTypes.ts b/applications/mail/src/app/logic/messages/messagesTypes.ts
-index 91dcf4e63..aa1a6a1cf 100644
+index 7de501f50..98ecf95d9 100644
 --- a/applications/mail/src/app/logic/messages/messagesTypes.ts
 +++ b/applications/mail/src/app/logic/messages/messagesTypes.ts
 @@ -44,6 +44,8 @@ export interface MessageVerification {
@@ -118,9 +118,16 @@ index 91dcf4e63..aa1a6a1cf 100644
 +    /* electron-mail mark */
 +
      /**
-      * Pinned public keys of the sender, if any
+      * Pinned public keys of the sender which can verify, if any
       */
-@@ -54,6 +56,8 @@ export interface MessageVerification {
+@@ -54,11 +56,15 @@ export interface MessageVerification {
+      */
+     senderPinnableKeys: OpenPGPKey[] | undefined;
+
++    /* electron-mail mark */
++
+     /**
+      * If the sender is in the list of contacts, whether its contact signature has been verified
       */
      senderVerified: boolean | undefined;
 
@@ -210,19 +217,19 @@ index dea411d80..caeec9fc5 100644
 --- a/packages/components/components/editor/rooster/hooks/useInitRooster.ts
 +++ b/packages/components/components/editor/rooster/hooks/useInitRooster.ts
 @@ -42,7 +42,9 @@ const useInitRooster = ({
- 
+
      const initRooster = useCallback(async () => {
          const iframe = iframeRef.current as HTMLIFrameElement;
 +        /* electron-mail mark */
          const iframeDocument = iframe.contentWindow?.document as Document;
 +        /* electron-mail mark */
- 
+
          iframeDocument.open();
          iframeDocument.write(`
 @@ -102,6 +104,13 @@ const useInitRooster = ({
- 
+
          onReady(actions);
- 
+
 +        window.dispatchEvent(
 +            new CustomEvent(
 +                'electron-mail:packages/components/components/editor/rooster/hooks/useInitRooster.ts:useInitRooster:onReady',
@@ -232,7 +239,7 @@ index dea411d80..caeec9fc5 100644
 +
          return editor;
      }, []);
- 
+
 diff --git a/packages/components/hooks/useCache.ts b/packages/components/hooks/useCache.ts
 index 35d7a0aba..352f1c8a3 100644
 --- a/packages/components/hooks/useCache.ts
@@ -262,7 +269,7 @@ index 50ae8f9a3..c79b724ee 100644
 @@ -22,11 +22,6 @@ newVersionUpdater(config);
  sentry({ config, uid: authentication.getUID(), sessionTracking: getSessionTrackingEnabled() });
  setVcalProdId(getProdId(config));
- 
+
 -// If the browser is Chromium based, register automatically the mailto protocol handler
 -if ('chrome' in window) {
 -    registerMailToProtocolHandler();
@@ -279,7 +286,7 @@ index fa8ab5f17..2c5bd2d2c 100644
 @@ -36,11 +36,6 @@ newVersionUpdater(config);
  sentry({ config, sessionTracking: getSessionTrackingEnabled() });
  setVcalProdId(getProdId(config));
- 
+
 -// If the browser is Chromium based, register automatically the mailto protocol handler
 -if ('chrome' in window) {
 -    registerMailToProtocolHandler();
@@ -296,23 +303,23 @@ index bdabb99e0..a56b8cdcb 100644
 @@ -4,13 +4,10 @@ import { Href } from '@proton/components/components/link';
  import { MAIL_APP_NAME } from '@proton/shared/lib/constants';
  import { getKnowledgeBaseUrl } from '@proton/shared/lib/helpers/url';
- 
+
 -import { registerMailToProtocolHandler } from '../../helpers/url';
 -
  const MailDefaultHandlerModal = (props: ModalProps) => {
      const { onClose } = props;
- 
+
      const handleAskForPermission = () => {
 -        registerMailToProtocolHandler();
- 
+
          onClose?.();
      };
 
 diff --git a/applications/mail/src/app/components/header/MailHeader.tsx b/applications/mail/src/app/components/header/MailHeader.tsx
-index 246b88729..71dd17426 100644
+index e68f73cd8..6a69bfb1f 100644
 --- a/applications/mail/src/app/components/header/MailHeader.tsx
 +++ b/applications/mail/src/app/components/header/MailHeader.tsx
-@@ -35,7 +35,6 @@ import { getLabelName } from '../../helpers/labels';
+@@ -34,7 +34,6 @@ import { getLabelName } from '../../helpers/labels';
  import { useEncryptedSearchContext } from '../../containers/EncryptedSearchProvider';
  import { useOnCompose, useOnMailTo } from '../../containers/ComposeProvider';
  import { MESSAGE_ACTIONS } from '../../constants';
@@ -320,14 +327,14 @@ index 246b88729..71dd17426 100644
  import ClearBrowserDataModal from './ClearBrowserDataModal';
  import MailSearch from './search/MailSearch';
  import MailOnboardingModal from '../onboarding/MailOnboardingModal';
-@@ -192,7 +191,6 @@ const MailHeader = ({ labelID, elementID, breakpoints, expanded, onToggleExpand
+@@ -191,7 +190,6 @@ const MailHeader = ({ labelID, elementID, breakpoints, expanded, onToggleExpand
              <MailViewLayoutModal {...mailViewLayoutProps} />
              <MailDensityModal {...mailDensityProps} />
              <MailComposerModeModal {...mailComposerModeProps} />
 -            <MailDefaultHandlerModal {...mailDefaultHandlerProps} />
              <ClearBrowserDataModal {...clearBrowserDataProps} />
-             <FeedbackModal
-                 {...feedbackModalProps}
+             <RebrandingFeedbackModal {...feedbackModalProps} />
+         </>
 
 diff --git a/applications/mail/src/app/helpers/url.ts b/applications/mail/src/app/helpers/url.ts
 index 2aaa779d3..487f54ff3 100644
@@ -335,7 +342,7 @@ index 2aaa779d3..487f54ff3 100644
 +++ b/applications/mail/src/app/helpers/url.ts
 @@ -91,16 +91,5 @@ export const mailtoParser = (mailto: string): PartialMessageState => {
  };
- 
+
  export const registerMailToProtocolHandler = () => {
 -    if ('registerProtocolHandler' in navigator) {
 -        try {
@@ -353,16 +360,16 @@ index 2aaa779d3..487f54ff3 100644
  };
 
 diff --git a/applications/mail/src/app/components/header/search/MailSearch.tsx b/applications/mail/src/app/components/header/search/MailSearch.tsx
-index 8afef84c8..b1874420a 100644
+index d1cb165a1..904bd2364 100644
 --- a/applications/mail/src/app/components/header/search/MailSearch.tsx
 +++ b/applications/mail/src/app/components/header/search/MailSearch.tsx
-@@ -56,7 +56,7 @@ const MailSearch = ({ breakpoints }: Props) => {
+@@ -53,7 +53,7 @@ const MailSearch = ({ breakpoints }: Props) => {
      const { isDBLimited, dropdownOpened } = getESDBStatus();
      const esState = useEncryptedSearchToggleState(isOpen);
- 
--    const showEncryptedSearch = !isMobile() && !!esFeature && !!esFeature.Value && !!isPaid(user);
+
+-    const showEncryptedSearch = !isMobile() && !!isPaid(user);
 +    const showEncryptedSearch = false;
- 
+
      // Show more from inside AdvancedSearch to persist the state when the overlay is closed
      const { state: showMore, toggle: toggleShowMore } = useToggle(false);
 
@@ -397,5 +404,5 @@ index 4f8928ead..ea00c2542 100644
 -    return isIntact;
 +    return false;
  };
- 
+
  /**

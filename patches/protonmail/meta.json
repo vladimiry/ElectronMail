@@ -6,7 +6,7 @@
     "pack-api-arg-3.patch",
     "pack-webpack-config-3.patch",
     "session-storage-3.patch",
-    "link-handler-4.patch",
+    "link-handler-5.patch",
     "proton-mail.patch"
   ],
   "proton-account": [
@@ -16,7 +16,7 @@
     "pack-api-arg-3.patch",
     "pack-webpack-config-3.patch",
     "session-storage-3.patch",
-    "link-handler-4.patch",
+    "link-handler-5.patch",
     "proton-account.patch"
   ],
   "proton-calendar": [
@@ -25,7 +25,7 @@
     "sentry-6.patch",
     "pack-api-arg-3.patch",
     "pack-webpack-config-3.patch",
-    "link-handler-4.patch",
+    "link-handler-5.patch",
     "session-storage-3.patch"
   ],
   "proton-drive": [
@@ -35,7 +35,7 @@
     "pack-api-arg-3.patch",
     "pack-webpack-config-3.patch",
     "session-storage-3.patch",
-    "link-handler-4.patch",
+    "link-handler-5.patch",
     "proton-drive.patch"
   ],
   "proton-vpn-settings": [
@@ -45,6 +45,6 @@
     "pack-api-arg-3.patch",
     "pack-webpack-config-3.patch",
     "session-storage-3.patch",
-    "link-handler-4.patch"
+    "link-handler-5.patch"
   ]
 }

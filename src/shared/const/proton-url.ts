@@ -8,7 +8,7 @@ import {resolvePrimaryDomainNameFromUrlHostname} from "src/shared/util/url";
 export const PROTON_API_ENTRY_VALUE_PREFIX = "local:::";
 
 // WARN the value also used for patching the web clients
-export const PROTON_API_URL_PLACEHOLDER = `___ELECTRON_MAIL_PROTON_API_ENTRY_URL_PLACEHOLDER___`;
+export const PROTON_API_URL_PLACEHOLDER = "___ELECTRON_MAIL_PROTON_API_ENTRY_URL_PLACEHOLDER___";
 
 export const PROTON_API_ENTRY_PRIMARY_VALUE = "https://mail.proton.me";
 

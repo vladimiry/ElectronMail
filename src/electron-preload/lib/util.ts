@@ -66,7 +66,7 @@ export const isProtonApiError = (
     );
 
     if (BUILD_ENVIRONMENT === "development" && result) {
-        console.log(`isProtonApiError() result:`, {error}, JSON.stringify({result})); // eslint-disable-line no-console
+        console.log(`${nameof(isProtonApiError)} result:`, {error}, JSON.stringify({result})); // eslint-disable-line no-console
     }
 
     return result;

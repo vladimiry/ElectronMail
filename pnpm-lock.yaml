@@ -83,7 +83,7 @@ importers:
       cross-env: 7.0.3
       css-loader: 6.7.1
       dts-generator: 3.0.0
-      electron: 15.5.7
+      electron: 19.0.3
       electron-builder: 23.0.3
       electron-fetch: 1.7.4
       electron-log: 4.4.7
@@ -168,7 +168,7 @@ importers:
       webpack-node-externals: 3.0.0
       zone.js: 0.11.5
     dependencies:
-      electron-rpc-api: 8.0.1_electron@15.5.7
+      electron-rpc-api: 8.0.1_electron@19.0.3
       fs-json-store-encryption-adapter: 3.0.4
       keytar: 7.9.0
       spellchecker: github.com/vladimiry-playground/node-spellchecker/37cebc43ccbfce27dac51f64ec45f72d9aa80b8f
@@ -243,7 +243,7 @@ importers:
       cross-env: 7.0.3
       css-loader: 6.7.1_webpack@5.73.0
       dts-generator: 3.0.0
-      electron: 15.5.7
+      electron: 19.0.3
       electron-builder: 23.0.3
       electron-fetch: 1.7.4
       electron-log: 4.4.7
@@ -1403,7 +1403,7 @@ packages:
   /@types/keyv/3.1.4:
     resolution: {integrity: sha512-BQ5aZNSCpj7D6K2ksrRCTmKRLEpnPvWDiLPfoGyhZ++8YtiK9d/3DBKPJgry359X/P1PfruyYwvnvwFjuEiEIg==}
     dependencies:
-      '@types/node': 16.11.7
+      '@types/node': 16.11.38
 
   /@types/minimatch/3.0.5:
     resolution: {integrity: sha512-Klz949h02Gz2uZCMGwDUSDS1YBlTdDDgbWHi+81l29tQALUtvz4rAYi5uoVhE5Lagoq6DeqAUlbrHvW/mXDgdQ==}
@@ -1413,11 +1413,12 @@ packages:
     resolution: {integrity: sha512-iiUgKzV9AuaEkZqkOLDIvlQiL6ltuZd9tGcW3gwpnX8JbuiuhFlEGmmFXEXkN50Cvq7Os88IY2v0dkDqXYWVgA==}
     dev: true
 
-  /@types/node/14.18.20:
-    resolution: {integrity: sha512-Q8KKwm9YqEmUBRsqJ2GWJDtXltBDxTdC4m5vTdXBolu2PeQh8LX+f6BTwU+OuXPu37fLxoN6gidqBmnky36FXA==}
+  /@types/node/16.11.38:
+    resolution: {integrity: sha512-hjO/0K140An3GWDw2HJfq7gko3wWeznbjXgg+rzPdVzhe198hp4x2i1dgveAOEiFKd8sOilAxzoSJiVv5P/CUg==}
 
   /@types/node/16.11.7:
     resolution: {integrity: sha512-QB5D2sqfSjCmTuWcBWyJ+/44bcjO7VbjSbOE0ucoVbAsSNQc4Lt6QkgkVXkTDwkL4z/beecZNDvVX15D4P8Jbw==}
+    dev: true
 
   /@types/normalize-package-data/2.4.1:
     resolution: {integrity: sha512-Gj7cI7z+98M282Tqmp2K5EIsoouUEzbBJhQQzDE3jSIRk6r9gsz0oUokqIUR4u1R3dMHo0pDHM7sNOHyhulypw==}
@@ -1445,7 +1446,7 @@ packages:
     resolution: {integrity: sha512-ULqvZNGMv0zRFvqn8/4LSPtnmN4MfhlPNtJCTpKuIIxGVGZ2rYWzFXrvEBoh9CVyqSE7D6YFRJ1hydLHI6kbWw==}
     requiresBuild: true
     dependencies:
-      '@types/node': 16.11.7
+      '@types/node': 16.11.38
       xmlbuilder: 15.1.1
     dev: true
     optional: true
@@ -1483,7 +1484,7 @@ packages:
   /@types/responselike/1.0.0:
     resolution: {integrity: sha512-85Y2BjiufFzaMIlvJDvTTB8Fxl2xfLo4HgmHzVBz08w4wDePCTjYw66PdrolO0kzli3yam/YCgRufyo1DdQVTA==}
     dependencies:
-      '@types/node': 16.11.7
+      '@types/node': 16.11.38
 
   /@types/rimraf/3.0.2:
     resolution: {integrity: sha512-F3OznnSLAUxFrCEu/L5PY8+ny8DtcFRjx7fZZ9bycvXRi3KPTRS9HOitGZwvPg0juRhXFWIeKX58cnX5YqLohQ==}
@@ -3478,13 +3479,13 @@ packages:
       - supports-color
     dev: true
 
-  /electron-rpc-api/8.0.1_electron@15.5.7:
+  /electron-rpc-api/8.0.1_electron@19.0.3:
     resolution: {integrity: sha512-dwhX88wO1CjG8/9OKJytnYqm+MmCJytI4LrMHRb1svqddCKAjwFRQuG7iXfHotTdPAOl57/0+tjhsZ0BvAxJTg==}
     engines: {node: '>=12.0.0'}
     peerDependencies:
       electron: '>=5.0.0'
     dependencies:
-      electron: 15.5.7
+      electron: 19.0.3
       pubsub-to-rpc-api: 7.1.0
       pure-uuid: 1.6.2
       rxjs: 7.5.5
@@ -3505,14 +3506,14 @@ packages:
       serialize-error: 8.1.0
     dev: true
 
-  /electron/15.5.7:
-    resolution: {integrity: sha512-n4mVlxoMc4eYx07wWFWGficL+iOMz5xZEf5dBtE/wwLm0fQpYVyW4AlknMFG9F8Css0MM0JSwNMOyRg5e1vDtg==}
+  /electron/19.0.3:
+    resolution: {integrity: sha512-V/8pFkXUOsoHcBzuTYVSbIQKLIwI/FAxfpvbkMazdaO/weZoIf9AN3Qc4Wuo9+489mhelDYc8lSX5N7c6A5n6A==}
     engines: {node: '>= 8.6'}
     hasBin: true
     requiresBuild: true
     dependencies:
       '@electron/get': 1.14.1
-      '@types/node': 14.18.20
+      '@types/node': 16.11.38
       extract-zip: 1.7.0
     transitivePeerDependencies:
       - supports-color
@@ -4954,7 +4955,7 @@ packages:
     resolution: {integrity: sha512-7vuh85V5cdDofPyxn58nrPjBktZo0u9x1g8WtjQol+jZDaE+fhN+cIvTj11GndBnMnyfrUOG1sZQxCdjKh+DKg==}
     engines: {node: '>= 10.13.0'}
     dependencies:
-      '@types/node': 16.11.7
+      '@types/node': 16.11.38
       merge-stream: 2.0.0
       supports-color: 8.1.1
     dev: true

@@ -8,7 +8,7 @@ catchTopLeventAsync(async () => {
     await execShell([
         "pnpm",
         [
-            ...`run --filter zstd-native build`.split(" "),
+            ...`run --filter compression-native build`.split(" "),
         ],
         ...(
             os.platform() === "darwin"

@@ -1,5 +1,5 @@
 {
-  "name": "zstd-native",
+  "name": "compression-native",
   "version": "0.1.0",
   "main": "index.node",
   "scripts": {

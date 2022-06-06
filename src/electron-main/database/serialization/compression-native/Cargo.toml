@@ -1,5 +1,5 @@
 [package]
-name = "zstd-native"
+name = "compression-native"
 version = "0.1.0"
 edition = "2021"
 
@@ -9,7 +9,7 @@ crate-type = ["cdylib"]
 [dependencies]
 napi = { version = "2", features = ["napi8", "tokio_rt"] }
 napi-derive = "2"
-async-compression = { version = "0.3", features = ["tokio", "zstd"] }
+async-compression = { version = "0.3", features = ["tokio", "zstd", "bzip2"] }
 tokio = { version = "1", features = ["full"] }
 
 [target.'cfg(all(target_arch = "x86_64", not(target_env = "musl")))'.dependencies]

@@ -37,11 +37,11 @@ export const buildSerializer: Model.buildSerializerType = (() => {
         dataReadingBufferSize: ONE_MB_BYTES,
         dataWritingBufferSize: ONE_MB_BYTES,
         mailsPortionSize: {min: 400, max: 5000},
-        compressionLevels: {gzip: 6, zstd: 8}, // TODO consider making compression type/level configurable via interface
+        compressionLevelsFallback: {gzip: 6, zstd: 7, bzip2: 1},
     } as const;
-    const zstdNative = (() => {
-        let value: typeof import("./zstd-native") | undefined;
-        return async () => value ??= await import("./zstd-native");
+    const compressionNative = (() => {
+        let value: typeof import("./compression-native") | undefined;
+        return async () => value ??= await import("./compression-native");
     })();
     const bufferToReadable = (input: Buffer): Readable => Readable.from(input, {highWaterMark: CONST.dataReadingBufferSize});
     const decryptBuffer = async (
@@ -53,9 +53,9 @@ export const buildSerializer: Model.buildSerializerType = (() => {
         const decryptedReadable = bufferToReadable(decryptedBuffer);
         return compressionType === "gzip"
             ? decryptedReadable.pipe(zlib.createGunzip())
-            : compressionType === "zstd"
-                ? bufferToReadable( // TODO use stream-based "zstd" decompression
-                    await (await zstdNative()).decompress(decryptedBuffer),
+            : (compressionType === "zstd" || compressionType === "bzip2")
+                ? bufferToReadable( // TODO use stream-based decompression
+                    await (await compressionNative()).decompress(compressionType, decryptedBuffer),
                 )
                 : decryptedReadable;
     };
@@ -74,10 +74,14 @@ export const buildSerializer: Model.buildSerializerType = (() => {
             )
             ||
             (
+                compressionType === "bzip2" && level > 9
+            )
+            ||
+            (
                 compressionType === "zstd" && level > 22
             )
         ) {
-            level = CONST.compressionLevels[compressionType];
+            level = CONST.compressionLevelsFallback[compressionType];
             logger.error(`Invalid "${nameof(level)}" value, falling back to the default value: ${level}`);
         }
         const serializedData = msgpack.encode(data);
@@ -85,8 +89,8 @@ export const buildSerializer: Model.buildSerializerType = (() => {
         const encryptedData = await encryptionAdapter.write(
             compressionType === "gzip"
                 ? await promisify(zlib.gzip)(serializedDataBuffer, {level})
-                : compressionType === "zstd"
-                    ? await (await zstdNative()).compress(serializedDataBuffer, level)
+                : (compressionType === "zstd" || compressionType === "bzip2")
+                    ? await (await compressionNative()).compress(compressionType, serializedDataBuffer, level)
                     : serializedDataBuffer
         );
         const encryptionHeaderBuffer = encryptedData.slice(CONST.zero, encryptedData.indexOf(CONST.headerZeroByteMark));

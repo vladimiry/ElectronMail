@@ -63,6 +63,10 @@ async function resolveAppImageTool(): Promise<{ command: string }> {
 async function packAndCleanup({packageFile, packageDir}: { packageFile: string; packageDir: string }): Promise<void> {
     const {command} = await resolveAppImageTool();
 
+    { // https://github.com/Ultimaker/Cura/issues/11918#issuecomment-1126669911
+        await execShell(["chmod", ["0777", packageDir]]);
+        await execShell(["chmod", ["0755", path.join(packageDir, "./AppRun")]]);
+    }
     await execShell(["rm", ["--force", packageFile]]);
     await execShell(
         [

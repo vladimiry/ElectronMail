@@ -2,6 +2,8 @@ import {concatMap, first} from "rxjs/operators";
 import electronLog from "electron-log";
 import {session as electronSession, Session} from "electron";
 import {from, lastValueFrom, race, throwError, timer} from "rxjs";
+import {keys} from "ts-transformer-keys";
+import {omit} from "remeda";
 
 import type {AccountConfig} from "src/shared/model/account";
 import type {AccountSessionAppData, Context} from "./model";
@@ -188,22 +190,32 @@ export const initAccountSessions = async (
         {
             const causesToSkip: ReadonlyArray<Parameters<Parameters<typeof session.cookies.on>[1]>[2]>
                 = ["expired", "evicted", "expired-overwrite"];
+            const processedCookiesValueStrings: Record<keyof ReturnType<typeof filterProtonSessionApplyingCookies>, string>
+                = {accessTokens: "", refreshTokens: "", sessionIds: ""};
             session.cookies.on(
                 "changed",
                 (...[, cookie, cause, removed]) => {
                     if (removed || causesToSkip.includes(cause)) {
                         return;
                     }
-                    const {
-                        accessTokens: {length: count1},
-                        refreshTokens: {length: count2},
-                        sessionIds: {length: count3},
-                    } = filterProtonSessionApplyingCookies([cookie]);
-                    if (count1 || count2 || count3) {
+                    const cookies = filterProtonSessionApplyingCookies([cookie]);
+                    for (const key of keys<typeof cookies>()) {
+                        const cookiesValue = cookies[key];
+                        if (!cookiesValue.length) {
+                            continue;
+                        }
+                        const cookiesValueString = JSON.stringify(
+                            cookiesValue.map((value) => omit(value, ["expirationDate"])),
+                        );
+                        if (cookiesValueString === processedCookiesValueStrings[key]) {
+                            continue;
+                        }
+                        processedCookiesValueStrings[key] = cookiesValueString;
                         logger.verbose("proton session token cookies modified");
                         IPC_MAIN_API_NOTIFICATION$.next(
                             IPC_MAIN_API_NOTIFICATION_ACTIONS.ProtonSessionTokenCookiesModified({key: {login: account.login}}),
                         );
+                        break;
                     }
                 },
             );

@@ -10,21 +10,17 @@ import {ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN} from "src/shared/con
 import {AccountConfig} from "src/shared/model/account";
 import {buildUrlOriginsFailedMsgTester, parseUrlOriginWithNullishCheck, resolvePrimaryDomainNameFromUrlHostname} from "src/shared/util/url";
 import {CorsProxy} from "./model";
-import {curryFunctionMembers} from "src/shared/util";
+import {curryFunctionMembers, reduceDuplicateItemsFromArray} from "src/shared/util";
 import {depersonalizeProtonApiUrl, resolveProtonApiOrigin} from "src/shared/util/proton-url";
 import {getHeader, patchCorsResponseHeaders, patchResponseSetCookieHeaderRecords, resolveCorsProxy} from "./service";
 import {getUserAgentByAccount} from "src/electron-main/util";
 import {HEADERS, STATIC_ALLOWED_ORIGINS} from "./const";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/const";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
-import {PROTON_API_ENTRY_URLS, PROTON_API_SUBDOMAINS} from "src/shared/const/proton-url";
+import {PROTON_API_SUBDOMAINS} from "src/shared/const/proton-url";
 import {resolveInitializedAccountSession} from "src/electron-main/session";
 
 const logger = curryFunctionMembers(_logger, __filename);
-
-export const protonPrimaryDomainNames = PROTON_API_ENTRY_URLS
-    .map((value) => new URL(value).hostname)
-    .map(resolvePrimaryDomainNameFromUrlHostname);
 
 const requestProxyCache = (() => {
     type MapKeyArg =
@@ -67,15 +63,21 @@ const isProtonEmbeddedUrl = (() => {
 
 const resolveWebRequestUrl = (
     url: string,
-): Readonly<Pick<URL, "href" | "scheme" | "hostname" | "origin"> & { primaryDomainName: string }> => {
-    const {scheme, hostname, origin} = new URL(url);
-    return {
-        href: url,
-        scheme,
-        hostname,
-        origin: parseUrlOriginWithNullishCheck(origin),
-        primaryDomainName: resolvePrimaryDomainNameFromUrlHostname(hostname),
-    } as const;
+): (Readonly<Pick<URL, "href" | "scheme" | "hostname" | "origin"> & { primaryDomainName: string }>) | null => {
+    const {scheme, hostname, origin: rawOrigin} = new URL(url);
+    try {
+        const origin = parseUrlOriginWithNullishCheck(rawOrigin);
+        return {
+            href: url,
+            scheme,
+            hostname,
+            origin,
+            primaryDomainName: resolvePrimaryDomainNameFromUrlHostname(hostname),
+        } as const;
+    } catch (error) { // https://github.com/vladimiry/ElectronMail/issues/525
+        logger.error(JSON.stringify({rawOrigin: String(rawOrigin)}), error);
+    }
+    return null;
 };
 
 // according to electron docs "only the last attached listener will be used" so no need to unsubscribe previously registered handlers
@@ -90,30 +92,32 @@ export function initWebRequestListenersByAccount(
     }: DeepReadonly<AccountConfig>,
 ): void {
     const session = resolveInitializedAccountSession({login, entryUrl: accountEntryUrl});
-    const resolveAllowedOrigins = (url: ReturnType<typeof resolveWebRequestUrl>) => [
-        ...[
+    const resolveAllowedOrigins = (url: Exclude<ReturnType<typeof resolveWebRequestUrl>, null>): readonly string [] => {
+        return reduceDuplicateItemsFromArray([
             ...[
-                ...STATIC_ALLOWED_ORIGINS,
-                ...PROTON_API_SUBDOMAINS.map((subdomain) => resolveProtonApiOrigin({accountEntryUrl, subdomain})),
-            ],
-            ...(() => {
-                // - it has been noticed the at least "fra-storage/zrh-storage/storage" subdomains used by Proton for Drive service
-                // - interesting thing is that those subdomains are not hardcoded in the https://github.com/ProtonMail/WebClients code
-                //     but likely dynamically received form the request to the server
-                // - so whitelisting all the subdomains of such kind
-                // https://github.com/vladimiry/ElectronMail/issues/508
-                const firstUrlSubdomain = String(url.href.split(".").shift()?.split("://").pop());
-                const isStorageSubdomain = (
-                    (firstUrlSubdomain === "storage" || firstUrlSubdomain.endsWith("-storage"))
-                    &&
-                    url.primaryDomainName === resolvePrimaryDomainNameFromUrlHostname(
-                        new URL(accountEntryUrl).hostname,
-                    )
-                );
-                return isStorageSubdomain ? [url.origin] : [];
-            })(),
-        ].map(parseUrlOriginWithNullishCheck),
-    ] as const;
+                ...[
+                    ...STATIC_ALLOWED_ORIGINS,
+                    ...PROTON_API_SUBDOMAINS.map((subdomain) => resolveProtonApiOrigin({accountEntryUrl, subdomain})),
+                ],
+                ...(() => {
+                    // - it has been noticed the at least "fra-storage/zrh-storage/storage" subdomains used by Proton for Drive service
+                    // - interesting thing is that those subdomains are not hardcoded in the https://github.com/ProtonMail/WebClients code
+                    //     but likely dynamically received form the request to the server
+                    // - so whitelisting all the subdomains of such kind
+                    // https://github.com/vladimiry/ElectronMail/issues/508
+                    const firstUrlSubdomain = String(url.href.split(".").shift()?.split("://").pop());
+                    const isStorageSubdomain = (
+                        (firstUrlSubdomain === "storage" || firstUrlSubdomain.endsWith("-storage"))
+                        &&
+                        url.primaryDomainName === resolvePrimaryDomainNameFromUrlHostname(
+                            new URL(accountEntryUrl).hostname,
+                        )
+                    );
+                    return isStorageSubdomain ? [url.origin] : [];
+                })(),
+            ].map(parseUrlOriginWithNullishCheck),
+        ]);
+    };
 
     session.webRequest.onBeforeRequest(
         {urls: []},
@@ -121,6 +125,12 @@ export function initWebRequestListenersByAccount(
             const allowRequest = (): void => callback({});
             const banRequest = (): void => callback({cancel: true});
             const url = resolveWebRequestUrl(details.url);
+
+            if (!url) {
+                banRequest();
+                return;
+            }
+
             const allowedOrigins = resolveAllowedOrigins(url);
 
             if (
@@ -217,11 +227,10 @@ export function initWebRequestListenersByAccount(
         {urls: []},
         (details, callback) => {
             const {requestHeaders} = details;
-            const corsProxy = resolveCorsProxy(
+            const url = resolveWebRequestUrl(details.url);
+            const corsProxy = url && resolveCorsProxy(
                 details,
-                resolveAllowedOrigins(
-                    resolveWebRequestUrl(details.url),
-                ),
+                resolveAllowedOrigins(url),
             );
 
             if (corsProxy) {

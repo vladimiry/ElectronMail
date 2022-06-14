@@ -1,6 +1,6 @@
 import {ChangeDetectionStrategy, Component} from "@angular/core";
 import {combineLatest, Observable, Subscription} from "rxjs";
-import {distinctUntilChanged} from "rxjs/operators";
+import {distinctUntilChanged, map} from "rxjs/operators";
 import {equals} from "remeda";
 import type {OnDestroy, OnInit} from "@angular/core";
 import {select, Store} from "@ngrx/store";
@@ -28,6 +28,7 @@ export class AccountsComponent implements OnInit, OnDestroy {
     readonly layoutMode$: Observable<"top" | "left" | "left-thin">;
     readonly hideControls$: Observable<boolean>;
     readonly accounts$: Observable<WebAccount[]>;
+    readonly loginsDistinctAccountCountChange$: Observable<string[]>;
     readonly selectedLogin$ = this.store.pipe(
         select(AccountsSelectors.FEATURED.selectedLogin),
         distinctUntilChanged(),
@@ -43,6 +44,10 @@ export class AccountsComponent implements OnInit, OnDestroy {
         this.layoutMode$ = this.store.pipe(select(OptionsSelectors.CONFIG.layoutMode));
         this.hideControls$ = this.store.pipe(select(OptionsSelectors.CONFIG.hideControls));
         this.accounts$ = this.store.pipe(select(AccountsSelectors.FEATURED.accounts));
+        this.loginsDistinctAccountCountChange$ = this.accounts$.pipe(
+            map((accounts) => accounts.map(({accountConfig: {login}}) => login)),
+            distinctUntilChanged(({length: prev}, {length: curr}) => prev === curr),
+        );
     }
 
     ngOnInit(): void {

@@ -74,13 +74,13 @@
             ></electron-mail-account-title>
         </ul>
     </div>
-    <div *ngIf="accounts$ | async; let accounts" class="account-block">
-        <div *ngIf="accounts.length; then accountsDefined else accountsUndefined"></div>
+    <div *ngIf="loginsDistinctAccountCountChange$ | async; let logins" class="account-block">
+        <div *ngIf="logins.length; then accountsDefined else accountsUndefined"></div>
         <ng-template #accountsDefined>
             <electron-mail-account-view
-                *ngFor="let account of accounts; trackBy: trackAccountByLogin"
-                [account]="account"
-                [ngClass]="{'d-none': account.accountConfig.login != (selectedLogin$ | async)}"
+                *ngFor="let login of logins"
+                [login]="login"
+                [ngClass]="{'d-none': login != (selectedLogin$ | async)}"
             ></electron-mail-account-view>
         </ng-template>
         <ng-template #accountsUndefined>

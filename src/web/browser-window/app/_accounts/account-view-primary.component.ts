@@ -66,55 +66,57 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
         );
 
         this.addSubscription(
-            this.filterDomReadyEvent().subscribe(({webView}) => {
-                // app set's app notification channel on webview.dom-ready event
-                // which means user is not logged-in yet at this moment, so resetting the state
-                this.action(
-                    this.accountsService
-                        .generatePrimaryNotificationsStateResetAction({login: this.account.accountConfig.login}),
-                );
+            this.filterDomReadyEvent()
+                .pipe(withLatestFrom(this.account$))
+                .subscribe(([{webView}, account]) => {
+                    // app set's app notification channel on webview.dom-ready event
+                    // which means user is not logged-in yet at this moment, so resetting the state
+                    this.action(
+                        this.accountsService
+                            .generatePrimaryNotificationsStateResetAction({login: account.accountConfig.login}),
+                    );
 
-                if (!testProtonMailAppPage({url: webView.src, logger: this.logger}).shouldInitProviderApi) {
-                    this.log("info", [`skip webview.dom-ready processing for ${webView.src} page`]);
-                    return;
-                }
+                    if (!testProtonMailAppPage({url: webView.src, logger: this.logger}).shouldInitProviderApi) {
+                        this.log("info", [`skip webview.dom-ready processing for ${webView.src} page`]);
+                        return;
+                    }
 
-                const finishPromise = this.filterDomReadyOrDestroyedPromise();
-                const breakPreviousSyncing$ = new Subject<void>();
+                    const finishPromise = this.filterDomReadyOrDestroyedPromise();
+                    const breakPreviousSyncing$ = new Subject<void>();
 
-                this.action(
-                    ACCOUNTS_ACTIONS.SetupPrimaryNotificationChannel({account: this.account, webView, finishPromise}),
-                );
+                    this.action(
+                        ACCOUNTS_ACTIONS.SetupPrimaryNotificationChannel({account, webView, finishPromise}),
+                    );
 
-                this.account$
-                    .pipe(
-                        map(({notifications, accountConfig, accountIndex}) => ({
-                            pk: {login: accountConfig.login, accountIndex},
-                            data: {loggedIn: notifications.loggedIn, database: accountConfig.database},
-                        })),
-                        // process switching of either "loggedIn" or "database" flags
-                        distinctUntilChanged(({data: prev}, {data: curr}) => equals(prev, curr)),
-                        takeUntil(from(finishPromise)),
-                    )
-                    .subscribe(({pk, data: {loggedIn, database}}) => {
-                        breakPreviousSyncing$.next(void 0);
-                        if (!loggedIn || !database) {
-                            return; // syncing disabled
-                        }
-                        this.action(
-                            ACCOUNTS_ACTIONS.ToggleSyncing({
-                                pk,
-                                webView,
-                                finishPromise: lastValueFrom(
-                                    race([
-                                        from(finishPromise),
-                                        breakPreviousSyncing$.pipe(take(1)),
-                                    ]),
-                                ),
-                            }),
-                        );
-                    });
-            }),
+                    this.account$
+                        .pipe(
+                            map(({notifications, accountConfig, accountIndex}) => ({
+                                pk: {login: accountConfig.login, accountIndex},
+                                data: {loggedIn: notifications.loggedIn, database: accountConfig.database},
+                            })),
+                            // process switching of either "loggedIn" or "database" flags
+                            distinctUntilChanged(({data: prev}, {data: curr}) => equals(prev, curr)),
+                            takeUntil(from(finishPromise)),
+                        )
+                        .subscribe(({pk, data: {loggedIn, database}}) => {
+                            breakPreviousSyncing$.next(void 0);
+                            if (!loggedIn || !database) {
+                                return; // syncing disabled
+                            }
+                            this.action(
+                                ACCOUNTS_ACTIONS.ToggleSyncing({
+                                    pk,
+                                    webView,
+                                    finishPromise: lastValueFrom(
+                                        race([
+                                            from(finishPromise),
+                                            breakPreviousSyncing$.pipe(take(1)),
+                                        ]),
+                                    ),
+                                }),
+                            );
+                        });
+                }),
         );
     }
 

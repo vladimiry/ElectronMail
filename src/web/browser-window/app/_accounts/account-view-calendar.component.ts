@@ -1,5 +1,6 @@
 import {Component, Injector} from "@angular/core";
 import type {OnInit} from "@angular/core";
+import {withLatestFrom} from "rxjs/operators";
 
 import {ACCOUNTS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsService} from "./accounts.service";
@@ -25,27 +26,29 @@ export class AccountViewCalendarComponent extends AccountViewAbstractComponent i
 
     ngOnInit(): void {
         this.addSubscription(
-            this.filterDomReadyEvent().subscribe(({webView}) => {
-                // app set's app notification channel on webview.dom-ready event
-                // which means user is not logged-in yet at this moment, so resetting the state
-                this.action(
-                    this.accountsService
-                        .generateCalendarNotificationsStateResetAction({login: this.account.accountConfig.login}),
-                );
+            this.filterDomReadyEvent()
+                .pipe(withLatestFrom(this.account$))
+                .subscribe(([{webView}, account]) => {
+                    // app set's app notification channel on webview.dom-ready event
+                    // which means user is not logged-in yet at this moment, so resetting the state
+                    this.action(
+                        this.accountsService
+                            .generateCalendarNotificationsStateResetAction({login: account.accountConfig.login}),
+                    );
 
-                if (!testProtonCalendarAppPage({url: webView.src, logger: this.logger}).shouldInitProviderApi) {
-                    this.log("info", [`skip webview.dom-ready processing for ${webView.src} page`]);
-                    return;
-                }
+                    if (!testProtonCalendarAppPage({url: webView.src, logger: this.logger}).shouldInitProviderApi) {
+                        this.log("info", [`skip webview.dom-ready processing for ${webView.src} page`]);
+                        return;
+                    }
 
-                this.action(
-                    ACCOUNTS_ACTIONS.SetupCalendarNotificationChannel({
-                        account: this.account,
-                        webView,
-                        finishPromise: this.filterDomReadyOrDestroyedPromise(),
-                    }),
-                );
-            }),
+                    this.action(
+                        ACCOUNTS_ACTIONS.SetupCalendarNotificationChannel({
+                            account,
+                            webView,
+                            finishPromise: this.filterDomReadyOrDestroyedPromise(),
+                        }),
+                    );
+                }),
         );
     }
 }

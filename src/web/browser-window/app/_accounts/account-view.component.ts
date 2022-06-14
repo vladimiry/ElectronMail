@@ -1,12 +1,12 @@
 import type {Action} from "@ngrx/store";
-import {BehaviorSubject, combineLatest, lastValueFrom, merge, Observable, of, race, Subject, Subscription, throwError, timer} from "rxjs";
+import {BehaviorSubject, combineLatest, EMPTY, lastValueFrom, merge, of, race, Subject, Subscription, throwError, timer} from "rxjs";
 import {Component, ComponentRef, ElementRef, HostBinding, Input, NgZone, ViewChild, ViewContainerRef} from "@angular/core";
 import {
     concatMap, debounceTime, delayWhen, distinctUntilChanged, filter, first, map, mergeMap, pairwise, startWith, switchMap, take, takeUntil,
     tap, withLatestFrom,
 } from "rxjs/operators";
+import type {Observable} from "rxjs";
 import type {OnDestroy, OnInit} from "@angular/core";
-import {pick} from "remeda";
 import {select, Store} from "@ngrx/store";
 
 import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
@@ -26,7 +26,7 @@ import {ofType} from "src/shared/util/ngrx-of-type";
 import {ONE_SECOND_MS, PRODUCT_NAME} from "src/shared/const";
 import {ProtonClientSession} from "src/shared/model/proton";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
-import {WebAccount} from "src/web/browser-window/app/model";
+import type {WebAccount} from "src/web/browser-window/app/model";
 
 const componentDestroyingNotificationSubject$ = new Subject<void>();
 
@@ -39,9 +39,14 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
     static componentDestroyingNotification$ = componentDestroyingNotificationSubject$.asObservable();
 
     @Input()
-    readonly account!: WebAccount;
+    readonly login: string = "";
 
-    readonly account$: Observable<WebAccount> = this.ngChangesObservable("account");
+    readonly account$: Observable<WebAccount> = this.ngChangesObservable("login").pipe(
+        switchMap((login) => this.store.pipe(
+            select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
+            mergeMap((account) => account ? [account] : EMPTY),
+        )),
+    );
 
     // TODO angular: get rid of @HostBinding("class") /  @Input() workaround https://github.com/angular/angular/issues/7289
     @Input()
@@ -88,11 +93,16 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
         private readonly core: CoreService,
         private readonly store: Store<State>,
         private readonly zone: NgZone,
+        // private readonly changeDetectorRef: ChangeDetectorRef,
     ) {
         super();
         this.ipcMainClient = this.electronService.ipcMainClient();
         this.logger = getWebLogger(__filename, nameof(AccountViewComponent));
         this.logger.info();
+    }
+
+    private async resolveAccountIndex(): Promise<Pick<WebAccount, "accountIndex">> {
+        return {accountIndex: (await lastValueFrom(this.account$.pipe(take(1)))).accountIndex};
     }
 
     ngOnInit(): void {
@@ -246,13 +256,14 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
                             &&
                             (await this.ipcMainClient("dbGetAccountMetadata")({login}))?.latestEventId
                         );
+                        const {accountIndex} = await this.resolveAccountIndex();
                         const body = useCustomNotification && accountMetadataSettled
                             ? await this.ipcMainClient("resolveUnreadNotificationMessage")({
                                 login,
                                 alias: title,
                                 code: customNotificationCode,
                             })
-                            : `Account [${title || this.account.accountIndex}]: ${unread} unread message${unread > 1 ? "s" : ""}.`;
+                            : `Account [${title || accountIndex}]: ${unread} unread message${unread > 1 ? "s" : ""}.`;
                         if (body) {
                             new Notification(
                                 PRODUCT_NAME,
@@ -325,11 +336,11 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
         // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
         const resolvePrimaryWebViewApiClient = async () => lastValueFrom(
             this.electronService
-                .primaryWebViewClient({webView: primaryWebView, accountIndex: this.account.accountIndex}),
+                .primaryWebViewClient({webView: primaryWebView, ...await this.resolveAccountIndex()}),
         );
         const resolveLiveProtonClientSession = async (): Promise<ProtonClientSession> => {
             const apiClient = await resolvePrimaryWebViewApiClient();
-            const value = await apiClient("resolveLiveProtonClientSession")(pick(this.account, ["accountIndex"]));
+            const value = await apiClient("resolveLiveProtonClientSession")(await this.resolveAccountIndex());
             if (!value) {
                 throw new Error(`Failed to resolve "proton client session" object`);
             }
@@ -420,7 +431,7 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
                     resolveLiveProtonClientSession(),
                     (async () => {
                         const apiClient = await resolvePrimaryWebViewApiClient();
-                        return apiClient("resolvedLiveSessionStoragePatch")(pick(this.account, ["accountIndex"]));
+                        return apiClient("resolvedLiveSessionStoragePatch")(await this.resolveAccountIndex());
                     })(),
                 ]);
                 // TODO if "src$" has been set before, consider only refreshing the client session without full page reload

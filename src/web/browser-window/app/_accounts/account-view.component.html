@@ -1,13 +1,13 @@
 <electron-mail-account-view-primary
     (event)="onEventChild($event)"
-    [account]="account"
+    [login]="login"
     [webViewSrc]="(webViewsState.primary.src$ | async) || ''"
 ></electron-mail-account-view-primary>
 
 <electron-mail-account-view-calendar
-    *ngIf="webViewsState.calendar.src$ | async; let src"
     (event)="onEventChild($event)"
-    [account]="account"
+    *ngIf="webViewsState.calendar.src$ | async; let src"
+    [login]="login"
     [webViewSrc]="src"
 ></electron-mail-account-view-calendar>
 

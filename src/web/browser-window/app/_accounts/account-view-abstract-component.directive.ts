@@ -1,12 +1,14 @@
 import type {Action} from "@ngrx/store";
-import {combineLatest, lastValueFrom, Observable, race, Subscription} from "rxjs";
+import {combineLatest, EMPTY, lastValueFrom, Observable, race, Subscription} from "rxjs";
 import {Directive, ElementRef, EventEmitter, Injector, Input, Output, Renderer2} from "@angular/core";
-import {distinctUntilChanged, filter, map, take} from "rxjs/operators";
+import {distinctUntilChanged, filter, map, mergeMap, switchMap, take} from "rxjs/operators";
 import {DOCUMENT} from "@angular/common";
 import type {OnDestroy} from "@angular/core";
 import {pick} from "remeda";
+import {select, Store} from "@ngrx/store";
 
 import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
 import {AccountViewComponent} from "./account-view.component";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {depersonalizeLoggedUrlsInString} from "src/shared/util/proton-url";
@@ -24,9 +26,9 @@ type ChildEvent = Parameters<typeof AccountViewComponent.prototype.onEventChild>
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
 export abstract class AccountViewAbstractComponent extends NgChangesObservableComponent implements OnDestroy {
     @Input()
-    readonly account!: WebAccount;
+    readonly login: string = "";
 
-    readonly account$: Observable<WebAccount> = this.ngChangesObservable("account");
+    readonly account$: Observable<WebAccount>;
 
     @Input()
     webViewSrc!: string;
@@ -49,6 +51,12 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
     ) {
         super();
 
+        this.account$ = this.ngChangesObservable("login").pipe(
+            switchMap((login) => this.injector.get(Store).pipe(
+                select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
+                mergeMap((account) => account ? [account] : EMPTY),
+            )),
+        );
         this.api = this.injector.get(ElectronService);
         this.core = this.injector.get(CoreService);
 
@@ -95,9 +103,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
         this.log("info", [nameof(AccountViewAbstractComponent.prototype.ngOnDestroy)]);
         this.subscription.unsubscribe();
         this.action(
-            ACCOUNTS_ACTIONS.Patch(
-                {login: this.account.accountConfig.login, patch: {webviewSrcValues: {[this.viewType]: ""}}, optionalAccount: true},
-            ),
+            ACCOUNTS_ACTIONS.Patch({login: this.login, patch: {webviewSrcValues: {[this.viewType]: ""}}, optionalAccount: true}),
         );
     }
 
@@ -177,9 +183,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
             "did-navigate",
             ({url}: import("electron").DidNavigateEvent) => {
                 this.action(
-                    ACCOUNTS_ACTIONS.Patch(
-                        {login: this.account.accountConfig.login, patch: {webviewSrcValues: {[this.viewType]: url}}},
-                    ),
+                    ACCOUNTS_ACTIONS.Patch({login: this.login, patch: {webviewSrcValues: {[this.viewType]: url}}}),
                 );
             },
         ] as const;

@@ -6,7 +6,7 @@ import {AccountPersistentSessionBundle} from "src/shared/model/account";
 import {curryFunctionMembers} from "src/shared/util";
 import {emptySessionStorageEntity} from "./util";
 import {LOCAL_WEBCLIENT_DIR_NAME} from "src/shared/const";
-import {processProtonCookieRecord} from "src/shared/util/proton-url";
+import {processProtonCookieRecord} from "src/electron-main/util/proton-url";
 import {
     PROTON_API_ENTRY_PRIMARY_VALUE, PROTON_API_ENTRY_PROTONMAIL_CH_VALUE, PROTON_API_ENTRY_PROTONMAIL_COM_VALUE,
     PROTON_API_ENTRY_TOR_V2_VALUE, PROTON_API_ENTRY_TOR_V3_VALUE, PROTON_API_ENTRY_TOR_V4_VALUE,

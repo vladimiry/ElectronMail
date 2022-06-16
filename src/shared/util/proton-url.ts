@@ -1,22 +1,9 @@
-import {Cookie as CookieParser, SameSite} from "@t-bowersox/cookie";
-import type {Cookie as ElectronCookie} from "electron";
 import {mapValues} from "remeda";
 import {URL} from "@cliqz/url-parser";
 
-import {
-    PROTON_API_ENTRY_PROTONMAIL_CH_VALUE, PROTON_API_ENTRY_PROTONMAIL_COM_VALUE, PROTON_API_ENTRY_TOR_V2_VALUE,
-    PROTON_API_ENTRY_TOR_V3_VALUE, PROTON_API_ENTRY_URLS, PROTON_API_SUBDOMAINS,
-} from "src/shared/const/proton-url";
+import {PROTON_API_ENTRY_URLS, PROTON_API_SUBDOMAINS} from "src/shared/const/proton-url";
 import {PROVIDER_REPO_MAP} from "src/shared/const/proton-apps";
 import {resolvePathnameDirFromUrlHref, resolvePrimaryDomainNameFromUrlHostname} from "src/shared/util/url";
-
-export const protonPrimaryDomainNamesEverUsed = [
-    ...PROTON_API_ENTRY_URLS,
-    PROTON_API_ENTRY_PROTONMAIL_CH_VALUE,
-    PROTON_API_ENTRY_PROTONMAIL_COM_VALUE,
-    PROTON_API_ENTRY_TOR_V2_VALUE,
-    PROTON_API_ENTRY_TOR_V3_VALUE,
-].map((value) => new URL(value).hostname).map(resolvePrimaryDomainNameFromUrlHostname);
 
 export const resolveProtonApiOrigin = (
     {accountEntryUrl, subdomain}: { accountEntryUrl: string, subdomain: string },
@@ -50,73 +37,6 @@ export const resolveProtonAppTypeFromUrlHref = (href: string): { requestBasePath
     );
 
     return protonProjectResultType;
-};
-
-export const processProtonCookieRecord = <T extends string | ElectronCookie>(
-    inputCookie: DeepReadonly<T>, {requestUrlPrimaryDomainName}: { requestUrlPrimaryDomainName: string },
-): T => {
-    const cookie = (() => {
-        // starting from @electron v12 (more exactly from the respective @chromium version)
-        // the "set-cookie" records with "samesite=strict" get blocked by @chromium for the "/api/auth/cookies" request at least
-        // so to workaround the issue we replace the "samesite=strict|lax"-like attribute with "samesite=none"
-        // TODO consider patching the "samesite" cookie attribute only for "/api/auth/cookies" request
-        const baseService = typeof inputCookie === "string"
-            ? (() => {
-                const _cookie_ = CookieParser.parse(inputCookie);
-                _cookie_.setSecure(true);
-                _cookie_.setSameSite(SameSite.None);
-                return {
-                    get _cookie_() { return _cookie_; },
-                    setDomain: (value: string): unknown => _cookie_.setDomain(value),
-                    setPath: (value: string): unknown => _cookie_.setPath(value),
-                    getResult: () => _cookie_.toString(),
-                };
-            })()
-            : (() => {
-                const cookie = inputCookie as ElectronCookie;
-                cookie.secure = true;
-                cookie.sameSite = "no_restriction";
-                return {
-                    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-                    get _cookie_() { return cookie as ElectronCookie; },
-                    setDomain: (value: string): unknown => cookie.domain = value,
-                    setPath: (value: string): unknown => cookie.path = value,
-                    getResult: () => cookie,
-                };
-            })();
-        return {
-            get domain() { return baseService._cookie_.domain; },
-            get path() { return baseService._cookie_.path; },
-            ...baseService,
-        } as const;
-    })();
-
-    if (cookie.domain) {
-        if (
-            // only overwriting domain if it's a "known" one (alien/external domain here should be generally impossible)
-            protonPrimaryDomainNamesEverUsed.includes(
-                resolvePrimaryDomainNameFromUrlHostname(
-                    cookie.domain.startsWith(".") ? cookie.domain.substring(1) : cookie.domain,
-                ),
-            )
-        ) {
-            cookie.setDomain(`.${requestUrlPrimaryDomainName}`);
-        }
-    } else {
-        cookie.setDomain(`.${requestUrlPrimaryDomainName}`);
-    }
-
-    {
-        // https://github.com/ProtonMail/WebClients/issues/276#issuecomment-1139612047
-        const v4ApiBasePath = "/api";
-        if (cookie.path && `${cookie.path}/`.startsWith(`${v4ApiBasePath}/`)) {
-            cookie.setPath(
-                cookie.path.substring(v4ApiBasePath.length) || "/",
-            );
-        }
-    }
-
-    return cookie.getResult() as T;
 };
 
 export const depersonalizeProtonApiUrl = (url: string): string => {

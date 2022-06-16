@@ -18,6 +18,7 @@ import {HEADERS, STATIC_ALLOWED_ORIGINS} from "./const";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/const";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {PROTON_API_SUBDOMAINS} from "src/shared/const/proton-url";
+import {protonApiUrlsUtil} from "src/electron-main/util/proton-url";
 import {resolveInitializedAccountSession} from "src/electron-main/session";
 
 const logger = curryFunctionMembers(_logger, __filename);
@@ -63,8 +64,8 @@ const isProtonEmbeddedUrl = (() => {
 
 const resolveWebRequestUrl = (
     url: string,
-): (Readonly<Pick<URL, "href" | "scheme" | "hostname" | "origin"> & { primaryDomainName: string }>) | null => {
-    const {scheme, hostname, origin: rawOrigin} = new URL(url);
+): (Readonly<Pick<URL, "href" | "scheme" | "hostname" | "origin" | "pathname"> & { primaryDomainName: string }>) | null => {
+    const {scheme, hostname, origin: rawOrigin, pathname} = new URL(url);
     try {
         const origin = parseUrlOriginWithNullishCheck(rawOrigin);
         return {
@@ -72,6 +73,7 @@ const resolveWebRequestUrl = (
             scheme,
             hostname,
             origin,
+            pathname,
             primaryDomainName: resolvePrimaryDomainNameFromUrlHostname(hostname),
         } as const;
     } catch (error) { // https://github.com/vladimiry/ElectronMail/issues/525
@@ -248,6 +250,8 @@ export function initWebRequestListenersByAccount(
                 requestHeaders[headerName] = getUserAgentByAccount({customUserAgent});
             }
 
+            protonApiUrlsUtil.patchAuthHeaders(String(url?.pathname), requestHeaders);
+
             callback({requestHeaders});
         },
     );
@@ -268,18 +272,7 @@ export function initWebRequestListenersByAccount(
                 patchCorsResponseHeaders(responseHeaders, corsProxy);
             }
 
-            if (new URL(details.url).pathname === "/core/v4/captcha") {
-                for (const headerName of Object.keys(responseHeaders)) {
-                    const headerValues = responseHeaders[headerName];
-                    if (headerName.toLowerCase() !== "content-security-policy" || !headerValues) {
-                        continue;
-                    }
-                    responseHeaders[headerName] = headerValues.map((headerValue) => {
-                        return headerValue.replace(/(frame-ancestors|report-uri|report-to)[\s]+([^;]*)[;]?/gi, "");
-                    });
-                }
-            }
-
+            protonApiUrlsUtil.patchCaptchaResponseHeaders(new URL(details.url).pathname, responseHeaders);
             patchResponseSetCookieHeaderRecords({url: details.url, responseHeaders});
 
             callback({responseHeaders});

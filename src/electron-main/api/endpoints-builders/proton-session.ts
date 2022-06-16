@@ -3,7 +3,7 @@ import {URL} from "@cliqz/url-parser";
 import {Context} from "src/electron-main/model";
 import {filterProtonSessionApplyingCookies} from "src/electron-main/util";
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
-import {processProtonCookieRecord} from "src/shared/util/proton-url";
+import {processProtonCookieRecord} from "src/electron-main/util/proton-url";
 import {resetSessionStorages, resolveInitializedAccountSession} from "src/electron-main/session";
 import {resolvePrimaryDomainNameFromUrlHostname} from "src/shared/util/url";
 

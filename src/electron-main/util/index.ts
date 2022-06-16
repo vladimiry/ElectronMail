@@ -10,7 +10,7 @@ import {Model as StoreModel} from "fs-json-store";
 import {AccountConfig} from "src/shared/model/account";
 import {buildInitialVendorsAppCssLinks, curryFunctionMembers, getRandomInt} from "src/shared/util";
 import {Config} from "src/shared/model/options";
-import {Context} from "./model";
+import {Context} from "src/electron-main/model";
 import {createSessionUtil} from "src/electron-main/session";
 import {PACKAGE_NAME} from "src/shared/const";
 import {PROTON_API_ENTRY_URLS} from "src/shared/const/proton-url";

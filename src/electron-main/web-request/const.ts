@@ -8,6 +8,7 @@ export const HEADERS = {
         accessControlRequestMethod: "Access-Control-Request-Method",
         contentType: "Content-Type",
         userAgent: "User-Agent",
+        xPmAppVersion: "x-pm-appversion",
     },
     response: {
         accessControlAllowCredentials: "Access-Control-Allow-Credentials",

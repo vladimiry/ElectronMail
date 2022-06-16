@@ -3,7 +3,7 @@ import {URL} from "@cliqz/url-parser";
 
 import {CorsProxy, GetHeaderCallResult} from "./model";
 import {HEADERS} from "./const";
-import {processProtonCookieRecord} from "src/shared/util/proton-url";
+import {processProtonCookieRecord} from "src/electron-main/util/proton-url";
 import {resolvePrimaryDomainNameFromUrlHostname, verifyUrlOriginValue} from "src/shared/util/url";
 
 export const getHeader = (

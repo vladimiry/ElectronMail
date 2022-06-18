@@ -70,4 +70,7 @@ export interface ProperLockfileError {
 
 // TODO stop putting account-specific data to the session
 // this hack is currently used to bind the "entryUrl" to a session for the "session.protocol.registerStreamProtocol" use purposes
-export type AccountSessionAppData = { "_electron_mail_data_": Pick<AccountConfig, "entryUrl"> };
+export type AccountSessionAppData = {
+    _electron_mail_data_: Pick<AccountConfig, "entryUrl">
+    _electron_mail_reset_counter_?: number
+};

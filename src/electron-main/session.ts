@@ -21,9 +21,9 @@ import {registerAccountSessionProtocols} from "src/electron-main/protocol";
 const _logger = curryFunctionMembers(electronLog, __filename);
 
 type createSessionUtilType = {
-    readonly create: (partition: string) => Session & Partial<AccountSessionAppData>;
+    readonly create: (partition: string) => Session & Partial<Pick<AccountSessionAppData, "_electron_mail_data_">>;
     readonly createdBefore: (partition: string) => boolean
-    readonly fromPartition: (partition: string) => Session
+    readonly fromPartition: (partition: string) => Session & Pick<AccountSessionAppData, "_electron_mail_reset_counter_">;
 };
 
 export const createSessionUtil: createSessionUtilType = (() => {
@@ -83,7 +83,7 @@ export const createSessionUtil: createSessionUtilType = (() => {
 
 export const resolveInitializedAccountSession = (
     {login, entryUrl}: DeepReadonly<Pick<AccountConfig, "login" | "entryUrl">>,
-): Session => {
+): ReturnType<typeof createSessionUtil.fromPartition> => {
     return createSessionUtil.fromPartition(
         getWebViewPartitionName({login, entryUrl}),
     );

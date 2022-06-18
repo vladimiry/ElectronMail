@@ -129,6 +129,23 @@ export const buildEndpoints = async (
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async resetProtonBackendSession({login, apiEndpointOrigin}) {
+            {
+                const session = resolveInitializedAccountSession({login, entryUrl: apiEndpointOrigin});
+
+                session._electron_mail_reset_counter_ ??= 0;
+                session._electron_mail_reset_counter_++;
+
+                if (
+                    session._electron_mail_reset_counter_ < 2
+                    ||
+                    !(await session.cookies.get({})).length
+                ) {
+                    // skipping the "session reset" for the first call since the session is still fresh/pure
+                    // https://github.com/vladimiry/ElectronMail/issues/447
+                    return;
+                }
+            }
+
             await resetSessionStorages(ctx, {login, apiEndpointOrigin});
         },
     };

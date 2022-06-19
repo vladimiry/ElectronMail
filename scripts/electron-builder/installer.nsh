@@ -7,26 +7,24 @@
 ClearErrors
 
 ReadRegDword $R0 HKLM "SOFTWARE\Wow6432Node\Microsoft\VisualStudio\14.0\VC\Runtimes\X64" "Installed"
-IfErrors 0 +2
-DetailPrint "Installing ${REDIST_NAME}..."
-StrCmp $R0 "1" 0 +3
+IfErrors Download
+IntCmp $R0 1 0 Download
   DetailPrint "${REDIST_NAME} is already installed. Skipping."
   Goto End
 
-DetailPrint "Downloading ${REDIST_NAME} Setup (from ${REDIST_SETUP_URL} to ${REDIST_SETUP_FILE}) ..."
-NSISdl::download /TIMEOUT=30000 "${REDIST_SETUP_URL}" "${REDIST_SETUP_FILE}"
-
-Pop $R0 ; get the return value
-StrCmp $R0 "success" OnSuccessDownload
-
-Pop $R0 ; get the return value
-StrCmp $R0 "success" +2
-  MessageBox MB_OK "Could not download ${REDIST_NAME} (from ${REDIST_SETUP_URL} to ${REDIST_SETUP_FILE}). Please install it manually."
+Download:
+  DetailPrint "Downloading ${REDIST_NAME} Setup (from ${REDIST_SETUP_URL} to ${REDIST_SETUP_FILE}) ..."
+  NSISdl::download /TIMEOUT=30000 "${REDIST_SETUP_URL}" "${REDIST_SETUP_FILE}"
+  Pop $R0
+  StrCmp $R0 "success" OnSuccessDownload
+  StrCmp $R0 "cancel" End
+  DetailPrint "Could not download ${REDIST_NAME} (from ${REDIST_SETUP_URL} to ${REDIST_SETUP_FILE})."
   Goto End
 
 OnSuccessDownload:
   DetailPrint "Running ${REDIST_NAME} Setup (${REDIST_SETUP_FILE} executable)..."
-  ExecWait '"${REDIST_SETUP_FILE}" /norestart'
+  # TODO use "IfSilent" test to apply "/quiet" arg only if NSIS setup was executed with "\S" flag
+  ExecWait '"${REDIST_SETUP_FILE}" /quiet /norestart'
   DetailPrint "Finished ${REDIST_NAME} Setup"
   Delete "${REDIST_SETUP_FILE}"
 

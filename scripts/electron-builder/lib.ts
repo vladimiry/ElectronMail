@@ -168,7 +168,7 @@ export async function build(
     packageType: "appimage" | "snap",
 ): Promise<{ packageFile: string }> {
     await execShell([
-        "pnpm",
+        "npm",
         [
             ...`run electron-builder:shortcut -- --publish never --linux ${packageType}`.split(" "),
         ],

@@ -13,13 +13,14 @@ jobs:
     steps:
       # <common> TODO use YAML anchors feature when it gets supported
       - { uses: actions/checkout@v2 }
-      - { uses: pnpm/action-setup@v2, with: { version: "latest" } }
+      - { uses: pnpm/action-setup@v2, with: { version: 7.5.2 } }
+      - { name: pnpm patch, if: runner.os == 'Windows', run: ./scripts/ci/github/patch-pnpm.ps1 }
       - { uses: actions/setup-node@v2, with: { node-version: "${{ env.ELECTRON_MAIL_NODE_VERSION }}", cache: "pnpm" } }
       - { name: system setup, if: runner.os == 'Linux', run: ./scripts/ci/github/system-setup-linux.sh }
       - { name: install node-gyp, if: runner.os == 'Windows', run: ./scripts/ci/github/install-node-gyp.ps1 }
       - { uses: actions/setup-python@v2, with: { python-version: "3.9" } }
       - { name: envinfo, run: npx envinfo }
-      - { name: install node modules, run: "pnpm install --frozen-lockfile" }
+      - { name: install node modules, run: "pnpm install --frozen-lockfile --reporter=append-only" }
       # </common>
       - name: cache artifact
         uses: actions/cache@v2
@@ -27,7 +28,7 @@ jobs:
           path: |
             ./output/git/backup
             ./app/assets/db-search-monaco-editor
-          key: "proton-clients-cache-${{ hashFiles('./src/shared/proton-apps-constants.ts') }}-${{ secrets.PROTON_CLIENTS_ARTIFACT_CACHE_VERSION }}"
+          key: "proton-clients-cache-${{ hashFiles('./src/shared/const/proton-apps.ts') }}-${{ secrets.PROTON_CLIENTS_ARTIFACT_CACHE_VERSION }}"
       - { name: print ./output/git/backup files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./output/git/backup }
       - { name: build, run: ./scripts/ci/prepare-webclients.sh }
       - { name: print ./output/git/backup files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./output/git/backup }
@@ -39,13 +40,14 @@ jobs:
     steps:
       # <common> TODO use YAML anchors feature when it gets supported
       - { uses: actions/checkout@v2 }
-      - { uses: pnpm/action-setup@v2, with: { version: "latest" } }
+      - { uses: pnpm/action-setup@v2, with: { version: 7.5.2 } }
+      - { name: pnpm patch, if: runner.os == 'Windows', run: ./scripts/ci/github/patch-pnpm.ps1 }
       - { uses: actions/setup-node@v2, with: { node-version: "${{ env.ELECTRON_MAIL_NODE_VERSION }}", cache: "pnpm" } }
       - { name: system setup, if: runner.os == 'Linux', run: ./scripts/ci/github/system-setup-linux.sh }
       - { name: install node-gyp, if: runner.os == 'Windows', run: ./scripts/ci/github/install-node-gyp.ps1 }
       - { uses: actions/setup-python@v2, with: { python-version: "3.9" } }
       - { name: envinfo, run: npx envinfo }
-      - { name: install node modules, run: "pnpm install --frozen-lockfile" }
+      - { name: install node modules, run: "pnpm install --frozen-lockfile --reporter=append-only" }
       # </common>
       - { name: build, run: 'npm exec --package=npm-run-all -- npm-run-all lint build' }
       - { name: print ./app files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./app }
@@ -58,13 +60,14 @@ jobs:
     steps:
       # <common> TODO use YAML anchors feature when it gets supported
       - { uses: actions/checkout@v2 }
-      - { uses: pnpm/action-setup@v2, with: { version: "latest" } }
+      - { uses: pnpm/action-setup@v2, with: { version: 7.5.2 } }
+      - { name: pnpm patch, if: runner.os == 'Windows', run: ./scripts/ci/github/patch-pnpm.ps1 }
       - { uses: actions/setup-node@v2, with: { node-version: "${{ env.ELECTRON_MAIL_NODE_VERSION }}", cache: "pnpm" } }
       - { name: system setup, if: runner.os == 'Linux', run: ./scripts/ci/github/system-setup-linux.sh }
       - { name: install node-gyp, if: runner.os == 'Windows', run: ./scripts/ci/github/install-node-gyp.ps1 }
       - { uses: actions/setup-python@v2, with: { python-version: "3.9" } }
       - { name: envinfo, run: npx envinfo }
-      - { name: install node modules, run: "pnpm install --frozen-lockfile" }
+      - { name: install node modules, run: "pnpm install --frozen-lockfile --reporter=append-only" }
       # </common>
       - { name: download proton clients artifact, uses: actions/download-artifact@v2, with: { name: proton-clients-artifact } }
       - { name: unpack proton clients artifact, shell: bash, run: tar -xvf ./proton-clients-artifact.tar }

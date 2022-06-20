@@ -1,0 +1,13 @@
+diff --git a/WebStorageCookieStore.js b/WebStorageCookieStore.js
+index 4ba71afa953b295efb2fbd0bab6c2b73dcb87b95..e538fc6c789553f752eef29623f249de97af750d 100644
+--- a/WebStorageCookieStore.js
++++ b/WebStorageCookieStore.js
+@@ -24,7 +24,7 @@ class WebStorageCookieStore extends ToughCookie.Store {
+     callback(null, Cookie.fromJSON(cookie));
+   }
+ 
+-  findCookies(domain, path, callback) {
++  findCookies(domain, path, allowSpecialUseDomain, callback) {
+     if (!domain) {
+       callback(null, []);
+       return;

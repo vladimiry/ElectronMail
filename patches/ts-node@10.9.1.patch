@@ -1,7 +1,7 @@
-diff --git a/node_modules/ts-node/dist-raw/node-internal-modules-esm-resolve.js b/node_modules/ts-node/dist-raw/node-internal-modules-esm-resolve.js
-index 2fbd832..0f39f96 100644
---- a/node_modules/ts-node/dist-raw/node-internal-modules-esm-resolve.js
-+++ b/node_modules/ts-node/dist-raw/node-internal-modules-esm-resolve.js
+diff --git a/dist-raw/node-internal-modules-esm-resolve.js b/dist-raw/node-internal-modules-esm-resolve.js
+index 2fbd832e1422cea1fb26fb8d480df5b914b14cc8..962361e88c48a7df840ca4162769635be105672e 100644
+--- a/dist-raw/node-internal-modules-esm-resolve.js
++++ b/dist-raw/node-internal-modules-esm-resolve.js
 @@ -307,11 +307,10 @@ function resolveExtensions(search) {
  
  /** This replaces JS with TS extensions */
@@ -22,29 +22,24 @@ index 2fbd832..0f39f96 100644
        }
      }
 +  } else {
-+    const indexFile = `${search}/index.ts`;
-+    return fileExists(indexFile) ? indexFile : `${search}.ts`;	  
++      const indexFile = `${search}/index.ts`;
++      return fileExists(indexFile) ? indexFile : `${search}.ts`;
    }
    return undefined;
  }
-diff --git a/node_modules/ts-node/dist-raw/node-options.js b/node_modules/ts-node/dist-raw/node-options.js
-index 2272275..98d3901 100644
---- a/node_modules/ts-node/dist-raw/node-options.js
-+++ b/node_modules/ts-node/dist-raw/node-options.js
-@@ -99,5 +99,16 @@ function getOptionValuesFromOtherEnvVars() {
+diff --git a/dist-raw/node-options.js b/dist-raw/node-options.js
+index 22722755d06efb5b7748a39fb1d171f867d409bb..fa23d2aa5f2a13deeedc9f97a1ff53d4ea78f9e6 100644
+--- a/dist-raw/node-options.js
++++ b/dist-raw/node-options.js
+@@ -99,5 +99,11 @@ function getOptionValuesFromOtherEnvVars() {
    if(process.env.NODE_PENDING_DEPRECATION === '1') {
      options['--pending-deprecation'] = true;
    }
 +  if (process.env.npm_config_node_options) {
-+      const errors = [];
-+      const envArgv = ParseNodeOptionsEnvVar(process.env.npm_config_node_options, errors);
-+      if (errors.length) {
-+          throw new Error(String(errors));
-+      }
-+      Object.assign(
-+          options,
-+          parseArgv(envArgv),
-+      );
-+  }   
++    const errors = [];
++    const envArgv = ParseNodeOptionsEnvVar(process.env.npm_config_node_options, errors);
++    if (errors.length) throw new Error(String(errors));
++    Object.assign(options, parseArgv(envArgv));
++  }
    return options;
  }

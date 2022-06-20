@@ -5,7 +5,7 @@ index 086a7575961ffab16857ac03cdf5dd903b4d7987..1b8a9ab2bc8e93da3379182642665282
 @@ -112,7 +112,11 @@ async function nodeGyp () {
  async function buildUnix () {
    if (!(await flag('build', UNIX_OUT))) return
-
+ 
 -  await run(['./configure', '--prefix=' + TMP_OUT, '--enable-static', '--with-pic', '--disable-pie'], { cwd: SRC })
 +  const extraConfigureArgs = ARCH !== os.arch() && ARCH.includes('arm64') && os.platform() === 'darwin'
 +      ? [`--host=arm64-apple-darwin`] // "cross compilation" case
@@ -14,9 +14,9 @@ index 086a7575961ffab16857ac03cdf5dd903b4d7987..1b8a9ab2bc8e93da3379182642665282
 +  await run(['./configure', '--prefix=' + TMP_OUT, '--enable-static', '--with-pic', '--disable-pie', ...extraConfigureArgs], { cwd: SRC })
    await run(['make', 'clean'], { cwd: SRC })
    await run(['make', 'install'], { cwd: SRC })
-
+ 
 @@ -201,12 +205,16 @@ function arg (name) {
-
+ 
  function run (cmd, opts = {}) {
    return new Promise((resolve) => {
 +    const now = Date.now();

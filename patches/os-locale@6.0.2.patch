@@ -1,7 +1,7 @@
-diff --git a/node_modules/os-locale/exec.js b/node_modules/os-locale/exec.js
-index 3439de5..2a30c93 100644
---- a/node_modules/os-locale/exec.js
-+++ b/node_modules/os-locale/exec.js
+diff --git a/exec.js b/exec.js
+index 3439de5708ddc403e9d92b11b2c407a93cd97b2a..2a30c93e822f79b57ce68af62f562fa98ddf7ec1 100644
+--- a/exec.js
++++ b/exec.js
 @@ -1,7 +1,7 @@
  // Mini wrapper around `child_process` to make it behave a little like `execa`.
  

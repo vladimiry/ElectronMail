@@ -6,6 +6,6 @@
     "build": "napi build --release --strip"
   },
   "devDependencies": {
-    "@napi-rs/cli": "2.10.0"
+    "@napi-rs/cli": "^2"
   }
 }

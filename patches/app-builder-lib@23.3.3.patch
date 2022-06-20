@@ -1,7 +1,7 @@
-diff --git a/node_modules/app-builder-lib/templates/nsis/include/installer.nsh b/node_modules/app-builder-lib/templates/nsis/include/installer.nsh
-index 34e91df..27f12cd 100644
---- a/node_modules/app-builder-lib/templates/nsis/include/installer.nsh
-+++ b/node_modules/app-builder-lib/templates/nsis/include/installer.nsh
+diff --git a/templates/nsis/include/installer.nsh b/templates/nsis/include/installer.nsh
+index 34e91dfe82fdbb2e929820f2e8deb771b7f7893c..27f12cd7e56754c3692db1656f59a7078766423d 100644
+--- a/templates/nsis/include/installer.nsh
++++ b/templates/nsis/include/installer.nsh
 @@ -174,7 +174,7 @@
        !insertmacro cleanupOldMenuDirectory
        !insertmacro createMenuDirectory

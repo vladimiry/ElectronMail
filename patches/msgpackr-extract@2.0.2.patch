@@ -1,0 +1,8 @@
+diff --git a/index.js b/index.js
+index 967188a6f508e93811b1fa92efc1afd2d5eb7375..6dc29570a61542e8089d4e4dd5633f75ba1c9ee7 100644
+--- a/index.js
++++ b/index.js
+@@ -1 +1 @@
+-module.exports = require('node-gyp-build-optional-packages')(__dirname);
+\ No newline at end of file
++module.exports = require('./build/Release/msgpackr-extract.node')

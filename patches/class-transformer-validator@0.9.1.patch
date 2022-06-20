@@ -1,7 +1,7 @@
-diff --git a/node_modules/class-transformer-validator/index.js b/node_modules/class-transformer-validator/index.js
-index 970dfa2..adc663c 100644
---- a/node_modules/class-transformer-validator/index.js
-+++ b/node_modules/class-transformer-validator/index.js
+diff --git a/index.js b/index.js
+index 970dfa2226a9ece95581d6fd8a93cf44758c8c29..adc663c7e9c895f8d7f5b4741be4cdbfcf9257f0 100644
+--- a/index.js
++++ b/index.js
 @@ -16,7 +16,7 @@ function transformAndValidate(classType, somethingToTransform, options) {
          else {
              return reject(new Error("Incorrect object param type! Only string, plain object and array of plain objects are valid."));

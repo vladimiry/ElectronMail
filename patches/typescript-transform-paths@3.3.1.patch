@@ -1,7 +1,7 @@
-diff --git a/node_modules/typescript-transform-paths/dist/visitor.js b/node_modules/typescript-transform-paths/dist/visitor.js
-index 4fb6475..6e2a314 100644
---- a/node_modules/typescript-transform-paths/dist/visitor.js
-+++ b/node_modules/typescript-transform-paths/dist/visitor.js
+diff --git a/dist/visitor.js b/dist/visitor.js
+index 4fb647535a227ebe25fff6240f2111c1349c6596..6e2a314e1315cc5be7e6af908fae372165ffcf85 100644
+--- a/dist/visitor.js
++++ b/dist/visitor.js
 @@ -86,7 +86,7 @@ function nodeVisitor(node) {
                      return undefined; // No imports left, elide entire declaration
                  importClause = updatedImportClause;

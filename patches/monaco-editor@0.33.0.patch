@@ -1,7 +1,7 @@
-diff --git a/node_modules/monaco-editor/esm/vs/editor/editor.main.js b/node_modules/monaco-editor/esm/vs/editor/editor.main.js
-index 97bfc6b..801b925 100644
---- a/node_modules/monaco-editor/esm/vs/editor/editor.main.js
-+++ b/node_modules/monaco-editor/esm/vs/editor/editor.main.js
+diff --git a/esm/vs/editor/editor.main.js b/esm/vs/editor/editor.main.js
+index 97bfc6b8de457c98a5670df6c77510bf172c60ac..8fda43595a90fbd379234fd1df4c80d74ef80f44 100644
+--- a/esm/vs/editor/editor.main.js
++++ b/esm/vs/editor/editor.main.js
 @@ -1,7 +1,9 @@
 -import '../basic-languages/monaco.contribution';
 -import '../language/css/monaco.contribution';
@@ -16,3 +16,4 @@ index 97bfc6b..801b925 100644
  import '../language/typescript/monaco.contribution';
  
  export * from './edcore.main';
+\ No newline at end of file

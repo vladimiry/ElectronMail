@@ -23,15 +23,15 @@ export const PROVIDER_REPO_MAP = {
         basePath: "",
         apiSubdomain: "mail-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-mail@5.0.3.1",
+        tag: "proton-mail@5.0.6.3",
         protonPack: {
             webpackIndexEntryItems: [
                 // immediate
                 "../../packages/shared/lib/api/contacts.ts",
-                "../../packages/shared/lib/api/conversations.js",
+                "../../packages/shared/lib/api/conversations.ts",
                 "../../packages/shared/lib/api/events.ts",
                 "../../packages/shared/lib/api/labels.ts",
-                "../../packages/shared/lib/api/messages.js",
+                "../../packages/shared/lib/api/messages.ts",
                 "../../packages/shared/lib/constants.ts",
                 "../../packages/shared/lib/models/mailSettingsModel.js",
                 "./src/app/containers/PageContainer.tsx",
@@ -50,14 +50,14 @@ export const PROVIDER_REPO_MAP = {
         basePath: "account",
         apiSubdomain: "account-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-account@5.0.2.0",
+        tag: "proton-account@5.0.4.0",
         protonPack: {}
     },
     [PROVIDER_APP_NAMES[2]]: {
         basePath: "calendar",
         apiSubdomain: "calendar-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-calendar@5.0.2.2",
+        tag: "proton-calendar@5.0.3.3",
         protonPack: {
             webpackIndexEntryItems: [
                 // immediate
@@ -70,14 +70,14 @@ export const PROVIDER_REPO_MAP = {
         basePath: "drive",
         apiSubdomain: "drive-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-drive@5.0.2.1",
+        tag: "proton-drive@5.0.4.4",
         protonPack: {},
     },
     [PROVIDER_APP_NAMES[4]]: {
         basePath: "account/vpn",
         apiSubdomain: "account-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-vpn-settings@5.0.2.0",
+        tag: "proton-vpn-settings@5.0.4.0",
         protonPack: {},
     },
 } as const;

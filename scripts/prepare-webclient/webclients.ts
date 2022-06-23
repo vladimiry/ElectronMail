@@ -3,7 +3,7 @@ import fsExtra from "fs-extra";
 import path from "path";
 
 import {applyPatch, assertPathIsInCwd, CONSOLE_LOG, execShell, resolveGitOutputBackupDir} from "scripts/lib";
-import {BINARY_NAME, RUNTIME_ENV_CI_PROTON_CLIENTS_ONLY, WEB_CLIENTS_BLANK_HTML_FILE_NAME} from "src/shared/const";
+import {BINARY_NAME, WEB_CLIENTS_BLANK_HTML_FILE_NAME} from "src/shared/const";
 import {CWD_ABSOLUTE_DIR, GIT_CLONE_ABSOLUTE_DIR} from "scripts/const";
 import {PROTON_API_URL_PLACEHOLDER} from "src/shared/const/proton-url";
 import {PROVIDER_APP_NAMES, PROVIDER_REPO_MAP} from "src/shared/const/proton-apps";
@@ -11,20 +11,6 @@ import {PROVIDER_APP_NAMES, PROVIDER_REPO_MAP} from "src/shared/const/proton-app
 const shouldFailOnBuildEnvVarName = "ELECTRON_MAIL_SHOULD_FAIL_ON_BUILD";
 
 const shouldFailOnBuild = Boolean(process.env[shouldFailOnBuildEnvVarName]);
-
-const reposOnlyFilter: DeepReadonly<{ value: Array<keyof typeof PROVIDER_REPO_MAP>, envVariableName: string }> = (() => {
-    const envVariableName = RUNTIME_ENV_CI_PROTON_CLIENTS_ONLY;
-    const envVariableValue = process.env[envVariableName];
-    const result = envVariableValue
-        ? envVariableValue
-            .split(";")
-            .map((value) => value.trim())
-            .filter((value) => value in PROVIDER_REPO_MAP)
-            .map((value) => value as keyof typeof PROVIDER_REPO_MAP)
-        : [];
-    CONSOLE_LOG(`${envVariableName} env variable (raw string):`, envVariableValue, "(filtered array):", result);
-    return {value: result, envVariableName};
-})();
 
 async function configure(
     {cwd, envFileName = "./appConfig.json"}: { cwd: string, envFileName?: string },
@@ -181,15 +167,6 @@ async function executeBuildFlow(
         destSubFolder: string
     },
 ): Promise<void> {
-    if (
-        reposOnlyFilter.value.length
-        &&
-        !reposOnlyFilter.value.includes(repoType)
-    ) {
-        CONSOLE_LOG(`Skip "${repoType}" processing as not explicitly listed in "${reposOnlyFilter.envVariableName}" env variable`);
-        return;
-    }
-
     const repoDir = path.join(GIT_CLONE_ABSOLUTE_DIR, "./WebClients");
     const appDir = path.join(repoDir, "./applications", repoType.substr("proton-".length));
     const repoDistDir = path.join(appDir, repoRelativeDistDir);

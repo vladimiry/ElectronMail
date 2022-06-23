@@ -3,24 +3,24 @@ index 896e1d299..467d0aa72 100644
 --- a/packages/shared/lib/authentication/authentication.ts
 +++ b/packages/shared/lib/authentication/authentication.ts
 @@ -1,6 +1,8 @@
-+/* electron-mail mark */
++/* <electron-mail-mark> */
  import createAuthentication from './createAuthenticationStore';
  import createSecureSessionStorage from './createSecureSessionStorage';
- 
+
  const authentication = createAuthentication(createSecureSessionStorage());
- 
+
  export default authentication;
-+/* electron-mail mark */
++/* </electron-mail-mark> */
 
 diff --git a/packages/shared/lib/authentication/createSecureSessionStorage.ts b/packages/shared/lib/authentication/createSecureSessionStorage.ts
 index 9e47ba48b..0b995ac96 100644
 --- a/packages/shared/lib/authentication/createSecureSessionStorage.ts
 +++ b/packages/shared/lib/authentication/createSecureSessionStorage.ts
 @@ -1,27 +1,24 @@
-+/* electron-mail mark */
++/* <electron-mail-mark> */
  import createStore from '../helpers/store';
  import { save, load } from '../helpers/secureSessionStorage';
- 
+
  const createSecureSessionStorage = () => {
      const store = createStore(load());
 +    const saveStateDo = () => {
@@ -28,7 +28,7 @@ index 9e47ba48b..0b995ac96 100644
 +    };
 +
 +    window.addEventListener("electron-mail:packages/shared/lib/authentication/createSecureSessionStorage.ts:unloadLike", saveStateDo);
- 
+
      if ('onpagehide' in window) {
          const handlePageShow = () => {
              // This does not need to do anything. The main purpose is just to reset window.name and sessionStorage to fix the Safari 13.1 described below
@@ -50,13 +50,13 @@ index 9e47ba48b..0b995ac96 100644
 -        window.addEventListener('unload', handleUnload, true);
 +        window.addEventListener('unload', saveStateDo, true);
      }
- 
+
      return store;
 @@ -30,3 +27,4 @@ const createSecureSessionStorage = () => {
  export type SecureSessionStorage = ReturnType<typeof createSecureSessionStorage>;
- 
+
  export default createSecureSessionStorage;
-+/* electron-mail mark */
++/* </electron-mail-mark> */
 
 diff --git a/packages/shared/lib/helpers/secureSessionStorage.ts b/packages/shared/lib/helpers/secureSessionStorage.ts
 index 66c59123b..90915a2a6 100644
@@ -74,7 +74,7 @@ index 66c59123b..90915a2a6 100644
          { share1: {}, share2: {} }
      );
 
-+/* electron-mail mark */
++/* <electron-mail-mark> */
  const SESSION_STORAGE_KEY = 'proton:storage';
  export const save = (data: any) => {
      if (!hasSessionStorage()) {
@@ -113,4 +113,4 @@ index 66c59123b..90915a2a6 100644
          return {};
      }
  };
-+/* electron-mail mark */
++/* </electron-mail-mark> */

@@ -66,14 +66,14 @@ export type ProviderInternals = AddInitializedProp<{
         readonly get: (type?: RestModel.Label["Type"]) => HttpApiArg
     }
 } & {
-    [K in StrictExtract<ImmediateKeys, "../../packages/shared/lib/api/conversations.js">]: {
+    [K in StrictExtract<ImmediateKeys, "../../packages/shared/lib/api/conversations.ts">]: {
         readonly getConversation: (id: RestModel.Conversation["ID"]) => HttpApiArg
         readonly queryConversations: (
             params?: RestModel.QueryParams & { LabelID?: Unpacked<RestModel.Conversation["LabelIDs"]> },
         ) => HttpApiArg
     }
 } & {
-    [K in StrictExtract<ImmediateKeys, "../../packages/shared/lib/api/messages.js">]: {
+    [K in StrictExtract<ImmediateKeys, "../../packages/shared/lib/api/messages.ts">]: {
         readonly getMessage: (id: RestModel.Message["ID"]) => HttpApiArg
         readonly queryMessageMetadata: (
             params?: RestModel.QueryParams & { LabelID?: Unpacked<RestModel.Message["LabelIDs"]> },
@@ -137,27 +137,27 @@ export type ProviderApi = { _throwErrorOnRateLimitedMethodCall?: boolean } & Rea
     }>,
     conversation: Readonly<{
         getConversation: (
-            ...args: Parameters<ProviderInternals["../../packages/shared/lib/api/conversations.js"]["value"]["getConversation"]>
+            ...args: Parameters<ProviderInternals["../../packages/shared/lib/api/conversations.ts"]["value"]["getConversation"]>
         ) => Promise<RestModel.ConversationResponse>
         queryConversations: (
-            ...args: Parameters<ProviderInternals["../../packages/shared/lib/api/conversations.js"]["value"]["queryConversations"]>
+            ...args: Parameters<ProviderInternals["../../packages/shared/lib/api/conversations.ts"]["value"]["queryConversations"]>
         ) => Promise<RestModel.ConversationsResponse>
     }>,
     message: Readonly<{
         getMessage: (
-            ...args: Parameters<ProviderInternals["../../packages/shared/lib/api/messages.js"]["value"]["getMessage"]>
+            ...args: Parameters<ProviderInternals["../../packages/shared/lib/api/messages.ts"]["value"]["getMessage"]>
         ) => Promise<RestModel.MessageResponse>
         queryMessageMetadata: (
-            ...args: Parameters<ProviderInternals["../../packages/shared/lib/api/messages.js"]["value"]["queryMessageMetadata"]>
+            ...args: Parameters<ProviderInternals["../../packages/shared/lib/api/messages.ts"]["value"]["queryMessageMetadata"]>
         ) => Promise<RestModel.MessagesResponse>
         markMessageAsRead: (
-            ...args: Parameters<ProviderInternals["../../packages/shared/lib/api/messages.js"]["value"]["markMessageAsRead"]>
+            ...args: Parameters<ProviderInternals["../../packages/shared/lib/api/messages.ts"]["value"]["markMessageAsRead"]>
         ) => Promise<void>
         labelMessages: (
-            ...args: Parameters<ProviderInternals["../../packages/shared/lib/api/messages.js"]["value"]["labelMessages"]>
+            ...args: Parameters<ProviderInternals["../../packages/shared/lib/api/messages.ts"]["value"]["labelMessages"]>
         ) => Promise<void>
         deleteMessages: (
-            ...args: Parameters<ProviderInternals["../../packages/shared/lib/api/messages.js"]["value"]["deleteMessages"]>
+            ...args: Parameters<ProviderInternals["../../packages/shared/lib/api/messages.ts"]["value"]["deleteMessages"]>
         ) => Promise<void>
     }>,
     contact: Readonly<{

@@ -131,43 +131,43 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
             conversation: {
                 async getConversation(id) {
                     return (await resolveHttpApi())(
-                        internals["../../packages/shared/lib/api/conversations.js"].value.getConversation(id),
+                        internals["../../packages/shared/lib/api/conversations.ts"].value.getConversation(id),
                     );
                 },
                 async queryConversations(params) {
                     return (await resolveHttpApi())(
-                        internals["../../packages/shared/lib/api/conversations.js"].value.queryConversations(params),
+                        internals["../../packages/shared/lib/api/conversations.ts"].value.queryConversations(params),
                     );
                 },
             },
             message: {
                 async getMessage(id) {
                     return (await resolveHttpApi())(
-                        internals["../../packages/shared/lib/api/messages.js"].value.getMessage(id),
+                        internals["../../packages/shared/lib/api/messages.ts"].value.getMessage(id),
                     );
                 },
                 async queryMessageMetadata(params) {
                     return (await resolveHttpApi())(
-                        internals["../../packages/shared/lib/api/messages.js"].value.queryMessageMetadata(params),
+                        internals["../../packages/shared/lib/api/messages.ts"].value.queryMessageMetadata(params),
                     );
                 },
                 async markMessageAsRead(IDs) {
                     const api = await resolveHttpApi();
-                    const {markMessageAsRead: apiMethod} = internals["../../packages/shared/lib/api/messages.js"].value;
+                    const {markMessageAsRead: apiMethod} = internals["../../packages/shared/lib/api/messages.ts"].value;
                     await Promise.all(
                         chunk(IDs, protonMaxPageSize).map(async (IDsPortion) => api(apiMethod(IDsPortion))),
                     );
                 },
                 async labelMessages({LabelID, IDs}) {
                     const api = await resolveHttpApi();
-                    const {labelMessages: apiMethod} = internals["../../packages/shared/lib/api/messages.js"].value;
+                    const {labelMessages: apiMethod} = internals["../../packages/shared/lib/api/messages.ts"].value;
                     await Promise.all(
                         chunk(IDs, protonMaxPageSize).map(async (IDsPortion) => api(apiMethod({IDs: IDsPortion, LabelID}))),
                     );
                 },
                 async deleteMessages(IDs) {
                     const api = await resolveHttpApi();
-                    const {deleteMessages: apiMethod} = internals["../../packages/shared/lib/api/messages.js"].value;
+                    const {deleteMessages: apiMethod} = internals["../../packages/shared/lib/api/messages.ts"].value;
                     await Promise.all(
                         chunk(IDs, protonMaxPageSize).map(async (IDsPortion) => api(apiMethod(IDsPortion)))
                     );

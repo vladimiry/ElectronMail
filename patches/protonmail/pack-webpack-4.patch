@@ -1,3 +1,17 @@
+diff --git a/packages/pack/webpack/plugins.js b/packages/pack/webpack/plugins.js
+index 213ede7de..f8e72d6b5 100644
+--- a/packages/pack/webpack/plugins.js
++++ b/packages/pack/webpack/plugins.js
+@@ -124,7 +124,7 @@ module.exports = ({ isProduction, publicPath, appMode, buildData, featureFlags,
+             },
+         }),
+
+-        ...(writeSRI
++        ...(false
+             ? [
+                   new SubresourceIntegrityPlugin(),
+                   new HtmlEditPlugin((tag) => {
+
 diff --git a/packages/pack/webpack.config.js b/packages/pack/webpack.config.js
 index a39cbea19..8069fc544 100644
 --- a/packages/pack/webpack.config.js

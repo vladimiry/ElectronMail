@@ -74,7 +74,7 @@ index c7d094d1b..3667af1eb 100644
      return api(getAttachment(ID));
  };
 
-+/* electron-mail mark */
++/* <electron-mail-mark> */
  export const getDecryptedAttachment = async (
      attachment: Attachment,
      verification: MessageVerification | undefined,
@@ -82,77 +82,68 @@ index c7d094d1b..3667af1eb 100644
          throw newError;
      }
  };
-+/* electron-mail mark */
++/* </electron-mail-mark> */
 
  export const getAndVerify = async (
      attachment: Attachment = {},
 
 diff --git a/applications/mail/src/app/helpers/message/messageDecrypt.ts b/applications/mail/src/app/helpers/message/messageDecrypt.ts
-index 375be1b51..a6bd8390e 100644
+index acfa71607..216229b0f 100644
 --- a/applications/mail/src/app/helpers/message/messageDecrypt.ts
 +++ b/applications/mail/src/app/helpers/message/messageDecrypt.ts
-@@ -47,6 +47,7 @@ const binaryToString = (data: Uint8Array) =>
+@@ -26,6 +26,7 @@ const binaryToString = (data: Uint8Array) =>
          // nbsp can be contained in message body and "crash" DOMPurify
          .replace(/\u00A0/g, ' ');
 
-+/* electron-mail mark */
++/* <electron-mail-mark> */
  export interface DecryptMessageResult {
      decryptedBody: string;
      decryptedRawContent: Uint8Array;
-@@ -56,6 +57,7 @@ export interface DecryptMessageResult {
+@@ -35,6 +36,7 @@ export interface DecryptMessageResult {
      errors?: MessageErrors;
      mimetype?: MIME_TYPES;
  }
-+/* electron-mail mark */
++/* </electron-mail-mark> */
 
  const decryptMimeMessage = async (
      message: Message,
-@@ -164,6 +166,7 @@ const decryptLegacyMessage = async (
+@@ -150,6 +152,7 @@ const decryptLegacyMessage = async (
   * Willingly not dealing with public keys and signature verification
   * It will be done separately when public keys will be ready
   */
-+/* electron-mail mark */
++/* <electron-mail-mark> */
  export const decryptMessage = async (
      message: Message,
-     privateKeys: OpenPGPKey[],
-@@ -176,6 +179,7 @@ export const decryptMessage = async (
+     privateKeys: PrivateKeyReference[],
+@@ -162,6 +165,7 @@ export const decryptMessage = async (
      }
      return decryptLegacyMessage(message, privateKeys, password);
  };
-+/* electron-mail mark */
++/* </electron-mail-mark> */
 
  /**
   * Verify the extracted `signature` of a decryption result against its `decryptedRawContent`
 
 diff --git a/applications/mail/src/app/logic/messages/messagesTypes.ts b/applications/mail/src/app/logic/messages/messagesTypes.ts
-index 7de501f50..98ecf95d9 100644
+index 0531de00e..665b8d087 100644
 --- a/applications/mail/src/app/logic/messages/messagesTypes.ts
 +++ b/applications/mail/src/app/logic/messages/messagesTypes.ts
-@@ -44,6 +44,8 @@ export interface MessageVerification {
+@@ -44,6 +44,7 @@ export interface MessageVerification {
       */
      verificationErrors: Error[] | undefined;
 
-+    /* electron-mail mark */
-+
++    /* <electron-mail-mark> */
      /**
       * Pinned public keys of the sender which can verify, if any
       */
-@@ -54,11 +56,15 @@ export interface MessageVerification {
-      */
-     senderPinnableKeys: OpenPGPKey[] | undefined;
-
-+    /* electron-mail mark */
-+
-     /**
+@@ -58,6 +59,7 @@ export interface MessageVerification {
       * If the sender is in the list of contacts, whether its contact signature has been verified
       */
      senderVerified: boolean | undefined;
++    /* </electron-mail-mark> */
 
-+    /* electron-mail mark */
-+
      /**
       * If the message is signed, the public key that verifies the signature
-      */
 
 diff --git a/applications/mail/src/app/hooks/message/useGetMessageKeys.ts b/applications/mail/src/app/hooks/message/useGetMessageKeys.ts
 index 4c16c85b5..8b93c6084 100644
@@ -163,7 +154,7 @@ index 4c16c85b5..8b93c6084 100644
   * Add user public and private keys to the MessageExtended if not already there
   */
 -export const useGetMessageKeys: UseGetMessageKeys = () => {
-+export const useGetMessageKeys: UseGetMessageKeys = () => { /* electron-mail mark */
++export const useGetMessageKeys: UseGetMessageKeys = () => { /* <electron-mail-mark> */
      const getAddressKeys = useGetAddressKeys();
 
      return useCallback(
@@ -172,7 +163,7 @@ index 4c16c85b5..8b93c6084 100644
          [getAddressKeys]
      );
 -};
-+}; /* electron-mail mark */
++}; /* </electron-mail-mark> */
 
 diff --git a/packages/components/hooks/useGetEncryptionPreferences.ts b/packages/components/hooks/useGetEncryptionPreferences.ts
 index fe83b9e8c..b944a61e8 100644
@@ -183,7 +174,7 @@ index fe83b9e8c..b944a61e8 100644
   * Confluence document 'Encryption preferences for outgoing email'
   */
 -const useGetEncryptionPreferences = () => {
-+const useGetEncryptionPreferences = () => { /* electron-mail mark */
++const useGetEncryptionPreferences = () => { /* <electron-mail-mark> */
      const api = useApi();
      const cache = useCache();
      const getAddresses = useGetAddresses();
@@ -192,7 +183,7 @@ index fe83b9e8c..b944a61e8 100644
          [cache, getEncryptionPreferences]
      );
 -};
-+}; /* electron-mail mark */
++}; /* </electron-mail-mark> */
 
  export default useGetEncryptionPreferences;
 
@@ -205,10 +196,10 @@ index e2baface5..8b4317d5a 100644
  import ContextApi from '../containers/api/apiContext';
 
 -const useApi = (): Api => {
-+const useApi = (): Api => { /* electron-mail mark */
++const useApi = (): Api => { /* <electron-mail-mark> */
      return useContext(ContextApi);
 -};
-+}; /* electron-mail mark */
++}; /* </electron-mail-mark> */
 
  export default useApi;
 
@@ -221,11 +212,11 @@ index feb92a8af..d802ae8ae 100644
  import { PrivateAuthenticationStore } from '../containers/app/interface';
 
 -const useAuthentication = () => {
-+const useAuthentication = () => { /* electron-mail mark */
++const useAuthentication = () => { /* <electron-mail-mark> */
      // Force private authentication store because the public app is a special case
      return useContext(AuthenticationContext) as PrivateAuthenticationStore;
 -};
-+}; /* electron-mail mark */
++}; /* </electron-mail-mark> */
 
  export default useAuthentication;
 
@@ -237,9 +228,9 @@ index dea411d80..caeec9fc5 100644
 
      const initRooster = useCallback(async () => {
          const iframe = iframeRef.current as HTMLIFrameElement;
-+        /* electron-mail mark */
++        /* <electron-mail-mark> */
          const iframeDocument = iframe.contentWindow?.document as Document;
-+        /* electron-mail mark */
++        /* </electron-mail-mark> */
 
          iframeDocument.open();
          iframeDocument.write(`
@@ -266,7 +257,7 @@ index 35d7a0aba..352f1c8a3 100644
  import Context from '../containers/cache/cacheContext';
 
 -const useCache = <K = string, V = any>() => {
-+const useCache = <K = string, V = any>() => { /* electron-mail mark */
++const useCache = <K = string, V = any>() => { /* <electron-mail-mark> */
      const cache = useContext(Context);
 
      if (!cache) {
@@ -275,7 +266,7 @@ index 35d7a0aba..352f1c8a3 100644
 
      return cache as Cache<K, V>;
 -};
-+}; /* electron-mail mark */
++}; /* </electron-mail-mark> */
 
  export default useCache;
 
@@ -404,14 +395,15 @@ index 1b28a2765..ee7c59df8 100644
      isSearchPartial: false,
      isSearching: false,
 
-diff --git a/packages/encrypted-search/lib/esUtils.ts b/packages/encrypted-search/lib/esUtils.ts
-index 4f8928ead..ea00c2542 100644
---- a/packages/encrypted-search/lib/esUtils.ts
-+++ b/packages/encrypted-search/lib/esUtils.ts
-@@ -227,13 +227,7 @@ export const updateSizeIDB = (userID: string, addend: number) => {
+diff --git a/packages/encrypted-search/lib/esHelpers/esUtils.ts b/packages/encrypted-search/lib/esHelpers/esUtils.ts
+index 2bb63cf10..c1440e969 100644
+--- a/packages/encrypted-search/lib/esHelpers/esUtils.ts
++++ b/packages/encrypted-search/lib/esHelpers/esUtils.ts
+@@ -296,15 +296,7 @@ export const updateSizeIDB = (userID: string, addend: number) => {
+  * Check whether ES can be used not just because the index key exists in localStorage
   * but also because IDB is not corrupt, i.e. the object store exists
   */
- export const canUseES = async (userID: string, storeName: string) => {
+-export const canUseES = async (userID: string, storeName: string) => {
 -    if (!indexKeyExists(userID)) {
 -        return false;
 -    }
@@ -419,7 +411,9 @@ index 4f8928ead..ea00c2542 100644
 -    const isIntact = esDB.objectStoreNames.contains(storeName);
 -    esDB.close();
 -    return isIntact;
-+    return false;
- };
+-};
++export const canUseES = async (userID: string, storeName: string) => false;
 
  /**
+  * Request storage persistence to prevent the ES database from being evicted
+

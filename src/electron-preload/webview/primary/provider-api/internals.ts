@@ -34,10 +34,10 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
             "../../packages/shared/lib/api/labels.ts": {
                 value: {get: NEVER_FN},
             },
-            "../../packages/shared/lib/api/conversations.js": {
+            "../../packages/shared/lib/api/conversations.ts": {
                 value: {getConversation: NEVER_FN, queryConversations: NEVER_FN},
             },
-            "../../packages/shared/lib/api/messages.js": {
+            "../../packages/shared/lib/api/messages.ts": {
                 value: {
                     getMessage: NEVER_FN,
                     queryMessageMetadata: NEVER_FN,

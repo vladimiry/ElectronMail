@@ -1,50 +1,60 @@
 {
   "proton-mail": [
     "common.patch",
-    "constants-3.patch",
-    "sentry-6.patch",
+    "url-2.patch",
+    "constants-4.patch",
+    "sentry-8.patch",
     "pack-api-arg-3.patch",
-    "pack-webpack-config-3.patch",
+    "pack-webpack-4.patch",
     "session-storage-3.patch",
     "link-handler-5.patch",
+    "embedded-verification-1.patch",
     "proton-mail.patch"
   ],
   "proton-account": [
     "common.patch",
-    "constants-3.patch",
-    "sentry-6.patch",
+    "url-2.patch",
+    "constants-4.patch",
+    "sentry-8.patch",
     "pack-api-arg-3.patch",
-    "pack-webpack-config-3.patch",
+    "pack-webpack-4.patch",
     "session-storage-3.patch",
     "link-handler-5.patch",
+    "embedded-verification-1.patch",
     "proton-account.patch"
   ],
   "proton-calendar": [
     "common.patch",
-    "constants-3.patch",
-    "sentry-6.patch",
+    "url-2.patch",
+    "constants-4.patch",
+    "sentry-7.patch",
     "pack-api-arg-3.patch",
-    "pack-webpack-config-3.patch",
+    "pack-webpack-4.patch",
+    "session-storage-3.patch",
     "link-handler-5.patch",
-    "session-storage-3.patch"
+    "embedded-verification-1.patch"
   ],
   "proton-drive": [
     "common.patch",
-    "constants-3.patch",
-    "sentry-6.patch",
+    "url-2.patch",
+    "constants-4.patch",
+    "sentry-8.patch",
     "pack-api-arg-3.patch",
-    "pack-webpack-config-3.patch",
+    "pack-webpack-4.patch",
     "session-storage-3.patch",
     "link-handler-5.patch",
+    "embedded-verification-1.patch",
     "proton-drive.patch"
   ],
   "proton-vpn-settings": [
     "common.patch",
-    "constants-3.patch",
-    "sentry-6.patch",
+    "url-2.patch",
+    "constants-4.patch",
+    "sentry-8.patch",
     "pack-api-arg-3.patch",
-    "pack-webpack-config-3.patch",
+    "pack-webpack-4.patch",
     "session-storage-3.patch",
-    "link-handler-5.patch"
+    "link-handler-5.patch",
+    "embedded-verification-1.patch"
   ]
 }

@@ -1,12 +1,3 @@
-From e60061699263562564c81a4e4db08d39b3260504 Mon Sep 17 00:00:00 2001
-From: "Vladimir.Y" <1560781+vladimiry@users.noreply.github.com>
-Date: Wed, 25 May 2022 13:59:20 +0300
-Subject: [PATCH] wip
-
----
- packages/shared/lib/helpers/sentry.ts | 99 +--------------------------
- 1 file changed, 3 insertions(+), 96 deletions(-)
-
 diff --git a/packages/shared/lib/helpers/sentry.ts b/packages/shared/lib/helpers/sentry.ts
 index 2ffbe86fa..af09bb1b8 100644
 --- a/packages/shared/lib/helpers/sentry.ts
@@ -14,11 +5,11 @@ index 2ffbe86fa..af09bb1b8 100644
 @@ -65,103 +65,10 @@ interface Arguments {
      uid?: string;
  }
-
+ 
 -function main({ config: { SENTRY_DSN, COMMIT, APP_VERSION }, uid, sessionTracking = false }: Arguments) {
 -    const { host } = window.location;
 +function main({ config: { SENTRY_DSN, COMMIT, APP_VERSION }, uid, sessionTracking = false }: Arguments) {}
-
+ 
 -    // No need to configure it if we don't load the DSN
 -    if (!SENTRY_DSN || isLocalhost(host)) {
 -        return;
@@ -98,7 +89,7 @@ index 2ffbe86fa..af09bb1b8 100644
 -        ],
 -    });
 +export const traceError = (...args: Parameters<typeof Sentry.captureException>) => console.error(...args);
-
+ 
 -    Sentry.configureScope((scope) => {
 -        scope.setTag('appVersion', APP_VERSION);
 -    });
@@ -116,5 +107,5 @@ index 2ffbe86fa..af09bb1b8 100644
 -    }
 -};
 +export const captureMessage = (...args: Parameters<typeof Sentry.captureMessage>) => console.log(...args);
-
+ 
  export default main;

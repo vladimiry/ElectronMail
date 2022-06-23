@@ -25,20 +25,6 @@ index 55715b89d..c87879ad4 100755
                  stdio: 'inherit',
              }
 
-diff --git a/packages/pack/webpack/plugins.js b/packages/pack/webpack/plugins.js
-index ec0febbc7..28181dc72 100644
---- a/packages/pack/webpack/plugins.js
-+++ b/packages/pack/webpack/plugins.js
-@@ -139,7 +139,7 @@ module.exports = ({ isProduction, publicPath, appMode, buildData, featureFlags,
-             },
-         }),
-
--        ...(writeSRI
-+        ...(false
-             ? [
-                   new SubresourceIntegrityPlugin(),
-                   new SriStripPlugin({
-
 diff --git a/packages/pack/webpack/css.loader.js b/packages/pack/webpack/css.loader.js
 index c50ab972c..a505eb314 100644
 --- a/packages/pack/webpack/css.loader.js
@@ -148,13 +134,13 @@ index 6edb249f3..738c4da33 100644
      });
  };
 
-+/* electron-mail mark */
++/* <electron-mail-mark> */
  export const createUrl = (urlString: string, params: { [key: string]: any } = {}) => {
      const url = new URL(urlString, window.location.origin);
      appendQueryParams(url, params);
      return url;
  };
-+/* electron-mail mark */
++/* </electron-mail-mark> */
 
  export const checkStatus = (response: Response, config: any) => {
      const { status } = response;
@@ -171,22 +157,3 @@ index 36bd0c712..c2fb3681c 100644
      if (doesNotSupportEarlyAccessVersion()) {
          return;
      }
-
-diff --git a/packages/shared/lib/helpers/url.ts b/packages/shared/lib/helpers/url.ts
-index d01e07cc6..74af6c896 100644
---- a/packages/shared/lib/helpers/url.ts
-+++ b/packages/shared/lib/helpers/url.ts
-@@ -183,12 +183,7 @@ export const getRelativeApiHostname = (hostname: string) => {
- };
-
- export const getApiSubdomainUrl = (pathname: string) => {
--    const url = new URL('/', window.location.origin);
--    if (url.hostname === 'localhost') {
--        url.pathname = `/api${pathname}`;
--        return url;
--    }
--    url.hostname = getRelativeApiHostname(url.hostname);
-+    const url = new URL('/', '___ELECTRON_MAIL_PROTON_API_ENTRY_URL_PLACEHOLDER___');
-     url.pathname = pathname;
-     return url;
- };

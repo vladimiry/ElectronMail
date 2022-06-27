@@ -1,5 +1,5 @@
 import type {Action} from "@ngrx/store";
-import {combineLatest, EMPTY, lastValueFrom, Observable, race, Subscription} from "rxjs";
+import {combineLatest, EMPTY, Observable, of, race, Subscription} from "rxjs";
 import {Directive, ElementRef, EventEmitter, Injector, Input, Output, Renderer2} from "@angular/core";
 import {distinctUntilChanged, filter, map, mergeMap, switchMap, take} from "rxjs/operators";
 import {DOCUMENT} from "@angular/common";
@@ -124,13 +124,14 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
         );
     }
 
-    protected async filterDomReadyOrDestroyedPromise(): Promise<void> {
-        return lastValueFrom(
-            race([
-                this.filterDomReadyEvent().pipe(take(1)),
-                this.ngOnDestroy$,
-            ]),
-        ).then(() => {}); // eslint-disable-line @typescript-eslint/no-empty-function
+    protected domReadyOrDestroyedSingleNotification(): Observable<void> {
+        return race(
+            this.filterDomReadyEvent(),
+            this.ngOnDestroy$,
+        ).pipe(
+            take(1),
+            mergeMap(() => of(((): void => {})())), // eslint-disable-line @typescript-eslint/no-empty-function
+        );
     }
 
     protected addSubscription(

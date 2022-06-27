@@ -1,6 +1,7 @@
 import {buildBaseEntity, buildPk} from "src/electron-preload/webview/lib/database-entity/index";
 import {buildLoggerBundle} from "src/electron-preload/lib/util";
 import * as DatabaseModel from "src/shared/model/database";
+import {isErrorOnRateLimitedMethodCall} from "src/electron-preload/webview/lib/util";
 import {lzutf8Util} from "src/shared/util/entity";
 import {ONE_SECOND_MS, PACKAGE_VERSION} from "src/shared/const";
 import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
@@ -71,6 +72,9 @@ export async function buildMail(input: RestModel.Message, api: ProviderApi): Pro
             bodyPart.body = decryptedBody;
         }
     } catch (error) {
+        if (isErrorOnRateLimitedMethodCall(error)) {
+            throw error;
+        }
         // printing mail subject to log helps users locating the problematic item
         logger.error(`body decryption failed, email subject: "${subject}"`, error);
         bodyPart.failedDownload = {

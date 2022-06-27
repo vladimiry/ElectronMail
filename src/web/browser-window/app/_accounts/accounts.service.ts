@@ -131,7 +131,7 @@ export class AccountsService {
                     );
                 }
 
-                const delayTriggersDispose$ = race([
+                const delayTriggersDispose$ = race(
                     this.actions$.pipe(
                         ofType(ACCOUNTS_ACTIONS.TryToLogin),
                         filter(({payload}) => payload.account.accountConfig.login === login),
@@ -157,7 +157,7 @@ export class AccountsService {
                         }),
                         filter((reason) => typeof reason === "string"),
                     ),
-                ]).pipe(
+                ).pipe(
                     take(1),
                     tap((reason) => {
                         logger.info(`disposing delayed "login" action with the following reason: ${String(reason)}`);

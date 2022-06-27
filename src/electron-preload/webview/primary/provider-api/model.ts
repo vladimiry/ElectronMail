@@ -121,7 +121,7 @@ export type ProviderInternalsLazy = AddInitializedProp<{
     }
 }>
 
-export type ProviderApi = Readonly<{
+export type ProviderApi = { _throwErrorOnRateLimitedMethodCall?: boolean } & Readonly<{
     _custom_: Readonly<{
         loggedIn$: import("rxjs").Observable<boolean>
         cachedMailSettingsModel$: import("rxjs").Observable<{ readonly ViewMode: number }>

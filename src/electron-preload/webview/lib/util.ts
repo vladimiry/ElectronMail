@@ -10,6 +10,7 @@ import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {LOCAL_WEBCLIENT_ORIGIN, ONE_SECOND_MS} from "src/shared/const";
 import {Logger} from "src/shared/model/common";
 import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
+import {RATE_LIMITED_METHOD_CALL_MESSAGE} from "src/electron-preload/webview/lib/const";
 import {resolveCachedConfig, resolveIpcMainApi} from "src/electron-preload/lib/util";
 import * as RestModel from "src/electron-preload/webview/lib/rest-model";
 
@@ -222,17 +223,25 @@ export function buildDbPatchRetryPipeline<T>(
 }
 
 export async function persistDatabasePatch(
+    providerApi: ProviderApi,
     data: Parameters<IpcMainApiEndpoints["dbPatch"]>[0],
     logger: Logger,
     bootstrapPhase?: "initial" | "intermediate" | "final",
 ): Promise<void> {
     logger.info(`${nameof(persistDatabasePatch)}() start`, JSON.stringify({bootstrapPhase}));
+
+    if (providerApi._throwErrorOnRateLimitedMethodCall) {
+        delete providerApi._throwErrorOnRateLimitedMethodCall;
+        throw new Error(nameof(providerApi._throwErrorOnRateLimitedMethodCall));
+    }
+
     await resolveIpcMainApi({logger})("dbPatch")({
         bootstrapPhase,
         login: data.login,
         metadata: data.metadata,
         patch: data.patch,
     });
+
     logger.info(`${nameof(persistDatabasePatch)}() end`);
 }
 
@@ -348,3 +357,7 @@ export const documentCookiesForCustomScheme: documentCookiesForCustomSchemeType 
     };
     return result;
 })();
+
+export const isErrorOnRateLimitedMethodCall = (error: unknown): boolean => {
+    return (Object(error) as {message?: string}).message === RATE_LIMITED_METHOD_CALL_MESSAGE;
+};

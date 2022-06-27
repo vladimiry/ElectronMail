@@ -1,17 +1,18 @@
 import type {Action} from "@ngrx/store";
 import {Actions, createEffect} from "@ngrx/effects";
 import {
-    catchError, concatMap, debounce, debounceTime, delay, filter, finalize, map, mergeMap, switchMap, takeUntil, tap, withLatestFrom,
+    catchError, concatMap, debounce, debounceTime, delay, filter, finalize, mergeMap, switchMap, take, takeUntil, tap, withLatestFrom,
 } from "rxjs/operators";
-import {concat, EMPTY, from, fromEvent, merge, Observable, of, throwError, timer} from "rxjs";
+import {concat, EMPTY, from, fromEvent, merge, of, race, Subject, throwError, timer} from "rxjs";
 import {Injectable} from "@angular/core";
+import {noop} from "remeda";
 import {select, Store} from "@ngrx/store";
 
 import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors, OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
 import {curryFunctionMembers, isDatabaseBootstrapped} from "src/shared/util";
-import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
+import {ElectronService, WebviewPingFailedError} from "src/web/browser-window/app/_core/electron.service";
 import {FIRE_SYNCING_ITERATION$} from "src/web/browser-window/app/app.constants";
 import {getWebLogger} from "src/web/browser-window/util";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
@@ -24,6 +25,8 @@ const _logger = getWebLogger(__filename);
 
 @Injectable()
 export class AccountsDbSyncingEffects {
+    readonly disposing$ = new Map<string /* login */, Subject<void>>();
+
     readonly effect$ = createEffect(
         () => {
             return this.actions$.pipe(
@@ -31,24 +34,10 @@ export class AccountsDbSyncingEffects {
                 mergeMap(({payload, ...action}) => {
                     const {pk: {login, accountIndex}, webView, finishPromise} = payload;
                     const logger = curryFunctionMembers(_logger, `[${action.type}][${accountIndex}]`);
-                    const dispose$ = from(finishPromise).pipe(
-                        tap(() => {
-                            this.store.dispatch(ACCOUNTS_ACTIONS.Patch({
-                                login,
-                                patch: {syncingActivated: false},
-                                optionalAccount: true
-                            }));
-                            logger.info("dispose");
-                        }),
-                    );
-                    const notSyncingPing$ = timer(0, ONE_SECOND_MS).pipe(
-                        switchMap(() => this.store.pipe(
-                            select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
-                            filter((account) => Boolean(account && !account.progress.syncing)),
-                        )),
-                    );
-                    const ipcMainClient = this.api.ipcMainClient();
-                    let bootstrappingTriggeredOnce = false;
+                    const dispose$ = new Subject<void>();
+
+                    this.disposing$.get(login)?.next();
+                    this.disposing$.set(login, dispose$);
 
                     logger.info("setup");
 
@@ -73,7 +62,7 @@ export class AccountsDbSyncingEffects {
                                 filter(({payload: {pk: key}}) => key.login === login),
                                 mergeMap(({payload: selectMailOnlineInput}) => concat(
                                     of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {selectingMailOnline: true}})),
-                                    this.api.primaryWebViewClient({webView, accountIndex}, {finishPromise}).pipe(
+                                    this.api.primaryWebViewClient({webView, accountIndex}, {finishPromise, pingTimeoutMs: 7001}).pipe(
                                         mergeMap((webViewClient) => {
                                             const selectMailOnlineInput$ = from(
                                                 webViewClient("selectMailOnline", {timeoutMs: ONE_SECOND_MS * 5})({
@@ -104,7 +93,7 @@ export class AccountsDbSyncingEffects {
                                 filter(({payload}) => payload.pk.login === login),
                                 mergeMap(({payload: {messageIds}}) => concat(
                                     of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {makingMailRead: true}})),
-                                    this.api.primaryWebViewClient({webView, accountIndex}).pipe(
+                                    this.api.primaryWebViewClient({webView, accountIndex}, {pingTimeoutMs: 7002}).pipe(
                                         mergeMap((webViewClient) => {
                                             return from(
                                                 webViewClient("makeMailRead", {timeoutMs: ONE_SECOND_MS * 30})(
@@ -134,7 +123,7 @@ export class AccountsDbSyncingEffects {
                                 filter(({payload}) => payload.pk.login === login),
                                 mergeMap(({payload: {folderId, messageIds}}) => concat(
                                     of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {settingMailFolder: true}})),
-                                    this.api.primaryWebViewClient({webView, accountIndex}).pipe(
+                                    this.api.primaryWebViewClient({webView, accountIndex}, {pingTimeoutMs: 7003}).pipe(
                                         mergeMap((webViewClient) => {
                                             return from(
                                                 webViewClient("setMailFolder", {timeoutMs: ONE_MINUTE_MS})(
@@ -164,7 +153,7 @@ export class AccountsDbSyncingEffects {
                                 filter(({payload}) => payload.pk.login === login),
                                 mergeMap(({payload: {messageIds}}) => concat(
                                     of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {deletingMessages: true}})),
-                                    this.api.primaryWebViewClient({webView, accountIndex}).pipe(
+                                    this.api.primaryWebViewClient({webView, accountIndex}, {pingTimeoutMs: 7004}).pipe(
                                         mergeMap((webViewClient) => {
                                             return from(
                                                 webViewClient("deleteMessages", {timeoutMs: ONE_MINUTE_MS})(
@@ -194,7 +183,7 @@ export class AccountsDbSyncingEffects {
                                 filter(({payload}) => payload.pk.login === login),
                                 mergeMap(({payload: {pk, mailPk}}) => concat(
                                     of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {fetchingSingleMail: true}})),
-                                    this.api.primaryWebViewClient({webView, accountIndex}).pipe(
+                                    this.api.primaryWebViewClient({webView, accountIndex}, {pingTimeoutMs: 7005}).pipe(
                                         // TODO progress on
                                         mergeMap((webViewClient) => {
                                             return from(
@@ -218,7 +207,7 @@ export class AccountsDbSyncingEffects {
                         ),
 
                         // syncing
-                        this.api.primaryWebViewClient({webView, accountIndex}, {finishPromise}).pipe(
+                        this.api.primaryWebViewClient({webView, accountIndex}, {finishPromise, pingTimeoutMs: 7006}).pipe(
                             withLatestFrom(
                                 this.store.pipe(
                                     select(OptionsSelectors.FEATURED.config),
@@ -227,15 +216,13 @@ export class AccountsDbSyncingEffects {
                             mergeMap((
                                 [webViewClient, {dbSyncingIntervalTrigger, dbSyncingOnlineTriggerDelay, dbSyncingFiredTriggerDebounce}],
                             ) => {
-                                const syncingIterationTrigger$: Observable<null> = merge(
+                                const syncingIterationTrigger$ = merge(
                                     timer(0, dbSyncingIntervalTrigger).pipe(
                                         tap(() => logger.verbose(`triggered by: timer`)),
-                                        map(() => null),
                                     ),
                                     fromEvent(window, "online").pipe(
                                         tap(() => logger.verbose(`triggered by: "window.online" event`)),
                                         delay(dbSyncingOnlineTriggerDelay),
-                                        map(() => null),
                                     ),
                                     FIRE_SYNCING_ITERATION$.pipe(
                                         filter((value) => value.login === login),
@@ -246,48 +233,40 @@ export class AccountsDbSyncingEffects {
                                         // a single sync iteration
                                         debounceTime(dbSyncingFiredTriggerDebounce),
                                     ),
-                                ).pipe(
-                                    map(() => null),
                                 );
 
                                 return syncingIterationTrigger$.pipe(
                                     debounceTime(ONE_SECOND_MS),
                                     debounce(() => PING_ONLINE_STATUS_EVERY_SECOND$),
-                                    debounce(() => notSyncingPing$),
+                                    debounce(() => { // "not syncing" ping
+                                        return timer(0, ONE_SECOND_MS).pipe(
+                                            switchMap(() => this.store.pipe(
+                                                select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
+                                                filter((account) => Boolean(account && !account.progress.syncing)),
+                                            )),
+                                        );
+                                    }),
                                     concatMap(() => {
                                         return from(
-                                            ipcMainClient("dbGetAccountMetadata")({login}),
+                                            this.api.ipcMainClient()("dbGetAccountMetadata")({login}),
                                         );
                                     }),
                                     withLatestFrom(this.store.pipe(select(OptionsSelectors.CONFIG.timeouts))),
                                     concatMap(([metadata, timeouts]) => {
                                         const bootstrapping = !isDatabaseBootstrapped(metadata);
                                         const buildDbPatchMethodName = "buildDbPatch";
-
-                                        if (bootstrapping && bootstrappingTriggeredOnce) {
-                                            return throwError(
-                                                new Error(
-                                                    `Database bootstrap fetch has already been called once for account, ${accountIndex}`,
-                                                ),
-                                            );
-                                        }
-
                                         const timeoutMs = bootstrapping
                                             ? timeouts.dbBootstrapping
                                             : timeouts.dbSyncing;
 
                                         logger.verbose(
                                             `calling "${buildDbPatchMethodName}" api`,
-                                            JSON.stringify({
-                                                timeoutMs,
-                                                bootstrapping,
-                                                bootstrappingTriggeredOnce,
-                                            }),
+                                            JSON.stringify({timeoutMs, bootstrapping}),
                                         );
 
                                         this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: true}}));
 
-                                        const result$ = from(
+                                        return from(
                                             webViewClient(buildDbPatchMethodName, {timeoutMs})({
                                                 login,
                                                 accountIndex,
@@ -308,45 +287,43 @@ export class AccountsDbSyncingEffects {
                                             concatMap(() => of(ACCOUNTS_ACTIONS.Synced({pk: {login, accountIndex}}))),
                                             takeUntil(
                                                 fromEvent(window, "offline").pipe(
-                                                    tap(() => {
-                                                        logger.verbose(`offline event`);
-
-                                                        // tslint:disable-next-line:early-exit
-                                                        if (bootstrapping && bootstrappingTriggeredOnce) {
-                                                            bootstrappingTriggeredOnce = false;
-                                                            logger.verbose(
-                                                                [
-                                                                    `reset "bootstrappingTriggeredOnce" state as previous iteration`,
-                                                                    `got aborted by the "offline" event`,
-                                                                ].join(" "),
-                                                            );
-                                                        }
-                                                    }),
+                                                    tap(() => logger.verbose(`offline event`)),
                                                 ),
                                             ),
                                             finalize(() => {
                                                 this.store.dispatch(
-                                                    ACCOUNTS_ACTIONS.PatchProgress({
-                                                        login,
-                                                        patch: {syncing: false},
-                                                        optionalAccount: true
-                                                    }),
+                                                    ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: false}, optionalAccount: true}),
                                                 );
                                             }),
                                         );
-
-                                        if (bootstrapping) {
-                                            bootstrappingTriggeredOnce = true;
-                                            logger.verbose("bootstrappingTriggeredOnce = true");
-                                        }
-
-                                        return result$;
                                     }),
                                 );
                             }),
                         ),
                     ).pipe(
-                        takeUntil(dispose$),
+                        finalize(() => {
+                            this.store.dispatch(ACCOUNTS_ACTIONS.Patch({login, patch: {syncingActivated: false}, optionalAccount: true}));
+
+                            this.api.primaryWebViewClient({webView, accountIndex}, {pingTimeoutMs: 7007}).pipe(
+                                take(1),
+                                switchMap((webViewClient) => from(
+                                    webViewClient("throwErrorOnRateLimitedMethodCall")({accountIndex}),
+                                )),
+                                catchError((error) => {
+                                    return error instanceof WebviewPingFailedError
+                                        ? EMPTY // page unload/change case (the db sync gets cancelled implicitly by page unload/change)
+                                        : throwError(error);
+                                }),
+                            ).subscribe(noop);
+
+                            logger.info("dispose");
+                        }),
+                        takeUntil(
+                            race(
+                                from(finishPromise),
+                                dispose$,
+                            ),
+                        ),
                     );
                 }),
             );
@@ -358,7 +335,5 @@ export class AccountsDbSyncingEffects {
         private readonly api: ElectronService,
         private readonly core: CoreService,
         private readonly store: Store<State>,
-    ) {
-
-    }
+    ) {}
 }

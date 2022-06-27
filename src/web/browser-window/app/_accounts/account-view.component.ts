@@ -1,5 +1,7 @@
 import type {Action} from "@ngrx/store";
-import {BehaviorSubject, combineLatest, EMPTY, lastValueFrom, merge, of, race, Subject, Subscription, throwError, timer} from "rxjs";
+import {
+    BehaviorSubject, combineLatest, EMPTY, firstValueFrom, lastValueFrom, merge, of, race, Subject, Subscription, throwError, timer,
+} from "rxjs";
 import {Component, ComponentRef, ElementRef, HostBinding, Input, NgZone, ViewChild, ViewContainerRef} from "@angular/core";
 import {
     concatMap, debounceTime, delayWhen, distinctUntilChanged, filter, first, map, mergeMap, pairwise, startWith, switchMap, take, takeUntil,
@@ -334,9 +336,9 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
         this.logger.info(nameof(AccountViewComponent.prototype.onPrimaryViewLoadedOnce));
 
         // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-        const resolvePrimaryWebViewApiClient = async () => lastValueFrom(
+        const resolvePrimaryWebViewApiClient = async () => firstValueFrom(
             this.electronService
-                .primaryWebViewClient({webView: primaryWebView, ...await this.resolveAccountIndex()}),
+                .primaryWebViewClient({webView: primaryWebView, ...await this.resolveAccountIndex()}, {pingTimeoutMs: 7000}),
         );
         const resolveLiveProtonClientSession = async (): Promise<ProtonClientSession> => {
             const apiClient = await resolvePrimaryWebViewApiClient();
@@ -445,7 +447,7 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
                         this.logger,
                         {clientSession, sessionStoragePatch},
                     ),
-                    lastValueFrom(
+                    firstValueFrom(
                         race(
                             this.loggedInCalendar$.pipe(
                                 filter(Boolean),

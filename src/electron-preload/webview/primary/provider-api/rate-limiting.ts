@@ -6,6 +6,7 @@ import {Logger} from "src/shared/model/common";
 import {ONE_SECOND_MS} from "src/shared/const";
 import {PROVIDER_APP_NAMES} from "src/shared/const/proton-apps";
 import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
+import {RATE_LIMITED_METHOD_CALL_MESSAGE} from "src/electron-preload/webview/lib/const";
 import {resolveCachedConfig} from "src/electron-preload/lib/util";
 
 // TODO get rid of require "rate-limiter-flexible/lib/RateLimiterMemory" import
@@ -53,6 +54,10 @@ export const attachRateLimiting = async (api: ProviderApi, logger_: Logger): Pro
                 log("queueing rate limited method");
 
                 return callingQueue.q(async () => {
+                    if (apiToPatch._throwErrorOnRateLimitedMethodCall) {
+                        delete apiToPatch._throwErrorOnRateLimitedMethodCall;
+                        throw new Error(RATE_LIMITED_METHOD_CALL_MESSAGE);
+                    }
                     const {waitTimeMs} = await consumeMemoryRateLimiter(consumeRateLimiting);
                     const shouldWait = waitTimeMs > 0;
                     const extraLogProps = shouldWait ? {waitTimeMs} as const : undefined;

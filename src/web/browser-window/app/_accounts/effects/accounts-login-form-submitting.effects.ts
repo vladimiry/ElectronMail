@@ -69,7 +69,7 @@ export class AccountsLoginFormSubmittingEffects {
 
                             return merge(
                                 of(this.accountsService.buildLoginDelaysResetAction({login})),
-                                this.api.primaryWebViewClient({webView, accountIndex}).pipe(
+                                this.api.primaryWebViewClient({webView, accountIndex}, {pingTimeoutMs: 7008}).pipe(
                                     mergeMap((webViewClient) => {
                                         return from(
                                             webViewClient("fillLogin")({login, accountIndex}),
@@ -87,7 +87,7 @@ export class AccountsLoginFormSubmittingEffects {
                                     of(this.accountsService.buildLoginDelaysResetAction({login})),
                                     of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {password: true}})),
                                     resetNotificationsState$,
-                                    this.api.primaryWebViewClient({webView, accountIndex}).pipe(
+                                    this.api.primaryWebViewClient({webView, accountIndex}, {pingTimeoutMs: 7009}).pipe(
                                         delay(
                                             account.loggedInOnce
                                                 ? ONE_SECOND_MS
@@ -167,7 +167,7 @@ export class AccountsLoginFormSubmittingEffects {
                         const action$ = merge(
                             of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {twoFactorCode: true}})),
                             resetNotificationsState$,
-                            this.api.primaryWebViewClient({webView, accountIndex}).pipe(
+                            this.api.primaryWebViewClient({webView, accountIndex}, {pingTimeoutMs: 7010}).pipe(
                                 mergeMap((webViewClient) => {
                                     return from(
                                         webViewClient("login2fa")({secret, accountIndex}),

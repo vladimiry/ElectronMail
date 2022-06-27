@@ -23,6 +23,7 @@ export const PROTON_PRIMARY_IPC_WEBVIEW_API_DEFINITION = {
     buildDbPatch:
         Observable<DeepReadonly<DbAccountPk & { metadata: Readonly<FsDbAccount["metadata"]> | null } & { accountIndex: number }>,
             void | "timeoutRelease">(),
+    throwErrorOnRateLimitedMethodCall: Promise<DeepReadonly<{ accountIndex: number }>, void>(),
     selectMailOnline:
         Promise<DeepReadonly<{
             mail: Pick<Mail, "id" | "mailFolderIds" | "conversationEntryPk">

@@ -1,4 +1,5 @@
 import {Component, Injector} from "@angular/core";
+import {firstValueFrom} from "rxjs";
 import type {OnInit} from "@angular/core";
 import {withLatestFrom} from "rxjs/operators";
 
@@ -45,7 +46,7 @@ export class AccountViewCalendarComponent extends AccountViewAbstractComponent i
                         ACCOUNTS_ACTIONS.SetupCalendarNotificationChannel({
                             account,
                             webView,
-                            finishPromise: this.filterDomReadyOrDestroyedPromise(),
+                            finishPromise: firstValueFrom(this.domReadyOrDestroyedSingleNotification()),
                         }),
                     );
                 }),

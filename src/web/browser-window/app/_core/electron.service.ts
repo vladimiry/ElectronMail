@@ -19,6 +19,16 @@ type LimitedCallOptions = Partial<Pick<SuperCallOptions, "timeoutMs" | "finishPr
 
 const logger = getWebLogger(__filename);
 
+export class WebviewPingFailedError extends Error {
+    constructor(message: string) {
+        super(message);
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, WebviewPingFailedError);
+        }
+        this.name = nameof(WebviewPingFailedError);
+    }
+}
+
 @Injectable()
 export class ElectronService implements OnDestroy {
     private defaultApiCallTimeoutMs = DEFAULT_API_CALL_TIMEOUT;
@@ -62,7 +72,7 @@ export class ElectronService implements OnDestroy {
 
     primaryWebViewClient(
         {webView, accountIndex}: { webView: Electron.WebviewTag } & WebAccountIndexProp,
-        options?: LimitedCallOptions,
+        options?: LimitedCallOptions & {pingTimeoutMs?: number},
     ): Observable<ReturnType<typeof __ELECTRON_EXPOSURE__.buildIpcPrimaryWebViewClient>> {
         const client = __ELECTRON_EXPOSURE__.buildIpcPrimaryWebViewClient(
             webView,
@@ -71,10 +81,10 @@ export class ElectronService implements OnDestroy {
 
         // TODO consider removing "ping" API or pinging once per "webView", keeping state in WeakMap<WebView, ...>?
         return this.onlinePingWithTimeouts$.pipe(
-            switchMap(({webViewApiPing: timeoutMs}) => this.raceWebViewClient({client, accountIndex}, timeoutMs)),
-            concatMap(() => {
-                return of(client);
+            switchMap(({webViewApiPing: timeoutMs}) => {
+                return this.raceWebViewClient({client, accountIndex}, options?.pingTimeoutMs ?? timeoutMs);
             }),
+            concatMap(() => of(client)),
         );
     }
 
@@ -91,9 +101,7 @@ export class ElectronService implements OnDestroy {
         return this.store.pipe(
             select(OptionsSelectors.CONFIG.timeouts),
             switchMap(({webViewApiPing: timeoutMs}) => this.raceWebViewClient({client, accountIndex}, timeoutMs)),
-            concatMap(() => {
-                return of(client);
-            }),
+            concatMap(() => of(client)),
         );
     }
 
@@ -117,22 +125,14 @@ export class ElectronService implements OnDestroy {
         timeoutMs: number,
     ) {
         return race(
-            defer(async () => {
-                return client("ping", {timeoutMs: ONE_SECOND_MS})({accountIndex});
-            }).pipe(
-                retryWhen((errors) => {
-                    return errors.pipe(
-                        delay(ONE_SECOND_MS),
-                    );
-                }),
+            defer(async () => client("ping", {timeoutMs: ONE_SECOND_MS})({accountIndex})).pipe(
+                retryWhen((errors) => errors.pipe(delay(ONE_SECOND_MS))),
             ),
             timer(timeoutMs).pipe(
                 concatMap(() => {
-                    return throwError(
-                        new Error(
-                            `Failed to wait for "webview" service provider initialization (timeout: ${timeoutMs}ms).`,
-                        ),
-                    );
+                    return throwError(() => {
+                        return new WebviewPingFailedError(`Failed to ping the "webview" backend service (timeout: ${timeoutMs}ms).`);
+                    });
                 }),
             ),
         );

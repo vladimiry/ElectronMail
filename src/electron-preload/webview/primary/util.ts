@@ -1,4 +1,4 @@
-import {buildDbPatchRetryPipeline} from "src/electron-preload/webview/lib/util";
+import {buildDbPatchRetryPipeline, isErrorOnRateLimitedMethodCall} from "src/electron-preload/webview/lib/util";
 import {isProtonApiError, sanitizeProtonApiError} from "src/electron-preload/lib/util";
 
 type preprocessErrorType = Parameters<typeof buildDbPatchRetryPipeline>[0];
@@ -13,7 +13,10 @@ export const preprocessError: preprocessErrorType = (() => {
         networkConnectionErrorNames: ["aborterror", "timeouterror", "offlineerror"] as readonly string[],
     } as const;
     const result: preprocessErrorType = (error) => {
+        const onRateLimitedMethodCall = isErrorOnRateLimitedMethodCall(error);
         const retriable = (
+            !onRateLimitedMethodCall
+            &&
             !navigator.onLine
             ||
             (
@@ -51,7 +54,7 @@ export const preprocessError: preprocessErrorType = (() => {
             // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
             error: sanitizeProtonApiError(error) as unknown as Error,
             retriable,
-            skippable: retriable,
+            skippable: onRateLimitedMethodCall || retriable,
         };
     };
     return result;

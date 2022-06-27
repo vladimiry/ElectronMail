@@ -366,12 +366,22 @@ async function buildDbPatch(
     return patch;
 }
 
-const buildDbPatchEndpoint = (providerApi: ProviderApi): Pick<ProtonPrimaryApi, "buildDbPatch" | "fetchSingleMail"> => {
+const buildDbPatchEndpoint = (providerApi: ProviderApi): Pick<ProtonPrimaryApi,
+    | "buildDbPatch"
+    | "throwErrorOnRateLimitedMethodCall"
+    | "fetchSingleMail"> => {
     const endpoints: ReturnType<typeof buildDbPatchEndpoint> = {
+        async throwErrorOnRateLimitedMethodCall(input) {
+            curryFunctionMembers(_logger, nameof(endpoints.throwErrorOnRateLimitedMethodCall), input.accountIndex).info();
+            providerApi._throwErrorOnRateLimitedMethodCall = true;
+        },
+
         buildDbPatch(input) {
             const logger = curryFunctionMembers(_logger, nameof(endpoints.buildDbPatch), input.accountIndex);
 
             logger.info();
+
+            delete providerApi._throwErrorOnRateLimitedMethodCall;
 
             const timeoutReleaseSubject$ = new Subject();
             const releaseTimeout = (cause: "refresh" | "defer"): void => {
@@ -408,6 +418,7 @@ const buildDbPatchEndpoint = (providerApi: ProviderApi): Pick<ProtonPrimaryApi, 
 
                 if (typeof fetchedEvents === "object") {
                     await persistDatabasePatch(
+                        providerApi,
                         {
                             patch: await buildDbPatch(providerApi, {events: fetchedEvents.events, parentLogger: logger}),
                             metadata: {latestEventId: fetchedEvents.latestEventId},
@@ -430,6 +441,7 @@ const buildDbPatchEndpoint = (providerApi: ProviderApi): Pick<ProtonPrimaryApi, 
                         logger,
                         async (bootstrapPhase, patch) => {
                             await persistDatabasePatch(
+                                providerApi,
                                 {
                                     ...patch,
                                     login: input.login,
@@ -488,6 +500,7 @@ const buildDbPatchEndpoint = (providerApi: ProviderApi): Pick<ProtonPrimaryApi, 
             };
 
             await persistDatabasePatch(
+                providerApi,
                 {
                     ...data,
                     login: input.login,

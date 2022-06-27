@@ -1,6 +1,6 @@
-import {combineLatest, from, lastValueFrom, race, Subject} from "rxjs";
+import {combineLatest, firstValueFrom, race, Subject} from "rxjs";
 import {Component, Injector} from "@angular/core";
-import {distinctUntilChanged, filter, map, pairwise, take, takeUntil, withLatestFrom} from "rxjs/operators";
+import {distinctUntilChanged, filter, map, pairwise, takeUntil, withLatestFrom} from "rxjs/operators";
 import {equals, pick} from "remeda";
 import type {OnInit} from "@angular/core";
 
@@ -81,11 +81,13 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
                         return;
                     }
 
-                    const finishPromise = this.filterDomReadyOrDestroyedPromise();
+                    const finishNotification$ = this.domReadyOrDestroyedSingleNotification();
                     const breakPreviousSyncing$ = new Subject<void>();
 
                     this.action(
-                        ACCOUNTS_ACTIONS.SetupPrimaryNotificationChannel({account, webView, finishPromise}),
+                        ACCOUNTS_ACTIONS.SetupPrimaryNotificationChannel(
+                            {account, webView, finishPromise: firstValueFrom(finishNotification$)},
+                        ),
                     );
 
                     this.account$
@@ -96,7 +98,7 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
                             })),
                             // process switching of either "loggedIn" or "database" flags
                             distinctUntilChanged(({data: prev}, {data: curr}) => equals(prev, curr)),
-                            takeUntil(from(finishPromise)),
+                            takeUntil(finishNotification$),
                         )
                         .subscribe(({pk, data: {loggedIn, database}}) => {
                             breakPreviousSyncing$.next(void 0);
@@ -107,11 +109,11 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
                                 ACCOUNTS_ACTIONS.ToggleSyncing({
                                     pk,
                                     webView,
-                                    finishPromise: lastValueFrom(
-                                        race([
-                                            from(finishPromise),
-                                            breakPreviousSyncing$.pipe(take(1)),
-                                        ]),
+                                    finishPromise: firstValueFrom(
+                                        race(
+                                            finishNotification$,
+                                            breakPreviousSyncing$,
+                                        ),
                                     ),
                                 }),
                             );

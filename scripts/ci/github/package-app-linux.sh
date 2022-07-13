@@ -19,7 +19,6 @@ export CC=gcc-7
 export CXX=g++-7
 echo "::endgroup::"
 
-echo "::group::build native modules"
 # assuming that "ubuntu-18.04" image comes with glibc v2.27, see https://github.com/vladimiry/ElectronMail/issues/389#issuecomment-812071591
 GLIBC_INFO_EXPECTED_SUB="release version 2.27"
 GLIBC_INFO=$(lsof -p $$ | grep libc | awk ' { print $NF" --version"; } ' | sh)
@@ -28,12 +27,12 @@ if [[ "$GLIBC_INFO" != *"$GLIBC_INFO_EXPECTED_SUB"* ]]; then
     echo >&2 "unexpected glibc version detected"
     exit 1
 fi
-pnpm run prepare:remove:prebuild-install
-pnpm run clean:prebuilds
-npm exec --package=electron-builder -- electron-builder install-app-deps --arch=x64
+
+echo "::group::build native modules"
+pnpm run ts-node:shortcut ./scripts/ci/prepare-native-deps.ts
 echo "::endgroup::"
 
-echo "::group::test:e2e:setup"
+echo "::group::test e2e setup"
 echo "initializing xvfb stuff..."
 export DISPLAY=":99.0"
 Xvfb :99 -screen 0 1280x1024x24 >/dev/null 2>&1 &
@@ -57,7 +56,7 @@ echo -n "secret-tool-password-1" | secret-tool store --label=secret-tool-label-1
 sudo sysctl kernel.unprivileged_userns_clone=1
 echo "::endgroup::"
 
-echo "::group::test:e2e"
+echo "::group::test e2e"
 pnpm run test:e2e
 echo "::endgroup::"
 

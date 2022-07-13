@@ -85,16 +85,10 @@ function initLocations(
     logger.transports.file.level = INITIAL_STORES.config().logLevel;
     logger.transports.console.level = false;
 
-    if (BUILD_ENVIRONMENT !== "e2e") { // eslint-disable-line sonarjs/no-collapsible-if
-        // TODO electron fix: the "Dictionaries" dir still located in the default place
-        //      see https://github.com/electron/electron/issues/26039
-        if (path.resolve(userDataDir) !== path.resolve(app.getPath("userData"))) {
-            // TODO figure why "app.setPath(...)" call breaks normal e2e/spectron test start
-            app.setPath("userData", userDataDir);
-            app.setAppLogsPath(
-                path.join(userDataDir, BINARY_NAME, "logs"),
-            );
-        }
+    if (path.resolve(userDataDir) !== path.resolve(app.getPath("userData"))) {
+        // TODO figure why "app.setPath(...)" call breaks normal e2e/playwright test start
+        app.setPath("userData", userDataDir);
+        app.setAppLogsPath(path.join(userDataDir, BINARY_NAME, "logs"));
     }
 
     const appRelativePath = (...value: string[]): string => path.join(appDir, ...value);

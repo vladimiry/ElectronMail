@@ -7,18 +7,16 @@ npm config set msvs_version 2017
 echo "::endgroup::"
 
 echo "::group::build native modules"
-pnpm run prepare:remove:prebuild-install
-pnpm run clean:prebuilds
-npm exec --package=electron-builder -- electron-builder install-app-deps --arch=x64
+pnpm run ts-node:shortcut ./scripts/ci/prepare-native-deps.ts
 echo "::endgroup::"
 
-echo "::group::test:e2e"
+echo "::group::test e2e"
 pnpm run test:e2e
 echo "::endgroup::"
 
 echo "::group::package"
 pnpm run build:electron-builder-hooks
-npm exec --package=electron-builder -- electron-builder
+npm run electron-builder:shortcut -- --publish never
 echo "::endgroup::"
 
 echo "::group::hash & upload"

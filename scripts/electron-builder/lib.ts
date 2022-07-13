@@ -170,7 +170,7 @@ export async function build(
     await execShell([
         "pnpm",
         [
-            ...`run electron-builder:shortcut --x64 --publish never --linux ${packageType}`.split(" "),
+            ...`run electron-builder:shortcut -- --publish never --linux ${packageType}`.split(" "),
         ],
     ]);
 

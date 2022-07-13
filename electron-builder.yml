@@ -11,9 +11,9 @@ files:
   - './app/**/*'
   - './package.json'
   - '!app/**/*/index-e2e.{js,cjs,mjs}'
-  # sodium-native TODO: include into the package only needed prebuilds for the platform is being assembled
+  #- '!node_modules/{keytar,msgpackr-extract,sodium-native,spellchecker}/build${/*}'
+  #- 'node_modules/{keytar,msgpackr-extract,sodium-native,spellchecker}/build/Release/*.node'
   - '!node_modules/sodium-native/{src,test,libsodium,tmp,deps}'
-  # spellchecker
   - '!node_modules/spellchecker/spec'
 compression: normal
 asar: true

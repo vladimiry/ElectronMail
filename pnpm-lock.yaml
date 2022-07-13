@@ -9,6 +9,11 @@ overrides:
   typescript: ^4
   webpack: ^5
 
+patchedDependencies:
+    sodium-native@3.3.0:
+        hash: caazmcsdnvw5e4pqtz5j3g2aui
+        path: patches/sodium-native@3.3.0.patch
+
 importers:
 
   .:
@@ -4068,7 +4073,7 @@ packages:
     dependencies:
       '@hscmap/cache-map': 1.2.0
       make-error-cause: 2.3.0
-      sodium-native: 3.3.0
+      sodium-native: 3.3.0_caazmcsdnvw5e4pqtz5j3g2aui
       tslib: 2.4.0
     dev: false
 
@@ -6863,12 +6868,13 @@ packages:
     dev: true
     optional: true
 
-  /sodium-native/3.3.0:
+  /sodium-native/3.3.0_caazmcsdnvw5e4pqtz5j3g2aui:
     resolution: {integrity: sha512-rg6lCDM/qa3p07YGqaVD+ciAbUqm6SoO4xmlcfkbU5r1zIGrguXztLiEtaLYTV5U6k8KSIUFmnU3yQUSKmf6DA==}
     requiresBuild: true
     dependencies:
-      node-gyp-build: 4.4.0
+      node-gyp-build: 4.5.0
     dev: false
+    patched: true
 
   /source-map-js/1.0.2:
     resolution: {integrity: sha512-R0XvVJ9WusLiqTCEiGCmICCMplcCkIwwR11mOSD9CR5u+IXYdiseeEuXCVAjS54zqwkLcPNnmU4OeJ6tUrWhDw==}

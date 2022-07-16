@@ -17,9 +17,9 @@ import {IPC_MAIN_API_DB_INDEXER_REQUEST$, IPC_MAIN_API_NOTIFICATION$} from "src/
 import {IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS, IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {narrowIndexActionPayload} from "./indexing/service";
+import {parseProtonRestModel, readMailBody} from "src/shared/util/entity";
 import {patchMetadata} from "src/electron-main/database/util";
 import {prepareFoldersView} from "./folders-view";
-import {readMailBody} from "src/shared/util/entity";
 import {validateEntity} from "src/electron-main/database/validation";
 
 const _logger = curryFunctionMembers(electronLog, __filename);
@@ -267,7 +267,11 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                 ...omit(mail, ["body"]),
                 // TODO test "dbGetAccountMail" setting "mail.body" through the "sanitizeHtml" call
                 body: sanitizeHtml(
-                    readMailBody(mail),
+                    Object
+                        .entries(parseProtonRestModel(mail).ParsedHeaders)
+                        .some(([name, value]) => name.toLowerCase() === "content-type" && value === "text/plain")
+                    ? readMailBody(mail).replace(/[\n\r]/g, "<br>")
+                    : readMailBody(mail)
                 ),
             };
         },

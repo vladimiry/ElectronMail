@@ -244,6 +244,13 @@ export function initWebRequestListenersByAccount(
             }
 
             {
+                if (customUserAgent) {
+                    for (const headerName of Object.keys(requestHeaders)) {
+                        if (headerName.toLowerCase().startsWith("sec-ch-ua")) {
+                            delete requestHeaders[headerName];
+                        }
+                    }
+                }
                 // the "session.setUserAgent()" makes an effect only once (first call, see the docs)
                 // so we resolve and set the header explicitly for each request
                 const {name: headerName} = getHeader(requestHeaders, HEADERS.request.userAgent) ?? {name: HEADERS.request.userAgent};

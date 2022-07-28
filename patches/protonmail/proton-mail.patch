@@ -1,3 +1,20 @@
+diff --git a/packages/shared/lib/api/events.ts b/packages/shared/lib/api/events.ts
+index 263d640ff..d1944c66e 100644
+--- a/packages/shared/lib/api/events.ts
++++ b/packages/shared/lib/api/events.ts
+@@ -1,9 +1,11 @@
+ export const getLatestID = () => ({
+     url: 'v4/events/latest',
+     method: 'get',
++    params: { MessageCounts: "", ConversationCounts: "", },
+ });
+
+ export const getEvents = (eventID: string) => ({
+     url: `v4/events/${eventID}`,
+     method: 'get',
++    params: { MessageCounts: "", ConversationCounts: "", },
+ });
+
 diff --git a/packages/components/containers/login/MinimalLoginContainer.tsx b/packages/components/containers/login/MinimalLoginContainer.tsx
 index 6fef05c..1719cc8 100644
 --- a/packages/components/containers/login/MinimalLoginContainer.tsx

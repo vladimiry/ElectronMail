@@ -1,8 +1,6 @@
 import path from "path";
 
-import {APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR} from "src/shared/const/hunspell";
 import {CONSOLE_LOG, execShell} from "scripts/lib";
-import {copyDictionaryFilesTo} from "scripts/electron-builder/lib";
 
 const hookName = "afterPack";
 
@@ -33,11 +31,6 @@ const hook: Required<import("app-builder-lib").Configuration>[typeof hookName] =
 
     if (electronPlatformNameLoweredCase.startsWith("lin")) {
         await linux(context);
-        return;
-    }
-
-    if (electronPlatformNameLoweredCase.startsWith("win")) {
-        await copyDictionaryFilesTo(path.join(context.appOutDir, APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR));
     }
 };
 

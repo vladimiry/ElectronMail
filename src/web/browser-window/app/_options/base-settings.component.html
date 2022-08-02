@@ -113,6 +113,17 @@
     <div class="custom-control custom-switch" [ngClass]="{'text-muted': controls.hideOnClose.disabled}">
         <input
             class="custom-control-input"
+            formControlName="spellcheck"
+            id="spellcheckCheckbox"
+            type="checkbox"
+        >
+        <label class="custom-control-label" for="spellcheckCheckbox">
+            Check spelling
+        </label>
+    </div>
+    <div class="custom-control custom-switch" [ngClass]="{'text-muted': controls.hideOnClose.disabled}">
+        <input
+            class="custom-control-input"
             formControlName="hideOnClose"
             id="hideOnCloseCheckbox"
             type="checkbox"

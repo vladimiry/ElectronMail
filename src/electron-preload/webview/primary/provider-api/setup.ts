@@ -5,7 +5,6 @@ import {applyZoomFactor} from "src/electron-preload/lib/util";
 import {curryFunctionMembers} from "src/shared/util";
 import {disableBrowserNotificationFeature} from "src/electron-preload/webview/lib/util";
 import {IFRAME_NOTIFICATION$} from "src/electron-preload/webview/primary/provider-api/notifications";
-import {initSpellCheckProvider} from "src/electron-preload/lib/spell-check";
 import {ONE_SECOND_MS} from "src/shared/const";
 import {registerDocumentClickEventListener, registerDocumentKeyDownEventListener} from "src/electron-preload/lib/events-handling";
 import {testProtonMailAppPage} from "src/shared/util/proton-webclient";
@@ -23,7 +22,6 @@ export const setupProviderIntegration = (
         return;
     }
 
-    initSpellCheckProvider(logger);
     applyZoomFactor(logger);
     registerDocumentKeyDownEventListener(document, logger);
     registerDocumentClickEventListener(document, logger);
@@ -63,7 +61,6 @@ export const setupProviderIntegration = (
             }),
         )
         .subscribe((/*{iframeDocument}*/) => {
-            initSpellCheckProvider(logger);
             applyZoomFactor(logger);
         });
 };

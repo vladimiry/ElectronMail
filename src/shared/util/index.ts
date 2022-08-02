@@ -28,7 +28,8 @@ export function initialConfig(): Config {
         };
 
         return {
-            spellCheckLocale: false,
+            spellcheck: false,
+            spellcheckLanguages: [],
             encryptionPreset,
             window: {
                 bounds: {width: 1024, height: 768},

@@ -4,11 +4,11 @@ import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 import {Model as StoreModel} from "fs-json-store";
 
 import {AccountConfig} from "src/shared/model/account";
-import {FuzzyLocale} from "src/electron-main/spell-check/model";
 import {LogLevel} from "src/shared/model/common";
 
 export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
-    spellCheckLocale: FuzzyLocale
+    spellcheck: boolean,
+    spellcheckLanguages: string[],
     encryptionPreset: PasswordBasedPreset
     window: {
         maximized?: boolean
@@ -95,6 +95,7 @@ export type BaseConfig = Pick<Config,
     | "idleTimeLogOutSec"
     | "layoutMode"
     | "logLevel"
+    | "spellcheck"
     | "startHidden"
     | "themeSource"
     | "unreadNotifications"

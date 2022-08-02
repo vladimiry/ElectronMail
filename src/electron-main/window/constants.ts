@@ -22,7 +22,7 @@ export const DEFAULT_WEB_PREFERENCES: Readonly<NoExtraProps<Pick<Required<WebPre
     nodeIntegration: false,
     nodeIntegrationInWorker: false,
     sandbox: true,
-    spellcheck: false,
+    spellcheck: true,
     webSecurity: true,
     webviewTag: false,
 };

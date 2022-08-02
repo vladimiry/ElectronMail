@@ -1,7 +1,7 @@
 {
   "name": "electron-mail",
   "description": "Unofficial ProtonMail Desktop App",
-  "version": "5.0.3",
+  "version": "5.1.0",
   "author": "Vladimir Yakovlev <desktop-app@protonmail.ch>",
   "license": "GPL-3.0",
   "homepage": "https://github.com/vladimiry/ElectronMail",
@@ -59,7 +59,7 @@
     "clean:app": "rimraf ./app",
     "clean:app-dev": "rimraf ./app-dev",
     "clean:output": "rimraf ./output",
-    "clean:prebuilds": "rimraf ./node_modules/{keytar,sodium-native,spellchecker,msgpackr-extract}/{bin,build,prebuilds} ./node_modules/@msgpackr-extract/ \"./node_modules/sodium-native/deps/**/!(bin.js)\"",
+    "clean:prebuilds": "rimraf ./node_modules/{keytar,sodium-native,msgpackr-extract}/{bin,build,prebuilds} ./node_modules/@msgpackr-extract/ \"./node_modules/sodium-native/deps/**/!(bin.js)\"",
     "assets": "npm-run-all assets:copy assets:webclient",
     "assets:dev": "npm-run-all assets:copy:dev assets:webclient:dev",
     "assets:copy": "cpx \"./src/assets/dist/**/*\" ./app/assets",
@@ -95,8 +95,7 @@
   "dependencies": {
     "electron-rpc-api": "8.0.1",
     "fs-json-store-encryption-adapter": "3.0.4",
-    "keytar": "7.9.0",
-    "spellchecker": "https://github.com/vladimiry-playground/node-spellchecker#37cebc43ccbfce27dac51f64ec45f72d9aa80b8f"
+    "keytar": "7.9.0"
   },
   "devDependencies": {
     "@angular-eslint/eslint-plugin": "14.0.2",
@@ -144,7 +143,6 @@
     "@types/sanitize-html": "2.6.2",
     "@types/semver": "7.3.10",
     "@types/sinon": "10.0.13",
-    "@types/spellchecker": "3.5.0",
     "@types/tough-cookie": "4.0.2",
     "@types/ts-nameof": "4.2.1",
     "@types/turndown": "5.0.1",

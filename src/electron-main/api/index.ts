@@ -4,6 +4,7 @@ import {first} from "rxjs/operators";
 import {lastValueFrom} from "rxjs";
 import path from "path";
 
+import {applySpellcheckOptionsChange} from "src/electron-main/web-contents";
 import {applyThemeSource} from "src/electron-main/native-theme";
 import {applyZoomFactor} from "src/electron-main/window/util";
 import {attachFullTextIndexWindow, detachFullTextIndexWindow} from "src/electron-main/window/full-text-search";
@@ -20,7 +21,6 @@ import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/const";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {PACKAGE_NAME, PRODUCT_NAME, PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION} from "src/shared/const";
 import {PLATFORM} from "src/electron-main/constants";
-import * as SpellCheck from "src/electron-main/spell-check/api";
 import {upgradeDatabase, upgradeSettings} from "src/electron-main/storage-upgrade";
 
 const logger = curryFunctionMembers(electronLog, __filename);
@@ -34,7 +34,6 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
         ...await EndpointsBuilders.ProtonSession.buildEndpoints(ctx),
         ...await EndpointsBuilders.TrayIcon.buildEndpoints(ctx),
         ...await EndpointsBuilders.UnreadNotification.buildDbUnreadNotificationEndpoints(ctx),
-        ...await SpellCheck.buildEndpoints(ctx),
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async changeMasterPassword({password, newPassword}) {
@@ -168,10 +167,8 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
                 return {previous, updated};
             });
 
-            // TODO update "patchBaseConfig" api method: test "logLevel" value, "logger.transports.file.level" update
             electronLog.transports.file.level = updatedConfig.logLevel;
 
-            // TODO update "patchBaseConfig" api method: test "attachFullTextIndexWindow" / "detachFullTextIndexWindow" calls
             if (Boolean(updatedConfig.fullTextSearch) !== Boolean(previousConfig.fullTextSearch)) {
                 if (updatedConfig.fullTextSearch) {
                     await attachFullTextIndexWindow(ctx);
@@ -180,7 +177,6 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
                 }
             }
 
-            // TODO update "patchBaseConfig" api method: test "setupIdleTimeLogOut" call
             if (updatedConfig.idleTimeLogOutSec !== previousConfig.idleTimeLogOutSec) {
                 await setupIdleTimeLogOut({idleTimeLogOutSec: updatedConfig.idleTimeLogOutSec});
             }
@@ -199,6 +195,10 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
 
             if (updatedConfig.themeSource !== previousConfig.themeSource) {
                 applyThemeSource(updatedConfig.themeSource);
+            }
+
+            if (updatedConfig.spellcheck !== previousConfig.spellcheck) {
+                await applySpellcheckOptionsChange(ctx, {enabled: updatedConfig.spellcheck, skipConfigSaving: true});
             }
 
             return updatedConfig;

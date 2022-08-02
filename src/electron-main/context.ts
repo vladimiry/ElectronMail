@@ -311,9 +311,6 @@ export function initContext(
         })(),
         settingsStoreQueue: new asap(),
         keytarSupport: true,
-        getSpellCheckController: () => {
-            throw new Error(`Spell check controller has net been initialized yet`);
-        },
     };
 
     // "proper-lockfile" module creates directory-based locks (since it's an atomic operation on all systems)

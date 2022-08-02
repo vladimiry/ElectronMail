@@ -7,7 +7,6 @@ import {
     AccountConfigCreateUpdatePatch, ApiEndpointOriginFieldContainer, LoginFieldContainer, NewPasswordFieldContainer, PasswordFieldContainer,
 } from "src/shared/model/container";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
-import {Controller, FuzzyLocale} from "src/electron-main/spell-check/model";
 import * as DbModel from "src/shared/model/database";
 import {DbPatch} from "src/shared/api/common";
 import {ElectronContextLocations} from "src/shared/model/electron";
@@ -20,12 +19,6 @@ import {ProtonAttachmentHeadersProp, ProtonClientSession} from "src/shared/model
 import {UnionOf} from "src/shared/util/ngrx";
 
 export const ENDPOINTS_DEFINITION = {
-    getSpellCheckMetadata: ActionType.Promise<void, { locale: ReturnType<Controller["getCurrentLocale"]> }>(),
-
-    changeSpellCheckLocale: ActionType.Promise<{ locale: FuzzyLocale }>(),
-
-    spellCheck: ActionType.Promise<{ words: string[] }, { misspelledWords: string[] }>(),
-
     addAccount: ActionType.Promise<AccountConfigCreateUpdatePatch, Settings>(),
 
     updateAccount: ActionType.Promise<AccountConfigCreateUpdatePatch, Settings>(),

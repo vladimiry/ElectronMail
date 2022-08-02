@@ -1,10 +1,9 @@
 import fs from "fs";
 import path from "path";
 
-import {APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR} from "src/shared/const/hunspell";
 import {assertPathIsInCwd, catchTopLeventAsync, CONSOLE_LOG, execShell} from "scripts/lib";
 import {BINARY_NAME} from "src/shared/const";
-import {build, copyDictionaryFilesTo, ensureFileHasNoSuidBit} from "scripts/electron-builder/lib";
+import {build, ensureFileHasNoSuidBit} from "scripts/electron-builder/lib";
 
 async function unpack({packageFile, packageDir}: { packageFile: string; packageDir: string }): Promise<void> {
     await execShell(["unsquashfs", ["-dest", packageDir, "-processors", "1", packageFile]]);
@@ -40,7 +39,6 @@ async function postProcess({packageFile}: { packageFile: string }): Promise<void
     const packageDir = `${packageFile}-squashfs-root-${Date.now()}`;
 
     await unpack({packageDir, packageFile});
-    await copyDictionaryFilesTo(path.join(packageDir, APP_EXEC_PATH_RELATIVE_HUNSPELL_DIR));
     addCommandLineArgs({packageDir});
     ensureFileHasNoSuidBit(path.join(packageDir, BINARY_NAME));
     await packAndCleanup({packageDir, packageFile});

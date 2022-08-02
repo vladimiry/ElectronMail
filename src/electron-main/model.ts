@@ -7,7 +7,6 @@ import {Database} from "./database";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {SessionStorage} from "src/electron-main/session-storage";
-import {Controller as SpellCheckController} from "src/electron-main/spell-check/model";
 
 export interface ContextInitOptionsPaths {
     appDir: string;
@@ -44,7 +43,6 @@ export interface Context {
         databaseView?: boolean;
         webContentId?: number;
     };
-    getSpellCheckController: () => SpellCheckController;
 }
 
 export interface UIContext {

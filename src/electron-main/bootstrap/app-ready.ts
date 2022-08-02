@@ -7,7 +7,6 @@ import {initApiEndpoints} from "src/electron-main/api";
 import {initApplicationMenu} from "src/electron-main/menu";
 import {initMainBrowserWindow} from "src/electron-main/window/main";
 import {initNativeThemeNotification} from "src/electron-main/native-theme";
-import {initSpellCheckController} from "src/electron-main/spell-check/controller";
 import {initTray} from "src/electron-main/tray";
 import {initWebContentsCreatingHandlers} from "src/electron-main/web-contents";
 import {registerWebFolderFileProtocol} from "src/electron-main/protocol";
@@ -29,19 +28,13 @@ export async function appReadyHandler(ctx: Context): Promise<void> {
     await initApiEndpoints(ctx);
 
     // so consequent "ctx.configStore.readExisting()" calls don't fail since "endpoints.readConfig()" call initializes the config
-    const {spellCheckLocale, logLevel, themeSource} = await (await ctx.deferredEndpoints.promise).readConfig();
+    const {logLevel, themeSource} = await (await ctx.deferredEndpoints.promise).readConfig();
 
     // TODO test "logger.transports.file.level" update
     electronLog.transports.file.level = logLevel;
 
     initNativeThemeNotification(themeSource);
 
-    await (async (): Promise<void> => {
-        const spellCheckController = await initSpellCheckController(spellCheckLocale);
-        ctx.getSpellCheckController = (): typeof spellCheckController => spellCheckController;
-    })();
-
-    // TODO test "initWebContentsCreatingHandlers" called after "ctx.getSpellCheckController" got initialized
     await initWebContentsCreatingHandlers(ctx);
 
     {

@@ -1,11 +1,14 @@
 import _logger from "electron-log";
-import {app, BrowserWindow, clipboard, Menu, MenuItemConstructorOptions, screen, WebPreferences} from "electron";
+import {
+    app, BrowserWindow, clipboard, Menu, MenuItemConstructorOptions, screen, Session, webContents as electronWebContents, WebPreferences,
+} from "electron";
 import {equals, pick} from "remeda";
+import {first} from "rxjs/operators";
 import {inspect} from "util";
 import {isWebUri} from "valid-url";
+import {lastValueFrom} from "rxjs";
 
 import {applyZoomFactor} from "src/electron-main/window/util";
-import {buildSpellCheckSettingsMenuItems, buildSpellingSuggestionMenuItems} from "src/electron-main/spell-check/menu";
 import {buildUrlOriginsFailedMsgTester} from "src/shared/util/url";
 import {Context} from "./model";
 import {curryFunctionMembers, lowerConsoleMessageEventLogLevel} from "src/shared/util";
@@ -33,7 +36,6 @@ const checkWebViewWebPreferencesDefaults: checkWebViewWebPreferencesDefaultsType
                 //     - backgroundThrottling: false => undefined,
                 //     - disableBlinkFeatures: "Auxclick" => "",
                 //     - nodeIntegrationInWorker: false => undefined,
-                //     - spellcheck: false => undefined
                 //     - webviewTag: false => undefined
                 logger.verbose(
                     `Default/expected and actual "webview.webPreferences" props are not equal: `,
@@ -65,14 +67,70 @@ const notifyLogAndThrow = (message: string): never => {
     throw error;
 };
 
+export async function applySpellcheckOptionsChange(
+    ctx: DeepReadonly<Context>,
+    {
+        enabled,
+        languages,
+        skipConfigSaving,
+        sessionInstance,
+    }: {
+        enabled?: boolean
+        languages?: string[]
+        skipConfigSaving?: boolean
+        sessionInstance?: Session
+    },
+): Promise<void> {
+    if (!skipConfigSaving) {
+        IPC_MAIN_API_NOTIFICATION$.next(
+            IPC_MAIN_API_NOTIFICATION_ACTIONS.ConfigUpdated(
+                await ctx.configStoreQueue.q(async () => {
+                    const config = await ctx.configStore.readExisting();
+                    if (typeof enabled === "boolean") {
+                        config.spellcheck = enabled;
+                    }
+                    if (languages?.length) {
+                        config.spellcheckLanguages = languages;
+                    }
+                    return ctx.configStore.write(config);
+                }),
+            ),
+        );
+    }
+    const sessions: readonly Session[] = sessionInstance
+        ? [sessionInstance]
+        : electronWebContents.getAllWebContents().map((value) => value.session);
+    for (const session of sessions) {
+        if (typeof enabled === "boolean") {
+            session.setSpellCheckerEnabled(enabled);
+        }
+        if (languages?.length && PLATFORM !== "darwin") { // on macOS dictionaries list gets defined by the system
+            const availableLanguages = new Set(session.availableSpellCheckerLanguages);
+            session.setSpellCheckerLanguages(
+                // WARN only applying the "available" languages (error gets thrown otherwise, which is expected behavior)
+                languages.filter((language) => availableLanguages.has(language)),
+            );
+        }
+    }
+}
+
 // WARN: needs to be called before "BrowserWindow" creating (has been ensured by tests)
 export async function initWebContentsCreatingHandlers(ctx: Context): Promise<void> {
     const emptyArray = [] as const;
     const endpoints = await ctx.deferredEndpoints.promise;
-    const spellCheckController = ctx.getSpellCheckController();
     const verifyWebviewUrlAccess = buildUrlOriginsFailedMsgTester([LOCAL_WEBCLIENT_ORIGIN]);
 
     app.on("web-contents-created", async (...[, webContents]) => {
+        setImmediate(async () => {
+            const config = await lastValueFrom(ctx.config$.pipe(first()));
+            await applySpellcheckOptionsChange(ctx, {
+                enabled: config.spellcheck,
+                languages: config.spellcheckLanguages,
+                skipConfigSaving: true,
+                sessionInstance: webContents.session,
+            });
+        });
+
         const uiContext = ctx.uiContext && await ctx.uiContext;
         const isFullTextSearchBrowserWindow = uiContext?.fullTextSearchBrowserWindow?.webContents === webContents;
 
@@ -136,8 +194,21 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
             }
             logger.warn(`Opening a new window is forbidden, url: "${url}"`);
         });
-        webContents.on("context-menu", async (...[, {editFlags, linkURL, linkText, isEditable, selectionText}]) => {
+        webContents.on("context-menu", async (
+            ...[/*event*/, {editFlags, linkURL, linkText, isEditable, /*spellcheckEnabled,*/ dictionarySuggestions}]
+        ) => {
             const menuItems: MenuItemConstructorOptions[] = [];
+            // TODO use "spellcheckEnabled" param of the "context-menu" instead of the config's value
+            // currently getting the config's value since:
+            //   - "spellcheckEnabled" value from the "context-menu"'s params can't be used since for some reason its value doesn't get
+            //      changed by the session.setSpellCheckerEnabled() call, so it seems to remain in a static state (keeping initial value)
+            //   - session.getSpellCheckerEnabled() can't be used since it always returns "true"
+            //     until the session.setSpellCheckerEnabled() called via the content menu
+            //     calling it at the init stage not via the content menu doesn't seem to make an effect
+            const spellcheckEnabled = await (async () => {
+                const config = await lastValueFrom(ctx.config$.pipe(first()));
+                return config.spellcheck;
+            })();
 
             if (linkURL) {
                 menuItems.push(
@@ -153,46 +224,6 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
                     },
                 );
             } else {
-                const checkSpelling = Boolean(spellCheckController.getCurrentLocale());
-                const misspelled = Boolean(
-                    checkSpelling
-                    &&
-                    isEditable
-                    &&
-                    selectionText
-                    &&
-                    spellCheckController
-                        .getSpellCheckProvider()
-                        .isMisspelled(selectionText),
-                );
-
-                if (misspelled) {
-                    menuItems.push(
-                        ...buildSpellingSuggestionMenuItems(
-                            webContents,
-                            spellCheckController
-                                .getSpellCheckProvider()
-                                .getSuggestions(selectionText)
-                                .slice(0, 7),
-                        ),
-                    );
-                }
-
-                if (isEditable) {
-                    menuItems.push(...[
-                        ...(menuItems.length ? [{type: "separator"} as const] : emptyArray),
-                        ...buildSpellCheckSettingsMenuItems(
-                            checkSpelling
-                                ? await spellCheckController.getAvailableDictionaries()
-                                : [],
-                            spellCheckController.getCurrentLocale(),
-                            async (locale) => {
-                                await endpoints.changeSpellCheckLocale({locale});
-                            },
-                        ),
-                    ]);
-                }
-
                 menuItems.push(...[
                     ...(menuItems.length ? [{type: "separator"} as const] : emptyArray),
                     ...[
@@ -206,13 +237,56 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
                 ]);
             }
 
-            if (!menuItems.length) {
-                return;
+            if (isEditable) { // spellchecker
+                if (menuItems.length) menuItems.push({type: "separator"});
+                if (spellcheckEnabled) {
+                    for (const suggestion of dictionarySuggestions) {
+                        menuItems.push({
+                            label: suggestion,
+                            click: () => webContents.replaceMisspelling(suggestion),
+                        });
+                    }
+                    if (PLATFORM !== "darwin") { // on macOS dictionaries list gets defined by the system
+                        const enabledLanguages = new Set(webContents.session.getSpellCheckerLanguages());
+                        const languagesSubmenu: typeof menuItems = [];
+                        for (const availableLanguage of webContents.session.availableSpellCheckerLanguages) {
+                            const availableLanguageEnabled = enabledLanguages.has(availableLanguage);
+                            languagesSubmenu.push({
+                                label: availableLanguage,
+                                type: "checkbox",
+                                checked: availableLanguageEnabled,
+                                async click() {
+                                    const enabled = availableLanguageEnabled && enabledLanguages.size === 1
+                                        ? false // disabling the feature when no selected items remain in the list
+                                        : undefined;
+                                    await applySpellcheckOptionsChange(ctx, {
+                                        enabled,
+                                        languages: availableLanguageEnabled
+                                            ? Array.from(enabledLanguages).filter((value) => value !== availableLanguage)
+                                            : [...enabledLanguages, availableLanguage],
+                                    });
+                                },
+                            });
+                        }
+                        if (languagesSubmenu.length) {
+                            menuItems.push({
+                                label: "Languages",
+                                submenu: languagesSubmenu,
+                            });
+                        }
+                    }
+                }
+                menuItems.push({
+                    label: "Check spelling",
+                    type: "checkbox",
+                    checked: spellcheckEnabled,
+                    async click() {
+                        await applySpellcheckOptionsChange(ctx, {enabled: !spellcheckEnabled});
+                    },
+                });
             }
 
-            Menu
-                .buildFromTemplate(menuItems)
-                .popup({});
+            if (menuItems.length) Menu.buildFromTemplate(menuItems).popup({});
         });
         webContents.on("will-attach-webview", (...[event, webPreferences, {src}]) => {
             if (!src) {

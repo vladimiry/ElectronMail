@@ -20,7 +20,7 @@ const compileNativeDeps = async (): Promise<void> => {
     const isCrossCompilation = destArch !== process.arch;
     const nativeModuleDirs = fastGlob.sync(sanitizeFastGlobPattern("./node_modules/*/binding.gyp")).map((v) => path.dirname(v));
 
-    if (nativeModuleDirs.length !== 5) {
+    if (nativeModuleDirs.length !== 4) {
         throw new Error("Unexpected native modules count found");
     }
 

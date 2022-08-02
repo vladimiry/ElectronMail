@@ -63,9 +63,10 @@ export const createSessionUtil: createSessionUtilType = (() => {
             }
         }
 
-        // TODO electron built-in spellcheck: drop dictionaries load preventing hack
-        // passing a non-resolving URL is a workaround, see https://github.com/electron/electron/issues/22995
-        session.setSpellCheckerDictionaryDownloadURL("https://00.00/");
+        session.setSpellCheckerEnabled(false); // gets enabled later in app's "web-contents-created" event handler, based on the config
+        session.on("spellcheck-dictionary-download-failure", (...[event, languageCode]) => {
+            _logger.error(nameof.full(createSessionUtil.create), event.type, languageCode);
+        });
 
         return session;
     };

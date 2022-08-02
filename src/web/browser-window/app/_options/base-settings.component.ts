@@ -66,6 +66,7 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
             null,
             Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
         ),
+        spellcheck: new FormControl(),
         startHidden: new FormControl(),
         themeSource: new FormControl(),
         unreadNotifications: new FormControl(),

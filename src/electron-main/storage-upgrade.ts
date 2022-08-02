@@ -125,11 +125,6 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             delete config.timeouts.syncing;
         }
     },
-    "3.4.0": (config) => {
-        if (typeof config.spellCheckLocale === "undefined") {
-            config.spellCheckLocale = INITIAL_STORES.config().spellCheckLocale;
-        }
-    },
     "3.5.0": (
         _,
         config = _ as Config & { databaseSaveDelayMs?: number; checkForUpdatesAndNotify?: boolean },
@@ -368,6 +363,24 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
     "4.15.1": (config) => {
         {
             const key = "dbCompression";
+            if (typeof config[key] === "undefined") {
+                config[key] = INITIAL_STORES.config()[key];
+            }
+        }
+    },
+    "5.1.0": (config) => {
+        {
+            const key = "spellcheck";
+            if (typeof config[key] !== "boolean") {
+                const {spellCheckLocale} = (config as unknown as { spellCheckLocale: unknown });
+                delete (config as unknown as { spellCheckLocale: unknown }).spellCheckLocale;
+                config[key] = typeof spellCheckLocale === "boolean"
+                    ? spellCheckLocale
+                    : INITIAL_STORES.config()[key];
+            }
+        }
+        {
+            const key = "spellcheckLanguages";
             if (typeof config[key] === "undefined") {
                 config[key] = INITIAL_STORES.config()[key];
             }

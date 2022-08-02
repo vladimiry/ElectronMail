@@ -1,30 +1,11 @@
-import fs from "fs";
 import path from "path";
 
-import {assertPathIsInCwd, catchTopLeventAsync, CONSOLE_LOG, execShell, resolveExecutable} from "scripts/lib";
+import {addCommandLineArgs, build, DISABLE_SANDBOX_ARGS_LINE, ensureFileHasNoSuidBit} from "scripts/electron-builder/lib";
+import {assertPathIsInCwd, catchTopLeventAsync, execShell, resolveExecutable} from "scripts/lib";
 import {BINARY_NAME} from "src/shared/const";
-import {build, DISABLE_SANDBOX_ARGS_LINE, ensureFileHasNoSuidBit} from "scripts/electron-builder/lib";
 
 // TODO pass destination directory instead of hardcoding it ("--appimage-extract" doesn't support destination parameter at the moment)
 const extractedImageFolderName = "squashfs-root";
-
-function addCommandLineArgs({packageDir}: { packageDir: string }): void {
-    const shFile = path.join(packageDir, "./AppRun");
-    const shFileContent = (() => {
-        const content = fs.readFileSync(shFile).toString();
-        const searchValue = `exec "$BIN"`;
-        const replaceWith = `${searchValue} ${DISABLE_SANDBOX_ARGS_LINE} --js-flags="--max-old-space-size=6144"`;
-        const patchedContent = content.replaceAll(searchValue, replaceWith);
-        if (patchedContent === content) {
-            throw new Error(`Failed to patch content of the "${shFile}" file`);
-        }
-        return patchedContent;
-    })();
-
-    CONSOLE_LOG(`Writing ${shFile} file with content:`, shFileContent);
-
-    fs.writeFileSync(shFile, shFileContent);
-}
 
 async function unpack({packageFile}: { packageFile: string }): Promise<{ packageDir: string }> {
     const cwd = path.dirname(packageFile);
@@ -82,7 +63,12 @@ async function packAndCleanup({packageFile, packageDir}: { packageFile: string; 
 
 async function postProcess({packageFile}: { packageFile: string }): Promise<void> {
     const {packageDir} = await unpack({packageFile});
-    addCommandLineArgs({packageDir});
+    const searchValue = `exec "$BIN"`;
+    addCommandLineArgs({
+        shFile: path.join(packageDir, "./AppRun"),
+        searchValue,
+        replaceWith: `${searchValue} ${DISABLE_SANDBOX_ARGS_LINE}`,
+    });
     ensureFileHasNoSuidBit(path.join(packageDir, BINARY_NAME));
     await packAndCleanup({packageDir, packageFile});
 }

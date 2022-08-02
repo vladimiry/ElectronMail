@@ -30,7 +30,7 @@
                     (click)="selectConversationMail(node.mail)"
                     *ngIf="node.mail"
                     [mail]="node.mail"
-                    [ngClass]="{'selected': node.mail.pk === selectedMail.conversationMail?.pk}"
+                    [ngClass]="{'selected': node.mail.pk === selectedMail.conversationMail.pk}"
                     [ngStyle]="{'margin-left': level + 'em'}"
                 ></electron-mail-db-view-mail>
             </ng-container>

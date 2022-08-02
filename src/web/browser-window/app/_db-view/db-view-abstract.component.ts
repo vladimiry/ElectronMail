@@ -1,13 +1,29 @@
-import {combineLatest, EMPTY, fromEvent, merge, Observable, of} from "rxjs";
-import {Directive, Input, ɵmarkDirty as markDirty} from "@angular/core";
+import {animationFrameScheduler, combineLatest, EMPTY, fromEvent, merge, Observable, of} from "rxjs";
+import {ApplicationRef, ChangeDetectorRef, Directive, inject, Injectable, Input} from "@angular/core";
 import {distinctUntilChanged, map, mergeMap, startWith} from "rxjs/operators";
 import {select, Store} from "@ngrx/store";
 
 import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
+import {Instance, State} from "src/web/browser-window/app/store/reducers/db-view";
 import {NgChangesObservableComponent} from "src/web/browser-window/app/components/ng-changes-observable.component";
 import {resolveInstance$} from "./util";
-import {State} from "src/web/browser-window/app/store/reducers/db-view";
 import {WebAccountPk} from "src/web/browser-window/app/model";
+
+@Injectable({providedIn: "root"})
+export class AnimationFrameTickScheduler {
+    private isScheduled = false;
+
+    constructor(private readonly appRef: ApplicationRef) {}
+
+    schedule(): void {
+        if (this.isScheduled) return;
+        this.isScheduled = true;
+        animationFrameScheduler.schedule(() => {
+            this.appRef.tick();
+            this.isScheduled = false;
+        });
+    }
+}
 
 @Directive()
 // so weird not single-purpose directive huh, https://github.com/angular/angular/issues/30080#issuecomment-539194668
@@ -44,17 +60,21 @@ export abstract class DbViewAbstractComponent extends NgChangesObservableCompone
         map(([signedIn, online]) => signedIn && online),
     );
 
-    instance$ = resolveInstance$(this.store, this.webAccountPk$.pipe(map(({login}) => login)));
+    protected readonly store: Store<State>;
+    protected readonly instance$: Observable<Instance>;
+    private readonly cdRef: ChangeDetectorRef;
+    private readonly tickScheduler: AnimationFrameTickScheduler;
 
-    protected constructor(
-        protected store: Store<State>,
-    ) {
+    protected constructor() {
         super();
+        this.cdRef = inject(ChangeDetectorRef);
+        this.tickScheduler = inject(AnimationFrameTickScheduler);
+        this.store = inject<Store<State>>(Store);
+        this.instance$ = resolveInstance$(this.store, this.webAccountPk$.pipe(map(({login}) => login)));
     }
 
     protected markDirty(): void {
-        // markDirty does the same job as ViewRef/ChangeDetectorRef.markForCheck
-        // only in addition it schedules change detection using requestAnimationFrame
-        markDirty(this);
+        this.cdRef.markForCheck();
+        this.tickScheduler.schedule();
     }
 }

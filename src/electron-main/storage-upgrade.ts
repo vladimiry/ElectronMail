@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
 
 import _logger from "electron-log";
-import compareVersions from "compare-versions";
+import {compareVersions} from "compare-versions";
 import path from "path";
 import {randomString} from "remeda";
 

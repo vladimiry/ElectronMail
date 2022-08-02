@@ -5,13 +5,12 @@ import {clone, pick} from "remeda";
 import {EMPTY, from} from "rxjs";
 import {mergeMap, takeUntil} from "rxjs/operators";
 import type {OnInit} from "@angular/core";
-import {Store} from "@ngrx/store";
 
 import {DB_VIEW_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {DbViewAbstractComponent} from "./db-view-abstract.component";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {filterConversationNodesMails} from "src/shared/util";
-import {MailsBundle, State} from "src/web/browser-window/app/store/reducers/db-view";
+import {MailsBundle} from "src/web/browser-window/app/store/reducers/db-view";
 import {ONE_SECOND_MS} from "src/shared/const";
 import {View} from "src/shared/model/database";
 
@@ -55,11 +54,10 @@ export class DbViewMailsExportComponent extends DbViewAbstractComponent implemen
     modalOpeningProgress = false;
 
     constructor(
-        store: Store<State>,
         private readonly api: ElectronService,
         private readonly modalService: BsModalService,
     ) {
-        super(store);
+        super();
     }
 
     ngOnInit(): void {

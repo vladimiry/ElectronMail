@@ -3,12 +3,12 @@ import {ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Output, Qu
 import {combineLatest, EMPTY, merge, Observable, Subject} from "rxjs";
 import {distinctUntilChanged, map, mergeMap, switchMap, takeUntil, tap} from "rxjs/operators";
 import {FormControl, FormGroup} from "@angular/forms";
-import {select, Store} from "@ngrx/store";
+import {select} from "@ngrx/store";
 
 import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
 import {DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {DbViewAbstractComponent} from "./db-view-abstract.component";
-import {Instance, State} from "src/web/browser-window/app/store/reducers/db-view";
+import {Instance} from "src/web/browser-window/app/store/reducers/db-view";
 import {SYSTEM_FOLDER_IDENTIFIERS, View} from "src/shared/model/database";
 
 @Component({
@@ -105,10 +105,8 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
 
     codeFilter?: string;
 
-    constructor(
-        readonly store: Store<State>,
-    ) {
-        super(store);
+    constructor() {
+        super();
     }
 
     ngOnInit(): void {

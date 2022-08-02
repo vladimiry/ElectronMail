@@ -2,7 +2,7 @@ import fastGlob from "fast-glob";
 import fs from "fs";
 import path from "path";
 
-import {execShell} from "scripts/lib";
+import {CONSOLE_LOG, execShell} from "scripts/lib";
 import {sanitizeFastGlobPattern} from "src/shared/util/sanitize";
 
 // "--disable-setuid-sandbox" prevents falling back to SUID sandbox
@@ -64,4 +64,19 @@ export async function build(
     }
 
     return {packageFile};
+}
+
+export function addCommandLineArgs(
+    {shFile, searchValue, replaceWith}: { shFile: string, searchValue: string, replaceWith: string },
+): void {
+    const shFileContent = (() => {
+        const content = fs.readFileSync(shFile).toString();
+        const patchedContent = content.replaceAll(searchValue, `${replaceWith} --js-flags="--max-old-space-size=12288"`);
+        if (patchedContent === content) {
+            throw new Error(`Failed to search the "${searchValue}" string in the "${shFile}" file`);
+        }
+        return patchedContent;
+    })();
+    CONSOLE_LOG(`Writing ${shFile} file with content:`, shFileContent);
+    fs.writeFileSync(shFile, shFileContent);
 }

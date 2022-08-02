@@ -1,5 +1,5 @@
 import {app, dialog, nativeTheme, shell} from "electron";
-import compareVersions from "compare-versions";
+import {compareVersions} from "compare-versions";
 import electronLog from "electron-log";
 import {equals} from "remeda";
 import fetch from "electron-fetch";

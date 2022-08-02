@@ -2,7 +2,7 @@ import {ChangeDetectionStrategy, Component, ElementRef, Input} from "@angular/co
 import {combineLatest, fromEvent, Observable, Subscription} from "rxjs";
 import {distinctUntilChanged, first, map, mergeMap, tap, withLatestFrom} from "rxjs/operators";
 import type {OnDestroy, OnInit} from "@angular/core";
-import {select, Store} from "@ngrx/store";
+import {select} from "@ngrx/store";
 
 import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
@@ -10,7 +10,7 @@ import {DB_VIEW_MAIL_DATA_PK_ATTR_NAME, DB_VIEW_MAIL_SELECTED_CLASS_NAME} from "
 import {DbViewAbstractComponent} from "./db-view-abstract.component";
 import {Folder, Mail} from "src/shared/model/database/view";
 import {LABEL_TYPE, SYSTEM_FOLDER_IDENTIFIERS} from "src/shared/model/database";
-import {MailsBundleKey, State} from "src/web/browser-window/app/store/reducers/db-view";
+import {MailsBundleKey} from "src/web/browser-window/app/store/reducers/db-view";
 
 // TODO read "electron-mail-db-view-mail" from the DbViewMailComponent.selector property
 const mailComponentTagName = "electron-mail-db-view-mail".toUpperCase();
@@ -209,9 +209,8 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
 
     constructor(
         private elementRef: ElementRef<Element>,
-        store: Store<State>,
     ) {
-        super(store);
+        super();
     }
 
     ngOnInit(): void {

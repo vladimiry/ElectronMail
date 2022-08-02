@@ -3,7 +3,7 @@ import {BehaviorSubject, combineLatest, EMPTY, Observable, Subject, Subscription
 import {ChangeDetectionStrategy, Component, ElementRef, Input, NgZone, QueryList, ViewChildren} from "@angular/core";
 import {delay, distinctUntilChanged, filter, first, map, mergeMap, pairwise, withLatestFrom} from "rxjs/operators";
 import {equals} from "remeda";
-import {select, Store} from "@ngrx/store";
+import {select} from "@ngrx/store";
 import UUID from "pure-uuid";
 
 import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS} from "src/web/browser-window/app/store/actions";
@@ -12,7 +12,7 @@ import {DB_VIEW_MAIL_SELECTED_CLASS_NAME} from "./const";
 import {DbViewAbstractComponent} from "./db-view-abstract.component";
 import {DbViewMailComponent} from "./db-view-mail.component";
 import {getWebLogger} from "src/web/browser-window/util";
-import {Instance, State} from "src/web/browser-window/app/store/reducers/db-view";
+import {Instance} from "src/web/browser-window/app/store/reducers/db-view";
 import {Mail, View} from "src/shared/model/database";
 import {ONE_SECOND_MS, WEB_PROTOCOL_SCHEME} from "src/shared/const";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
@@ -85,11 +85,10 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
     private readonly logger = getWebLogger(__filename, nameof(DbViewMailBodyComponent));
 
     constructor(
-        store: Store<State>,
         private elementRef: ElementRef<HTMLElement>,
         private zone: NgZone,
     ) {
-        super(store);
+        super();
     }
 
     ngOnInit(): void {

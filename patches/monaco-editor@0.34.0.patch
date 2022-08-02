@@ -1,19 +1,14 @@
 diff --git a/esm/vs/editor/editor.main.js b/esm/vs/editor/editor.main.js
-index 97bfc6b8de457c98a5670df6c77510bf172c60ac..8fda43595a90fbd379234fd1df4c80d74ef80f44 100644
+index 97bfc6b8de457c98a5670df6c77510bf172c60ac..56a25a5b007c1b21ebd8fbb740a744b7cedb82a0 100644
 --- a/esm/vs/editor/editor.main.js
 +++ b/esm/vs/editor/editor.main.js
-@@ -1,7 +1,9 @@
+@@ -1,7 +1,5 @@
 -import '../basic-languages/monaco.contribution';
 -import '../language/css/monaco.contribution';
 -import '../language/html/monaco.contribution';
 -import '../language/json/monaco.contribution';
-+// import '../basic-languages/monaco.contribution';
 +import '../basic-languages/javascript/javascript.contribution';
 +import '../basic-languages/typescript/typescript.contribution';
-+// import '../language/css/monaco.contribution';
-+// import '../language/html/monaco.contribution';
-+// import '../language/json/monaco.contribution';
  import '../language/typescript/monaco.contribution';
  
  export * from './edcore.main';
-\ No newline at end of file

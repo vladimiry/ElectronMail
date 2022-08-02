@@ -1,12 +1,12 @@
 import {ChangeDetectionStrategy, Component, HostBinding, HostListener} from "@angular/core";
 import {distinctUntilChanged, map, mergeMap} from "rxjs/operators";
 import {EMPTY, Observable, of} from "rxjs";
-import {select, Store} from "@ngrx/store";
+import {select} from "@ngrx/store";
 
 import {DB_VIEW_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {DbViewAbstractComponent} from "./db-view-abstract.component";
 import {LABEL_TYPE, SYSTEM_FOLDER_IDENTIFIERS, View} from "src/shared/model/database";
-import {MailsBundleKey, State} from "src/web/browser-window/app/store/reducers/db-view";
+import {MailsBundleKey} from "src/web/browser-window/app/store/reducers/db-view";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 
 @Component({
@@ -70,10 +70,8 @@ export class DbViewMailTabComponent extends DbViewAbstractComponent {
         }),
     );
 
-    constructor(
-        store: Store<State>,
-    ) {
-        super(store);
+    constructor() {
+        super();
     }
 
     toggleSearchView(): void {

@@ -1,7 +1,7 @@
 {
   "name": "electron-mail",
   "description": "Unofficial ProtonMail Desktop App",
-  "version": "5.0.2",
+  "version": "5.0.3",
   "author": "Vladimir Yakovlev <desktop-app@protonmail.ch>",
   "license": "GPL-3.0",
   "homepage": "https://github.com/vladimiry/ElectronMail",
@@ -23,7 +23,7 @@
     "prepare:ts-patch": "ts-patch install -s",
     "prepare:ts-patch:check": "ts-patch check",
     "prepare:remove:prebuild-install": "rimraf ./node_modules/prebuild-install",
-    "app:dist": "npm-run-all lint build assets build:electron-builder-hooks clean:prebuilds",
+    "app:dist": "npm-run-all lint build assets prepare-native-deps build:electron-builder-hooks",
     "build": "npm-run-all build:electron-main build:electron-preload build:web",
     "build:dev": "cross-env NODE_ENV=development npm-run-all build",
     "build:electron-main": "npm-run-all scripts/code-generation/electron-main build:electron-main:compile:compression-native build:electron-main:compile",
@@ -55,6 +55,7 @@
     "build:electron-builder-hooks:celanup": "rimraf ./scripts/electron-builder/hooks/afterPack/index.js",
     "build:electron-builder-hooks:build": "pnpm run webpack:shortcut -- --config ./webpack-configs/electron-builder-hooks.ts",
     "build:electron-builder-hooks": "npm-run-all build:electron-builder-hooks:celanup build:electron-builder-hooks:build",
+    "prepare-native-deps": "npm-run-all clean:prebuilds prepare:remove:prebuild-install scripts/prepare-native-deps",
     "clean:app": "rimraf ./app",
     "clean:app-dev": "rimraf ./app-dev",
     "clean:output": "rimraf ./output",
@@ -81,6 +82,7 @@
     "test:e2e:build-code": "cross-env NODE_ENV=e2e npm-run-all build:electron-main build:electron-preload:browser-window build:electron-preload:webview-primary build:electron-preload:webview-calendar",
     "test:e2e:run": "cross-env DEBUG=pw:api TS_NODE_PROJECT=./src/e2e/tsconfig.json pnpm run ts-node:shortcut ./node_modules/playwright/cli.js test --global-timeout 600000 --timeout 600000",
     "test:e2e": "npm-run-all test:e2e:build-code test:e2e:run",
+    "scripts/prepare-native-deps": "pnpm run ts-node:shortcut ./scripts/prepare-native-deps.ts",
     "scripts/code-generation/electron-main": "pnpm run ts-node:shortcut ./scripts/code-generation/electron-main.ts",
     "scripts/dist-packages/print-hashes": "pnpm run ts-node:shortcut ./scripts/dist-packages/print-hashes.ts ./dist",
     "scripts/dist-packages/upload": "pnpm run ts-node:shortcut ./scripts/dist-packages/upload.ts ./dist ./output",
@@ -171,6 +173,7 @@
     "electron-builder": "23.3.3",
     "electron-fetch": "1.7.4",
     "electron-log": "4.4.8",
+    "electron-rebuild": "3.2.9",
     "electron-unhandled": "4.0.1",
     "eslint": "8.20.0",
     "eslint-plugin-import": "2.26.0",
@@ -268,7 +271,8 @@
       "sodium-native@3.3.0": "patches/sodium-native@3.3.0.patch",
       "tough-cookie-web-storage-store@1.0.0": "patches/tough-cookie-web-storage-store@1.0.0.patch",
       "ts-node@10.9.1": "patches/ts-node@10.9.1.patch",
-      "typescript-transform-paths@3.3.1": "patches/typescript-transform-paths@3.3.1.patch"
+      "typescript-transform-paths@3.3.1": "patches/typescript-transform-paths@3.3.1.patch",
+      "electron-rebuild@3.2.9": "patches/electron-rebuild@3.2.9.patch"
     }
   }
 }

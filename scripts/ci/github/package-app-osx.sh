@@ -2,14 +2,14 @@
 
 set -ev
 
-ARCH="${ELECTRON_MAIL_ARCH:-x64}" # defaults to "x64"
+ARCH="${ELECTRON_DEST_MAIL_ARCH:-x64}" # defaults to "x64"
 
 echo "::group::tweak the system"
 brew install automake libtool
 echo "::endgroup::"
 
-echo "::group::build native modules"
-npm_config_arch=${ARCH} pnpm run ts-node:shortcut ./scripts/ci/prepare-native-deps.ts
+echo "::group::compile native modules"
+pnpm run prepare-native-deps
 echo "::endgroup::"
 
 echo "::group::test e2e"

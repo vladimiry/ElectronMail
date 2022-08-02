@@ -1,0 +1,13 @@
+diff --git a/lib/src/clang-fetcher.js b/lib/src/clang-fetcher.js
+index ed9243f66d49658e9a03654fa1042cfa1dd06658..98916a395db0a88a10e52e29cd58ce6baac8119f 100644
+--- a/lib/src/clang-fetcher.js
++++ b/lib/src/clang-fetcher.js
+@@ -81,7 +81,7 @@ async function getClangEnvironmentVars(electronVersion, targetArch) {
+         env: {
+             CC: `"${path.resolve(clangDir, 'clang')}" ${clangArgs.join(' ')}`,
+             CXX: `"${path.resolve(clangDir, 'clang++')}" ${clangArgs.join(' ')}`,
+-            CFLAGS: `${cxxflags.join(' ')}`,
++            CFLAGS: `${process.env.CFLAGS ? process.env.CFLAGS + " ": ""}${cxxflags.join(' ')}`,
+             CXXFLAGS: `${cxxflags.join(' ')}`
+         },
+         args: gypArgs,

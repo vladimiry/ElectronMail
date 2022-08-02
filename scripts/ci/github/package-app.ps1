@@ -6,8 +6,8 @@ echo "::group::vs build tools setup"
 npm config set msvs_version 2017
 echo "::endgroup::"
 
-echo "::group::build native modules"
-pnpm run ts-node:shortcut ./scripts/ci/prepare-native-deps.ts
+echo "::group::compile native modules"
+pnpm run prepare-native-deps
 echo "::endgroup::"
 
 echo "::group::test e2e"

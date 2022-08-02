@@ -28,8 +28,8 @@ if [[ "$GLIBC_INFO" != *"$GLIBC_INFO_EXPECTED_SUB"* ]]; then
     exit 1
 fi
 
-echo "::group::build native modules"
-pnpm run ts-node:shortcut ./scripts/ci/prepare-native-deps.ts
+echo "::group::compile native modules"
+pnpm run prepare-native-deps
 echo "::endgroup::"
 
 echo "::group::test e2e setup"

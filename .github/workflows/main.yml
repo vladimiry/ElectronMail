@@ -77,7 +77,7 @@ jobs:
       - { name: build, if: runner.os == 'Windows', run: ./scripts/ci/github/package-app.ps1 }
       - { name: build, if: runner.os == 'Linux', run: ./scripts/ci/github/package-app-linux.sh }
       - { name: build, if: matrix.os == 'macos-10.15', run: ./scripts/ci/github/package-app-osx.sh, env: { MACOSX_DEPLOYMENT_TARGET: "10.10" } }
-      - { name: build, if: matrix.os == 'macos-latest', run: ./scripts/ci/github/package-app-osx.sh, env: { MACOSX_DEPLOYMENT_TARGET: "11.0", ELECTRON_MAIL_ARCH: "arm64" } }
+      - { name: build, if: matrix.os == 'macos-latest', run: ./scripts/ci/github/package-app-osx.sh, env: { MACOSX_DEPLOYMENT_TARGET: "11.0", ELECTRON_DEST_MAIL_ARCH: "arm64" } }
       - name: upload e2e/spectron output
         if: ${{ always() }}
         uses: actions/upload-artifact@v2

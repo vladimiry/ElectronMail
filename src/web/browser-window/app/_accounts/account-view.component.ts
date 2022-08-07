@@ -4,8 +4,8 @@ import {
 } from "rxjs";
 import {Component, ComponentRef, ElementRef, HostBinding, Input, NgZone, ViewChild, ViewContainerRef} from "@angular/core";
 import {
-    concatMap, debounceTime, delayWhen, distinctUntilChanged, filter, first, map, mergeMap, pairwise, startWith, switchMap, take, takeUntil,
-    tap, withLatestFrom,
+    concatMap, debounceTime, distinctUntilChanged, filter, first, map, mergeMap, pairwise, startWith, switchMap, take, takeUntil, tap,
+    withLatestFrom,
 } from "rxjs/operators";
 import type {Observable} from "rxjs";
 import type {OnDestroy, OnInit} from "@angular/core";
@@ -63,10 +63,6 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
     };
     @ViewChild("tplDbViewComponentContainerRef", {read: ViewContainerRef, static: true})
     private readonly tplDbViewComponentContainerRef!: ViewContainerRef;
-    private readonly onlinePing$ = timer(0, ONE_SECOND_MS).pipe(
-        filter(() => navigator.onLine),
-        take(1),
-    );
     private readonly persistentSession$ = this.account$.pipe(
         map(({accountConfig: {persistentSession}}) => Boolean(persistentSession)),
         distinctUntilChanged(),
@@ -123,7 +119,6 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
                     // account reloading with a new session in the case of "entryUrl" change gets handled via the "unload" action call
                     first(),
                     switchMap(({accountConfig: {login}}) => this.accountsService.setupLoginDelayTrigger({login}, this.logger)),
-                    delayWhen(() => this.onlinePing$),
                     withLatestFrom(this.account$),
                 )
                 // TODO move subscribe handler logic to "_accounts/*.service"

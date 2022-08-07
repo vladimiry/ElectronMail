@@ -1,11 +1,10 @@
-import {concatMap, delay, filter, map, mergeMap, retryWhen, switchMap, take, withLatestFrom} from "rxjs/operators";
+import {concatMap, delay, mergeMap, retryWhen, switchMap, take} from "rxjs/operators";
 import {createIpcMainApiService} from "electron-rpc-api";
 import {defer, Observable, of, race, Subscription, throwError, timer} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
 import type {OnDestroy} from "@angular/core";
 import {select, Store} from "@ngrx/store";
 
-import {Config} from "src/shared/model/options";
 import {DEFAULT_API_CALL_TIMEOUT, ONE_SECOND_MS} from "src/shared/const";
 import {getWebLogger} from "src/web/browser-window/util";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
@@ -33,18 +32,11 @@ export class WebviewPingFailedError extends Error {
 export class ElectronService implements OnDestroy {
     private defaultApiCallTimeoutMs = DEFAULT_API_CALL_TIMEOUT;
     private readonly subscription = new Subscription();
-    private readonly onlinePingWithTimeouts$: Observable<Config["timeouts"]>;
 
     constructor(
         private store: Store<State>,
         private ngZone: NgZone,
     ) {
-        this.onlinePingWithTimeouts$ = timer(0, ONE_SECOND_MS).pipe(
-            filter(() => navigator.onLine),
-            take(1),
-            withLatestFrom(this.store.pipe(select(OptionsSelectors.CONFIG.timeouts))),
-            map(([, timeouts]) => timeouts),
-        );
         this.subscription.add(
             this.store
                 .pipe(
@@ -72,19 +64,18 @@ export class ElectronService implements OnDestroy {
 
     primaryWebViewClient(
         {webView, accountIndex}: { webView: Electron.WebviewTag } & WebAccountIndexProp,
-        options?: LimitedCallOptions & {pingTimeoutMs?: number},
+        options?: LimitedCallOptions & { pingTimeoutMs?: number },
     ): Observable<ReturnType<typeof __ELECTRON_EXPOSURE__.buildIpcPrimaryWebViewClient>> {
         const client = __ELECTRON_EXPOSURE__.buildIpcPrimaryWebViewClient(
             webView,
             {options: this.buildApiCallOptions(options)},
         );
-
-        // TODO consider removing "ping" API or pinging once per "webView", keeping state in WeakMap<WebView, ...>?
-        return this.onlinePingWithTimeouts$.pipe(
+        return this.store.pipe(select(OptionsSelectors.CONFIG.timeouts)).pipe(
+            take(1),
             switchMap(({webViewApiPing: timeoutMs}) => {
                 return this.raceWebViewClient({client, accountIndex}, options?.pingTimeoutMs ?? timeoutMs);
             }),
-            concatMap(() => of(client)),
+            mergeMap(() => of(client)),
         );
     }
 

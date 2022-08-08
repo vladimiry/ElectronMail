@@ -1,0 +1,41 @@
+diff --git a/packages/components/hooks/useLinkHandler.tsx b/packages/components/hooks/useLinkHandler.tsx
+index cd4a0af3a..7d192d8d6 100644
+--- a/packages/components/hooks/useLinkHandler.tsx
++++ b/packages/components/hooks/useLinkHandler.tsx
+@@ -4,7 +4,7 @@ import punycode from 'punycode.js';
+ import { c } from 'ttag';
+
+ import { PROTON_DOMAINS } from '@proton/shared/lib/constants';
+-import { isEdge, isIE11 } from '@proton/shared/lib/helpers/browser';
++import { isEdge, isIE11, openNewTab } from '@proton/shared/lib/helpers/browser';
+ import { getSecondLevelDomain } from '@proton/shared/lib/helpers/url';
+ import { MailSettings } from '@proton/shared/lib/interfaces';
+ import isTruthy from '@proton/utils/isTruthy';
+@@ -165,6 +165,10 @@ export const useLinkHandler: UseLinkHandler = (
+             return;
+         }
+
++        event.preventDefault();
++        event.stopPropagation(); // Required for Safari
++        const encodedLink = await encoder(src);
++
+         if (
+             (askForConfirmation || isPhishingAttempt) &&
+             isExternal(src.raw) &&
+@@ -172,13 +176,10 @@ export const useLinkHandler: UseLinkHandler = (
+                 .filter(isTruthy) // currentDomain can be null
+                 .some((domain) => isSubDomain(hostname, domain))
+         ) {
+-            event.preventDefault();
+-            event.stopPropagation(); // Required for Safari
+-
+-            const link = await encoder(src);
+-            setLink(link);
+-
++            setLink(encodedLink);
+             setLinkConfirmationModalOpen(true);
++        } else {
++            openNewTab(encodedLink ?? src.raw);
+         }
+     });
+

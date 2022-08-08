@@ -1,10 +1,10 @@
 diff --git a/applications/account/src/app/Setup.tsx b/applications/account/src/app/Setup.tsx
-index 74279d7fb..4282e13b7 100644
+index 8f5e56ef0..a40d9dc17 100644
 --- a/applications/account/src/app/Setup.tsx
 +++ b/applications/account/src/app/Setup.tsx
-@@ -3,14 +3,30 @@ import { locales } from '@proton/shared/lib/i18n/locales';
- import { PublicAuthenticationStore, PrivateAuthenticationStore, useAuthentication } from '@proton/components';
- 
+@@ -2,14 +2,30 @@ import { PrivateAuthenticationStore, PublicAuthenticationStore, useAuthenticatio
+ import { locales } from '@proton/shared/lib/i18n/locales';
+
  import PrivateApp from './content/PrivateApp';
 -import PublicApp from './content/PublicApp';
 +
@@ -24,7 +24,7 @@ index 74279d7fb..4282e13b7 100644
 +    });
 +    return _ElectronMail_React_import_.createElement(_ElectronMail_React_import_.Fragment, null, message);
 +};
- 
+
  const Setup = () => {
 -    const { UID, login, logout } = useAuthentication() as PublicAuthenticationStore & PrivateAuthenticationStore;
 +    const { UID, logout } = useAuthentication() as PublicAuthenticationStore & PrivateAuthenticationStore;
@@ -34,7 +34,7 @@ index 74279d7fb..4282e13b7 100644
 -    return <PublicApp locales={locales} onLogin={login} />;
 +    return <RedirectToOrigin />;
  };
- 
+
  export default Setup;
 
 diff --git a/applications/account/src/app/content/MainContainer.tsx b/applications/account/src/app/content/MainContainer.tsx

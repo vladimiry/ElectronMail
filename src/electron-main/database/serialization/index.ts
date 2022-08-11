@@ -299,27 +299,30 @@ export const buildSerializer: Model.buildSerializerType = (() => {
                     {compression: compressionOpts.type, items: []};
                 const fileStream = (() => {
                     const stream = new WriteStreamAtomic(file, {highWaterMark: CONST.dataWritingBufferSize, encoding: "binary"});
-                    const streamErrorDeferred = new Deferred<void>();
-                    const writeToStream = async (chunk: Buffer): Promise<void> => {
-                        return new Promise<void>((resolve, reject) => {
-                            stream.write(chunk, (error) => {
-                                if (error) {
-                                    streamErrorDeferred.reject(error);
-                                    return reject(error);
+                    const streamDeferred = new Deferred<void>();
+                    const writeToStream = async (chunk: Buffer): Promise<[void, void]> => {
+                        const writeDeferred = new Deferred<void>();
+                        return Promise.all([
+                            writeDeferred.promise,
+                            new Promise<void>((resolve, reject) => {
+                                if (
+                                    !stream.write(chunk, (error) => {
+                                        if (error) return reject(error);
+                                        writeDeferred.resolve();
+                                    })
+                                ) {
+                                    stream.once("drain", resolve);
+                                } else {
+                                    resolve();
                                 }
-                                resolve();
-                            });
-                        });
+                            }),
+                        ]);
                     };
-                    let closePromise: Promise<void> | undefined;
-                    stream.once("error", (error) => streamErrorDeferred.reject(error));
+                    stream.once("error", (error) => streamDeferred.reject(error));
+                    stream.once("finish", () => streamDeferred.resolve());
                     return {
-                        closePromise,
-                        errorHandlingPromise: streamErrorDeferred.promise,
-                        async write(chunk: Buffer): Promise<void> {
-                            closePromise ??= new Promise((resolve) => stream.once("close", resolve));
-                            return writeToStream(chunk);
-                        },
+                        finishPromise: streamDeferred.promise,
+                        write: writeToStream,
                         async finish(): Promise<void> {
                             await writeToStream(
                                 Buffer.concat([
@@ -329,13 +332,7 @@ export const buildSerializer: Model.buildSerializerType = (() => {
                                     ),
                                 ]),
                             );
-                            await new Promise<void>((resolve) => {
-                                stream.end(() => {
-                                    stream.destroy();
-                                    resolve();
-                                });
-                            });
-                            streamErrorDeferred.resolve();
+                            await new Promise<void>((resolve) => stream.end(resolve));
                         },
                     } as const;
                 })();
@@ -346,71 +343,64 @@ export const buildSerializer: Model.buildSerializerType = (() => {
                 };
 
                 await Promise.all([
-                    fileStream.errorHandlingPromise,
-
+                    fileStream.finishPromise,
                     (async () => {
-                        try {
-                            { // serializing initial data structure (full db but with empty "mails")
-                                const accountsWithEmptyMails: DeepReadonly<FsDb["accounts"]> = Object.entries(inputDb.accounts).reduce(
-                                    (accountsAccumulator, [login, account]) => {
-                                        const accountWithoutMailsShallowCopy: typeof account = {...account, mails: {}};
-                                        return {...accountsAccumulator, [login]: accountWithoutMailsShallowCopy};
-                                    },
-                                    {} as DeepReadonly<FsDb["accounts"]>,
-                                );
-                                const dbWithEmptyMails: typeof inputDb = {...inputDb, accounts: accountsWithEmptyMails};
-                                await writeDataMapItem(dbWithEmptyMails);
-                            }
+                        { // serializing initial data structure (full db but with empty "mails")
+                            const accountsWithEmptyMails: DeepReadonly<FsDb["accounts"]> = Object.entries(inputDb.accounts).reduce(
+                                (accountsAccumulator, [login, account]) => {
+                                    const accountWithoutMailsShallowCopy: typeof account = {...account, mails: {}};
+                                    return {...accountsAccumulator, [login]: accountWithoutMailsShallowCopy};
+                                },
+                                {} as DeepReadonly<FsDb["accounts"]>,
+                            );
+                            const dbWithEmptyMails: typeof inputDb = {...inputDb, accounts: accountsWithEmptyMails};
+                            await writeDataMapItem(dbWithEmptyMails);
+                        }
 
-                            { // serializing emails split into the portions
-                                const mailsPortion: {
-                                    bufferDb: FsDb["accounts"],
-                                    portionSizeCounter: number,
-                                    readonly portionSizeLimit: number
-                                } = {
-                                    bufferDb: {},
-                                    portionSizeCounter: CONST.zero,
-                                    portionSizeLimit: (() => {
-                                        const clampInRangeLimit = (value: number): number => Math.min(
-                                            Math.max(value, CONST.mailsPortionSize.min),
-                                            CONST.mailsPortionSize.max,
-                                        );
-                                        const min = clampInRangeLimit(compressionOpts.mailsPortionSize.min);
-                                        const max = clampInRangeLimit(compressionOpts.mailsPortionSize.max);
-                                        return getRandomInt(
-                                            Math.min(min, max),
-                                            Math.max(min, max),
-                                        );
-                                    })(),
-                                };
-                                const writeMailsPortion = async (): Promise<void> => {
-                                    await writeDataMapItem(mailsPortion.bufferDb);
-                                    mailsPortion.bufferDb = {};
-                                    mailsPortion.portionSizeCounter = CONST.zero;
-                                };
+                        { // serializing emails split into the portions
+                            const mailsPortion: {
+                                bufferDb: FsDb["accounts"],
+                                portionSizeCounter: number,
+                                readonly portionSizeLimit: number
+                            } = {
+                                bufferDb: {},
+                                portionSizeCounter: CONST.zero,
+                                portionSizeLimit: (() => {
+                                    const clampInRangeLimit = (value: number): number => Math.min(
+                                        Math.max(value, CONST.mailsPortionSize.min),
+                                        CONST.mailsPortionSize.max,
+                                    );
+                                    const min = clampInRangeLimit(compressionOpts.mailsPortionSize.min);
+                                    const max = clampInRangeLimit(compressionOpts.mailsPortionSize.max);
+                                    return getRandomInt(
+                                        Math.min(min, max),
+                                        Math.max(min, max),
+                                    );
+                                })(),
+                            };
+                            const writeMailsPortion = async (): Promise<void> => {
+                                await writeDataMapItem(mailsPortion.bufferDb);
+                                mailsPortion.bufferDb = {};
+                                mailsPortion.portionSizeCounter = CONST.zero;
+                            };
 
-                                for (const [login, account] of Object.entries(inputDb.accounts)) {
-                                    for (const [mailPk, mail] of Object.entries(account.mails)) {
-                                        mailsPortion.portionSizeCounter++;
-                                        (mailsPortion.bufferDb[login] ??= Database.buildEmptyAccount()).mails[mailPk] = mail;
+                            for (const [login, account] of Object.entries(inputDb.accounts)) {
+                                for (const [mailPk, mail] of Object.entries(account.mails)) {
+                                    mailsPortion.portionSizeCounter++;
+                                    (mailsPortion.bufferDb[login] ??= Database.buildEmptyAccount()).mails[mailPk] = mail;
 
-                                        if (mailsPortion.portionSizeCounter === mailsPortion.portionSizeLimit) {
-                                            await writeMailsPortion(); // serializing mails portion
-                                        }
+                                    if (mailsPortion.portionSizeCounter === mailsPortion.portionSizeLimit) {
+                                        await writeMailsPortion(); // serializing mails portion
                                     }
                                 }
-
-                                if (mailsPortion.portionSizeCounter) {
-                                    await writeMailsPortion(); // serializing "remaining / incomplete" mails portion
-                                }
                             }
 
-                            await fileStream.finish();
-                        } finally {
-                            if (fileStream.closePromise) {
-                                await fileStream.closePromise;
+                            if (mailsPortion.portionSizeCounter) {
+                                await writeMailsPortion(); // serializing "remaining / incomplete" mails portion
                             }
                         }
+
+                        await fileStream.finish();
                     })(),
                 ]);
 

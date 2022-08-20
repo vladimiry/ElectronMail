@@ -148,7 +148,7 @@ type ProtonMetadataPart = NoExtraProps<{
     latestEventId: string; // Rest.Model.Event["EventID"]
 }>;
 
-export type FsDb = NoExtraProps<Partial<StoreModel.StoreEntity> & GenericDb<ProtonMetadataPart>>;
+export type FsDb = NoExtraProps<Partial<StoreModel.StoreEntity> & GenericDb<ProtonMetadataPart>> & { mergeId?: string };
 
 export type FsDbAccount = NoExtraProps<FsDb["accounts"][string]>;
 

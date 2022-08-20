@@ -78,6 +78,7 @@ export function initialConfig(): Config {
                 level: 7,
                 mailsPortionSize: {min: 800, max: 1000},
             },
+            dbMergeBytesFileSizeThreshold: 1024 * 1024 * 5, // 5 MB
             // base
             calendarNotification: false,
             checkUpdateAndNotify: false,

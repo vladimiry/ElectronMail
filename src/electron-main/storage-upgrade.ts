@@ -385,6 +385,12 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
                 config[key] = INITIAL_STORES.config()[key];
             }
         }
+        {
+            const key = "dbMergeBytesFileSizeThreshold";
+            if (typeof config[key] !== "number") {
+                config[key] = INITIAL_STORES.config()[key];
+            }
+        }
         try {
             if (config.fetching.rateLimit.maxInInterval === 275) {
                 config.fetching.rateLimit.maxInInterval = INITIAL_STORES.config().fetching.rateLimit.maxInInterval;
@@ -580,16 +586,16 @@ export const upgradeSettings: upgradeSettingsType = ((): upgradeSettingsType => 
 export async function upgradeDatabase(db: Database, accounts: Settings["accounts"]): Promise<boolean> {
     let needToSave = false;
 
-    if (db.getVersion() === "1") {
+    if (db.version === "1") {
         db.reset();
         return true;
     }
 
-    if (db.getVersion() === "2") {
+    if (db.version === "2") {
         needToSave = true;
     }
 
-    if (Number(db.getVersion()) < 4) {
+    if (Number(db.version) < 4) {
         for (const {account} of db) {
             if (typeof account.deletedPks !== "undefined") {
                 continue;
@@ -604,16 +610,16 @@ export async function upgradeDatabase(db: Database, accounts: Settings["accounts
         }
     }
 
-    if (Number(db.getVersion()) < 5) {
+    if (Number(db.version) < 5) {
         const dbInstance = (db as any)[DB_INSTANCE_PROP_NAME]; // eslint-disable-line @typescript-eslint/no-explicit-any
         dbInstance.accounts = dbInstance.accounts.protonmail ?? Database.buildEmptyDb().accounts;
         needToSave = true;
     }
 
     // was adding "{exclusive: number}" prop to the "folder" entity (parsed from the "folder.raw" value)
-    // if (Number(db.getVersion()) < 6) { ...
+    // if (Number(db.version) < 6) { ...
 
-    if (Number(db.getVersion()) < 7) {
+    if (Number(db.version) < 7) {
         const folderHandler = (folder: import("src/shared/model/database").Folder): void => {
             // setting "folder.type" prop from the "folder.raw" value
             if (!LABEL_TYPE._.isValidValue(folder.type)) {
@@ -634,7 +640,7 @@ export async function upgradeDatabase(db: Database, accounts: Settings["accounts
         }
     }
 
-    if (Number(db.getVersion()) < 9) {
+    if (Number(db.version) < 9) {
         for (const {account} of db) {
             for (const mail of Object.values(account.mails)) {
                 if (MIME_TYPES._.isValidValue(mail.mimeType)) {
@@ -647,7 +653,7 @@ export async function upgradeDatabase(db: Database, accounts: Settings["accounts
         }
     }
 
-    if (Number(db.getVersion()) < 10) {
+    if (Number(db.version) < 10) {
         for (const {account} of db) {
             for (const folder of Object.values(account.folders)) {
                 const rawModel = parseProtonRestModel(folder);
@@ -657,7 +663,7 @@ export async function upgradeDatabase(db: Database, accounts: Settings["accounts
         }
     }
 
-    if (Number(db.getVersion()) < 11) {
+    if (Number(db.version) < 11) {
         // "dataSaltBase64" prop generating/attaching enabled for every database file save operation, so just triggering the saving
         needToSave = true;
     }

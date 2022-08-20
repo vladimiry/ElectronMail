@@ -1,8 +1,11 @@
 import {authenticator} from "otplib";
 import electronLog from "electron-log";
 import {first} from "rxjs/operators";
+import fs from "fs";
 import {lastValueFrom} from "rxjs";
+import {noop} from "remeda";
 import path from "path";
+import UUID from "pure-uuid";
 
 import {applySpellcheckOptionsChange} from "src/electron-main/web-contents";
 import {applyThemeSource} from "src/electron-main/native-theme";
@@ -297,56 +300,98 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
         async loadDatabase({accounts}) {
             logger.info(nameof(endpoints.loadDatabase), "start");
 
-            const {db, sessionDb, sessionStorage} = ctx;
+            const config = await lastValueFrom(ctx.config$.pipe(first()));
+            const needToSave = {sessionDb: false, db: false};
+            let mergeId: string | undefined;
 
             // TODO move to "readSettings" method
-            await sessionStorage.load(accounts.map(({login}) => login));
+            await ctx.sessionStorage.load(accounts.map(({login}) => login));
 
-            if (await sessionDb.persisted()) {
-                await sessionDb.loadFromFile();
-                const upgraded = await upgradeDatabase(sessionDb, accounts);
-                logger.verbose(nameof(endpoints.loadDatabase), "session database upgraded:", upgraded);
-                // it will be reset and saved anyway
-            }
-
-            let needToSaveDb = false;
-
-            if (await db.persisted()) {
+            // loading & upgrading
+            for (const dbType of ["sessionDb", "db"] as const) {
+                const db = ctx[dbType];
+                if (!(await db.persisted())) continue;
                 await db.loadFromFile();
                 const upgraded = await upgradeDatabase(db, accounts);
-                logger.verbose(nameof(endpoints.loadDatabase), "database upgraded:", upgraded);
+                logger.verbose(nameof(endpoints.loadDatabase), `"${dbType}" upgraded:`, upgraded);
                 if (upgraded) {
-                    needToSaveDb = true;
+                    needToSave[dbType] = true;
                 }
             }
 
-            // merging session database to the primary one
-            if (await sessionDb.persisted()) {
-                logger.verbose(nameof(endpoints.loadDatabase), "start session db accounts merging to primary db");
-
-                for (const {pk: accountPk} of sessionDb) {
-                    if (
-                        Database.mergeAccount(
-                            sessionDb,
-                            db,
-                            accountPk,
-                        )
-                    ) {
-                        needToSaveDb = true;
+            { // cleaning thins if some db savings got failed before (previous app runs)
+                const sessionDbMergeId = ctx.sessionDb.mergeId;
+                if (sessionDbMergeId) {
+                    if (sessionDbMergeId === ctx.db.mergeId) {
+                        // case: "primary db" got saved after merging but "session db" saving after "resetting" got failed
+                        // action: just cleaning it up (re-applying resetting)
+                        ctx.sessionDb.reset();
+                        await ctx.sessionDb.saveToFile();
+                    } else {
+                        // case: "primary db" saving after merging got failed
+                        // action: NOOP (new merging will happen next in the code)
+                        noop(); // to please linting (TODO just ignore the linting rule)
                     }
                 }
             }
 
-            if (needToSaveDb) {
-                await db.saveToFile();
+            { // merging
+                const shouldMerge = await ctx.sessionDb.persisted();
+                const shouldSaveMerged = (
+                    shouldMerge
+                    &&
+                    fs.statSync(ctx.sessionDb.options.file).size >= config.dbMergeBytesFileSizeThreshold
+                );
+                logger.verbose(nameof(endpoints.loadDatabase), JSON.stringify({shouldMerge, shouldSaveMerged}));
+                if (shouldSaveMerged && !(await ctx.db.persisted())) { // primary db doesn't exist yet, so just renaming instead of merging
+                    if (needToSave.sessionDb) await ctx.sessionDb.saveToFile();
+                    await fs.promises.rename(ctx.sessionDb.options.file, ctx.db.options.file);
+                    ctx.sessionDb.reset();
+                    await ctx.sessionDb.saveToFile();
+                    await ctx.db.loadFromFile();
+                    needToSave.sessionDb = false;
+                    needToSave.db = false;
+                } else { // actual merging
+                    if (shouldMerge) {
+                        for (const {pk: accountPk} of ctx.sessionDb) {
+                            if (
+                                Database.mergeAccount(ctx.sessionDb, ctx.db, accountPk)
+                                &&
+                                shouldSaveMerged
+                            ) {
+                                needToSave.db = true;
+                            }
+                        }
+                    }
+                    if (shouldSaveMerged) {
+                        needToSave.sessionDb = true;
+                        mergeId = new UUID(4).format();
+                        // WARN we mark the "session db" as "has to be reset" in the case its consequent "saving after reset" fails
+                        //      so with this mark the app will reset it first thing to happen when it starts next time
+                        await ctx.sessionDb.setMergeIdAndSaveToFile(mergeId);
+                    }
+                }
             }
 
-            // resetting the session database in memory
-            sessionDb.reset();
-            // saving the session database
-            await sessionDb.saveToFile();
+            // WARN saving the "primary db" first as "session db" gets reset before saving if merged
+            //      and so data loss might occur if "primary db" didn't get saved before "session db" saving
+            if (needToSave.db) {
+                if (mergeId) {
+                    await ctx.db.setMergeIdAndSaveToFile(mergeId);
+                } else {
+                    await ctx.db.saveToFile();
+                }
+            }
+            if (needToSave.sessionDb) {
+                // WARN don't use "ctx.sessionDb.mergeId" test here as the value might potentially be filled in the previous app runs
+                //       when: "saving after merge" got failed and so "mergeId" remains AND merge threshold size got change manually
+                if (mergeId) {
+                    ctx.sessionDb.reset();
+                }
+                await ctx.sessionDb.saveToFile();
+            }
 
-            if ((await lastValueFrom(ctx.config$.pipe(first()))).fullTextSearch) {
+            if (config.fullTextSearch) {
                 await attachFullTextIndexWindow(ctx);
             } else {
                 await detachFullTextIndexWindow(ctx);

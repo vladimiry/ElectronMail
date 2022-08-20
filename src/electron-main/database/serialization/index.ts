@@ -39,10 +39,6 @@ export const buildSerializer: Model.buildSerializerType = (() => {
         mailsPortionSize: {min: 400, max: 5000},
         compressionLevelsFallback: {gzip: 6, zstd: 7, bzip2: 1},
     } as const;
-    const compressionNative = (() => {
-        let value: typeof import("./compression-native") | undefined;
-        return async () => value ??= await import("./compression-native");
-    })();
     const bufferToReadable = (input: Buffer): Readable => Readable.from(input, {highWaterMark: CONST.dataReadingBufferSize});
     const decryptBuffer = async (
         data: Buffer,
@@ -55,7 +51,7 @@ export const buildSerializer: Model.buildSerializerType = (() => {
             ? decryptedReadable.pipe(zlib.createGunzip())
             : (compressionType === "zstd" || compressionType === "bzip2")
                 ? bufferToReadable( // TODO use stream-based decompression
-                    await (await compressionNative()).decompress(compressionType, decryptedBuffer),
+                    await (await import("./compression-native")).decompress(compressionType, decryptedBuffer),
                 )
                 : decryptedReadable;
     };
@@ -90,7 +86,7 @@ export const buildSerializer: Model.buildSerializerType = (() => {
             compressionType === "gzip"
                 ? await promisify(zlib.gzip)(serializedDataBuffer, {level})
                 : (compressionType === "zstd" || compressionType === "bzip2")
-                    ? await (await compressionNative()).compress(compressionType, serializedDataBuffer, level)
+                    ? await (await import("./compression-native")).compress(compressionType, serializedDataBuffer, level)
                     : serializedDataBuffer
         );
         const encryptionHeaderBuffer = encryptedData.slice(CONST.zero, encryptedData.indexOf(CONST.headerZeroByteMark));

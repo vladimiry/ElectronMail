@@ -132,8 +132,12 @@ export class Database {
         this.logger = curryFunctionMembers(_logger, `[${path.basename(this.options.file)}]`);
     }
 
-    getVersion(): string {
+    get version(): FsDb["version"] {
         return this.dbInstance.version;
+    }
+
+    get mergeId(): FsDb["mergeId"] {
+        return this.dbInstance.mergeId;
     }
 
     getMutableAccount<TL extends DbAccountPk>({login}: TL): FsDbAccount | undefined {
@@ -212,6 +216,11 @@ export class Database {
 
             this.logStats("saveToFile", duration);
         });
+    }
+
+    async setMergeIdAndSaveToFile(value: FsDb["mergeId"]): Promise<void> {
+        this.dbInstance.mergeId = value;
+        await this.saveToFile();
     }
 
     reset(): void {

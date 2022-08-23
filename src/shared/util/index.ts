@@ -37,9 +37,8 @@ export function initialConfig(): Config {
             },
             fetching: {
                 rateLimit: {
-                    // 275 requests in 60 seconds
                     intervalMs: ONE_MINUTE_MS,
-                    maxInInterval: 275,
+                    maxInInterval: 300, // gave ~80 loaded messages per minute on ~6k messages account
                 },
                 messagesStorePortionSize: DEFAULT_MESSAGES_STORE_PORTION_SIZE,
             },

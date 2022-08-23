@@ -7,7 +7,7 @@ import {asyncDelay, curryFunctionMembers, isDatabaseBootstrapped} from "src/shar
 import {DbPatch} from "src/shared/api/common";
 import {FsDbAccount} from "src/shared/model/database";
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
-import {LOCAL_WEBCLIENT_ORIGIN, ONE_SECOND_MS} from "src/shared/const";
+import {LOCAL_WEBCLIENT_ORIGIN, ONE_MINUTE_MS, ONE_SECOND_MS} from "src/shared/const";
 import {Logger} from "src/shared/model/common";
 import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
 import {RATE_LIMITED_METHOD_CALL_MESSAGE} from "src/electron-preload/webview/lib/const";
@@ -235,7 +235,7 @@ export async function persistDatabasePatch(
         throw new Error(nameof(providerApi._throwErrorOnRateLimitedMethodCall));
     }
 
-    await resolveIpcMainApi({logger})("dbPatch")({
+    await resolveIpcMainApi({timeoutMs: ONE_MINUTE_MS * 5, logger})("dbPatch")({
         bootstrapPhase,
         login: data.login,
         metadata: data.metadata,

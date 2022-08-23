@@ -385,6 +385,13 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
                 config[key] = INITIAL_STORES.config()[key];
             }
         }
+        try {
+            if (config.fetching.rateLimit.maxInInterval === 275) {
+                config.fetching.rateLimit.maxInInterval = INITIAL_STORES.config().fetching.rateLimit.maxInInterval;
+            }
+        } catch {
+            // NOOP
+        }
     },
     // last updater
     "100.0.0": (config) => {

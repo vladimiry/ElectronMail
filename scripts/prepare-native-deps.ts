@@ -1,6 +1,7 @@
 import fastGlob from "fast-glob";
 import fs from "fs";
 import os from "os";
+import packageJSON from "package.json" assert {type: "json"};
 import path from "path";
 
 import {catchTopLeventAsync, CONSOLE_LOG, execShell} from "scripts/lib";
@@ -44,9 +45,9 @@ const compileNativeDeps = async (): Promise<void> => {
                         "--",
                         electronRebuildModuleName,
                         "--force",
-                        "--which-module",
-                        moduleName,
-                        `--arch=${destArch}`,
+                        `--arch`, destArch,
+                        "--version", packageJSON.devDependencies.electron,
+                        "--which-module", moduleName,
                     ],
                     {
                         cwd: moduleDir,

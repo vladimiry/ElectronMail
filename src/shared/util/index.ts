@@ -210,7 +210,7 @@ export function mailDateComparatorDefaultsToDesc(o1: View.Mail, o2: View.Mail, o
 
 // TODO consider using https://github.com/cedx/enum.js instead
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
-export function buildEnumBundle<M, K extends keyof M, V extends Extract<M[keyof M], string | number>>(
+export function buildEnumBundle<M extends Record<string, unknown>, K extends keyof M, V extends Extract<M[keyof M], string | number>>(
     nameValueMap: M,
 ) {
     const {names, values, valueNameMap} = Object

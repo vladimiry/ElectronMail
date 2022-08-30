@@ -161,9 +161,9 @@ export const overridePushMethodGlobally = <T>(
 };
 
 export const handleObservableValue = <R,
-    T extends AddInitializedProp<PickObservableValues<R>>,
+    T extends PickObservableValues<R>,
     K extends Extract<keyof T, string>>(
-    result: T,
+    result: AddInitializedProp<T>,
     {
         resultKey,
         webpack_exports,

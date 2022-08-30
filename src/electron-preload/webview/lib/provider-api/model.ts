@@ -24,7 +24,7 @@ export interface DefineObservableValue<T, VS extends (arg: unknown) => unknown =
     readonly value$: import("rxjs").Subject<T>
 }
 
-export type PickObservableValues<T extends AddInitializedProp<T>> = import("ts-essentials").NonNever<{
+export type PickObservableValues<T> = import("ts-essentials").NonNever<{
     [K in keyof T]:
     T[K] extends DefineObservableValue<infer U> // eslint-disable-line @typescript-eslint/no-unused-vars
         ? T[K]

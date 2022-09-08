@@ -38,16 +38,15 @@ index 8f5e56ef0..a40d9dc17 100644
  export default Setup;
 
 diff --git a/applications/account/src/app/content/MainContainer.tsx b/applications/account/src/app/content/MainContainer.tsx
-index f14e76d5a..b21b54c97 100644
+index ceb51ba56..7656f38f6 100644
 --- a/applications/account/src/app/content/MainContainer.tsx
 +++ b/applications/account/src/app/content/MainContainer.tsx
-@@ -91,7 +91,7 @@ const MainContainer = () => {
-         setExpand(false);
-     }, [location.pathname, location.hash]);
+@@ -119,7 +119,7 @@ const MainContainer = () => {
+
+     useDeviceRecovery();
 
 -    const app = getAppFromPathnameSafe(location.pathname) || DEFAULT_APP;
 +    const app = getAppFromPathnameSafe(window.location.pathname) || DEFAULT_APP;
      const appSlug = getSlugFromApp(app);
 
      /*
-

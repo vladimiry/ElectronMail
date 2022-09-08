@@ -23,7 +23,7 @@ export const PROVIDER_REPO_MAP = {
         basePath: "",
         apiSubdomain: "mail-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-mail@5.0.6.9",
+        tag: "proton-mail@5.0.7.9",
         protonPack: {
             webpackIndexEntryItems: [
                 // immediate
@@ -49,14 +49,14 @@ export const PROVIDER_REPO_MAP = {
         basePath: "account",
         apiSubdomain: "account-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-account@5.0.6.0",
+        tag: "proton-account@5.0.7.3",
         protonPack: {}
     },
     [PROVIDER_APP_NAMES[2]]: {
         basePath: "calendar",
         apiSubdomain: "calendar-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-calendar@5.0.4.1",
+        tag: "proton-calendar@5.0.4.4",
         protonPack: {
             webpackIndexEntryItems: [
                 // immediate

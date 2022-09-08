@@ -54,16 +54,18 @@ index 11cd310f6..8019c07f5 100644
      if (window.location.hostname === 'localhost' || getIsDohDomain(window.location.origin)) {
 
 diff --git a/packages/shared/lib/fetch/helpers.ts b/packages/shared/lib/fetch/helpers.ts
-index 6edb249f3..738c4da33 100644
+index f0b3e2e31..90995e1fc 100644
 --- a/packages/shared/lib/fetch/helpers.ts
 +++ b/packages/shared/lib/fetch/helpers.ts
-@@ -10,11 +10,13 @@ const appendQueryParams = (url: URL, params: { [key: string]: any }) => {
+@@ -10,6 +10,7 @@ const appendQueryParams = (url: URL, params: { [key: string]: any }) => {
      });
  };
 
 +/* <electron-mail-mark> */
  export const createUrl = (urlString: string, params: { [key: string]: any } = {}) => {
-     const url = new URL(urlString, window.location.origin);
+     let url: URL;
+     if (typeof window !== 'undefined') {
+@@ -20,6 +21,7 @@ export const createUrl = (urlString: string, params: { [key: string]: any } = {}
      appendQueryParams(url, params);
      return url;
  };

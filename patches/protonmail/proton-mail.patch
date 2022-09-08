@@ -1,18 +1,17 @@
 diff --git a/packages/shared/lib/api/events.ts b/packages/shared/lib/api/events.ts
-index 263d640ff..d1944c66e 100644
+index 7c263575d..6d696e5f4 100644
 --- a/packages/shared/lib/api/events.ts
 +++ b/packages/shared/lib/api/events.ts
-@@ -1,9 +1,11 @@
- export const getLatestID = () => ({
-     url: 'v4/events/latest',
-     method: 'get',
-+    params: { MessageCounts: "", ConversationCounts: "", },
- });
-
- export const getEvents = (eventID: string) => ({
+@@ -6,5 +6,9 @@ export const getLatestID = () => ({
+ export const getEvents = (eventID: string, params?: { ConversationCounts: 1 | 0; MessageCounts: 1 | 0 }) => ({
      url: `v4/events/${eventID}`,
      method: 'get',
-+    params: { MessageCounts: "", ConversationCounts: "", },
+-    params,
++    params: {
++        ...params,
++        ConversationCounts: 1,
++        MessageCounts: 1,
++    },
  });
 
 diff --git a/packages/components/containers/login/MinimalLoginContainer.tsx b/packages/components/containers/login/MinimalLoginContainer.tsx
@@ -324,18 +323,18 @@ index bdabb99e0..a56b8cdcb 100644
      };
 
 diff --git a/applications/mail/src/app/components/header/MailHeader.tsx b/applications/mail/src/app/components/header/MailHeader.tsx
-index e68f73cd8..6a69bfb1f 100644
+index d86dc9880..e75180b46 100644
 --- a/applications/mail/src/app/components/header/MailHeader.tsx
 +++ b/applications/mail/src/app/components/header/MailHeader.tsx
-@@ -34,7 +34,6 @@ import { getLabelName } from '../../helpers/labels';
- import { useEncryptedSearchContext } from '../../containers/EncryptedSearchProvider';
- import { useOnCompose, useOnMailTo } from '../../containers/ComposeProvider';
- import { MESSAGE_ACTIONS } from '../../constants';
--import MailDefaultHandlerModal from './MailDefaultHandlerModal';
- import ClearBrowserDataModal from './ClearBrowserDataModal';
- import MailSearch from './search/MailSearch';
+@@ -38,7 +38,6 @@ import { setParamsInUrl } from '../../helpers/mailboxUrl';
+ import { Breakpoints } from '../../models/utils';
  import MailOnboardingModal from '../onboarding/MailOnboardingModal';
-@@ -191,7 +190,6 @@ const MailHeader = ({ labelID, elementID, breakpoints, expanded, onToggleExpand
+ import ClearBrowserDataModal from './ClearBrowserDataModal';
+-import MailDefaultHandlerModal from './MailDefaultHandlerModal';
+ import MailSearch from './search/MailSearch';
+
+ interface Props {
+@@ -192,7 +191,6 @@ const MailHeader = ({ labelID, elementID, breakpoints, expanded, onToggleExpand
              <MailViewLayoutModal {...mailViewLayoutProps} />
              <MailDensityModal {...mailDensityProps} />
              <MailComposerModeModal {...mailComposerModeProps} />

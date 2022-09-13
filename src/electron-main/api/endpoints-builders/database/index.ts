@@ -1,7 +1,7 @@
 import electronLog from "electron-log";
 import {first} from "rxjs/operators";
 import {lastValueFrom} from "rxjs";
-import {omit} from "remeda";
+import {omit, pick} from "remeda";
 import sanitizeHtml from "sanitize-html";
 import UUID from "pure-uuid";
 
@@ -10,7 +10,6 @@ import {buildDbIndexingEndpoints} from "./indexing/api";
 import {buildDbSearchEndpoints} from "./search/api";
 import {Context} from "src/electron-main/model";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
-import {Database} from "src/electron-main/database";
 import {DB_DATA_CONTAINER_FIELDS, IndexableMail} from "src/shared/model/database";
 import * as DbModel from "src/shared/model/database";
 import {IPC_MAIN_API_DB_INDEXER_REQUEST$, IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/const";
@@ -26,6 +25,8 @@ const _logger = curryFunctionMembers(electronLog, __filename);
 
 type Methods = keyof Pick<IpcMainApiEndpoints,
     | "dbPatch"
+    | "dbGetAccountBootstrapOldestRawMailMetadata"
+    | "dbGetAccountBootstrapRawMailIds"
     | "dbResetDbMetadata"
     | "dbGetAccountMetadata"
     | "dbGetAccountDataView"
@@ -45,23 +46,45 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
         ...await buildDbSearchEndpoints(ctx),
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-        async dbPatch({bootstrapPhase, login, metadata: metadataPatch, patch: entityUpdatesPatch}) {
+        async dbPatch({login, metadata: metadataPatch, patch: entityUpdatesPatch}) {
             const logger = curryFunctionMembers(_logger, nameof(endpoints.dbPatch));
 
             logger.info();
 
-            const {db, sessionDb} = ctx;
             const accountKey = {login} as const;
+            const fetchStage = typeof metadataPatch === "object"
+                ? metadataPatch.fetchStage
+                : undefined;
 
-            logger.verbose(JSON.stringify({bootstrapPhase}));
+            logger.verbose(JSON.stringify({fetchStage}));
 
-            if (bootstrapPhase === "initial") {
-                // reset session db account so the bootstrap fetch outcome gets saved into the clear/empty session database
-                sessionDb.initEmptyAccount(accountKey);
+            if (fetchStage === "bootstrap_init") {
+                for (const db of [ctx.sessionDb, ctx.db]) {
+                    setTimeout(() => {
+                        // removing stale mails form the full text search index
+                        // TODO performance optimization: send mails to indexing process if indexing feature activated
+                        IPC_MAIN_API_DB_INDEXER_REQUEST$.next(
+                            IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS.Index(
+                                {
+                                    uid: new UUID(4).format(),
+                                    ...narrowIndexActionPayload({
+                                        key: accountKey,
+                                        add: [],
+                                        remove: Array
+                                            .from(new Set(Object.keys(db.getAccount(accountKey)?.mails ?? {})))
+                                            .map((pk) => ({pk})),
+                                    }),
+                                },
+                            ),
+                        );
+                    });
+                    db.initEmptyAccount(accountKey);
+                    await db.saveToFile();
+                }
             }
 
-            const account = db.getMutableAccount(accountKey) || db.initEmptyAccount(accountKey);
-            const sessionAccount = sessionDb.getMutableAccount(accountKey) || sessionDb.initEmptyAccount(accountKey);
+            const account = ctx.db.getMutableAccount(accountKey) || ctx.db.initEmptyAccount(accountKey);
+            const sessionAccount = ctx.sessionDb.getMutableAccount(accountKey) || ctx.sessionDb.initEmptyAccount(accountKey);
 
             for (const entityType of DB_DATA_CONTAINER_FIELDS) {
                 const {remove, upsert} = entityUpdatesPatch[entityType];
@@ -107,57 +130,6 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
 
             logger.verbose(JSON.stringify({entitiesModified, metadataModified, sessionMetadataModified}));
 
-            if (bootstrapPhase === "final") {
-                // reset db account before mering session db account into it
-                db.initEmptyAccount(accountKey);
-
-                // calculate stale ids, ie those that get removed after the session db account merge
-                const staleMailPks = (() => {
-                    {
-                        const sessionAccount = sessionDb.getAccount(accountKey);
-                        const account = db.getAccount(accountKey);
-                        if (!sessionAccount || !account) {
-                            return [];
-                        }
-                        const sessionMails = sessionAccount["mails"];
-                        const allMailsPks = Object.keys(account["mails"]);
-                        const staleMailsPks = allMailsPks.filter((mailPk) => !(mailPk in sessionMails));
-                        return staleMailsPks.map((pk) => ({pk}));
-                    }
-                })();
-
-                setTimeout(() => {
-                    // removing stale mails form the full text search index
-                    // TODO performance optimization: send mails to indexing process if indexing feature activated
-                    IPC_MAIN_API_DB_INDEXER_REQUEST$.next(
-                        IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS.Index(
-                            {
-                                uid: new UUID(4).format(),
-                                ...narrowIndexActionPayload({
-                                    key: accountKey,
-                                    add: [],
-                                    remove: staleMailPks,
-                                }),
-                            },
-                        ),
-                    );
-                });
-
-                if (
-                    Database.mergeAccount(
-                        sessionDb,
-                        db,
-                        accountKey,
-                    )
-                ) {
-                    await db.saveToFile();
-                }
-
-                // reset session db account after it got merged into the primary db
-                sessionDb.initEmptyAccount(accountKey);
-                await sessionDb.saveToFile();
-            }
-
             setTimeout(async () => {
                 const config = await lastValueFrom(ctx.config$.pipe(first()));
                 const {disableSpamNotifications} = config;
@@ -166,7 +138,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                     IPC_MAIN_API_NOTIFICATION_ACTIONS.DbPatchAccount({
                         key: accountKey,
                         entitiesModified,
-                        stat: db.accountStat(account, !disableSpamNotifications),
+                        stat: ctx.db.accountStat(account, !disableSpamNotifications),
                     }),
                 );
             });
@@ -176,10 +148,30 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                 ||
                 sessionMetadataModified
             ) {
-                await sessionDb.saveToFile();
+                await ctx.sessionDb.saveToFile();
             }
 
             return account.metadata;
+        },
+
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+        async dbGetAccountBootstrapOldestRawMailMetadata({login}) {
+            const oldestBootstrappedMail = Object.values(ctx.db.getAccount({login})?.mails || {})
+                .filter(({failedDownload}) => failedDownload?.type === "bootstrap-fetch")
+                .sort(({sentDate: a}, {sentDate: b}) => b - a) // descending order (oldest last)
+                .pop();
+            return oldestBootstrappedMail
+                ? pick(parseProtonRestModel(oldestBootstrappedMail), ["ID", "Time"])
+                : null;
+        },
+
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+        async dbGetAccountBootstrapRawMailIds({login}) {
+            return Object.values(ctx.db.getAccount({login})?.mails || {})
+                .filter(({failedDownload}) => failedDownload?.type === "bootstrap-fetch")
+                .sort(({sentDate: a}, {sentDate: b}) => b - a) // descending order (oldest last)
+                .map(parseProtonRestModel)
+                .map(({ID}) => ({ID}));
         },
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
@@ -266,13 +258,15 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             return {
                 ...omit(mail, ["body"]),
                 // TODO test "dbGetAccountMail" setting "mail.body" through the "sanitizeHtml" call
-                body: sanitizeHtml(
-                    Object
-                        .entries(parseProtonRestModel(mail).ParsedHeaders)
-                        .some(([name, value]) => name.toLowerCase() === "content-type" && value === "text/plain")
-                    ? readMailBody(mail).replace(/[\n\r]/g, "<br>")
-                    : readMailBody(mail)
-                ),
+                body: !mail.failedDownload
+                    ? sanitizeHtml(
+                        Object
+                            .entries(parseProtonRestModel(mail).ParsedHeaders)
+                            .some(([name, value]) => name.toLowerCase() === "content-type" && value === "text/plain")
+                            ? readMailBody(mail).replace(/[\n\r]/g, "<br>")
+                            : readMailBody(mail)
+                    )
+                    : "",
             };
         },
     };

@@ -3,6 +3,7 @@ import {equals} from "remeda";
 
 import {curryFunctionMembers} from "src/shared/util";
 import {Folder, FsDbAccount, LABEL_TYPE, SYSTEM_FOLDER_IDENTIFIERS, View} from "src/shared/model/database";
+import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {PRODUCT_NAME} from "src/shared/const";
 
 const logger = curryFunctionMembers(electronLog, __filename);
@@ -79,28 +80,19 @@ const buildVirtualUnreadFolder = (): Folder => {
 // patching "target" with "source"
 export function patchMetadata(
     target: FsDbAccount["metadata"],
-    // TODO TS: use patch: Parameters<IpcMainApiEndpoints["dbPatch"]>[0]["metadata"],
-    patch: DeepReadonly<FsDbAccount["metadata"]>,
+    patch: Parameters<IpcMainApiEndpoints["dbPatch"]>[0]["metadata"],
     sourceType: "dbPatch" | "mergeAccount",
 ): boolean {
-    const logPrefix = `patchMetadata() ${sourceType}`;
+    const logPrefix = `${nameof(patchMetadata)}() ${sourceType}`;
 
     logger.info(logPrefix);
 
-    if (
-        typeof patch.latestEventId !== "string"
-        ||
-        !patch.latestEventId.trim()
-    ) {
-        // we don't allow patching with empty/initial value
-        // which would cause a need to completely reset the account in the database
+    if (patch === "skipPatching") {
         return false;
     }
 
     // TODO apply "merge deep" logic if metadata becomes nested object
     const merged = {...target, ...patch} as const;
-
-    // console.log(JSON.stringify({target, source, merged}, null, 2));
 
     if (equals(target, merged)) {
         return false;

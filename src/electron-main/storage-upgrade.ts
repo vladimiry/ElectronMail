@@ -88,11 +88,6 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             config.disableSpamNotifications = INITIAL_STORES.config().disableSpamNotifications;
         }
     },
-    "2.2.1": (_, config = _ as Config & { timeouts: { syncing?: number } }) => {
-        if (typeof config.timeouts.syncing !== "number") {
-            config.timeouts.syncing = INITIAL_STORES.config().timeouts.dbSyncing;
-        }
-    },
     "2.3.3": (_, config = _ as Config & { timeouts: { fetching?: number; syncing?: number } }) => {
         const defaultConfig = INITIAL_STORES.config();
 
@@ -110,19 +105,6 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
 
         if (typeof config.indexingBootstrapBufferSize !== "number") {
             config.indexingBootstrapBufferSize = defaultConfig.indexingBootstrapBufferSize;
-        }
-
-        {
-            if (typeof config.timeouts.dbBootstrapping !== "number") {
-                config.timeouts.dbBootstrapping = defaultConfig.timeouts.dbBootstrapping;
-            }
-
-            if (typeof config.timeouts.dbSyncing !== "number") {
-                config.timeouts.dbSyncing = defaultConfig.timeouts.dbSyncing;
-            }
-
-            delete config.timeouts.fetching;
-            delete config.timeouts.syncing;
         }
     },
     "3.5.0": (
@@ -186,9 +168,6 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             INITIAL_STORES.config().timeouts.indexingBootstrap,
             timeouts.indexingBootstrap,
         );
-        // if (typeof restConfig.reflectSelectedAccountTitle === "undefined") {
-        //     restConfig.reflectSelectedAccountTitle = INITIAL_STORES.config().reflectSelectedAccountTitle;
-        // }
     },
     "4.1.0": (
         _,
@@ -398,6 +377,10 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
         } catch {
             // NOOP
         }
+    },
+    "5.1.1": (config) => {
+        delete (config.timeouts as { dbBootstrapping?: unknown }).dbBootstrapping;
+        delete (config.timeouts as { dbSyncing?: unknown }).dbSyncing;
     },
     // last updater
     "100.0.0": (config) => {

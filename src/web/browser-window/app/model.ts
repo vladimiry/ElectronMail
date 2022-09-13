@@ -12,6 +12,7 @@ export interface WebAccount extends WebAccountIndexProp {
     accountConfig: AccountConfig
     progress: Partial<Record<keyof AccountConfig["credentials"], boolean>> & Partial<{
         syncing: boolean
+        syncProgress: string
         indexing: boolean
         searching: boolean
         selectingMailOnline: boolean

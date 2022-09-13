@@ -49,7 +49,7 @@ export class AccountsLoginFormSubmittingEffects {
                         async () => this.loginRateLimiter.consume(key),
                     );
                     // tslint:disable-next-line:early-exit
-                    if (waitTimeMs > 0) {
+                    if (waitTimeMs) {
                         const {points, duration} = this.loginRateLimiterOptions;
                         throw new Error([
                             `It's not allowed to submit the same password for the same account`,

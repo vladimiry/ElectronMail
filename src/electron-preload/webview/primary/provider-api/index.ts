@@ -8,12 +8,10 @@ import {EncryptionPreferences, MessageVerification, ProviderApi} from "./model";
 import {FETCH_NOTIFICATION_SKIP_SYMBOL} from "./const";
 import {HttpApi, resolveStandardSetupPublicApi} from "src/electron-preload/webview/lib/provider-api/standart-setup-internals";
 import {Logger} from "src/shared/model/common";
+import {PROTON_MAX_QUERY_PORTION_LIMIT, WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 import {resolveProviderInternals} from "./internals";
-import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, __filename);
-
-const protonMaxPageSize = 150;
 
 // TODO move function wrapping to utility function
 const attachLoggingBeforeCall = (api: ProviderApi, logger: Logger): void => {
@@ -128,19 +126,12 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                     );
                 },
             },
-            conversation: {
-                async getConversation(id) {
-                    return (await resolveHttpApi())(
-                        internals["../../packages/shared/lib/api/conversations.ts"].value.getConversation(id),
-                    );
-                },
-                async queryConversations(params) {
-                    return (await resolveHttpApi())(
-                        internals["../../packages/shared/lib/api/conversations.ts"].value.queryConversations(params),
-                    );
-                },
-            },
             message: {
+                async queryMessageCount() {
+                    return (await resolveHttpApi())(
+                        internals["../../packages/shared/lib/api/messages.ts"].value.queryMessageCount(),
+                    );
+                },
                 async getMessage(id) {
                     return (await resolveHttpApi())(
                         internals["../../packages/shared/lib/api/messages.ts"].value.getMessage(id),
@@ -155,21 +146,21 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                     const api = await resolveHttpApi();
                     const {markMessageAsRead: apiMethod} = internals["../../packages/shared/lib/api/messages.ts"].value;
                     await Promise.all(
-                        chunk(IDs, protonMaxPageSize).map(async (IDsPortion) => api(apiMethod(IDsPortion))),
+                        chunk(IDs, PROTON_MAX_QUERY_PORTION_LIMIT).map(async (IDsPortion) => api(apiMethod(IDsPortion))),
                     );
                 },
                 async labelMessages({LabelID, IDs}) {
                     const api = await resolveHttpApi();
                     const {labelMessages: apiMethod} = internals["../../packages/shared/lib/api/messages.ts"].value;
                     await Promise.all(
-                        chunk(IDs, protonMaxPageSize).map(async (IDsPortion) => api(apiMethod({IDs: IDsPortion, LabelID}))),
+                        chunk(IDs, PROTON_MAX_QUERY_PORTION_LIMIT).map(async (IDsPortion) => api(apiMethod({IDs: IDsPortion, LabelID}))),
                     );
                 },
                 async deleteMessages(IDs) {
                     const api = await resolveHttpApi();
                     const {deleteMessages: apiMethod} = internals["../../packages/shared/lib/api/messages.ts"].value;
                     await Promise.all(
-                        chunk(IDs, protonMaxPageSize).map(async (IDsPortion) => api(apiMethod(IDsPortion)))
+                        chunk(IDs, PROTON_MAX_QUERY_PORTION_LIMIT).map(async (IDsPortion) => api(apiMethod(IDsPortion)))
                     );
                 },
             },

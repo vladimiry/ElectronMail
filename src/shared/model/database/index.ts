@@ -32,7 +32,7 @@ export type ConversationEntry = NoExtraProps<Entity & {
 }>;
 
 export type MailFailedDownload = NoExtraProps<{
-    readonly type: "body-decrypting";
+    readonly type: "body-decrypting" | "bootstrap-fetch";
     readonly errorMessage: string;
     readonly errorStack: string;
     readonly date: Timestamp;
@@ -145,7 +145,13 @@ type GenericDb<MetadataPart> = NoExtraProps<{
 }>;
 
 type ProtonMetadataPart = NoExtraProps<{
-    latestEventId: string; // Rest.Model.Event["EventID"]
+    latestEventId: string // Rest.Model.Event["EventID"]
+    fetchStage?:
+        | "bootstrap_init"
+        | "bootstrap_messages_metadata"
+        | "bootstrap_messages_content"
+        | "bootstrap_final"
+        | "events"
 }>;
 
 export type FsDb = NoExtraProps<Partial<StoreModel.StoreEntity> & GenericDb<ProtonMetadataPart>> & { mergeId?: string };

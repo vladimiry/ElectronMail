@@ -66,6 +66,16 @@ export const protonApiUrlsUtil = {
 
         return true;
     },
+
+    patchMailApiHeaders(urlPathname: string, requestHeaders: Record<string, string>): boolean {
+        if (!`${urlPathname}/`.startsWith("/api/mail/v4/messages/") && !`${urlPathname}/`.startsWith("/mail/v4/messages/")) {
+            return false;
+        }
+        // eslint-disable-next-line max-len
+        // https://github.com/ProtonMail/WebClients/blob/0bbd15b60334ee3322f9a71789f0773e33ede80b/packages/encrypted-search/lib/esHelpers/esAPI.ts#L52
+        requestHeaders.Priority = "u=7";
+        return true;
+    },
 } as const;
 
 export const processProtonCookieRecord = <T extends string | ElectronCookie>(

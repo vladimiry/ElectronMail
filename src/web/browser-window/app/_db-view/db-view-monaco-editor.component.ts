@@ -25,7 +25,7 @@ const codeSnippets = ([
         value: `
                 filterMessage(({ParsedHeaders}) => {
                     return Object
-                        .entries(ParsedHeaders)
+                        .entries(ParsedHeaders || {})
                         .some(([name, value]) => name.toLowerCase() === "content-type" && value === "text/plain")
                 })
             `,

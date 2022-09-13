@@ -66,14 +66,8 @@ export type ProviderInternals = AddInitializedProp<{
         readonly get: (type?: RestModel.Label["Type"]) => HttpApiArg
     }
 } & {
-    [K in StrictExtract<ImmediateKeys, "../../packages/shared/lib/api/conversations.ts">]: {
-        readonly getConversation: (id: RestModel.Conversation["ID"]) => HttpApiArg
-        readonly queryConversations: (
-            params?: RestModel.QueryParams & { LabelID?: Unpacked<RestModel.Conversation["LabelIDs"]> },
-        ) => HttpApiArg
-    }
-} & {
     [K in StrictExtract<ImmediateKeys, "../../packages/shared/lib/api/messages.ts">]: {
+        readonly queryMessageCount: () => HttpApiArg
         readonly getMessage: (id: RestModel.Message["ID"]) => HttpApiArg
         readonly queryMessageMetadata: (
             params?: RestModel.QueryParams & { LabelID?: Unpacked<RestModel.Message["LabelIDs"]> },
@@ -135,15 +129,10 @@ export type ProviderApi = { _throwErrorOnRateLimitedMethodCall?: boolean } & Rea
             ...args: Parameters<ProviderInternals["../../packages/shared/lib/api/labels.ts"]["value"]["get"]>
         ) => Promise<RestModel.LabelsResponse>
     }>,
-    conversation: Readonly<{
-        getConversation: (
-            ...args: Parameters<ProviderInternals["../../packages/shared/lib/api/conversations.ts"]["value"]["getConversation"]>
-        ) => Promise<RestModel.ConversationResponse>
-        queryConversations: (
-            ...args: Parameters<ProviderInternals["../../packages/shared/lib/api/conversations.ts"]["value"]["queryConversations"]>
-        ) => Promise<RestModel.ConversationsResponse>
-    }>,
     message: Readonly<{
+        queryMessageCount: (
+            ...args: Parameters<ProviderInternals["../../packages/shared/lib/api/messages.ts"]["value"]["queryMessageCount"]>
+        ) => Promise<RestModel.MessagesCountResponse>
         getMessage: (
             ...args: Parameters<ProviderInternals["../../packages/shared/lib/api/messages.ts"]["value"]["getMessage"]>
         ) => Promise<RestModel.MessageResponse>

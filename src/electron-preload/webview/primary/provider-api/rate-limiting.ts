@@ -1,4 +1,5 @@
 import asap from "asap-es";
+import {RateLimiterMemory} from "rate-limiter-flexible";
 import UUID from "pure-uuid";
 
 import {assertTypeOf, asyncDelay, consumeMemoryRateLimiter, curryFunctionMembers} from "src/shared/util";
@@ -8,13 +9,6 @@ import {PROVIDER_APP_NAMES} from "src/shared/const/proton-apps";
 import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
 import {RATE_LIMITED_METHOD_CALL_MESSAGE} from "src/electron-preload/webview/lib/const";
 import {resolveCachedConfig} from "src/electron-preload/lib/util";
-
-// TODO get rid of require "rate-limiter-flexible/lib/RateLimiterMemory" import
-//      ES import makes the build fail in "web" context since webpack attempts to bundle the whole library which requires "node" context
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-const RateLimiterMemory: typeof import("rate-limiter-flexible")["RateLimiterMemory"]
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    = require("rate-limiter-flexible/lib/RateLimiterMemory");
 
 export const attachRateLimiting = async (api: ProviderApi, logger_: Logger): Promise<void> => {
     const logger = curryFunctionMembers(logger_, nameof(attachRateLimiting));
@@ -59,14 +53,14 @@ export const attachRateLimiting = async (api: ProviderApi, logger_: Logger): Pro
                         throw new Error(RATE_LIMITED_METHOD_CALL_MESSAGE);
                     }
                     const {waitTimeMs} = await consumeMemoryRateLimiter(consumeRateLimiting);
-                    const shouldWait = waitTimeMs > 0;
+                    const shouldWait = Boolean(waitTimeMs);
                     const extraLogProps = shouldWait ? {waitTimeMs} as const : undefined;
-
-                    log("calling rate limited method", extraLogProps);
 
                     if (shouldWait) {
                         log("delaying rate limited method calling", extraLogProps);
                         await asyncDelay(waitTimeMs);
+                    } else {
+                        log("calling rate limited method", extraLogProps);
                     }
 
                     const callResult = originalMethod(...args); // should be awaited on the upper level (by consumer)
@@ -90,10 +84,9 @@ export const attachRateLimiting = async (api: ProviderApi, logger_: Logger): Pro
         }
     };
 
-    attach(api, "_custom_", ["decryptMessage"]);
+    // attach(api, "_custom_", ["decryptMessage"]);
     attach(api, "label", ["get"]);
-    attach(api, "conversation", ["getConversation", "queryConversations"]);
-    attach(api, "message", ["getMessage", "queryMessageMetadata", "labelMessages", "markMessageAsRead"]);
+    attach(api, "message", ["queryMessageCount", "getMessage", "queryMessageMetadata", "labelMessages", "markMessageAsRead"]);
     attach(api, "contact", ["queryContacts", "getContact"]);
     attach(api, "events", ["getEvents", "getLatestID"]);
     attach(api, "attachmentLoader", ["getDecryptedAttachment"]);

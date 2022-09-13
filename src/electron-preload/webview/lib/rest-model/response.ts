@@ -1,7 +1,6 @@
 import {Contact, Context, Conversation, Message} from "src/electron-preload/webview/lib/rest-model/response-entity/mail";
 import {Event} from "src/electron-preload/webview/lib/rest-model/response-entity/event";
 import {Label} from "src/electron-preload/webview/lib/rest-model/response-entity/folder";
-import {NumericBoolean} from "src/shared/model/common";
 
 export const SUCCESS_RESPONSE = 1000;
 
@@ -27,16 +26,11 @@ export interface MessageResponse extends Response {
 export interface MessagesResponse extends Response {
     Total: number;
     Limit: number;
-    Messages: Array<StrictOmit<Message,
-        | "Attachments"
-        | "Body"
-        | "Header"
-        | "MIMEType"
-        | "ParsedHeaders"
-        | "ReplyTo"
-        | "ReplyTos"
-        | "SpamScore"> &
-        { HasAttachment: NumericBoolean }>;
+    Messages: Array<StrictOmit<Message, "Body" | "Attachments" | "MIMEType" | "ParsedHeaders">>;
+}
+
+export interface MessagesCountResponse extends Response {
+    Counts: Array<{ LabelID: string, Total: number, Unread: number }>
 }
 
 export interface ContactResponse extends Response {

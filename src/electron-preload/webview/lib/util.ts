@@ -1,10 +1,12 @@
 import {concatMap, delay, retryWhen} from "rxjs/operators";
 import {CookieJar} from "tough-cookie";
 import {from, Observable, of, ReplaySubject, throwError} from "rxjs";
+import {omit} from "remeda";
 import WebStorageCookieStore from "tough-cookie-web-storage-store";
 
-import {asyncDelay, curryFunctionMembers, isDatabaseBootstrapped} from "src/shared/util";
+import {asyncDelay, curryFunctionMembers, getPlainErrorProps, isDatabaseBootstrapped} from "src/shared/util";
 import {DbPatch} from "src/shared/api/common";
+import {depersonalizeProtonApiUrl} from "src/shared/util/proton-url";
 import {FsDbAccount} from "src/shared/model/database";
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {LOCAL_WEBCLIENT_ORIGIN, ONE_MINUTE_MS, ONE_SECOND_MS} from "src/shared/const";
@@ -226,21 +228,19 @@ export async function persistDatabasePatch(
     providerApi: ProviderApi,
     data: Parameters<IpcMainApiEndpoints["dbPatch"]>[0],
     logger: Logger,
-    bootstrapPhase?: "initial" | "intermediate" | "final",
 ): Promise<void> {
-    logger.info(`${nameof(persistDatabasePatch)}() start`, JSON.stringify({bootstrapPhase}));
+    logger.info(`${nameof(persistDatabasePatch)}() start`, JSON.stringify({
+        metadata: typeof data.metadata === "string"
+            ? data.metadata
+            : omit(data.metadata, ["latestEventId"]),
+    }));
 
     if (providerApi._throwErrorOnRateLimitedMethodCall) {
         delete providerApi._throwErrorOnRateLimitedMethodCall;
         throw new Error(nameof(providerApi._throwErrorOnRateLimitedMethodCall));
     }
 
-    await resolveIpcMainApi({timeoutMs: ONE_MINUTE_MS * 5, logger})("dbPatch")({
-        bootstrapPhase,
-        login: data.login,
-        metadata: data.metadata,
-        patch: data.patch,
-    });
+    await resolveIpcMainApi({timeoutMs: ONE_MINUTE_MS * 5, logger})("dbPatch")(data);
 
     logger.info(`${nameof(persistDatabasePatch)}() end`);
 }
@@ -359,5 +359,22 @@ export const documentCookiesForCustomScheme: documentCookiesForCustomSchemeType 
 })();
 
 export const isErrorOnRateLimitedMethodCall = (error: unknown): boolean => {
-    return (Object(error) as {message?: string}).message === RATE_LIMITED_METHOD_CALL_MESSAGE;
+    return (Object(error) as { message?: string }).message === RATE_LIMITED_METHOD_CALL_MESSAGE;
+};
+
+export const attachUnhandledErrorHandler = (logger: Logger): void => {
+    window.addEventListener("error", (event) => {
+        const {message, filename, lineno, colno, error} = event; // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+        if (BUILD_ENVIRONMENT === "development") {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            console.log("window.error event:", {message, filename, lineno, colno, error}); // eslint-disable-line no-console
+            return;
+        }
+        // TODO figure the "ResizeObserver loop limit exceeded" error cause (raised by proton)
+        logger[message === "ResizeObserver loop limit exceeded" ? "warn" : "error"](
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            {message, filename: depersonalizeProtonApiUrl(filename), lineno, colno, error: getPlainErrorProps(error)},
+        );
+        event.preventDefault();
+    });
 };

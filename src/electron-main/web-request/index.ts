@@ -266,6 +266,7 @@ export function initWebRequestListenersByAccount(
             }
 
             protonApiUrlsUtil.patchAuthHeaders(String(url?.pathname), requestHeaders);
+            protonApiUrlsUtil.patchMailApiHeaders(String(url?.pathname), requestHeaders);
 
             callback({requestHeaders});
         },

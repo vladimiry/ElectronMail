@@ -50,8 +50,7 @@ export class AccountsDbSyncingEffects {
                             ofType(IPC_MAIN_API_NOTIFICATION_ACTIONS.DbPatchAccount),
                             filter(({payload: {key}}) => key.login === login),
                             mergeMap(({payload}) => of(ACCOUNTS_ACTIONS.Patch({
-                                login,
-                                patch: {notifications: {unread: payload.stat.unread}}
+                                login, patch: {notifications: {unread: payload.stat.unread}},
                             }))),
                         ),
 
@@ -251,29 +250,24 @@ export class AccountsDbSyncingEffects {
                                             this.api.ipcMainClient()("dbGetAccountMetadata")({login}),
                                         );
                                     }),
-                                    withLatestFrom(this.store.pipe(select(OptionsSelectors.CONFIG.timeouts))),
-                                    concatMap(([metadata, timeouts]) => {
+                                    concatMap((metadata) => {
                                         const bootstrapping = !isDatabaseBootstrapped(metadata);
                                         const buildDbPatchMethodName = "buildDbPatch";
-                                        const timeoutMs = bootstrapping
-                                            ? timeouts.dbBootstrapping
-                                            : timeouts.dbSyncing;
 
-                                        logger.verbose(
-                                            `calling "${buildDbPatchMethodName}" api`,
-                                            JSON.stringify({timeoutMs, bootstrapping}),
-                                        );
+                                        logger.verbose(`calling "${buildDbPatchMethodName}" api`, JSON.stringify({bootstrapping}));
 
                                         this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncing: true}}));
 
                                         return from(
-                                            webViewClient(buildDbPatchMethodName, {timeoutMs})({
+                                            webViewClient(buildDbPatchMethodName, {timeoutMs: 0})({
                                                 login,
                                                 accountIndex,
                                                 metadata,
                                             }).pipe(
-                                                tap((value) => {
-                                                    logger.verbose(`${buildDbPatchMethodName}:value type: ${typeof value}`);
+                                                tap(({progress: syncProgress}) => {
+                                                    if (!bootstrapping) return;
+                                                    logger.info(buildDbPatchMethodName, syncProgress);
+                                                    this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {syncProgress}}));
                                                 }),
                                                 catchError((error) => {
                                                     return of(

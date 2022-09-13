@@ -5,7 +5,7 @@ import {EMPTY, from, interval, lastValueFrom, merge, Observable} from "rxjs";
 import {pick} from "remeda";
 import {serializeError} from "serialize-error";
 
-import {buildDbPatch, buildDbPatchEndpoint} from "src/electron-preload/webview/primary/api/build-db-patch";
+import {buildDbPatch, buildDbPatchEndpoint} from "./db-patch";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
 import {
     documentCookiesForCustomScheme, fillInputValue, getLocationHref, resolveDomElements, submitTotpToken,
@@ -31,9 +31,7 @@ const resolveCookieSessionStoragePatch = (): IpcMainServiceScan["ApiImplReturns"
     const sessionStorageCookieStoreKey = {"tough-cookie-web-storage-store": {storageCookieKey: "__cookieStore__"}} as const;
     const {"tough-cookie-web-storage-store": {storageCookieKey}} = sessionStorageCookieStoreKey;
     const {__cookieStore__} = {[storageCookieKey]: window.sessionStorage.getItem(storageCookieKey)};
-    return __cookieStore__
-        ? {__cookieStore__}
-        : null;
+    return __cookieStore__ ? {__cookieStore__} : null;
 };
 
 export function registerApi(providerApi: ProviderApi): void {
@@ -147,7 +145,7 @@ export function registerApi(providerApi: ProviderApi): void {
                     /* eslint-enable max-len */
                     const serializedError = serializeError(
                         // sanitizing the error (original error might include the "data"/other props which we don't want to log)
-                        pick(error as (Error & {code: unknown}), ["name", "message", "stack", "code"]),
+                        pick(error as (Error & { code: unknown }), ["name", "message", "stack", "code"]),
                     );
 
                     logger.error(

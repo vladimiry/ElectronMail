@@ -129,9 +129,10 @@
     </div>
 
     <div *ngIf="selectedMail.conversationMail.failedDownload as failedDownload">
-        <div class="alert alert-danger mb-2">
-            Failed to decrypt the email body content:
-            <ul>
+        <div class="alert mb-2" [ngClass]="{'alert-danger': failedDownload.type == 'body-decrypting', 'alert-warning': failedDownload.type != 'body-decrypting'}">
+            <span *ngIf="failedDownload.type == 'body-decrypting'">Failed to decrypt the email body content:</span>
+            <span *ngIf="failedDownload.type == 'bootstrap-fetch'">Message's "body" content is scheduled for downloading (bootstrap fetch is in progress).</span>
+            <ul *ngIf="failedDownload.type == 'body-decrypting'">
                 <li><strong>App version</strong>: {{ failedDownload.appVersion }}</li>
                 <li><strong>Date</strong>: {{ failedDownload.date | date:'medium' }}</li>
                 <li><strong>Error message</strong>: <span [innerText]="failedDownload.errorMessage"></span></li>

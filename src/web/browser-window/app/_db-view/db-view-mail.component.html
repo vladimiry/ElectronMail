@@ -23,8 +23,9 @@
         </div>
         <i
             *ngIf="mail.failedDownload as failedDownload"
-            [popover]="failedDownload.errorMessage"
-            class="fa fa-info-circle text-danger ml-1"
+            [ngClass]="{'text-danger': failedDownload.type == 'body-decrypting', 'text-warning': failedDownload.type != 'body-decrypting'}"
+            [popover]="failedDownload.type === 'body-decrypting' ? failedDownload.errorMessage : 'bootstrap fetch is in progress ...'"
+            class="fa fa-info-circle ml-1"
             container="body"
             triggers="mouseenter:mouseleave"
         ></i>

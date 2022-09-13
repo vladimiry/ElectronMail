@@ -24,6 +24,7 @@
     *ngIf="state$ | async; let state"
     [ngClass]="{'selected': state.selected, 'stored': state.stored, 'login-filled-once': state.account.loginFilledOnce}"
     class="btn-group"
+    [title]="state.account.progress.syncProgress || ''"
 >
     <a class="btn btn-sm btn-secondary" href="mailto:{{ state.account.accountConfig.login }}">
         <electron-mail-unread-badge

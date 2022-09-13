@@ -1,7 +1,7 @@
 import {keys} from "ts-transformer-keys";
 import {mapValues, pick} from "remeda";
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
-import type {RateLimiterMemory} from "rate-limiter-flexible";
+import type {RateLimiterMemory, RateLimiterRes} from "rate-limiter-flexible";
 
 import {AccountConfig} from "src/shared/model/account";
 import {BaseConfig, Config} from "src/shared/model/options";
@@ -43,18 +43,15 @@ export function initialConfig(): Config {
                 messagesStorePortionSize: DEFAULT_MESSAGES_STORE_PORTION_SIZE,
             },
             timeouts: {
-                // "fetchingRateLimiting" values need to be taking into the account defining the "fetching" timeout
-                dbBootstrapping: ONE_MINUTE_MS * 60 * 12, // 12 hours
-                dbSyncing: ONE_MINUTE_MS * 30, // 30 minutes
                 webViewApiPing: ONE_SECOND_MS * 15,
                 webViewBlankDOMLoaded: ONE_SECOND_MS * 15,
                 domElementsResolving: ONE_SECOND_MS * 20,
                 defaultApiCall: DEFAULT_API_CALL_TIMEOUT,
-                databaseLoading: ONE_MINUTE_MS * 5, // 5 minutes
-                indexingBootstrap: ONE_SECOND_MS * 30, // 30 seconds
-                clearSessionStorageData: ONE_SECOND_MS * 3, // 3 seconds
-                attachmentLoadAverage: ONE_MINUTE_MS * 2, // 2 minutes
-                fullTextSearch: ONE_SECOND_MS * 30, // 30 seconds
+                databaseLoading: ONE_MINUTE_MS * 5,
+                indexingBootstrap: ONE_SECOND_MS * 30,
+                clearSessionStorageData: ONE_SECOND_MS * 3,
+                attachmentLoadAverage: ONE_MINUTE_MS * 2,
+                fullTextSearch: ONE_SECOND_MS * 30,
             },
             updateCheck: {
                 releasesUrl: "https://api.github.com/repos/vladimiry/ElectronMail/releases",
@@ -305,6 +302,12 @@ export function isDatabaseBootstrapped(
         Boolean(
             metadata.latestEventId.trim(),
         )
+        &&
+        metadata.fetchStage !== "bootstrap_init"
+        &&
+        metadata.fetchStage !== "bootstrap_messages_metadata"
+        &&
+        metadata.fetchStage !== "bootstrap_messages_content"
     );
 }
 
@@ -352,7 +355,7 @@ export const consumeMemoryRateLimiter = async (
         await consume();
         return {waitTimeMs: 0};
     } catch (_error) {
-        const error = _error as ({ msBeforeNext?: unknown } | Unpacked<ReturnType<typeof RateLimiterMemory.prototype.consume>>);
+        const error = _error as RateLimiterRes;
         if (typeof error === "object" && typeof error.msBeforeNext === "number") {
             return {waitTimeMs: error.msBeforeNext};
         }

@@ -28,7 +28,6 @@ export const PROVIDER_REPO_MAP = {
             webpackIndexEntryItems: [
                 // immediate
                 "../../packages/shared/lib/api/contacts.ts",
-                "../../packages/shared/lib/api/conversations.ts",
                 "../../packages/shared/lib/api/events.ts",
                 "../../packages/shared/lib/api/labels.ts",
                 "../../packages/shared/lib/api/messages.ts",

@@ -118,24 +118,30 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
                 }
             },
             PatchProgress({login, patch, optionalAccount}) {
-                logger.verbose("(PatchProgress)", JSON.stringify({patch, optionalAccount}));
+                logger.verbose(nameof.full(ACCOUNTS_ACTIONS.PatchProgress), JSON.stringify({patch, optionalAccount}));
 
                 const account = resolveAccountByLogin(draftState.accounts, {login}, !optionalAccount);
 
                 if (!account) {
-                    logger.verbose("(PatchProgress) reducing skipped");
+                    logger.verbose(nameof.full(ACCOUNTS_ACTIONS.PatchProgress), "reducing skipped");
                     return;
                 }
 
+                const syncingToggled = "syncing" in patch && account.progress.syncing !== patch.syncing;
+
                 account.progress = {...account.progress, ...patch};
+
+                if (syncingToggled) {
+                    delete account.progress.syncProgress;
+                }
             },
             Patch({login, patch, optionalAccount}) {
-                logger.verbose("(Patch)", JSON.stringify({patch, optionalAccount}));
+                logger.verbose(nameof.full(ACCOUNTS_ACTIONS.Patch), JSON.stringify({patch, optionalAccount}));
 
                 const account = resolveAccountByLogin(draftState.accounts, {login}, !optionalAccount);
 
                 if (!account) {
-                    logger.verbose("(Patch) reducing skipped");
+                    logger.verbose(nameof.full(ACCOUNTS_ACTIONS.Patch), "reducing skipped");
                     return;
                 }
 
@@ -144,7 +150,6 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
                 }
                 if ("notifications" in patch) {
                     account.notifications = {...account.notifications, ...patch.notifications};
-
                     if (!account.loggedInOnce && account.notifications.loggedIn) {
                         account.loggedInOnce = true;
                     }

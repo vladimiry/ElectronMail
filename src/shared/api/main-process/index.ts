@@ -16,6 +16,7 @@ import {
 } from "src/shared/api/main-process/actions";
 import {PACKAGE_NAME} from "src/shared/const";
 import {ProtonAttachmentHeadersProp, ProtonClientSession} from "src/shared/model/proton";
+import * as RestModel from "src/electron-preload/webview/lib/rest-model";
 import {UnionOf} from "src/shared/util/ngrx";
 
 export const ENDPOINTS_DEFINITION = {
@@ -36,12 +37,15 @@ export const ENDPOINTS_DEFINITION = {
     selectPath: ActionType.Observable<void, { message: "timeout-reset" | "canceled" } | { location: string }>(),
 
     dbPatch: ActionType.Promise<DbModel.DbAccountPk
-        & { bootstrapPhase?: "initial" | "intermediate" | "final" }
         & { patch: DbPatch }
-        & { metadata: FsDbAccount["metadata"] },
+        & { metadata: FsDbAccount["metadata"] | "skipPatching" },
         DbModel.FsDbAccount["metadata"]>(),
 
     dbResetDbMetadata: ActionType.Promise<{ reset: boolean }>(),
+
+    dbGetAccountBootstrapOldestRawMailMetadata: ActionType.Promise<DbModel.DbAccountPk, { ID: string, Time: number } | null>(),
+
+    dbGetAccountBootstrapRawMailIds: ActionType.Promise<DbModel.DbAccountPk, Array<{ ID: RestModel.Message["ID"] }>>(),
 
     dbGetAccountMetadata: ActionType.Promise<DbModel.DbAccountPk, DbModel.FsDbAccount["metadata"] | null>(),
 

@@ -23,9 +23,7 @@ export async function buildDbIndexingEndpoints(
             logger.info(nameof(endpoints.dbIndexerOn), `action.type: ${action.type}`);
 
             // propagating action to custom stream
-            setTimeout(() => {
-                IPC_MAIN_API_DB_INDEXER_RESPONSE$.next(action);
-            });
+            setTimeout(() => IPC_MAIN_API_DB_INDEXER_RESPONSE$.next(action));
 
             IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS.match(action, {
                 Bootstrapped() {
@@ -39,6 +37,7 @@ export async function buildDbIndexingEndpoints(
 
                             for (const {account, pk} of ctx.db) {
                                 if (logins.includes(pk.login)) {
+                                    // TODO index only "enabled" and "loaded" accounts
                                     await indexAccount(account, pk, config);
                                 }
                             }
@@ -54,8 +53,8 @@ export async function buildDbIndexingEndpoints(
                     );
 
                     setTimeout(async () => {
-                        await lastValueFrom(indexAccounts$);
-                    });
+						await lastValueFrom(indexAccounts$);
+					});
                 },
                 ProgressState(payload) {
                     logger.verbose(nameof(endpoints.dbIndexerOn), `ProgressState.status: ${JSON.stringify(payload.status)}`);

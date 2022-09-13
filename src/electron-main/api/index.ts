@@ -343,33 +343,23 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
                     fs.statSync(ctx.sessionDb.options.file).size >= config.dbMergeBytesFileSizeThreshold
                 );
                 logger.verbose(nameof(endpoints.loadDatabase), JSON.stringify({shouldMerge, shouldSaveMerged}));
-                if (shouldSaveMerged && !(await ctx.db.persisted())) { // primary db doesn't exist yet, so just renaming instead of merging
-                    if (needToSave.sessionDb) await ctx.sessionDb.saveToFile();
-                    await fs.promises.rename(ctx.sessionDb.options.file, ctx.db.options.file);
-                    ctx.sessionDb.reset();
-                    await ctx.sessionDb.saveToFile();
-                    await ctx.db.loadFromFile();
-                    needToSave.sessionDb = false;
-                    needToSave.db = false;
-                } else { // actual merging
-                    if (shouldMerge) {
-                        for (const {pk: accountPk} of ctx.sessionDb) {
-                            if (
-                                Database.mergeAccount(ctx.sessionDb, ctx.db, accountPk)
-                                &&
-                                shouldSaveMerged
-                            ) {
-                                needToSave.db = true;
-                            }
+                if (shouldMerge) {
+                    for (const {pk: accountPk} of ctx.sessionDb) {
+                        if (
+                            Database.mergeAccount(ctx.sessionDb, ctx.db, accountPk)
+                            &&
+                            shouldSaveMerged
+                        ) {
+                            needToSave.db = true;
                         }
                     }
-                    if (shouldSaveMerged) {
-                        needToSave.sessionDb = true;
-                        mergeId = new UUID(4).format();
-                        // WARN we mark the "session db" as "has to be reset" in the case its consequent "saving after reset" fails
-                        //      so with this mark the app will reset it first thing to happen when it starts next time
-                        await ctx.sessionDb.setMergeIdAndSaveToFile(mergeId);
-                    }
+                }
+                if (shouldSaveMerged) {
+                    needToSave.sessionDb = true;
+                    mergeId = new UUID(4).format();
+                    // WARN we mark the "session db" as "has to be reset" in the case its consequent "saving after reset" fails
+                    //      so with this mark the app will reset it first thing to happen when it starts next time
+                    await ctx.sessionDb.setMergeIdAndSaveToFile(mergeId);
                 }
             }
 

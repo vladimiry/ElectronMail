@@ -3,11 +3,9 @@ import {Deferred} from "ts-deferred";
 import type {EncryptionAdapter} from "fs-json-store-encryption-adapter";
 import fs from "fs";
 import fsBackwardsStream from "fs-backwards-stream";
-import * as msgpack from "@msgpack/msgpack";
-import oboe from "oboe";
+import {Packr} from "msgpackr";
 import path from "path";
 import {promisify} from "util";
-import {Readable} from "stream";
 import WriteStreamAtomic from "fs-write-stream-atomic";
 import zlib from "zlib";
 
@@ -27,6 +25,8 @@ const fsAsync = { // TODO use "fs/promises" (at the moment there is no "read" fu
     close: promisify(fs.close),
 } as const;
 
+const msgpackr = new Packr({useRecords: false, moreTypes: false, structuredClone: false, int64AsNumber: true});
+
 export const buildSerializer: Model.buildSerializerType = (() => {
     const CONST = {
         zero: 0,
@@ -39,21 +39,17 @@ export const buildSerializer: Model.buildSerializerType = (() => {
         mailsPortionSize: {min: 400, max: 5000},
         compressionLevelsFallback: {gzip: 6, zstd: 7, bzip2: 1},
     } as const;
-    const bufferToReadable = (input: Buffer): Readable => Readable.from(input, {highWaterMark: CONST.dataReadingBufferSize});
     const decryptBuffer = async (
         data: Buffer,
         encryptionAdapter: EncryptionAdapter,
         compressionType?: Config["dbCompression"]["type"],
-    ): Promise<Readable> => {
+    ): Promise<Buffer> => {
         const decryptedBuffer = await encryptionAdapter.read(data);
-        const decryptedReadable = bufferToReadable(decryptedBuffer);
         return compressionType === "gzip"
-            ? decryptedReadable.pipe(zlib.createGunzip())
+            ? promisify(zlib.gunzip)(decryptedBuffer)
             : (compressionType === "zstd" || compressionType === "bzip2")
-                ? bufferToReadable( // TODO use stream-based decompression
-                    await (await import("./compression-native")).decompress(compressionType, decryptedBuffer),
-                )
-                : decryptedReadable;
+                ? (await import("./compression-native")).decompress(compressionType, decryptedBuffer)
+                : decryptedBuffer;
     };
     const serializeDataMapItem = async (
         data: DeepReadonly<FsDb> | DeepReadonly<FsDb["accounts"]>,
@@ -80,7 +76,7 @@ export const buildSerializer: Model.buildSerializerType = (() => {
             level = CONST.compressionLevelsFallback[compressionType];
             logger.error(`Invalid "${nameof(level)}" value, falling back to the default value: ${level}`);
         }
-        const serializedData = msgpack.encode(data);
+        const serializedData = msgpackr.pack(data);
         const serializedDataBuffer = Buffer.from(serializedData.buffer, serializedData.byteOffset, serializedData.byteLength);
         const encryptedData = await encryptionAdapter.write(
             compressionType === "gzip"
@@ -213,31 +209,12 @@ export const buildSerializer: Model.buildSerializerType = (() => {
 
                 readLogger.verbose(JSON.stringify({serializationType, serializationDataMap}));
 
-                if (serializationType !== "msgpack") { // backward compatibility support (before "msgpack" introduction)
-                    const decryptedReadable = await decryptBuffer(
-                        await fsAsync.readFile(file),
-                        encryptionAdapter,
-                    );
-                    return new Promise((resolve, reject) => {
-                        readLogger.verbose(`${nameof(oboe)} start`);
-                        // TODO replace "oboe" with alternative library that doesn't block the "event loop" so heavily:
-                        //      - https://gitlab.com/philbooth/bfj
-                        //      - https://github.com/ibmruntimes/yieldable-json
-                        //      or consider moving parsing to a separate Worker/Process
-                        oboe(decryptedReadable)
-                            .done((parsed) => {
-                                readLogger.verbose(`${nameof(oboe)} end`);
-                                resolve(parsed); // eslint-disable-line @typescript-eslint/no-unsafe-argument
-                            })
-                            .fail((error) => {
-                                readLogger.error(`${nameof(oboe)} fail`, error);
-                                reject(error);
-                            });
-                    });
+                if (serializationType !== "msgpack") {
+                    throw new Error("Too old local store database format");
                 }
 
                 if (!serializationDataMap) { // backward compatibility support
-                    const db = await msgpack.decodeAsync(
+                    const db = msgpackr.unpack(
                         await decryptBuffer(
                             await fsAsync.readFile(file),
                             encryptionAdapter,
@@ -261,11 +238,11 @@ export const buildSerializer: Model.buildSerializerType = (() => {
                     fileOffsetStart = fileOffsetEnd;
 
                     if (!resultDb) { // first iteration
-                        resultDb = await msgpack.decodeAsync(
+                        resultDb = msgpackr.unpack(
                             await decryptBuffer(item, encryptionAdapter, serializationDataMap.compression),
                         ) as DeepReadonly<FsDb>;
                     } else { // merging the mails resolved by this iteration into the previously/during-first-iteration created database
-                        const dbWithOnlyMailsFilled = await msgpack.decodeAsync(
+                        const dbWithOnlyMailsFilled = msgpackr.unpack(
                             await decryptBuffer(item, encryptionAdapter, serializationDataMap.compression),
                         ) as DeepReadonly<FsDb["accounts"]>;
 
@@ -320,11 +297,12 @@ export const buildSerializer: Model.buildSerializerType = (() => {
                         finishPromise: streamDeferred.promise,
                         write: writeToStream,
                         async finish(): Promise<void> {
+                            const serializationHeader: Model.SerializationHeader = {serialization: {type: "msgpack", dataMap}};
                             await writeToStream(
                                 Buffer.concat([
                                     CONST.headerZeroByteMark,
                                     Buffer.from(
-                                        JSON.stringify({serialization: {type: "msgpack", dataMap}}),
+                                        JSON.stringify(serializationHeader),
                                     ),
                                 ]),
                             );

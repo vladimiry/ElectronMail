@@ -194,7 +194,7 @@ export class Database {
             await this.buildEncryptionAdapter(),
         );
 
-        this.logStats("loadFromFile", duration);
+        this.logStats(nameof(Database.prototype.loadFromFile), duration); // eslint-disable-line @typescript-eslint/unbound-method
     }
 
     async saveToFile(): Promise<void> {
@@ -214,7 +214,7 @@ export class Database {
                 await this.options.dbCompression(),
             );
 
-            this.logStats("saveToFile", duration);
+            this.logStats(nameof(Database.prototype.saveToFile), duration); // eslint-disable-line @typescript-eslint/unbound-method
         });
     }
 
@@ -268,22 +268,25 @@ export class Database {
     }
 
     private logStats(
-        methodName: keyof Pick<typeof Database.prototype, "loadFromFile" | "saveToFile">,
+        methodName: string,
         methodDuration: ReturnType<typeof hrtimeDuration>,
         logLevel: LogLevel = "verbose",
     ): void {
-        type dataToLogType = ReturnType<typeof Database.prototype.stat> & { methodTime: number; statTime: number };
+        type dataToLogType = { methodTime: number; statTime: number } & Partial<ReturnType<typeof Database.prototype.stat>>;
         const dataToLog: dataToLogType = (
             (): dataToLogType => {
                 const methodTime = methodDuration.end(); // first of all
                 const statsDuration = hrtimeDuration(); // before the "stat()" called
-                const stat = this.stat();
+                const stat = logLevel === "debug" || logLevel === "verbose"
+                    ? this.stat()
+                    : undefined;
                 const statTime = statsDuration.end(); // after the "stat()" called
                 return {methodTime, statTime, ...stat};
             }
         )();
 
-        this.logger[logLevel](`${methodName}().stat: ${JSON.stringify(dataToLog, null, 2)}`);
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        this.logger[logLevel](`${methodName}.${nameof(Database.prototype.logStats)}: ${JSON.stringify(dataToLog, null, 2)}`);
     }
 
     private getPks(): Array<DeepReadonly<DbAccountPk>> {

@@ -68,7 +68,6 @@ importers:
       '@babel/runtime': 7.19.0
       '@cliqz/url-parser': 1.1.4
       '@expo/spawn-async': 1.7.0
-      '@msgpack/msgpack': 2.8.0
       '@ng-select/ng-select': 9.0.2
       '@ngrx/component': 14.3.1
       '@ngrx/effects': 14.3.1
@@ -147,6 +146,7 @@ importers:
       mini-css-extract-plugin: 2.6.1
       monaco-editor: 0.34.0
       mrmime: 1.0.1
+      msgpackr: 1.7.0
       ndx: 1.0.2
       ndx-query: 1.0.1
       ngx-bootstrap: 9.0.0
@@ -154,7 +154,6 @@ importers:
       node-libs-browser: 2.2.1
       node-loader: 2.0.0
       npm-run-all2: 6.0.2
-      oboe: 2.1.5
       os-locale: 6.0.2
       otplib: 12.0.1
       outdent: 0.8.0
@@ -204,6 +203,7 @@ importers:
       electron-rpc-api: 9.0.0_electron@20.1.4
       fs-json-store-encryption-adapter: 3.0.4
       keytar: 7.9.0
+      msgpackr: 1.7.0
     devDependencies:
       '@angular-eslint/eslint-plugin': 14.0.4_irgkl5vooow2ydyo6aokmferha
       '@angular/animations': 14.2.2_@angular+core@14.2.2
@@ -225,7 +225,6 @@ importers:
       '@babel/runtime': 7.19.0
       '@cliqz/url-parser': 1.1.4
       '@expo/spawn-async': 1.7.0
-      '@msgpack/msgpack': 2.8.0
       '@ng-select/ng-select': 9.0.2_rdeaoxzykvuwnufkzy2bv7vhlu
       '@ngrx/component': 14.3.1_faw6holc2knsbkmngrw5nb76im
       '@ngrx/effects': 14.3.1_6eg3g2xtawfw3o6rgsxwgio6oe
@@ -308,7 +307,6 @@ importers:
       node-libs-browser: 2.2.1
       node-loader: 2.0.0_webpack@5.74.0
       npm-run-all2: 6.0.2
-      oboe: 2.1.5
       os-locale: 6.0.2_4ktr4lb7j2kpheabqfc43zx2ku
       otplib: 12.0.1
       outdent: 0.8.0
@@ -1096,11 +1094,6 @@ packages:
       tmp-promise: 3.0.3
     transitivePeerDependencies:
       - supports-color
-    dev: true
-
-  /@msgpack/msgpack/2.8.0:
-    resolution: {integrity: sha512-h9u4u/jiIRKbq25PM+zymTyW6bhTzELvOoUd+AvYriWOAKpLGnIamaET3pnHYoI5iYphAHBI4ayx0MehR+VVPQ==}
-    engines: {node: '>= 10'}
     dev: true
 
   /@msgpackr-extract/msgpackr-extract-darwin-arm64/2.1.2:
@@ -4647,10 +4640,6 @@ packages:
   /http-cache-semantics/4.1.0:
     resolution: {integrity: sha512-carPklcUh7ROWRK7Cv27RPtdhYhUsela/ue5/jKzjegVvXDqM2ILE9Q2BGn9JZJh1g87cp56su/FgQSzcWS8cQ==}
 
-  /http-https/1.0.0:
-    resolution: {integrity: sha512-o0PWwVCSp3O0wS6FvNr6xfBCHgt0m1tvPLFOCc2iFDKTRAXhB7m8klDf7ErowFH8POa6dVdGatKU5I1YYwzUyg==}
-    dev: true
-
   /http-proxy-agent/5.0.0:
     resolution: {integrity: sha512-n2hY8YdoRE1i7r6M0w9DIw5GgZN0G25P8zLCRQ8rjXtTU3vsNFBI/vWK/UIeE6g5MUUz6avwAPXmL6Fy9D/90w==}
     engines: {node: '>= 6'}
@@ -5727,8 +5716,8 @@ packages:
     optional: true
     patched: true
 
-  /msgpackr/1.6.3:
-    resolution: {integrity: sha512-Wtwnt2W06wNOLzV3N0XLLAJCxpwlCfFpvSZAXsu+xf71X7KuqBEDhDSjAy9nwNhQ2aK74Rd1RiRln+62tffoXw==}
+  /msgpackr/1.7.0:
+    resolution: {integrity: sha512-/lumbjWnrRn8mZ8TEJXbFpkRDSei94CcqwcgbyuE0hT2/f6az2Fmi4ojNUOUTS9T8AYyADrmoPvCiLL9+ufvsA==}
     optionalDependencies:
       msgpackr-extract: 2.1.2_64x6xnx7xxvlnzyyjo7phgjubu
     dev: false
@@ -6024,12 +6013,6 @@ packages:
       call-bind: 1.0.2
       define-properties: 1.1.4
       es-abstract: 1.20.2
-    dev: true
-
-  /oboe/2.1.5:
-    resolution: {integrity: sha512-zRFWiF+FoicxEs3jNI/WYUrVEgA7DeET/InK0XQuudGHRg8iIob3cNPrJTKaz4004uaA9Pbe+Dwa8iluhjLZWA==}
-    dependencies:
-      http-https: 1.0.0
     dev: true
 
   /once/1.4.0:
@@ -6519,7 +6502,7 @@ packages:
     engines: {node: '>=14'}
     dependencies:
       jsan: 3.1.14
-      msgpackr: 1.6.3
+      msgpackr: 1.7.0
       pure-uuid: 1.6.2
       rxjs: 7.5.6
       tslib: 2.4.0

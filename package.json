@@ -1,7 +1,7 @@
 {
   "name": "electron-mail",
   "description": "Unofficial ProtonMail Desktop App",
-  "version": "5.1.1",
+  "version": "5.1.2",
   "author": "Vladimir Yakovlev <desktop-app@protonmail.ch>",
   "license": "GPL-3.0",
   "homepage": "https://github.com/vladimiry/ElectronMail",
@@ -95,7 +95,8 @@
   "dependencies": {
     "electron-rpc-api": "9.0.0",
     "fs-json-store-encryption-adapter": "3.0.4",
-    "keytar": "7.9.0"
+    "keytar": "7.9.0",
+    "msgpackr": "1.7.0"
   },
   "devDependencies": {
     "@angular-eslint/eslint-plugin": "14.0.4",
@@ -118,7 +119,6 @@
     "@babel/runtime": "7.19.0",
     "@cliqz/url-parser": "1.1.4",
     "@expo/spawn-async": "1.7.0",
-    "@msgpack/msgpack": "2.8.0",
     "@ng-select/ng-select": "9.0.2",
     "@ngrx/component": "14.3.1",
     "@ngrx/effects": "14.3.1",
@@ -201,7 +201,6 @@
     "node-libs-browser": "2.2.1",
     "node-loader": "2.0.0",
     "npm-run-all2": "6.0.2",
-    "oboe": "2.1.5",
     "os-locale": "6.0.2",
     "otplib": "12.0.1",
     "outdent": "0.8.0",

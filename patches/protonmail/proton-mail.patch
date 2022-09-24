@@ -203,12 +203,12 @@ index e2baface5..8b4317d5a 100644
  export default useApi;
 
 diff --git a/packages/components/hooks/useAuthentication.ts b/packages/components/hooks/useAuthentication.ts
-index feb92a8af..d802ae8ae 100644
+index 2bab0ad85..51fc1fd18 100644
 --- a/packages/components/hooks/useAuthentication.ts
 +++ b/packages/components/hooks/useAuthentication.ts
 @@ -3,9 +3,9 @@ import { useContext } from 'react';
- import AuthenticationContext from '../containers/authentication/authenticationContext';
  import { PrivateAuthenticationStore } from '../containers/app/interface';
+ import AuthenticationContext from '../containers/authentication/authenticationContext';
 
 -const useAuthentication = () => {
 +const useAuthentication = () => { /* <electron-mail-mark> */

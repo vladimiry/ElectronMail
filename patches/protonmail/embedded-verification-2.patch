@@ -9,7 +9,6 @@ index 9bfef3d1f..546b273c8 100644
 -export * from './verification';
  export * from './v5WelcomeModal';
  export * from './vpn';
---
 
 diff --git a/packages/components/containers/verification/EmbeddedVerification.tsx b/packages/components/containers/verification/EmbeddedVerification.tsx
 deleted file mode 100644

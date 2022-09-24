@@ -1,26 +1,26 @@
 diff --git a/packages/components/containers/index.ts b/packages/components/containers/index.ts
-index fd20d8e62..7c3e55c87 100644
+index a83ab6ba5..44da559d6 100644
 --- a/packages/components/containers/index.ts
 +++ b/packages/components/containers/index.ts
-@@ -56,6 +56,5 @@ export * from './sessions';
+@@ -60,5 +60,4 @@ export * from './sessions';
  export * from './support';
  export * from './themes';
  export * from './topBanners';
 -export * from './verification';
- export * from './v5WelcomeModal';
  export * from './vpn';
 
 diff --git a/packages/components/containers/verification/EmbeddedVerification.tsx b/packages/components/containers/verification/EmbeddedVerification.tsx
 deleted file mode 100644
-index 242be9084..000000000
+index 6425df9ec..000000000
 --- a/packages/components/containers/verification/EmbeddedVerification.tsx
 +++ /dev/null
-@@ -1,102 +0,0 @@
+@@ -1,103 +0,0 @@
 -import { useEffect, useMemo, useRef, useState } from 'react';
--import { localeCode } from '@proton/shared/lib/i18n';
+-
 -import { APPS } from '@proton/shared/lib/constants';
--import { HumanVerificationMethodType } from '@proton/shared/lib/interfaces';
 -import { getAppUrlFromApiUrl, getAppUrlRelativeToOrigin, stringifySearchParams } from '@proton/shared/lib/helpers/url';
+-import { localeCode } from '@proton/shared/lib/i18n';
+-import { HumanVerificationMethodType } from '@proton/shared/lib/interfaces';
 -
 -import { useConfig, useNotifications } from '../../hooks';
 -
@@ -121,8 +121,8 @@ index 242be9084..000000000
 
 diff --git a/packages/components/containers/verification/index.ts b/packages/components/containers/verification/index.ts
 deleted file mode 100644
-index 8da2cc627..000000000
+index 16a977e60..000000000
 --- a/packages/components/containers/verification/index.ts
 +++ /dev/null
 @@ -1 +0,0 @@
--export { default as EmbeddedVerification } from './EmbeddedVerification'
+-export { default as EmbeddedVerification } from './EmbeddedVerification';

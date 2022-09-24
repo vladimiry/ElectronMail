@@ -238,9 +238,9 @@ export function initContext(
                         return {encryption};
                     },
                 },
-                async dbCompression(): Promise<Config["dbCompression"]> {
-                    const {dbCompression} = await configStore.readExisting();
-                    return dbCompression;
+                async dbCompression(): Promise<Config["dbCompression2"]> {
+                    const {dbCompression2} = await configStore.readExisting();
+                    return dbCompression2;
                 },
             } as const;
             return {

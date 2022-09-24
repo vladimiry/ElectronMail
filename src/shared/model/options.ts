@@ -48,7 +48,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     dbSyncingFiredTriggerDebounce: number;
     shouldRequestDbMetadataReset: "initial" | "done";
     // TODO consider making compression type/level configurable via interface
-    dbCompression: { type: "gzip" | "zstd" | "bzip2", level: number, mailsPortionSize: { min: number, max: number } };
+    dbCompression2: { type: "gzip" | "zstd", level: number, mailsPortionSize: { min: number, max: number } };
     dbMergeBytesFileSizeThreshold: number
     // base
     calendarNotification: boolean

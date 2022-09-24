@@ -6,7 +6,7 @@ import type {FsDb} from "src/shared/model/database";
 export type DataMapSerializationHeaderPart = DeepReadonly<{
     type: "msgpack"
     dataMap?: {
-        readonly compression?: Config["dbCompression"]["type"]
+        readonly compression?: Config["dbCompression2"]["type"]
         readonly items: Array<{ byteLength: number }>
     }
 }>;
@@ -24,6 +24,6 @@ export type buildSerializerType = (file: string) => {
     write: (
         encryptionAdapter: EncryptionAdapter,
         data: DeepReadonly<FsDb>,
-        dbCompression: DeepReadonly<Config["dbCompression"]>,
+        dbCompression: DeepReadonly<Config["dbCompression2"]>,
     ) => Promise<void>
 };

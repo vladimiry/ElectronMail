@@ -27,6 +27,18 @@ const fsAsync = { // TODO use "fs/promises" (at the moment there is no "read" fu
 
 const msgpackr = new Packr({useRecords: false, moreTypes: false, structuredClone: false, int64AsNumber: true});
 
+export const resolveZstdWasm = ((): () => Promise<typeof import("@oneidentity/zstd-js/wasm")["ZstdSimple"]> => {
+    let lib: typeof import("@oneidentity/zstd-js/wasm")["ZstdSimple"] | undefined;
+    return async () => {
+        if (!lib) {
+            const {ZstdInit} = await import("@oneidentity/zstd-js/wasm");
+            const {ZstdSimple} = await ZstdInit();
+            lib = ZstdSimple;
+        }
+        return lib;
+    };
+})();
+
 export const buildSerializer: Model.buildSerializerType = (() => {
     const CONST = {
         zero: 0,
@@ -37,41 +49,35 @@ export const buildSerializer: Model.buildSerializerType = (() => {
         dataReadingBufferSize: ONE_MB_BYTES,
         dataWritingBufferSize: ONE_MB_BYTES,
         mailsPortionSize: {min: 400, max: 5000},
-        compressionLevelsFallback: {gzip: 6, zstd: 7, bzip2: 1},
+        compressionLevelsFallback: {gzip: 6, zstd: 7},
     } as const;
     const decryptBuffer = async (
         data: Buffer,
         encryptionAdapter: EncryptionAdapter,
-        compressionType?: Config["dbCompression"]["type"],
+        compressionType?: Config["dbCompression2"]["type"],
     ): Promise<Buffer> => {
         const decryptedBuffer = await encryptionAdapter.read(data);
         return compressionType === "gzip"
             ? promisify(zlib.gunzip)(decryptedBuffer)
-            : (compressionType === "zstd" || compressionType === "bzip2")
-                ? (await import("./compression-native")).decompress(compressionType, decryptedBuffer)
+            : (compressionType === "zstd")
+                ? Buffer.from(
+                    (await resolveZstdWasm()).decompress(decryptedBuffer),
+                )
                 : decryptedBuffer;
     };
     const serializeDataMapItem = async (
         data: DeepReadonly<FsDb> | DeepReadonly<FsDb["accounts"]>,
         encryptionAdapter: EncryptionAdapter,
-        compressionType: Config["dbCompression"]["type"],
-        level: Config["dbCompression"]["level"],
+        compressionType: Config["dbCompression2"]["type"],
+        level: Config["dbCompression2"]["level"],
     ): Promise<Buffer> => {
         if (typeof level !== "number"
             ||
             level < 1
             ||
-            (
-                compressionType === "gzip" && level > 9
-            )
+            (compressionType === "gzip" && level > 9)
             ||
-            (
-                compressionType === "bzip2" && level > 9
-            )
-            ||
-            (
-                compressionType === "zstd" && level > 22
-            )
+            (compressionType === "zstd" && level > 22)
         ) {
             level = CONST.compressionLevelsFallback[compressionType];
             logger.error(`Invalid "${nameof(level)}" value, falling back to the default value: ${level}`);
@@ -81,8 +87,13 @@ export const buildSerializer: Model.buildSerializerType = (() => {
         const encryptedData = await encryptionAdapter.write(
             compressionType === "gzip"
                 ? await promisify(zlib.gzip)(serializedDataBuffer, {level})
-                : (compressionType === "zstd" || compressionType === "bzip2")
-                    ? await (await import("./compression-native")).compress(compressionType, serializedDataBuffer, level)
+                // TODO explore the "zstd" library payload size limitation: min 100 bytes
+                // eslint-disable-next-line max-len
+                // https://github.com/OneIdentity/zstd-js/blob/d9de2d24e6b61ae9d3cf86c2838a117555c1e835/src/components/common/zstd-simple/zstd-simple.ts#L23
+                : (compressionType === "zstd" && serializedDataBuffer.byteLength > 100)
+                    ? Buffer.from(
+                        (await resolveZstdWasm()).compress(serializedDataBuffer, level),
+                    )
                     : serializedDataBuffer
         );
         const encryptionHeaderBuffer = encryptedData.slice(CONST.zero, encryptedData.indexOf(CONST.headerZeroByteMark));

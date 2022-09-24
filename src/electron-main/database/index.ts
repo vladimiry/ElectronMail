@@ -125,7 +125,7 @@ export class Database {
                 resolveKey: () => Promise<string>;
                 resolvePreset: () => Promise<KeyBasedPreset>;
             }>;
-            dbCompression: () => Promise<Config["dbCompression"]>;
+            dbCompression: () => Promise<Config["dbCompression2"]>;
         }>
     ) {
         this.serializer = buildSerializer(this.options.file);

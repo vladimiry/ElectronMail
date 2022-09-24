@@ -339,14 +339,6 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             }
         }
     },
-    "4.15.1": (config) => {
-        {
-            const key = "dbCompression";
-            if (typeof config[key] === "undefined") {
-                config[key] = INITIAL_STORES.config()[key];
-            }
-        }
-    },
     "5.1.0": (config) => {
         {
             const key = "spellcheck";
@@ -381,6 +373,14 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
     "5.1.1": (config) => {
         delete (config.timeouts as { dbBootstrapping?: unknown }).dbBootstrapping;
         delete (config.timeouts as { dbSyncing?: unknown }).dbSyncing;
+    },
+    "5.1.2": (config) => {
+        {
+            const key = "dbCompression2";
+            if (typeof config[key] === "undefined") {
+                config[key] = INITIAL_STORES.config()[key];
+            }
+        }
     },
     // last updater
     "100.0.0": (config) => {

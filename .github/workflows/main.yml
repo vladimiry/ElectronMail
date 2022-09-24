@@ -13,7 +13,7 @@ jobs:
     steps:
       # <common> TODO use YAML anchors feature when it gets supported
       - { uses: actions/checkout@v2 }
-      - { uses: pnpm/action-setup@v2, with: { version: 7.5.2 } }
+      - { uses: pnpm/action-setup@v2, with: { version: "latest" } }
       - { name: pnpm patch, if: runner.os == 'Windows', run: ./scripts/ci/github/patch-pnpm.ps1 }
       - { uses: actions/setup-node@v2, with: { node-version: "${{ env.ELECTRON_MAIL_NODE_VERSION }}", cache: "pnpm" } }
       - { name: system setup, if: runner.os == 'Linux', run: ./scripts/ci/github/system-setup-linux.sh }
@@ -40,7 +40,7 @@ jobs:
     steps:
       # <common> TODO use YAML anchors feature when it gets supported
       - { uses: actions/checkout@v2 }
-      - { uses: pnpm/action-setup@v2, with: { version: 7.5.2 } }
+      - { uses: pnpm/action-setup@v2, with: { version: "latest" } }
       - { name: pnpm patch, if: runner.os == 'Windows', run: ./scripts/ci/github/patch-pnpm.ps1 }
       - { uses: actions/setup-node@v2, with: { node-version: "${{ env.ELECTRON_MAIL_NODE_VERSION }}", cache: "pnpm" } }
       - { name: system setup, if: runner.os == 'Linux', run: ./scripts/ci/github/system-setup-linux.sh }
@@ -60,7 +60,7 @@ jobs:
     steps:
       # <common> TODO use YAML anchors feature when it gets supported
       - { uses: actions/checkout@v2 }
-      - { uses: pnpm/action-setup@v2, with: { version: 7.5.2 } }
+      - { uses: pnpm/action-setup@v2, with: { version: "latest" } }
       - { name: pnpm patch, if: runner.os == 'Windows', run: ./scripts/ci/github/patch-pnpm.ps1 }
       - { uses: actions/setup-node@v2, with: { node-version: "${{ env.ELECTRON_MAIL_NODE_VERSION }}", cache: "pnpm" } }
       - { name: system setup, if: runner.os == 'Linux', run: ./scripts/ci/github/system-setup-linux.sh }

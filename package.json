@@ -18,6 +18,7 @@
   "type": "module",
   "main": "./app/electron-main/index.cjs",
   "scripts": {
+    "postinstall": "node -e \"if (process.platform === 'win32') process.exit(0); require('child_process').exec('chmod +x ./node_modules/.bin/*')\"",
     "prepare": "npm-run-all prepare:husky-install prepare:remove:prebuild-install prepare:ts-patch prepare:ts-patch:check",
     "prepare:husky-install": "husky install",
     "prepare:ts-patch": "ts-patch install -s",
@@ -124,6 +125,7 @@
     "@ngrx/effects": "14.3.1",
     "@ngrx/store": "14.3.1",
     "@ngtools/webpack": "14.2.2",
+    "@oneidentity/zstd-js": "^1.0.2",
     "@playwright/test": "1.25.2",
     "@rgba-image/lanczos": "0.1.1",
     "@t-bowersox/cookie": "1.0.0",

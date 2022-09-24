@@ -18,10 +18,6 @@ export default buildBaseConfig(
         module: {
             rules: [
                 typescriptLoaderRule({tsConfigFile}),
-                {
-                    test: /\.node$/,
-                    loader: "node-loader",
-                },
             ],
         },
         externals: mapValues(

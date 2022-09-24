@@ -35,7 +35,7 @@ patchedDependencies:
     hash: gdagwmwndeixxlcm7duqxqq3r4
     path: patches/ts-node@10.9.1.patch
   typescript-transform-paths@3.3.1:
-    hash: kk266mnbftw7tkxl4vh73rpoba
+    hash: izr7nv74skc2o7zxhii424xmrq
     path: patches/typescript-transform-paths@3.3.1.patch
   electron-rebuild@3.2.9:
     hash: 45qvjfafbmjnhciumr5bn7cpcm
@@ -73,6 +73,7 @@ importers:
       '@ngrx/effects': 14.3.1
       '@ngrx/store': 14.3.1
       '@ngtools/webpack': 14.2.2
+      '@oneidentity/zstd-js': ^1.0.2
       '@playwright/test': 1.25.2
       '@rgba-image/lanczos': 0.1.1
       '@t-bowersox/cookie': 1.0.0
@@ -230,6 +231,7 @@ importers:
       '@ngrx/effects': 14.3.1_6eg3g2xtawfw3o6rgsxwgio6oe
       '@ngrx/store': 14.3.1_i7tktysnynbuwpamqlvgeyyawi
       '@ngtools/webpack': 14.2.2_cpi7uk4wacjg7eibn5ru6hde5u
+      '@oneidentity/zstd-js': 1.0.2
       '@playwright/test': 1.25.2
       '@rgba-image/lanczos': 0.1.1
       '@t-bowersox/cookie': 1.0.0
@@ -345,7 +347,7 @@ importers:
       tslib: 2.4.0
       turndown: 7.1.1
       typescript: 4.8.3
-      typescript-transform-paths: 3.3.1_kk266mnbftw7tkxl4vh73rpoba_typescript@4.8.3
+      typescript-transform-paths: 3.3.1_izr7nv74skc2o7zxhii424xmrq_typescript@4.8.3
       valid-url: 1.0.9
       webpack: 5.74.0_webpack-cli@4.10.0
       webpack-cli: 4.10.0_webpack@5.74.0
@@ -1251,6 +1253,12 @@ packages:
       rimraf: 3.0.2
     dev: true
 
+  /@oneidentity/zstd-js/1.0.2:
+    resolution: {integrity: sha512-wfr61n6YIx8jJOqjbJ3CbeJ8JQo7LOHGnJuuruu10SvobuzncKxpRYaI1erQetiUn4fmN7D5m9Zj8aNR6Hl/wA==}
+    dependencies:
+      '@types/emscripten': 1.39.6
+    dev: true
+
   /@otplib/core/12.0.1:
     resolution: {integrity: sha512-4sGntwbA/AC+SbPhbsziRiD+jNDdIzsZ3JUyfZwjtKyc/wufl1pnSIaG4Uqx8ymPagujub0o92kgBnB89cuAMA==}
     dev: true
@@ -1441,6 +1449,10 @@ packages:
     dependencies:
       '@types/bluebird': 3.5.36
       typescript: 4.8.3
+    dev: true
+
+  /@types/emscripten/1.39.6:
+    resolution: {integrity: sha512-H90aoynNhhkQP6DRweEjJp5vfUVdIj7tdPLsu7pq89vODD/lcugKfZOsfgwpvM6XUewEp2N5dCg1Uf3Qe55Dcg==}
     dev: true
 
   /@types/eslint-scope/3.7.4:
@@ -7716,7 +7728,7 @@ packages:
     engines: {node: '>=12.20'}
     dev: true
 
-  /typescript-transform-paths/3.3.1_kk266mnbftw7tkxl4vh73rpoba_typescript@4.8.3:
+  /typescript-transform-paths/3.3.1_izr7nv74skc2o7zxhii424xmrq_typescript@4.8.3:
     resolution: {integrity: sha512-c+8Cqd2rsRtTU68rJI0NX/OtqgBDddNs1fIxm1nCNyhn0WpoyqtpUxc1w9Ke5c5kgE4/OT5xYbKf2cf694RYEg==}
     peerDependencies:
       typescript: '>=3.6.5'

@@ -1,3 +1,0 @@
-packages:
-  - '.'
-  - './src/electron-main/database/serialization/compression-native'

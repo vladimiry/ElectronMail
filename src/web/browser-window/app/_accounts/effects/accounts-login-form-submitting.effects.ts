@@ -1,6 +1,6 @@
 import {Actions, createEffect} from "@ngrx/effects";
 import {concatMap, delay, finalize, mergeMap, take} from "rxjs/operators";
-import {EMPTY, from, merge, Observable, of} from "rxjs";
+import {EMPTY, from, merge, NEVER, Observable, of} from "rxjs";
 import {Injectable} from "@angular/core";
 import {select, Store} from "@ngrx/store";
 
@@ -114,7 +114,7 @@ export class AccountsLoginFormSubmittingEffects {
                             };
                             const trigger$: Observable<{ trigger: string }> = skipLoginDelayLogic
                                 ? of({trigger: "the delay already took place, so immediate resolve"})
-                                : this.accountsService.setupLoginDelayTrigger({login}, logger);
+                                : this.accountsService.setupLoginDelayTrigger({login, takeUntil$: NEVER}, logger);
 
                             return trigger$.pipe(
                                 mergeMap(() => this.store.pipe(

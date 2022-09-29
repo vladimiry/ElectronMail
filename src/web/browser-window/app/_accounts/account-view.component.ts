@@ -118,7 +118,11 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
                     // processing just first/initial value here
                     // account reloading with a new session in the case of "entryUrl" change gets handled via the "unload" action call
                     first(),
-                    switchMap(({accountConfig: {login}}) => this.accountsService.setupLoginDelayTrigger({login}, this.logger)),
+                    switchMap(({accountConfig: {login}}) => {
+                        return this.accountsService.setupLoginDelayTrigger(
+                            {login, takeUntil$: this.webViewsState.primary.domReady$.asObservable()}, this.logger,
+                        );
+                    }),
                     withLatestFrom(this.account$),
                 )
                 // TODO move subscribe handler logic to "_accounts/*.service"
@@ -135,6 +139,7 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
                         webViewsState.domReady$,
                         (src: string) => webViewsState.src$.next(src),
                         this.logger,
+                        this.ngOnDestroy$.asObservable(),
                     ] as const;
                     const sessionStoragePatch = await this.ipcMainClient("resolvedSavedSessionStoragePatch")(key);
                     const baseReturn = async (): Promise<void> => {
@@ -440,6 +445,7 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
                         this.webViewsState.calendar.domReady$,
                         (src: string) => this.webViewsState.calendar.src$.next(src),
                         this.logger,
+                        this.ngOnDestroy$.asObservable(),
                         {clientSession, sessionStoragePatch},
                     ),
                     firstValueFrom(

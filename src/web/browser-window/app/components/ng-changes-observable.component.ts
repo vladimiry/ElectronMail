@@ -9,7 +9,7 @@ import type {OnChanges, OnDestroy, SimpleChanges} from "@angular/core";
 export abstract class NgChangesObservableComponent implements OnChanges, OnDestroy {
     protected ngChanges = new BehaviorSubject<Partial<{ [k in keyof this]: this[k] }>>({});
 
-    protected ngOnDestroy$ = new Subject();
+    protected ngOnDestroy$ = new Subject<void>();
 
     ngOnChanges(changes: SimpleChanges): void {
         const props: Record<keyof typeof changes, any> // eslint-disable-line @typescript-eslint/no-explicit-any

@@ -52,7 +52,7 @@ export class AccountsService {
     }
 
     setupLoginDelayTrigger(
-        {login}: NoExtraProps<Pick<WebAccount["accountConfig"], "login">>,
+        {login, takeUntil$}: NoExtraProps<Pick<WebAccount["accountConfig"], "login">> & { takeUntil$: Observable<Electron.WebviewTag> },
         logger: ReturnType<typeof getWebLogger>,
     ): Observable<{ trigger: string }> {
         const account$ = this.store.pipe(
@@ -188,6 +188,7 @@ export class AccountsService {
                     }),
                 );
             }),
+            takeUntil(takeUntil$),
         );
     }
 }

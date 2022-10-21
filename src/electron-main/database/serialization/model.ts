@@ -1,7 +1,6 @@
-import type {EncryptionAdapter, KeyBasedFileHeader} from "fs-json-store-encryption-adapter";
+import type {KeyBasedFileHeader} from "fs-json-store-encryption-adapter";
 
 import type {Config} from "src/shared/model/options";
-import type {FsDb} from "src/shared/model/database";
 
 export type DataMapSerializationHeaderPart = DeepReadonly<{
     type: "msgpack"
@@ -18,12 +17,3 @@ export type SerializationHeader = DeepReadonly<{
 } & {
     [k in keyof KeyBasedFileHeader]?: KeyBasedFileHeader[k]
 }>;
-
-export type buildSerializerType = (file: string) => {
-    read: (encryptionAdapter: EncryptionAdapter) => Promise<FsDb>
-    write: (
-        encryptionAdapter: EncryptionAdapter,
-        data: DeepReadonly<FsDb>,
-        dbCompression: DeepReadonly<Config["dbCompression2"]>,
-    ) => Promise<void>
-};

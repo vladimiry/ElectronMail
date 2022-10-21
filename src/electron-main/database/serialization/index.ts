@@ -1,224 +1,37 @@
-import _logger from "electron-log";
-import {Deferred} from "ts-deferred";
+import electronLog from "electron-log";
 import type {EncryptionAdapter} from "fs-json-store-encryption-adapter";
-import fs from "fs";
-import fsBackwardsStream from "fs-backwards-stream";
-import {Packr} from "msgpackr";
+import fsAsync from "fs/promises";
 import path from "path";
-import {promisify} from "util";
-import WriteStreamAtomic from "fs-write-stream-atomic";
-import zlib from "zlib";
 
-import type {Config} from "src/shared/model/options";
-import {curryFunctionMembers, getRandomInt} from "src/shared/util";
+import {
+    buildFileStream, CONST, decryptBuffer, msgpackr, portionSizeLimit, readFileBytes, readSummaryHeader, serializeDataMapItem,
+} from "./util";
+import {Config} from "src/shared/model/options";
+import {curryFunctionMembers} from "src/shared/util";
 import {Database} from "src/electron-main/database";
 import type {FsDb} from "src/shared/model/database";
 import * as Model from "./model";
-import {ONE_MB_BYTES} from "src/shared/const";
 
-const logger = curryFunctionMembers(_logger, __filename);
+const _logger = curryFunctionMembers(electronLog, __filename);
 
-const fsAsync = { // TODO use "fs/promises" (at the moment there is no "read" function for some reason)
-    open: promisify(fs.open),
-    read: promisify(fs.read),
-    readFile: promisify(fs.readFile),
-    close: promisify(fs.close),
-} as const;
-
-const msgpackr = new Packr({useRecords: false, moreTypes: false, structuredClone: false, int64AsNumber: true});
-
-export const resolveZstdWasm = ((): () => Promise<typeof import("@oneidentity/zstd-js/wasm")["ZstdSimple"]> => {
-    let lib: typeof import("@oneidentity/zstd-js/wasm")["ZstdSimple"] | undefined;
-    return async () => {
-        if (!lib) {
-            const {ZstdInit} = await import("@oneidentity/zstd-js/wasm");
-            const {ZstdSimple} = await ZstdInit();
-            lib = ZstdSimple;
-        }
-        return lib;
-    };
-})();
-
-export const buildSerializer: Model.buildSerializerType = (() => {
-    const CONST = {
-        zero: 0,
-        minusOne: -1,
-        fileReadFlag: "r",
-        headerZeroByteMark: Buffer.from([0o0]),
-        headerReadingBufferSize: 50,
-        dataReadingBufferSize: ONE_MB_BYTES,
-        dataWritingBufferSize: ONE_MB_BYTES,
-        mailsPortionSize: {min: 400, max: 5000},
-        compressionLevelsFallback: {gzip: 6, zstd: 7},
-    } as const;
-    const decryptBuffer = async (
-        data: Buffer,
+export const buildSerializer: (file: string) => {
+    read: (encryptionAdapter: EncryptionAdapter) => Promise<FsDb>
+    write: (
         encryptionAdapter: EncryptionAdapter,
-        compressionType?: Config["dbCompression2"]["type"],
-    ): Promise<Buffer> => {
-        const decryptedBuffer = await encryptionAdapter.read(data);
-        return compressionType === "gzip"
-            ? promisify(zlib.gunzip)(decryptedBuffer)
-            : (compressionType === "zstd")
-                ? Buffer.from(
-                    (await resolveZstdWasm()).decompress(decryptedBuffer),
-                )
-                : decryptedBuffer;
-    };
-    const serializeDataMapItem = async (
-        data: DeepReadonly<FsDb> | DeepReadonly<FsDb["accounts"]>,
-        encryptionAdapter: EncryptionAdapter,
-        compressionType: Config["dbCompression2"]["type"],
-        level: Config["dbCompression2"]["level"],
-    ): Promise<Buffer> => {
-        if (typeof level !== "number"
-            ||
-            level < 1
-            ||
-            (compressionType === "gzip" && level > 9)
-            ||
-            (compressionType === "zstd" && level > 22)
-        ) {
-            level = CONST.compressionLevelsFallback[compressionType];
-            logger.error(`Invalid "${nameof(level)}" value, falling back to the default value: ${level}`);
-        }
-        const serializedData = msgpackr.pack(data);
-        const serializedDataBuffer = Buffer.from(serializedData.buffer, serializedData.byteOffset, serializedData.byteLength);
-        const encryptedData = await encryptionAdapter.write(
-            compressionType === "gzip"
-                ? await promisify(zlib.gzip)(serializedDataBuffer, {level})
-                // TODO explore the "zstd" library payload size limitation: min 100 bytes
-                // eslint-disable-next-line max-len
-                // https://github.com/OneIdentity/zstd-js/blob/d9de2d24e6b61ae9d3cf86c2838a117555c1e835/src/components/common/zstd-simple/zstd-simple.ts#L23
-                : (compressionType === "zstd" && serializedDataBuffer.byteLength > 100)
-                    ? Buffer.from(
-                        (await resolveZstdWasm()).compress(serializedDataBuffer, level),
-                    )
-                    : serializedDataBuffer
-        );
-        const encryptionHeaderBuffer = encryptedData.slice(CONST.zero, encryptedData.indexOf(CONST.headerZeroByteMark));
-        const encryptionHeader = JSON.parse(encryptionHeaderBuffer.toString()) as Required<Model.SerializationHeader>["encryption"];
-        const serializationHeader: Model.SerializationHeader = {...encryptionHeader, serialization: {dataMapItem: true}};
-        return Buffer.concat([
-            Buffer.from(JSON.stringify(serializationHeader)),
-            CONST.headerZeroByteMark,
-            encryptedData.slice(encryptionHeaderBuffer.length + 1),
-        ]);
-    };
-    const readFileBytes = async (
-        file: string,
-        {byteCountToRead, fileOffsetStart = CONST.zero}: { byteCountToRead: number, fileOffsetStart?: number },
-    ): Promise<Buffer> => {
-        // TODO consider reusing the buffer with dynamic size increasing if previously used is too small (GC doesn't kick in immediately)
-        const result = Buffer.alloc(byteCountToRead);
-        const fileHandle: number = await fsAsync.open(file, CONST.fileReadFlag);
-        try {
-            await fsAsync.read(fileHandle, result, CONST.zero, byteCountToRead, fileOffsetStart);
-        } finally {
-            try {
-                await fsAsync.close(fileHandle);
-            } catch {
-                // NOOP
-            }
-        }
-        return result;
-    };
-    const readSummaryHeader = async (
-        file: string,
-        headerPosition?: "start" | "end",
-    ): Promise<{ value: Model.SerializationHeader, payloadOffsetStart: number }> => {
-        if (!headerPosition) {
-            const startHeader = await readSummaryHeader(file, "start");
-            const {serialization} = startHeader.value;
-            if (typeof serialization !== "object") {
-                return startHeader; // case: backward compatibility support (before "msgpack" introduction)
-            }
-            if ("dataMapItem" in serialization && Boolean(serialization.dataMapItem)) {
-                return readSummaryHeader(file, "end"); // case: primary / v4.12.2+
-            }
-            // case: v4.12.2 WIP build shared only once here https://github.com/vladimiry/ElectronMail/issues/406#issuecomment-850574547
-            // TODO throw "Header resolving failed..."-like error after v4.12.2 got released
-            return startHeader;
-        }
-
-        const {headerReadingBufferSize: highWaterMark, headerZeroByteMark} = CONST;
-        const fromEnd = headerPosition === "end";
-        const stream = fromEnd
-            ? fsBackwardsStream(file, {block: highWaterMark}) // this stream is not iterable, so "await-for-of" can't be used
-            : fs.createReadStream(file, {highWaterMark});
-        return new Promise<Unpacked<ReturnType<typeof readSummaryHeader>>>((resolve, reject) => {
-            let buffer: Buffer = Buffer.from([]);
-            stream.once("error", reject);
-            stream.once("end", () => { // header is required, so it's expected to be resolved before the "end" event gets fired
-                reject(new Error(`Failed to locate header of the ${file} file (trigger: stream "end" event)`));
-            });
-            stream.on("data", (fileChunk: Buffer) => {
-                const index = fileChunk[fromEnd ? "lastIndexOf" : "indexOf"](headerZeroByteMark);
-                const found = index !== CONST.minusOne;
-                const concatParts = [
-                    buffer,
-                    found
-                        ? (
-                            fromEnd
-                                ? fileChunk.slice(index + 1)
-                                : fileChunk.slice(CONST.zero, index)
-                        )
-                        : fileChunk
-                ];
-                buffer = Buffer.concat( // TODO use "push / unshift" on array (without dereferencing, so "const" variable)
-                    concatParts[fromEnd ? "reverse" : "slice"](),
-                );
-                if (found) {
-                    resolve({
-                        value: JSON.parse(buffer.toString()), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-                        payloadOffsetStart: fromEnd
-                            ? CONST.zero
-                            : buffer.byteLength + headerZeroByteMark.byteLength,
-                    });
-                    return;
-                }
-                if (buffer.byteLength > ONE_MB_BYTES) { // TODO header is normally much much smaller, consider reducing the limit
-                    reject(
-                        new Error(
-                            `Failed to locate header in extreme ${buffer.byteLength} bytes of ${file} file (from end: ${String(fromEnd)})`,
-                        ),
-                    );
-                }
-            });
-        }).finally(() => {
-            if (fromEnd) {
-                // just calling "destroy" is not enough to close/stop the "fs-backwards-stream"-based stream
-                // so "end => close" gets called on "fs-backwards-stream"-based stream
-                // calling "end" seems to be sufficient, so "close" called just in case
-                const {end, close} = stream as unknown as {
-                    [k in keyof Pick<import("stream").Writable & import("stream").Pipe, "end" | "close">]?: (this: typeof stream) => void
-                };
-                for (const method of [end, close] as const) {
-                    if (typeof method === "function") {
-                        method.call(stream);
-                    }
-                }
-            }
-            stream.destroy();
-        });
-    };
-    const result: Model.buildSerializerType = (file) => {
-        const {readLogger, writeLogger} = (() => {
-            return {
-                readLogger: curryFunctionMembers(logger, path.basename(file), "read"),
-                writeLogger: curryFunctionMembers(logger, path.basename(file), "write"),
-            } as const;
-        })();
-
-        return {
-            async read(encryptionAdapter) {
-                readLogger.verbose("start");
-
+        data: DeepReadonly<FsDb>,
+        dbCompression: DeepReadonly<Config["dbCompression2"]>,
+    ) => Promise<void>
+} = (file) => {
+    return {
+        read: (() => {
+            const logger = curryFunctionMembers(_logger, path.basename(file), "read");
+            return async (encryptionAdapter) => {
+                logger.verbose("start");
                 const {value: {serialization}, payloadOffsetStart} = await readSummaryHeader(file);
                 const serializationType = serialization && "type" in serialization && serialization.type;
                 const serializationDataMap = serialization && "dataMap" in serialization && serialization.dataMap;
 
-                readLogger.verbose(JSON.stringify({serializationType, serializationDataMap}));
+                logger.verbose(JSON.stringify({serializationType, serializationDataMap}));
 
                 if (serializationType !== "msgpack") {
                     throw new Error("Too old local store database format");
@@ -231,7 +44,7 @@ export const buildSerializer: Model.buildSerializerType = (() => {
                             encryptionAdapter,
                         ),
                     ) as FsDb;
-                    readLogger.verbose("end");
+                    logger.verbose("end");
                     return db;
                 }
 
@@ -241,9 +54,10 @@ export const buildSerializer: Model.buildSerializerType = (() => {
                 // parallel processing is not used by desing, so memory use peaks get reduced (GC doesn't kick in immediately)
                 for (const {byteLength} of serializationDataMap.items) {
                     const fileOffsetEnd = fileOffsetStart + byteLength;
+
                     const item = await readFileBytes(
                         file,
-                        {fileOffsetStart: fileOffsetStart, byteCountToRead: fileOffsetEnd - fileOffsetStart},
+                        {fileOffsetStart, byteCountToRead: fileOffsetEnd - fileOffsetStart},
                     );
 
                     fileOffsetStart = fileOffsetEnd;
@@ -271,58 +85,29 @@ export const buildSerializer: Model.buildSerializerType = (() => {
                     throw new Error("Unable to deserialize the incomplete data");
                 }
 
-                readLogger.verbose("end");
+                logger.verbose("end");
 
                 return resultDb as FsDb;
-            },
-            async write(encryptionAdapter, inputDb, compressionOpts) {
-                writeLogger.verbose("start");
+            };
+        })(),
 
+        write: (() => {
+            const logger = curryFunctionMembers(_logger, path.basename(file), "write");
+            return async (encryptionAdapter, inputDb, compressionOpts) => {
+                logger.verbose("start");
                 type DataMap = NoExtraProps<Required<Model.DataMapSerializationHeaderPart["dataMap"]>>;
                 const dataMap: Pick<DataMap, "compression"> & import("ts-essentials").DeepWritable<Pick<DataMap, "items">> =
                     {compression: compressionOpts.type, items: []};
-                const fileStream = (() => {
-                    const stream = new WriteStreamAtomic(file, {highWaterMark: CONST.dataWritingBufferSize, encoding: "binary"});
-                    const streamDeferred = new Deferred<void>();
-                    const writeToStream = async (chunk: Buffer): Promise<[void, void]> => {
-                        const writeDeferred = new Deferred<void>();
-                        return Promise.all([
-                            writeDeferred.promise,
-                            new Promise<void>((resolve, reject) => {
-                                if (
-                                    !stream.write(chunk, (error) => {
-                                        if (error) return reject(error);
-                                        writeDeferred.resolve();
-                                    })
-                                ) {
-                                    stream.once("drain", resolve);
-                                } else {
-                                    resolve();
-                                }
-                            }),
-                        ]);
-                    };
-                    stream.once("error", (error) => streamDeferred.reject(error));
-                    stream.once("finish", () => streamDeferred.resolve());
-                    return {
-                        finishPromise: streamDeferred.promise,
-                        write: writeToStream,
-                        async finish(): Promise<void> {
-                            const serializationHeader: Model.SerializationHeader = {serialization: {type: "msgpack", dataMap}};
-                            await writeToStream(
-                                Buffer.concat([
-                                    CONST.headerZeroByteMark,
-                                    Buffer.from(
-                                        JSON.stringify(serializationHeader),
-                                    ),
-                                ]),
-                            );
-                            await new Promise<void>((resolve) => stream.end(resolve));
-                        },
-                    } as const;
-                })();
+                const fileStream = buildFileStream(file);
                 const writeDataMapItem = async (data: DeepReadonly<FsDb> | DeepReadonly<FsDb["accounts"]>): Promise<void> => {
-                    const serializedDb = await serializeDataMapItem(data, encryptionAdapter, dataMap.compression, compressionOpts.level);
+                    const serializedDb = await serializeDataMapItem(
+                        logger,
+                        msgpackr,
+                        data,
+                        encryptionAdapter,
+                        dataMap.compression,
+                        compressionOpts.level,
+                    );
                     await fileStream.write(serializedDb);
                     dataMap.items.push({byteLength: serializedDb.byteLength});
                 };
@@ -350,18 +135,7 @@ export const buildSerializer: Model.buildSerializerType = (() => {
                             } = {
                                 bufferDb: {},
                                 portionSizeCounter: CONST.zero,
-                                portionSizeLimit: (() => {
-                                    const clampInRangeLimit = (value: number): number => Math.min(
-                                        Math.max(value, CONST.mailsPortionSize.min),
-                                        CONST.mailsPortionSize.max,
-                                    );
-                                    const min = clampInRangeLimit(compressionOpts.mailsPortionSize.min);
-                                    const max = clampInRangeLimit(compressionOpts.mailsPortionSize.max);
-                                    return getRandomInt(
-                                        Math.min(min, max),
-                                        Math.max(min, max),
-                                    );
-                                })(),
+                                portionSizeLimit: portionSizeLimit(compressionOpts.mailsPortionSize),
                             };
                             const writeMailsPortion = async (): Promise<void> => {
                                 await writeDataMapItem(mailsPortion.bufferDb);
@@ -385,13 +159,12 @@ export const buildSerializer: Model.buildSerializerType = (() => {
                             }
                         }
 
-                        await fileStream.finish();
+                        await fileStream.finish({serialization: {type: "msgpack", dataMap}});
                     })(),
                 ]);
 
-                writeLogger.verbose("end");
-            },
-        };
+                logger.verbose("end");
+            };
+        })(),
     };
-    return result;
-})();
+};

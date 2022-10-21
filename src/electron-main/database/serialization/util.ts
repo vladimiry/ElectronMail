@@ -234,11 +234,11 @@ export const portionSizeLimit = (mailsPortionSize: Readonly<Config["dbCompressio
 };
 
 export const readFileBytes = async (
+    buffer: Buffer,
     file: string,
     {byteCountToRead, fileOffsetStart}: { byteCountToRead: number, fileOffsetStart: number },
 ): Promise<Buffer> => {
     const fileHandle = await fsAsync.open(file, "r");
-    const buffer = Buffer.alloc(byteCountToRead);
     try {
         await fsAsync.read(fileHandle, buffer, 0, byteCountToRead, fileOffsetStart);
     } finally {
@@ -248,5 +248,5 @@ export const readFileBytes = async (
             // NOOP
         }
     }
-    return buffer;
+    return buffer.slice(0, byteCountToRead);
 };

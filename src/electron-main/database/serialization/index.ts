@@ -50,14 +50,26 @@ export const buildSerializer: (file: string) => {
 
                 let fileOffsetStart = payloadOffsetStart;
                 let resultDb: DeepReadonly<FsDb> | undefined;
+                let readFileBytesSharedBuffer: Buffer | undefined; // using shared buffer to reduce memory allocation peaks
 
                 // parallel processing is not used by desing, so memory use peaks get reduced (GC doesn't kick in immediately)
                 for (const {byteLength} of serializationDataMap.items) {
                     const fileOffsetEnd = fileOffsetStart + byteLength;
+                    const byteCountToRead = fileOffsetEnd - fileOffsetStart;
+
+                    if (!readFileBytesSharedBuffer) {
+                        readFileBytesSharedBuffer = Buffer.alloc(byteCountToRead);
+                    } else if (readFileBytesSharedBuffer.byteLength < byteCountToRead) {
+                        readFileBytesSharedBuffer = Buffer.concat([
+                            readFileBytesSharedBuffer,
+                            Buffer.alloc(byteCountToRead - readFileBytesSharedBuffer.byteLength)
+                        ]);
+                    }
 
                     const item = await readFileBytes(
+                        readFileBytesSharedBuffer,
                         file,
-                        {fileOffsetStart, byteCountToRead: fileOffsetEnd - fileOffsetStart},
+                        {fileOffsetStart, byteCountToRead},
                     );
 
                     fileOffsetStart = fileOffsetEnd;

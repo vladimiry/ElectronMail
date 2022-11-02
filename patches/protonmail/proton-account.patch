@@ -38,10 +38,10 @@ index 8f5e56ef0..a40d9dc17 100644
  export default Setup;
 
 diff --git a/applications/account/src/app/content/MainContainer.tsx b/applications/account/src/app/content/MainContainer.tsx
-index ceb51ba56..7656f38f6 100644
+index 32a57aa6d..472a7c9c9 100644
 --- a/applications/account/src/app/content/MainContainer.tsx
 +++ b/applications/account/src/app/content/MainContainer.tsx
-@@ -119,7 +119,7 @@ const MainContainer = () => {
+@@ -132,7 +132,7 @@ const MainContainer = () => {
 
      useDeviceRecovery();
 

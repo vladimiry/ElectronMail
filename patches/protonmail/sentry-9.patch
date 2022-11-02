@@ -1,8 +1,8 @@
 diff --git a/packages/shared/lib/helpers/sentry.ts b/packages/shared/lib/helpers/sentry.ts
-index 839cd1b90..f01b1c678 100644
+index 4c7409411..cab096801 100644
 --- a/packages/shared/lib/helpers/sentry.ts
 +++ b/packages/shared/lib/helpers/sentry.ts
-@@ -71,108 +71,11 @@ interface Arguments {
+@@ -71,107 +71,11 @@ interface Arguments {
 
  let sentryEnabled = true;
 
@@ -79,7 +79,6 @@ index 839cd1b90..f01b1c678 100644
 -            'No network connection',
 -            'Failed to fetch',
 -            'NetworkError when attempting to fetch resource.',
--            'No network connection',
 -            'webkitExitFullScreen', // Bug in Firefox for iOS.
 -            'InactiveSession',
 -            'UnhandledRejection', // Happens too often in extensions and we have lints for that, so should be safe to ignore.
@@ -114,4 +113,3 @@ index 839cd1b90..f01b1c678 100644
 
  export const setSentryEnabled = (enabled: boolean) => {
      sentryEnabled = enabled;
-

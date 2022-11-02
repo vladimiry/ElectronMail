@@ -56,9 +56,9 @@ index 9aaa78a28..f3d24b47c 100644
 +{
 +    const platform = String(navigator.platform);
 +    const userAgents = {
-+        linux: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.63 Safari/537.36",
-+        windows: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.63 Safari/537.36",
-+        macos: "Mozilla/5.0 (Macintosh; Intel Mac OS X 12_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.63 Safari/537.36"
++        linux: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
++        windows: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
++        macos: "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36"
 +    } as const;
 +    uaParser.setUA(
 +        platform.startsWith("Linux")
@@ -112,19 +112,6 @@ index ebce00d20..96498d8c8 100644
              {...rest}
          >
              {children}
-
-diff --git a/packages/components/containers/topBanners/NudgeTopBanner.tsx b/packages/components/containers/topBanners/NudgeTopBanner.tsx
-index 38e76fbcd..cace56733 100644
---- a/packages/components/containers/topBanners/NudgeTopBanner.tsx
-+++ b/packages/components/containers/topBanners/NudgeTopBanner.tsx
-@@ -14,7 +14,7 @@ const NudgeTopBanner = () => {
-     const [show] = useState(getIsProtonMailDomain);
-     const { feature } = useFeature(FeatureCode.NudgeProton);
-
--    if (!feature?.Value || !show) {
-+    if (Boolean("1") || !feature?.Value || !show) {
-         return null;
-     }
 
 diff --git a/packages/components/helpers/earlyAccessDesynchronization.ts b/packages/components/helpers/earlyAccessDesynchronization.ts
 index 36bd0c712..c2fb3681c 100644

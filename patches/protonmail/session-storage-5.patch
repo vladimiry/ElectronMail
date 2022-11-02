@@ -13,10 +13,10 @@ index 896e1d299..467d0aa72 100644
 +/* </electron-mail-mark> */
 
 diff --git a/packages/shared/lib/authentication/createSecureSessionStorage.ts b/packages/shared/lib/authentication/createSecureSessionStorage.ts
-index 9e47ba48b..0b995ac96 100644
+index 2477711b0..a6c9fe1a5 100644
 --- a/packages/shared/lib/authentication/createSecureSessionStorage.ts
 +++ b/packages/shared/lib/authentication/createSecureSessionStorage.ts
-@@ -1,27 +1,24 @@
+@@ -1,29 +1,26 @@
 +/* <electron-mail-mark> */
  import { load, save } from '../helpers/secureSessionStorage';
  import createStore from '../helpers/store';
@@ -47,12 +47,14 @@ index 9e47ba48b..0b995ac96 100644
 -        const handleUnload = () => {
 -            save(store.getState());
 -        };
+         // This gets narrowed to never because of the onpagehide
+         // @ts-ignore
 -        window.addEventListener('unload', handleUnload, true);
 +        window.addEventListener('unload', saveStateDo, true);
      }
 
      return store;
-@@ -30,3 +27,4 @@ const createSecureSessionStorage = () => {
+@@ -32,3 +29,4 @@ const createSecureSessionStorage = () => {
  export type SecureSessionStorage = ReturnType<typeof createSecureSessionStorage>;
 
  export default createSecureSessionStorage;

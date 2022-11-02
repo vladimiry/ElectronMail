@@ -5,4 +5,4 @@ export interface BuildEnvVars {
     BUILD_START_MAXIMIZED_BY_DEFAULT: unknown
 }
 
-export type BuildAngularCompilationFlags = { readonly aot: boolean, readonly ivy: boolean };
+export type BuildAngularCompilationFlags = { readonly aot: boolean, readonly ivy: true };

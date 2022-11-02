@@ -14,7 +14,7 @@ const envVarName = {
     npm_config_arch: "npm_config_arch",
 } as const;
 
-const electronRebuildModuleName = "electron-rebuild";
+const electronRebuildModuleName = "@electron/rebuild";
 
 const compileNativeDeps = async (): Promise<void> => {
     const destArch = process.env[envVarName.ELECTRON_DEST_MAIL_ARCH] || process.env[envVarName.npm_config_arch] || process.arch;
@@ -43,7 +43,7 @@ const compileNativeDeps = async (): Promise<void> => {
                         "--package",
                         electronRebuildModuleName,
                         "--",
-                        electronRebuildModuleName,
+                        "electron-rebuild",
                         "--force",
                         `--arch`, destArch,
                         "--version", packageJSON.devDependencies.electron,
@@ -59,11 +59,12 @@ const compileNativeDeps = async (): Promise<void> => {
                             [envVarName.DEBUG]: electronRebuildModuleName,
                             // https://developer.apple.com/documentation/apple-silicon/building-a-universal-macos-binary
                             ...(isCrossCompilation && destArch === "arm64" && os.platform() === "darwin" && {
-                                CFLAGS: (process.env.CFLAGS ?? "") +
-                                    ` -target arm64-apple-macos11 -arch ${destArch}`
+                                CFLAGS: `${process.env.CFLAGS ?? ""} -target arm64-apple-macos11 -arch ${destArch}`,
                             }),
                             // https://github.com/vladimiry/ElectronMail/issues/357#issuecomment-1184862301
-                            ...(isCrossCompilation && isSodiumNativeModule && {[envVarName.PREBUILD_ARCH]: destArch}),
+                            ...(isCrossCompilation && isSodiumNativeModule && {
+                                [envVarName.PREBUILD_ARCH]: destArch,
+                            }),
                         },
                     },
                 ],

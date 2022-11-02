@@ -186,13 +186,15 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
         webContents.on("plugin-crashed", ({type}, name, version) => logger.error(JSON.stringify({type, name, version})));
         webContents.on("preload-error", ({type}, preloadPath, error) => logger.error(JSON.stringify({type, preloadPath}), error));
         webContents.on("render-process-gone", ({type}, details) => logger.error(JSON.stringify({type, details})));
-        webContents.on("new-window", async (event, url) => {
-            event.preventDefault();
+        webContents.setWindowOpenHandler(({url}) => {
             if (isWebUri(url)) {
-                await endpoints.openExternal({url});
-                return;
+                endpoints.openExternal({url}).catch((error) => {
+                    logger.error(error);
+                });
+            } else {
+                logger.warn(`Opening a new window is forbidden, url: "${url}"`);
             }
-            logger.warn(`Opening a new window is forbidden, url: "${url}"`);
+            return {action: "deny"};
         });
         webContents.on("context-menu", async (
             ...[/*event*/, {editFlags, linkURL, linkText, isEditable, /*spellcheckEnabled,*/ dictionarySuggestions}]

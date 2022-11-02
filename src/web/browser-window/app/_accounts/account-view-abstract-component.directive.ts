@@ -7,7 +7,7 @@ import type {OnDestroy} from "@angular/core";
 import {pick} from "remeda";
 import {select, Store} from "@ngrx/store";
 
-import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {ACCOUNTS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
 import {AccountViewComponent} from "./account-view.component";
 import {CoreService} from "src/web/browser-window/app/_core/core.service";
@@ -195,12 +195,6 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
                 this.log("verbose", ["webview event", JSON.stringify({type, src: webView.src})]);
             },
         ] as const;
-        const newWindowArgs = [
-            "new-window",
-            ({url}: import("electron").NewWindowEvent) => {
-                this.event.emit({type: "action", payload: NAVIGATION_ACTIONS.OpenExternal({url})});
-            },
-        ] as const;
         const consoleMessageArgs = [
             "console-message",
             ({type, level, message, line, sourceId}: import("electron").ConsoleMessageEvent) => {
@@ -245,7 +239,6 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
         //      - https://github.com/Microsoft/TypeScript/issues/25352
         webView.addEventListener(...didNavigateArgs);
         webView.addEventListener(...domReadyArgs);
-        webView.addEventListener(...newWindowArgs);
         webView.addEventListener(...consoleMessageArgs);
         webView.addEventListener(...didFailLoadArgs);
         webView.addEventListener(...crashedArgs);
@@ -257,7 +250,6 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
             unsubscribe: () => {
                 webView.removeEventListener(...didNavigateArgs);
                 webView.removeEventListener(...domReadyArgs);
-                webView.removeEventListener(...newWindowArgs);
                 webView.removeEventListener(...consoleMessageArgs);
                 webView.removeEventListener(...didFailLoadArgs);
                 webView.removeEventListener(...crashedArgs);

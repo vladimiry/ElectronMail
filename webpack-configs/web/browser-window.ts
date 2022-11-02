@@ -118,7 +118,6 @@ const config = buildBaseWebConfig(
                     Extract<keyof Required<AngularWebpackPluginOptions>["compilerOptions"], string>> = {
                     preserveWhitespaces: false,
                     disableTypeScriptVersionCheck: true,
-                    enableIvy: angularCompilationFlags.ivy,
                     ...legacyNgcOptions,
                     ...strictTemplateOptions,
                     ...readConfiguration(tsConfigFile).options,

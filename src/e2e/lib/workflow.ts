@@ -293,7 +293,7 @@ export const buildWorkflow = (testContext: TestContext) => {
                 try {
                     await testContext.firstWindowPage.waitForURL(
                         `**${expected}`,
-                        {timeout: CONF.timeouts.elementTouched * 2, waitUntil: "networkidle"},
+                        {timeout: CONF.timeouts.elementTouched * 2},
                     );
                 } catch (e) {
                     const actual = await workflow.getLocationHash();

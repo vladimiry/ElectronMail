@@ -108,3 +108,8 @@ If you want to backup the app data these are only files you need to take care of
 It's recommended to perform the following actions before uninstalling the app:
 - If you had the `Keep me signed in` feature enabled (see [screenshot](images/keep-me-signed-in.png)), click `Log-out` action in the app menu (see [screenshot](images/logout.png)). That will remove locally stored master password (done with [node-keytar](https://github.com/atom/node-keytar)). You can also remove it having the app already uninstalled, but that would be a more complicated way as you will have to manually edit the system's keychain.
 - Remove settings folder manually. You can locate settings folder path clicking `Open setting folder` app/tray menu item (see [screenshot](images/open-settings-folder.jpg)) or reading `app.getPath(name ="userData")` related `app.getPath(name)` section [here](https://electronjs.org/docs/api/app#appgetpathname). 
+
+## Thanks to
+
+- JetBrains for provided [open source license](https://jb.gg/OpenSourceSupport).
+- Proton engineers for provided support at [issues](https://github.com/ProtonMail/WebClients/issues).

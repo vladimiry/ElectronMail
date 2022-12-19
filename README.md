@@ -5,7 +5,7 @@
 ElectronMail is an [Electron](https://electronjs.org)-based unofficial desktop client for [ProtonMail](https://protonmail.com/). The app aims to provide enhanced desktop user experience enabling features that are not supported by the official in-browser web clients.
 It is written in [TypeScript](http://www.typescriptlang.org) and uses [Angular](https://angular.io).
 
-[![GitHub Actions CI](https://img.shields.io/github/workflow/status/vladimiry/ElectronMail/GitHub%20Actions%20CI?branch=master&logo=github&label=GitHub%20Actions%20CI)](https://github.com/vladimiry/ElectronMail/actions)
+[![GitHub Actions CI](https://img.shields.io/github/actions/workflow/status/vladimiry/ElectronMail/main.yml?branch=master&logo=github&label=GitHub%20Actions%20CI)](https://github.com/vladimiry/ElectronMail/actions)
 [![License](https://img.shields.io/github/license/vladimiry/ElectronMail.svg?label=License)](https://github.com/vladimiry/ElectronMail/blob/master/LICENSE)
 [![GitHub top language](https://img.shields.io/github/languages/top/vladimiry/ElectronMail.svg?label=TypeScript)](https://github.com/vladimiry/ElectronMail/search?l=typescript)
 

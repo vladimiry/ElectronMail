@@ -145,23 +145,26 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                 async markMessageAsRead(IDs) {
                     const api = await resolveHttpApi();
                     const {markMessageAsRead: apiMethod} = internals["../../packages/shared/lib/api/messages.ts"].value;
-                    await Promise.all(
-                        chunk(IDs, PROTON_MAX_QUERY_PORTION_LIMIT).map(async (IDsPortion) => api(apiMethod(IDsPortion))),
-                    );
+
+                    for (const idsChunk of chunk(IDs, PROTON_MAX_QUERY_PORTION_LIMIT)) {
+                        await api(apiMethod(idsChunk));
+                    }
                 },
                 async labelMessages({LabelID, IDs}) {
                     const api = await resolveHttpApi();
                     const {labelMessages: apiMethod} = internals["../../packages/shared/lib/api/messages.ts"].value;
-                    await Promise.all(
-                        chunk(IDs, PROTON_MAX_QUERY_PORTION_LIMIT).map(async (IDsPortion) => api(apiMethod({IDs: IDsPortion, LabelID}))),
-                    );
+
+                    for (const idsChunk of chunk(IDs, PROTON_MAX_QUERY_PORTION_LIMIT)) {
+                        await api(apiMethod({IDs: idsChunk, LabelID}));
+                    }
                 },
                 async deleteMessages(IDs) {
                     const api = await resolveHttpApi();
                     const {deleteMessages: apiMethod} = internals["../../packages/shared/lib/api/messages.ts"].value;
-                    await Promise.all(
-                        chunk(IDs, PROTON_MAX_QUERY_PORTION_LIMIT).map(async (IDsPortion) => api(apiMethod(IDsPortion)))
-                    );
+
+                    for (const idsChunk of chunk(IDs, PROTON_MAX_QUERY_PORTION_LIMIT)) {
+                        await api(apiMethod(idsChunk));
+                    }
                 },
             },
             contact: {

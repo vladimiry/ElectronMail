@@ -17,7 +17,7 @@ import {FIRE_SYNCING_ITERATION$} from "src/web/browser-window/app/app.constants"
 import {getWebLogger} from "src/web/browser-window/util";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {ofType} from "src/shared/util/ngrx-of-type";
-import {ONE_MINUTE_MS, ONE_SECOND_MS} from "src/shared/const";
+import {ONE_SECOND_MS} from "src/shared/const";
 import {PING_ONLINE_STATUS_EVERY_SECOND$} from "src/web/browser-window/app/_accounts/const";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 
@@ -95,9 +95,7 @@ export class AccountsDbSyncingEffects {
                                     this.api.primaryWebViewClient({webView, accountIndex}, {pingTimeoutMs: 7002}).pipe(
                                         mergeMap((webViewClient) => {
                                             return from(
-                                                webViewClient("makeMailRead", {timeoutMs: ONE_SECOND_MS * 30})(
-                                                    {messageIds, accountIndex},
-                                                ),
+                                                webViewClient("makeMailRead", {timeoutMs: 0})({messageIds, accountIndex}),
                                             ).pipe(
                                                 mergeMap(() => this.core.fireSyncingIteration({login})),
                                                 finalize(() => {
@@ -125,9 +123,7 @@ export class AccountsDbSyncingEffects {
                                     this.api.primaryWebViewClient({webView, accountIndex}, {pingTimeoutMs: 7003}).pipe(
                                         mergeMap((webViewClient) => {
                                             return from(
-                                                webViewClient("setMailFolder", {timeoutMs: ONE_MINUTE_MS})(
-                                                    {folderId, messageIds, accountIndex},
-                                                ),
+                                                webViewClient("setMailFolder", {timeoutMs: 0})({folderId, messageIds, accountIndex}),
                                             ).pipe(
                                                 mergeMap(() => this.core.fireSyncingIteration({login})),
                                                 finalize(() => {
@@ -155,9 +151,7 @@ export class AccountsDbSyncingEffects {
                                     this.api.primaryWebViewClient({webView, accountIndex}, {pingTimeoutMs: 7004}).pipe(
                                         mergeMap((webViewClient) => {
                                             return from(
-                                                webViewClient("deleteMessages", {timeoutMs: ONE_MINUTE_MS})(
-                                                    {messageIds, accountIndex},
-                                                ),
+                                                webViewClient("deleteMessages", {timeoutMs: 0})({messageIds, accountIndex}),
                                             ).pipe(
                                                 mergeMap(() => this.core.fireSyncingIteration({login})),
                                                 finalize(() => {

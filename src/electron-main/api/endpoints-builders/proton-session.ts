@@ -1,11 +1,15 @@
 import {URL} from "@cliqz/url-parser";
+import {webFrameMain} from "electron";
 
 import {Context} from "src/electron-main/model";
 import {filterProtonSessionApplyingCookies} from "src/electron-main/util";
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
+import {LOCAL_WEBCLIENT_ORIGIN} from "src/shared/const";
 import {processProtonCookieRecord} from "src/electron-main/util/proton-url";
+import {PROVIDER_REPO_MAP} from "src/shared/const/proton-apps";
 import {resetSessionStorages, resolveInitializedAccountSession} from "src/electron-main/session";
 import {resolvePrimaryDomainNameFromUrlHostname} from "src/shared/util/url";
+import {sessionSetupJavaScriptAndNavigate} from "src/shared/util/proton-webclient";
 
 // TODO enable minimal logging
 
@@ -18,7 +22,8 @@ export const buildEndpoints = async (
     | "applySavedProtonBackendSession"
     | "saveSessionStoragePatch"
     | "resolvedSavedSessionStoragePatch"
-    | "resetProtonBackendSession">> => {
+    | "resetProtonBackendSession"
+    | "applySessionToIframeAndNavigateToCalendar">> => {
     const endpoints: Unpacked<ReturnType<typeof buildEndpoints>> = {
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async resolveSavedProtonClientSession({login, apiEndpointOrigin}) {
@@ -147,6 +152,53 @@ export const buildEndpoints = async (
             }
 
             await resetSessionStorages(ctx, {login, apiEndpointOrigin});
+        },
+
+        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+        async applySessionToIframeAndNavigateToCalendar({frame: frameId, sessionStoragePatch, clientSession}) {
+            const frame = webFrameMain.fromId(frameId.processId, frameId.routingId);
+            const parentFrame = frame?.parent;
+
+            if (!frame || !parentFrame) {
+                throw new Error(`Failed to resolve some of the drawer calendar's instances: ${nameof(frame)}, ${nameof(parentFrame)}`);
+            }
+
+            // setting "window.sessionStorage" data on parent window (session storage is shared between iframe and parent page)
+            await parentFrame.executeJavaScript(
+                sessionSetupJavaScriptAndNavigate({
+                    savedSessionData: {
+                        sessionStoragePatch,
+                        clientSession: {windowName: {}, sessionStorage: clientSession.sessionStorage},
+                    },
+                }),
+            );
+
+            // setting "window.name" data
+            await frame.executeJavaScript(
+                sessionSetupJavaScriptAndNavigate({
+                    savedSessionData: {
+                        sessionStoragePatch: {} as typeof sessionStoragePatch, // gets inherited from the parent window, so skip patching
+                        clientSession: {windowName: clientSession.windowName, sessionStorage: {}},
+                    },
+                    finalCodePart: `
+                        window.location.assign(
+                            "${LOCAL_WEBCLIENT_ORIGIN}/${PROVIDER_REPO_MAP["proton-calendar"].basePath}",
+                        );
+                    `,
+                }),
+            );
+
+            // await parentFrame.executeJavaScript(
+            //     sessionSetupJavaScriptAndNavigate({
+            //         window: `document.getElementById("drawer-app-iframe").contentWindow`,
+            //         savedSessionData: {sessionStoragePatch, clientSession},
+            //         finalCodePart: `
+            //             window.location.assign(
+            //                 "${LOCAL_WEBCLIENT_ORIGIN}/${PROVIDER_REPO_MAP["proton-calendar"].basePath}",
+            //             );
+            //         `,
+            //     }),
+            // );
         },
     };
 

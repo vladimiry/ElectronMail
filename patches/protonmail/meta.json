@@ -9,6 +9,7 @@
     "session-storage-5.patch",
     "link-handler-7.patch",
     "embedded-verification-3.patch",
+    "drawer.patch",
     "proton-mail.patch"
   ],
   "proton-account": [
@@ -21,6 +22,7 @@
     "session-storage-5.patch",
     "link-handler-7.patch",
     "embedded-verification-3.patch",
+    "drawer.patch",
     "proton-account.patch"
   ],
   "proton-calendar": [
@@ -32,7 +34,8 @@
     "pack-webpack-6.patch",
     "session-storage-5.patch",
     "link-handler-7.patch",
-    "embedded-verification-3.patch"
+    "embedded-verification-3.patch",
+    "drawer.patch"
   ],
   "proton-drive": [
     "common-1.patch",
@@ -44,6 +47,7 @@
     "session-storage-5.patch",
     "link-handler-7.patch",
     "embedded-verification-3.patch",
+    "drawer.patch",
     "proton-drive.patch"
   ],
   "proton-vpn-settings": [
@@ -55,6 +59,7 @@
     "pack-webpack-6.patch",
     "session-storage-5.patch",
     "link-handler-7.patch",
-    "embedded-verification-3.patch"
+    "embedded-verification-3.patch",
+    "drawer.patch"
   ]
 }

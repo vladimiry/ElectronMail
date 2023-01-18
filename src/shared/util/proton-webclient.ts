@@ -2,7 +2,9 @@ import {pick} from "remeda";
 import {URL} from "@cliqz/url-parser";
 
 import {AccountConfig} from "src/shared/model/account";
+import {IpcMainServiceScan} from "src/shared/api/main-process";
 import {LOCAL_WEBCLIENT_ORIGIN, WEB_CLIENTS_BLANK_HTML_FILE_NAME} from "src/shared/const";
+import {ProtonClientSession} from "src/shared/model/proton";
 import {PROVIDER_REPO_MAP} from "src/shared/const/proton-apps";
 import {resolveProtonAppTypeFromUrlHref} from "src/shared/util/proton-url";
 
@@ -72,3 +74,52 @@ export const resolvePackagedWebClientApp = (
 ): Readonly<{ project: keyof typeof PROVIDER_REPO_MAP }> => {
     return {project: resolveProtonAppTypeFromUrlHref(url.href).type};
 };
+
+export const sessionSetupJavaScriptAndNavigate = (
+    {savedSessionData, finalCodePart, window = "window"}: {
+        window?: string,
+        savedSessionData?: {
+            clientSession?: ProtonClientSession | null
+            sessionStoragePatch?: IpcMainServiceScan["ApiImplReturns"]["resolvedSavedSessionStoragePatch"] | null
+        },
+        finalCodePart?: string,
+    }
+): string => {
+    const generateSessionStoragePatchingCode = (patch: Record<string, unknown>): string => {
+        return `(() => {
+            const sessionStorageStr = ${JSON.stringify(JSON.stringify(patch))};
+            const sessionStorageParsed = JSON.parse(sessionStorageStr);
+            for (const [key, value] of Object.entries(sessionStorageParsed)) {
+                ${window}.sessionStorage.setItem(key, value);
+            }
+        })();`;
+    };
+    const prependCodeParts: string[] = [];
+
+    if (savedSessionData?.clientSession) {
+        prependCodeParts.push(...[
+            generateSessionStoragePatchingCode(savedSessionData?.clientSession.sessionStorage),
+            `(() => {
+                const windowNameStr = ${JSON.stringify(JSON.stringify(savedSessionData?.clientSession.windowName))};
+                ${window}.name = windowNameStr;
+            })();`,
+        ]);
+    }
+
+    if (savedSessionData?.sessionStoragePatch) {
+        prependCodeParts.push(generateSessionStoragePatchingCode(savedSessionData?.sessionStoragePatch));
+    }
+
+    if (prependCodeParts.length) {
+        return `
+            ${prependCodeParts.join("\n\r")};
+            ${finalCodePart ?? ""}
+        `;
+    }
+
+    return `
+        ${window}.name = "";
+        ${window}.sessionStorage.clear();
+        ${finalCodePart ?? ""}
+    `;
+}

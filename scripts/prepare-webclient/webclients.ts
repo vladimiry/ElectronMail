@@ -301,6 +301,8 @@ async function executeBuildFlow(
                 assertPathIsInCwd(repoDistDir);
                 await execShell(["npx", ["--no", "rimraf", repoDistDir]]);
 
+                fs.copyFileSync("src/shared/const/proton-apps.ts", path.join(repoDir, "electron-mail-proton-apps.ts"));
+
                 await execShell(
                     [
                         "yarn",

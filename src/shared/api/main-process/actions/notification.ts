@@ -34,6 +34,10 @@ export const IPC_MAIN_API_NOTIFICATION_ACTIONS = propsRecordToActionsRecord(
         PowerMonitor: props<{ message: "suspend" | "resume" | "shutdown" }>(),
         ProtonSessionTokenCookiesModified: props<{ key: DbModel.DbAccountPk }>(),
         NativeTheme: props<{ shouldUseDarkColors: boolean }>(),
+        CalendarIframeLoadRequest: props<{
+            frame: Pick<import("electron").WebFrameMain, "processId" | "routingId">,
+            webContents: Pick<import("electron").WebContents, "id">,
+        }>(),
     },
     {prefix: __filename},
 );

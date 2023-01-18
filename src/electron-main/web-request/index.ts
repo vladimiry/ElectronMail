@@ -1,4 +1,6 @@
 import _logger from "electron-log";
+import {concatMap} from "rxjs/operators";
+import {firstValueFrom, Observable, race, throwError, timer} from "rxjs";
 import {
     OnBeforeRequestListenerDetails, OnBeforeSendHeadersListenerDetails, OnCompletedListenerDetails, OnErrorOccurredListenerDetails,
     OnHeadersReceivedListenerDetails,
@@ -6,7 +8,9 @@ import {
 import {pick} from "remeda";
 import {URL} from "@cliqz/url-parser";
 
-import {ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN} from "src/shared/const";
+import {
+    ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN, LOCAL_WEBCLIENT_ORIGIN, ONE_SECOND_MS, WEB_CLIENTS_BLANK_HTML_FILE_NAME,
+} from "src/shared/const";
 import {AccountConfig} from "src/shared/model/account";
 import {buildUrlOriginsFailedMsgTester, parseUrlOriginWithNullishCheck, resolvePrimaryDomainNameFromUrlHostname} from "src/shared/util/url";
 import {CorsProxy} from "./model";
@@ -19,6 +23,7 @@ import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/const";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {PROTON_API_SUBDOMAINS} from "src/shared/const/proton-url";
 import {protonApiUrlsUtil} from "src/electron-main/util/proton-url";
+import {PROVIDER_REPO_MAP} from "src/shared/const/proton-apps";
 import {resolveInitializedAccountSession} from "src/electron-main/session";
 
 const logger = curryFunctionMembers(_logger, __filename);
@@ -123,7 +128,7 @@ export function initWebRequestListenersByAccount(
                     //   - subFrame: https://newassets.hcaptcha.com/captcha/v1/335f764/static/hcaptcha.html
                     //   - possibly https://accounts.hcaptcha.com
                     // so whitelisting it with subdomains
-                    return url.origin === "https://hcaptcha.com" || url.origin.endsWith(".hcaptcha.com") ? [url.origin]: [];
+                    return url.origin === "https://hcaptcha.com" || url.origin.endsWith(".hcaptcha.com") ? [url.origin] : [];
                 })(),
             ].map(parseUrlOriginWithNullishCheck),
         ]);
@@ -135,6 +140,41 @@ export function initWebRequestListenersByAccount(
             const allowRequest = (): void => callback({});
             const banRequest = (): void => callback({cancel: true});
             const url = resolveWebRequestUrl(details.url);
+
+            if (
+                details.resourceType === "subFrame"
+                &&
+                `${url?.pathname}/`.startsWith(`/${PROVIDER_REPO_MAP["proton-calendar"].basePath}/mail/`)
+            ) {
+                {
+                    const {frame, webContents} = details;
+                    if (!frame || !webContents) {
+                        throw new Error(`Some of the instances haven't been defined: ${nameof(frame)}, ${nameof(webContents)}`);
+                    }
+                    (async () => {
+                        await firstValueFrom(
+                            race(
+                                new Observable<void>((subscriber) => {
+                                    frame.once("dom-ready", () => {
+                                        IPC_MAIN_API_NOTIFICATION$.next(
+                                            IPC_MAIN_API_NOTIFICATION_ACTIONS.CalendarIframeLoadRequest({
+                                                frame: pick(frame, ["processId", "routingId"]),
+                                                webContents: pick(webContents, ["id"]),
+                                            }),
+                                        );
+                                        subscriber.next();
+                                    });
+                                }),
+                                timer(ONE_SECOND_MS * 3).pipe(
+                                    concatMap(() => throwError(() => new Error("Failed to load frame iframe stub page"))),
+                                ),
+                            ),
+                        );
+                    })();
+                }
+                callback({redirectURL: `${LOCAL_WEBCLIENT_ORIGIN}/${WEB_CLIENTS_BLANK_HTML_FILE_NAME}`});
+                return;
+            }
 
             if (!url) {
                 banRequest();

@@ -131,10 +131,9 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
                     const {primary: webViewsState} = this.webViewsState;
                     const key = {
                         login: accountConfig.login,
-                        apiEndpointOrigin: this.core.parseEntryUrl(accountConfig, project).sessionStorage.apiEndpointOrigin,
+                        apiEndpointOrigin: this.core.parseSessionStorageApiEndpointOrigin(accountConfig).sessionStorage.apiEndpointOrigin,
                     } as const;
                     const applyProtonClientSessionAndNavigateArgs = [
-                        accountConfig,
                         project,
                         webViewsState.domReady$,
                         (src: string) => webViewsState.src$.next(src),
@@ -307,7 +306,7 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
                     }
                     await this.ipcMainClient("resetSavedProtonSession")({
                         login: accountConfig.login,
-                        apiEndpointOrigin: this.core.parseEntryUrl(accountConfig, "proton-mail").sessionStorage.apiEndpointOrigin,
+                        apiEndpointOrigin: this.core.parseSessionStorageApiEndpointOrigin(accountConfig).sessionStorage.apiEndpointOrigin,
                     });
                 }),
         );
@@ -348,6 +347,41 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
             }
             return value;
         };
+        const resolveLiveSessionBundle = async () => {
+            const [clientSession, sessionStoragePatch] = await Promise.all([
+                resolveLiveProtonClientSession(),
+                (async () => {
+                    const apiClient = await resolvePrimaryWebViewApiClient();
+                    return apiClient("resolvedLiveSessionStoragePatch")(await this.resolveAccountIndex());
+                })(),
+            ]);
+            return {clientSession, sessionStoragePatch};
+        }
+
+        this.subscription.add(
+            this.store.pipe(
+                select(OptionsSelectors.FEATURED.mainProcessNotificationAction),
+                ofType(IPC_MAIN_API_NOTIFICATION_ACTIONS.CalendarIframeLoadRequest),
+                // withLatestFrom(this.account$),
+                // ).subscribe(async ([{payload: iframeRequestPayload}, {accountConfig}]) => {
+            ).subscribe(async ({payload: iframeRequestPayload}) => {
+                // const key = {
+                //     login: accountConfig.login,
+                //     apiEndpointOrigin: this.core.parseSessionStorageApiEndpointOrigin(accountConfig).sessionStorage.apiEndpointOrigin,
+                // } as const;
+                // const sessionStoragePatch = await this.ipcMainClient("resolvedSavedSessionStoragePatch")(key);
+                // const clientSession = await this.ipcMainClient("resolveSavedProtonClientSession")(key);
+                const {clientSession, sessionStoragePatch} = await resolveLiveSessionBundle();
+                if (!sessionStoragePatch || !clientSession) {
+                    throw new Error(`Some of the values haven't been resolved: ${nameof(clientSession)}, ${nameof(sessionStoragePatch)}`);
+                }
+                await this.ipcMainClient("applySessionToIframeAndNavigateToCalendar")({
+                    ...iframeRequestPayload,
+                    sessionStoragePatch,
+                    clientSession,
+                });
+            }),
+        );
 
         {
             const logger = curryFunctionMembers(
@@ -397,7 +431,7 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
                     await this.ipcMainClient(ipcMainAction)({
                         login: accountConfig.login,
                         clientSession: await resolveLiveProtonClientSession(),
-                        apiEndpointOrigin: this.core.parseEntryUrl(accountConfig, "proton-mail").sessionStorage.apiEndpointOrigin,
+                        apiEndpointOrigin: this.core.parseSessionStorageApiEndpointOrigin(accountConfig).sessionStorage.apiEndpointOrigin,
                     });
                 }),
             );
@@ -412,13 +446,12 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
                 ),
             ]).pipe(
                 withLatestFrom(
-                    this.account$,
                     this.store.pipe(
                         select(OptionsSelectors.CONFIG.timeouts),
                     ),
                 ),
             ).subscribe(async (
-                [[loggedIn, loggedInCalendar, calendarNotification], {accountConfig}, {webViewApiPing: calendarGetsSignedInStateTimeoutMs}]
+                [[loggedIn, loggedInCalendar, calendarNotification], {webViewApiPing: calendarGetsSignedInStateTimeoutMs}]
             ) => {
                 if (!calendarNotification) {
                     // TODO make sure that calendar-related component/webview actually disappears
@@ -429,18 +462,11 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
                     return;
                 }
                 const project = "proton-calendar";
-                const [clientSession, sessionStoragePatch] = await Promise.all([
-                    resolveLiveProtonClientSession(),
-                    (async () => {
-                        const apiClient = await resolvePrimaryWebViewApiClient();
-                        return apiClient("resolvedLiveSessionStoragePatch")(await this.resolveAccountIndex());
-                    })(),
-                ]);
+                const {clientSession, sessionStoragePatch} = await resolveLiveSessionBundle();
                 // TODO if "src$" has been set before, consider only refreshing the client session without full page reload
                 await Promise.all([
                     // the app shares the same backend between mail and calendar, so applying here only the client session
                     await this.core.applyProtonClientSessionAndNavigate(
-                        accountConfig,
                         project,
                         this.webViewsState.calendar.domReady$,
                         (src: string) => this.webViewsState.calendar.src$.next(src),

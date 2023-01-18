@@ -18,6 +18,7 @@ import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {parseUrlOriginWithNullishCheck} from "src/shared/util/url";
 import {ProtonClientSession} from "src/shared/model/proton";
 import {PROVIDER_REPO_MAP} from "src/shared/const/proton-apps";
+import {sessionSetupJavaScriptAndNavigate} from "src/shared/util/proton-webclient";
 import {State} from "src/web/browser-window/app/store/reducers/root";
 import {WebAccount} from "src/web/browser-window/app/model";
 
@@ -29,23 +30,19 @@ export class CoreService {
         private readonly actions$: Actions,
     ) {}
 
-    parseEntryUrl(
+    parseSessionStorageApiEndpointOrigin(
         {entryUrl}: WebAccount["accountConfig"],
-        repoType: keyof typeof PROVIDER_REPO_MAP,
-    ): Readonly<{ entryPageUrl: string, sessionStorage: { apiEndpointOrigin: string } }> {
+    ): Readonly<{ sessionStorage: { apiEndpointOrigin: string } }> {
         if (!entryUrl || !entryUrl.startsWith("https://")) {
             throw new Error(`Invalid "${JSON.stringify({entryUrl})}" value`);
         }
-        const {basePath} = PROVIDER_REPO_MAP[repoType];
         return {
-            entryPageUrl: `${LOCAL_WEBCLIENT_ORIGIN}${basePath ? "/" + basePath : ""}`,
             sessionStorage: {apiEndpointOrigin: parseUrlOriginWithNullishCheck(entryUrl)},
         };
     }
 
     // TODO move method to "_accounts/*.service"
     async applyProtonClientSessionAndNavigate(
-        accountConfig: WebAccount["accountConfig"],
         repoType: keyof typeof PROVIDER_REPO_MAP,
         webViewDomReady$: import("rxjs").Observable<Electron.WebviewTag>,
         setWebViewSrc: (src: string) => void,
@@ -61,7 +58,7 @@ export class CoreService {
         const loaderId = new UUID(4).format();
         const loaderIdParam = "loader-id";
         const loaderSrcOrigin = parseUrlOriginWithNullishCheck(
-            this.parseEntryUrl(accountConfig, repoType).entryPageUrl,
+            `${LOCAL_WEBCLIENT_ORIGIN}${PROVIDER_REPO_MAP[repoType].basePath ? "/" + PROVIDER_REPO_MAP[repoType].basePath : ""}`,
         );
         const loaderSrc = `${loaderSrcOrigin}/${WEB_CLIENTS_BLANK_HTML_FILE_NAME}?${loaderIdParam}=${loaderId}`;
         const {webViewBlankDOMLoaded: loaderIdTimeoutMs} = await lastValueFrom(
@@ -109,51 +106,17 @@ export class CoreService {
                     return;
                 }
 
-                const javaScriptCode = (() => {
-                    const generateSessionStoragePatchingCode = (patch: Record<string, unknown>): string => {
-                        return `(() => {
-                            const sessionStorageStr = ${JSON.stringify(JSON.stringify(patch))};
-                            const sessionStorageParsed = JSON.parse(sessionStorageStr);
-                            for (const [key, value] of Object.entries(sessionStorageParsed)) {
-                                window.sessionStorage.setItem(key, value);
-                            }
-                        })();`;
-                    };
-                    const finalCodePart = `(() => {
-                        window.sessionStorage.setItem(${JSON.stringify(WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS)}, 1);
-                        window.location.assign("./${PROVIDER_REPO_MAP[repoType].basePath}")
-                    })();`;
-                    const prependCodeParts: string[] = [];
-                    if (savedSessionData?.clientSession) {
-                        prependCodeParts.push(...[
-                            generateSessionStoragePatchingCode(savedSessionData?.clientSession.sessionStorage),
-                            `(() => {
-                                const windowNameStr = ${JSON.stringify(JSON.stringify(savedSessionData?.clientSession.windowName))};
-                                window.name = windowNameStr;
-                            })();`,
-                        ]);
-                    }
-                    if (savedSessionData?.sessionStoragePatch) {
-                        prependCodeParts.push(generateSessionStoragePatchingCode(savedSessionData?.sessionStoragePatch));
-                    }
-
-                    if (prependCodeParts.length) {
-                        return `
-                            ${prependCodeParts.join("\n\r")};
-                            ${finalCodePart}
-                        `;
-                    }
-
-                    return `
-                        window.name = "";
-                        window.sessionStorage.clear();
-                        ${finalCodePart}
-                    `;
-                })();
-
                 try {
                     logger.verbose("executeJavaScript");
-                    await webView.executeJavaScript(javaScriptCode);
+                    await webView.executeJavaScript(
+                        sessionSetupJavaScriptAndNavigate({
+                            savedSessionData,
+                            finalCodePart: `
+                                window.sessionStorage.setItem(${JSON.stringify(WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS)}, 1);
+                                window.location.assign("./${PROVIDER_REPO_MAP[repoType].basePath}");
+                            `,
+                        }),
+                    );
                 } catch (error) {
                     const baseMessage = `Failed to set shared session object on "${loaderSrc}" page ("executeJavaScript")`;
                     if (BUILD_ENVIRONMENT === "development") {

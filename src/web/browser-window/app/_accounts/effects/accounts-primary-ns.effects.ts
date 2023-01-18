@@ -36,7 +36,7 @@ export class AccountsPrimaryNsEffects {
                     );
                 }));
                 const {sessionStorage: {apiEndpointOrigin: apiEndpointOriginSS}}
-                    = this.core.parseEntryUrl(payload.account.accountConfig, "proton-mail");
+                    = this.core.parseSessionStorageApiEndpointOrigin(payload.account.accountConfig);
                 const entryApiUrl = resolveProtonApiOrigin(
                     {accountEntryUrl, subdomain: PROVIDER_REPO_MAP["proton-mail"].apiSubdomain},
                 );

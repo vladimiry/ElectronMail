@@ -194,6 +194,12 @@ export const ENDPOINTS_DEFINITION = {
 
     executeUnreadNotificationShellCommand: ActionType.Promise<NoExtraProps<DbModel.DbAccountPk
         & { code: string, alias: AccountConfig["title"] }>, void>(),
+
+    applySessionToIframeAndNavigateToCalendar: ActionType
+        .Promise<Parameters<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS.CalendarIframeLoadRequest>[0] & {
+            sessionStoragePatch: import("ts-essentials").ValueOf<AccountSessionStoragePatchBundle>
+            clientSession: ProtonClientSession
+        }, void>(),
 };
 
 export interface InitResponse {

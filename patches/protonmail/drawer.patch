@@ -1,0 +1,91 @@
+diff --git a/packages/shared/lib/apps/helper.ts b/packages/shared/lib/apps/helper.ts
+index b72274a55..fa641f98a 100644
+--- a/packages/shared/lib/apps/helper.ts
++++ b/packages/shared/lib/apps/helper.ts
+@@ -3,6 +3,7 @@ import isTruthy from '@proton/utils/isTruthy';
+ import { getLocalIDPath, stripLocalBasenameFromPathname } from '../authentication/pathnameHelper';
+ import { APPS, APPS_CONFIGURATION, APP_NAMES, EXTENSIONS, VPN_HOSTNAME } from '../constants';
+ import { stripLeadingAndTrailingSlash } from '../helpers/string';
++import { PROVIDER_REPO_MAP } from '../../../../electron-mail-proton-apps';
+
+ interface TargetLocation {
+     hostname: string;
+@@ -25,19 +26,16 @@ export const getAppHref = (
+     to: string,
+     toApp: APP_NAMES,
+     localID?: number,
+-    targetLocation: TargetLocation = window.location
+ ) => {
+-    const { subdomain: targetSubdomain } = APPS_CONFIGURATION[toApp];
+-    const { hostname, protocol, port } = getSSOAppTargetLocation(targetLocation);
+-    const lastIndex = hostname.lastIndexOf('.');
+-    const secondLevelIndex = hostname.indexOf('.');
+-    // If there's no second level, just use the original hostname. NOTE: Does not work for tlds as .co.uk
+-    const secondLevelDomain = lastIndex !== secondLevelIndex ? hostname.substr(secondLevelIndex + 1) : hostname;
+-    const targetDomain = [targetSubdomain, secondLevelDomain].filter(isTruthy).join('.');
+-    const targetPort = port.length > 0 ? `:${port}` : '';
++    if (!(toApp in PROVIDER_REPO_MAP)) {
++        throw new Error(`The desktop app doesn't support the following proton app type: ${toApp}`);
++    }
++
++    const {basePath} = PROVIDER_REPO_MAP[toApp as keyof typeof PROVIDER_REPO_MAP];
+
+     const path = [
+-        targetDomain + targetPort,
++        "mail.proton.me",
++        basePath,
+         stripLeadingAndTrailingSlash(''),
+         getLocalIDPath(localID),
+         stripLeadingAndTrailingSlash(stripLocalBasenameFromPathname(to)),
+@@ -45,7 +43,7 @@ export const getAppHref = (
+         .filter(isTruthy)
+         .join('/');
+
+-    return `${protocol}//${path}`;
++    return `webclient://${path}`;
+ };
+
+ export const getAppHrefBundle = (to: string, toApp: APP_NAMES) => {
+
+diff --git a/packages/shared/lib/drawer/helpers.ts b/packages/shared/lib/drawer/helpers.ts
+index 7dbc5ec43..e79e132c9 100644
+--- a/packages/shared/lib/drawer/helpers.ts
++++ b/packages/shared/lib/drawer/helpers.ts
+@@ -15,17 +15,21 @@ const drawerAuthorizedApps = [
+     APPS_CONFIGURATION[PROTONDRIVE].subdomain,
+ ] as string[];
+
++/* <electron-mail-mark> */
+ export const getIsNativeDrawerApp = (app: APP_NAMES): app is DRAWER_APPS => {
+     const nativeApps: APP_NAMES[] = [APPS.PROTONCONTACTS];
+
+     return nativeApps.includes(app);
+ };
++/* </electron-mail-mark> */
+
++/* <electron-mail-mark> */
+ export const getIsIframedDrawerApp = (app: APP_NAMES): app is DRAWER_APPS => {
+     const iframedApps: APP_NAMES[] = [APPS.PROTONCALENDAR];
+
+     return iframedApps.includes(app);
+ };
++/* </electron-mail-mark> */
+
+ export const getIsDrawerApp = (app: APP_NAMES): app is DRAWER_APPS => {
+     return getIsNativeDrawerApp(app) || getIsIframedDrawerApp(app);
+@@ -45,10 +49,12 @@ export const isAuthorizedDrawerUrl = (url: string) => {
+     }
+ };
+
++/* <electron-mail-mark> */
+ export const getIsAuthorizedApp = (appName: string): appName is APP_NAMES => {
+     const authorizedApps: string[] = [APPS.PROTONMAIL, APPS.PROTONCALENDAR, APPS.PROTONDRIVE];
+     return authorizedApps.includes(appName);
+ };
++/* </electron-mail-mark> */
+
+ export const getIsDrawerPostMessage = (event: MessageEvent): event is MessageEvent<DRAWER_ACTION> => {
+     const origin = event.origin;
+--
+2.39.1
+

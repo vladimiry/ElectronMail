@@ -1,5 +1,6 @@
 import electronLog from "electron-log";
 import {exec} from "child_process";
+import {pick} from "remeda";
 import {promisify} from "util";
 import {shouldInterruptAfterDeadline} from "quickjs-emscripten";
 
@@ -106,9 +107,13 @@ export const executeUnreadNotificationShellCommand = async (
 
     try {
         await promisify(exec)(command, execOptions);
-    } catch {
-        // we don't show/log a possibly sensitive data (like command to execute or its options)
-        // so the original error gets suppressed
-        throw new Error("Failed to execute a triggered by an unread desktop notification shell exec command!");
+    } catch (error) {
+        // we don't show/log a possibly sensitive data (like command to execute or its options), so the original error gets suppressed
+        throw new Error(
+            "Failed to execute a triggered by an unread desktop notification shell exec command: " +
+            JSON.stringify(
+                pick(Object(error) as unknown as { errno: unknown, code: unknown }, ["errno", "code"]),
+            ),
+        );
     }
 };

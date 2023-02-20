@@ -25,6 +25,7 @@ Some package types are available for installing from the repositories (`AUR/Pacm
 [![MPR version](https://repology.org/badge/latest-versions/electronmail.svg?header=MPR)](https://mpr.makedeb.org/packages/electronmail-bin)
 [![Chocolatey version](https://img.shields.io/chocolatey/v/electron-mail?label=Chocolatey)](https://community.chocolatey.org/packages/electron-mail)
 [![Winget version](https://img.shields.io/badge/dynamic/xml?label=Winget&prefix=v&query=%2F%2Ftr%5B%40id%3D%27winget%27%5D%2Ftd%5B3%5D%2Fspan%2Fa&url=https%3A%2F%2Frepology.org%2Fproject%2Felectronmail%2Fversions)](https://github.com/microsoft/winget-pkgs/tree/master/manifests/v/VladimirYakovlev/ElectronMail)
+[![Scoop version](https://img.shields.io/scoop/v/electronmail?label=Scoop&bucket=extras)](https://github.com/ScoopInstaller/Extras/blob/master/bucket/electronmail.json)
 
 ## Features
 

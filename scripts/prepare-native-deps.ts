@@ -48,9 +48,10 @@ const compileNativeDeps = async (): Promise<void> => {
                         `--arch`, destArch,
                         "--version", packageJSON.devDependencies.electron,
                         "--which-module", moduleName,
+                        "--module-dir", path.join("node_modules", moduleName),
                     ],
                     {
-                        cwd: moduleDir,
+                        // cwd: moduleDir, // WARN don't set "cwd" to avoid installing/using npx's "electron-rebuild" module version
                         env: {
                             ...process.env,
                             // should enable "--verbose" arg for "node-gyp" call

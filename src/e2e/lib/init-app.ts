@@ -129,6 +129,8 @@ export const initAppWithTestContext = async (
                                 &&
                                 line.includes("Object has been destroyed")
                             )
+                            ||
+                            line.includes(`"message":"Found a 'popover' attribute.`)
                         ) {
                             return;
                         }

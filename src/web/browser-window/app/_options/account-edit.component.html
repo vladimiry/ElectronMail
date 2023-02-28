@@ -90,7 +90,7 @@
                             class="fa fa-info-circle text-warning align-self-center ml-1"
                             container="body"
                             placement="bottom"
-                            popover="If option enabled the saved &quot;Proton Session&quot; will be reused on the next computer/app start and so the login form will be skipped."
+                            [popover]="'If option enabled the saved &quot;Proton Session&quot; will be reused on the next computer/app start and so the login form will be skipped.'"
                             triggers="mouseenter:mouseleave"
                         ></i>
                         <a class="ml-1" href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/227">#227</a>
@@ -105,7 +105,7 @@
                         style="margin-left: 3px"
                         container="body"
                         placement="bottom"
-                        popover="If specified will be displayed in the app UI instead of login value. The alias value also gets displayed in the desktop notification message."
+                        [popover]="'If specified will be displayed in the app UI instead of login value. The alias value also gets displayed in the desktop notification message.'"
                         triggers="mouseenter:mouseleave"
                     ></i>
                 </label>
@@ -125,7 +125,7 @@
                                 class="fa fa-info-circle text-primary align-self-center"
                                 container="body"
                                 placement="bottom"
-                                popover="Rules indicating which proxies to use."
+                                [popover]="'Rules indicating which proxies to use.'"
                                 triggers="mouseenter:mouseleave"
                             ></i>
                         </label>
@@ -144,7 +144,7 @@
                                 class="fa fa-info-circle text-primary align-self-center"
                                 container="body"
                                 placement="bottom"
-                                popover="Rules indicating which URLs should bypass the proxy settings."
+                                [popover]="'Rules indicating which URLs should bypass the proxy settings.'"
                                 triggers="mouseenter:mouseleave"
                             ></i>
                         </label>
@@ -171,7 +171,7 @@
                                 class="fa fa-info-circle text-warning align-self-center ml-1"
                                 container="body"
                                 placement="bottom"
-                                popover="So, for example, the inlined in the email messages images loading will be blocked if this option enabled."
+                                [popover]="'So, for example, the inlined in the email messages images loading will be blocked if this option enabled.'"
                                 triggers="mouseenter:mouseleave"
                             ></i>
                             <a class="ml-1" href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/312">#312</a>
@@ -231,7 +231,7 @@
                             class="fa fa-info-circle text-warning align-self-center"
                             container="body"
                             placement="bottom"
-                            popover="The login delay is picked by either time range or account selection triggers. Whichever kicks in first if both values defined."
+                            [popover]="'The login delay is picked by either time range or account selection triggers. Whichever kicks in first if both values defined.'"
                             triggers="mouseenter:mouseleave"
                         ></i>
                     </label>
@@ -356,7 +356,7 @@
                             class="fa fa-info-circle text-warning align-self-center"
                             container="body"
                             placement="bottom"
-                            popover="This is not the one time password your phone generates for you but a secret seed. Please follow the description link for details."
+                            [popover]="'This is not the one time password your phone generates for you but a secret seed. Please follow the description link for details.'"
                             triggers="mouseenter:mouseleave"
                         ></i>
                     </label>
@@ -375,7 +375,7 @@
                             class="fa fa-info-circle text-warning align-self-center"
                             container="body"
                             placement="bottom"
-                            popover="This field is only relevant if you have two-password mode enabled for your account. Please follow the description links for details."
+                            [popover]="'This field is only relevant if you have two-password mode enabled for your account. Please follow the description links for details.'"
                             triggers="mouseenter:mouseleave"
                         ></i>
                     </label>

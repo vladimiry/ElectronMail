@@ -1,23 +1,23 @@
 diff --git a/binding.gyp b/binding.gyp
-index d9c3491906735ff87a581351929e748923388c35..fa5726685909653b04776b942ab7c6a73893739a 100644
+index 7ff7a52602e3d6a3d2cd2a2d4ed10e0268358eb5..434fef172f567c5e1011c33c060abc27cc228ee7 100644
 --- a/binding.gyp
 +++ b/binding.gyp
 @@ -23,6 +23,18 @@
        "sources": [
          "src/extract.cpp",
        ],
-+"msvs_settings": {
-+  "VCCLCompilerTool": {
-+    "AdditionalOptions": [
-+      "-std:c++17",
-+    ],
-+  }
-+},
-+"msbuild_settings": {
-+  "ClCompile": {
-+    "LanguageStandard": "stdcpp17"
-+  }
-+},
++    "msvs_settings": {
++      "VCCLCompilerTool": {
++        "AdditionalOptions": [
++          "-std:c17",
++        ],
++      }
++    },
++    "msbuild_settings": {
++      "ClCompile": {
++        "LanguageStandard": "stdcpp17"
++      }
++    },
        "defines": [ "NAPI_DISABLE_CPP_EXCEPTIONS" ],
        "conditions": [
          ["OS=='linux'", {

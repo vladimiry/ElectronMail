@@ -1,9 +1,9 @@
 {
   "proton-mail": [
-    "common-1.patch",
+    "common-3.patch",
     "url-3.patch",
-    "constants-7.patch",
-    "sentry-9.patch",
+    "constants-8.patch",
+    "sentry-10.patch",
     "pack-api-arg-4.patch",
     "pack-webpack-6.patch",
     "session-storage-5.patch",
@@ -12,10 +12,10 @@
     "proton-mail.patch"
   ],
   "proton-account": [
-    "common-2.patch",
+    "common-3.patch",
     "url-3.patch",
-    "constants-7.patch",
-    "sentry-9.patch",
+    "constants-8.patch",
+    "sentry-10.patch",
     "pack-api-arg-4.patch",
     "pack-webpack-6.patch",
     "session-storage-5.patch",
@@ -24,10 +24,10 @@
     "proton-account.patch"
   ],
   "proton-calendar": [
-    "common-1.patch",
+    "common-3.patch",
     "url-3.patch",
-    "constants-7.patch",
-    "sentry-9.patch",
+    "constants-8.patch",
+    "sentry-10.patch",
     "pack-api-arg-4.patch",
     "pack-webpack-6.patch",
     "session-storage-5.patch",
@@ -35,9 +35,9 @@
     "embedded-verification-3.patch"
   ],
   "proton-drive": [
-    "common-1.patch",
+    "common-3.patch",
     "url-3.patch",
-    "constants-7.patch",
+    "constants-9.patch",
     "sentry-9.patch",
     "pack-api-arg-4.patch",
     "pack-webpack-6.patch",
@@ -47,10 +47,10 @@
     "proton-drive.patch"
   ],
   "proton-vpn-settings": [
-    "common-1.patch",
+    "common-3.patch",
     "url-3.patch",
-    "constants-7.patch",
-    "sentry-9.patch",
+    "constants-8.patch",
+    "sentry-10.patch",
     "pack-api-arg-4.patch",
     "pack-webpack-6.patch",
     "session-storage-5.patch",

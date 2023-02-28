@@ -1,17 +1,17 @@
 diff --git a/packages/shared/lib/constants.ts b/packages/shared/lib/constants.ts
-index a5c634a9f..c1cbd799a 100644
+index d035e6c88..96af3775b 100644
 --- a/packages/shared/lib/constants.ts
 +++ b/packages/shared/lib/constants.ts
-@@ -57,7 +57,7 @@ export const APPS = {
+@@ -69,7 +69,7 @@ interface AppConfiguration {
 
- export const APPS_CONFIGURATION = {
+ export const APPS_CONFIGURATION: { [key in APP_NAMES]: AppConfiguration } = {
      [APPS.PROTONACCOUNT]: {
 -        publicPath: '',
 +        publicPath: '/account',
          subdomain: 'account',
          name: 'Proton Account',
          bareName: 'Account',
-@@ -129,8 +129,8 @@ export const APPS_CONFIGURATION = {
+@@ -141,8 +141,8 @@ export const APPS_CONFIGURATION: { [key in APP_NAMES]: AppConfiguration } = {
          settingsSlug: '',
      },
      [APPS.PROTONVPN_SETTINGS]: {

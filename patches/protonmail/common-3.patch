@@ -100,15 +100,15 @@ index 9aaa78a28..f3d24b47c 100644
  };
 
 diff --git a/packages/components/components/link/SettingsLink.tsx b/packages/components/components/link/SettingsLink.tsx
-index ebce00d20..96498d8c8 100644
+index 5081c4003..cde37c0cb 100644
 --- a/packages/components/components/link/SettingsLink.tsx
 +++ b/packages/components/components/link/SettingsLink.tsx
-@@ -37,7 +37,7 @@ const SettingsLink = ({ path, app, children, ...rest }: Props, ref: Ref<HTMLAnch
+@@ -48,7 +48,7 @@ const SettingsLink = ({ path, app, children, ...rest }: Props, ref: Ref<HTMLAnch
              ref={ref}
              toApp={APPS.PROTONACCOUNT}
              // If going to settings for the same app
--            target={isGoingToSameSettings ? '_self' : '_blank'}
-+            target={isGoingToSameSettings || app === APPS.PROTONVPN_SETTINGS ? '_self' : '_blank'}
+-            target={canOpenInSameTab(APP_NAME, settingsApp, toSettingsForApp) ? '_self' : '_blank'}
++            target={canOpenInSameTab(APP_NAME, settingsApp, toSettingsForApp) || app === APPS.PROTONVPN_SETTINGS ? '_self' : '_blank'}
              {...rest}
          >
              {children}

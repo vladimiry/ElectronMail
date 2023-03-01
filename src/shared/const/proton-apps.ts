@@ -69,7 +69,7 @@ export const PROVIDER_REPO_MAP = {
         basePath: "drive",
         apiSubdomain: "drive-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-drive@5.0.10.2",
+        tag: "proton-drive@5.0.11.1",
         protonPack: {},
     },
     [PROVIDER_APP_NAMES[4]]: {

@@ -37,8 +37,8 @@
   "proton-drive": [
     "common-3.patch",
     "url-3.patch",
-    "constants-9.patch",
-    "sentry-9.patch",
+    "constants-10.patch",
+    "sentry-10.patch",
     "pack-api-arg-4.patch",
     "pack-webpack-6.patch",
     "session-storage-5.patch",

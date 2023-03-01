@@ -156,7 +156,7 @@ specifiers:
   postcss-loader: 7.0.2
   postcss-url: 10.1.3
   pure-uuid: 1.6.2
-  pureimage: 0.3.17
+  pureimage: 0.3.15
   quickjs-emscripten: 0.22.0
   randomstring: 1.2.3
   rate-limiter-flexible: 2.4.1
@@ -311,7 +311,7 @@ devDependencies:
   postcss-loader: 7.0.2_webpack@5.75.0
   postcss-url: 10.1.3
   pure-uuid: 1.6.2
-  pureimage: 0.3.17
+  pureimage: 0.3.15
   quickjs-emscripten: 0.22.0
   randomstring: 1.2.3
   rate-limiter-flexible: 2.4.1
@@ -6671,8 +6671,8 @@ packages:
     resolution: {integrity: sha512-WQ4xz74ApW6s0BToRuuyuMo9g0VHx1HljY0H2gPng+mqqz/K1yLj7sHZonZZQ2++WfHl/ZzruilWvuz+WtmxjQ==}
     engines: {node: '>=8.0.0'}
 
-  /pureimage/0.3.17:
-    resolution: {integrity: sha512-JV4hfYF1BXxDwbSR8hjhVEhVTxwmAXos8uIXQ7Bw2eWrUEpLDJnQoQ8WLlWAO4TMGJ7mp9n6gvLKJ6MSaGUkXQ==}
+  /pureimage/0.3.15:
+    resolution: {integrity: sha512-QpQYEV8nxVb84en7D0nKXwG0bdmwmlsSg9QnqxpEOExvUXdbmo6Lw/UoxSXD9z+ryvWDkgWqZsIM3iPCAh4dXg==}
     engines: {node: '>=0.8'}
     dependencies:
       jpeg-js: 0.4.4

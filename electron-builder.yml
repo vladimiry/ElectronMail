@@ -1,5 +1,5 @@
 appId: 'github.com/vladimiry/ElectronMail'
-artifactName: ${name}-${version}-${os}-${arch}.${ext}
+artifactName: ${name}-${version}-${os}78-${arch}.${ext}
 productName: 'ElectronMail'
 publish: {provider: github, releaseType: draft, vPrefixedTagName: true}
 forceCodeSigning: false

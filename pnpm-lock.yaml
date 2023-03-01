@@ -111,7 +111,7 @@ specifiers:
   cross-env: 7.0.3
   css-loader: 6.7.3
   dts-generator: 3.0.0
-  electron: 23.1.1
+  electron: 22.3.1
   electron-builder: 23.6.0
   electron-fetch: 1.9.1
   electron-log: 4.4.8
@@ -195,7 +195,7 @@ specifiers:
   zone.js: 0.12.0
 
 dependencies:
-  electron-rpc-api: 9.0.0_electron@23.1.1
+  electron-rpc-api: 9.0.0_electron@22.3.1
   fs-json-store-encryption-adapter: 3.0.4
   keytar: 7.9.0
   msgpackr: 1.8.1
@@ -270,7 +270,7 @@ devDependencies:
   cross-env: 7.0.3
   css-loader: 6.7.3_webpack@5.75.0
   dts-generator: 3.0.0
-  electron: 23.1.1
+  electron: 22.3.1
   electron-builder: 23.6.0
   electron-fetch: 1.9.1
   electron-log: 4.4.8
@@ -3693,13 +3693,13 @@ packages:
       - supports-color
     dev: true
 
-  /electron-rpc-api/9.0.0_electron@23.1.1:
+  /electron-rpc-api/9.0.0_electron@22.3.1:
     resolution: {integrity: sha512-XVYEj/P0TjRk6A5U97lJNHSDYrpwfDBJtwHnnp78FypmX+uCS6xwPEZtjitFkqMTryWWd2FK932ipaeEzK5dbQ==}
     engines: {node: '>=14'}
     peerDependencies:
       electron: '>=5.0.0'
     dependencies:
-      electron: 23.1.1
+      electron: 22.3.1
       pubsub-to-rpc-api: 8.0.1
       pure-uuid: 1.6.2
       rxjs: 7.8.0
@@ -3720,8 +3720,8 @@ packages:
       serialize-error: 8.1.0
     dev: true
 
-  /electron/23.1.1:
-    resolution: {integrity: sha512-junV1NzPx5T8Mx9+o8fMWK1Q5WOtG5vggiM09PGYg/6zTcGDL3DjGVHeUa/97gx7ErXL37DrFnxNg6+ePWprDg==}
+  /electron/22.3.1:
+    resolution: {integrity: sha512-iDltL9j12bINK3aOp8ZoGq4NFBFjJhw1AYHelbWj93XUCAIT4fdA+PRsq0aaTHg3bthLLlLRvIZVgNsZPqWcqg==}
     engines: {node: '>= 12.20.55'}
     hasBin: true
     requiresBuild: true

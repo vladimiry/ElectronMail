@@ -76,7 +76,7 @@ export const PROVIDER_REPO_MAP = {
         basePath: "account/vpn",
         apiSubdomain: "account-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-vpn-settings@5.0.15.1",
+        tag: "proton-vpn-settings@5.0.16.0",
         protonPack: {},
     },
 } as const;

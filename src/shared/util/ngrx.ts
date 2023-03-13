@@ -18,8 +18,8 @@ type ActionsRecord<P extends PropsRecord = PropsRecord> = {
         : ActionCreator<T, () => TypedAction<T>>
 };
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-export type UnionOf<T extends ActionsRecord> = Exclude<ReturnType<ValueOf<Omit<StrictOmit<T, MatchPropName>, symbol | number>>>, boolean>;
+// @ts-expect-error // TODO get rid of "ts-expect-error" thing
+export type UnionOf<T extends ActionsRecord> = Exclude<ReturnType<ValueOf<Omit<StrictOmit<T, MatchPropName>, symbol | number>>>, boolean>; // eslint-disable-line @typescript-eslint/ban-types, max-len
 
 export type UnionOfRecord<P extends PropsRecord, T extends ActionsRecord<P> = ActionsRecord<P>>
     = { [K in Exclude<keyof T, MatchPropName>]: ReturnType<T[K]> };
@@ -55,6 +55,7 @@ export const propsRecordToActionsRecord = <P extends PropsRecord>(
     {prefix}: { prefix: string },
 ): ActionsRecord<P>
     & { [K in MatchPropName]: Match<P> }
+    // @ts-expect-error // TODO get rid of "ts-expect-error" thing
     & { is: (value: UnionOf<ActionsRecord>) => value is UnionOf<ActionsRecord<P>> } => {
     const prefixedTypes = new Set<string>();
     const resolvePrefixedType = (key: keyof P): string => {
@@ -76,11 +77,14 @@ export const propsRecordToActionsRecord = <P extends PropsRecord>(
             {} as ActionsRecord<P>,
         ),
         match(value, matchers) {
-            const matcher = mapKeys(matchers, (key) => resolvePrefixedType(key))[value.type] ?? matchers.default;
+            // @ts-expect-error // TODO get rid of "ts-expect-error" thing
+            const matcher = mapKeys(matchers, (key) => resolvePrefixedType(key))[value.type] ?? matchers.default; // eslint-disable-line @typescript-eslint/no-unsafe-member-access, max-len
             if (typeof matcher !== "function") {
+                // @ts-expect-error // TODO get rid of "ts-expect-error" thing
                 throw new Error(`Failed to resolve matching handler for the "${String(value.type)}" action`);
             }
             const args = (
+                // @ts-expect-error // TODO get rid of "ts-expect-error" thing
                 "payload" in value
                     ? [value.payload]
                     : []

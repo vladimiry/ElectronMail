@@ -32,7 +32,7 @@
     "baseUrl": ".",
     "paths": {
       "remeda/*": [
-        "./node_modules/remeda/dist/es/*"
+        "./node_modules/ndx/dist/*"
       ],
       "patches/*": [
         "./patches/*"

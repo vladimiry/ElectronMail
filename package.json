@@ -1,7 +1,7 @@
 {
   "name": "electron-mail",
   "description": "Unofficial ProtonMail Desktop App",
-  "version": "5.1.6",
+  "version": "5.1.7",
   "author": "Vladimir Yakovlev <desktop-app@protonmail.ch>",
   "license": "GPL-3.0",
   "homepage": "https://github.com/vladimiry/ElectronMail",
@@ -266,8 +266,8 @@
       "tough-cookie-web-storage-store@1.0.0": "patches/tough-cookie-web-storage-store@1.0.0.patch",
       "ts-node@10.9.1": "patches/ts-node@10.9.1.patch",
       "msgpackr-extract@3.0.2": "patches/msgpackr-extract@3.0.2.patch",
-      "monaco-editor@0.36.1": "patches/monaco-editor@0.36.1.patch",
-      "@electron/rebuild@3.2.10": "patches/@electron__rebuild@3.2.10.patch"
+      "@electron/rebuild@3.2.10": "patches/@electron__rebuild@3.2.10.patch",
+      "monaco-editor@0.36.1": "patches/monaco-editor@0.36.1.patch"
     }
   }
 }

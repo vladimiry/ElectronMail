@@ -10,6 +10,9 @@ overrides:
   webpack: ^5
 
 patchedDependencies:
+  '@electron/rebuild@3.2.10':
+    hash: s67otkniavlc2p7fmimx5rc2ku
+    path: patches/@electron__rebuild@3.2.10.patch
   app-builder-lib@24.0.0:
     hash: jx2ksykbcuzre4mycexfkp55o4
     path: patches/app-builder-lib@24.0.0.patch
@@ -19,27 +22,24 @@ patchedDependencies:
   domino@2.1.6:
     hash: owtpcey3ymbod6tcfswjepvevi
     path: patches/domino@2.1.6.patch
-  sodium-native@3.4.1:
-    hash: caazmcsdnvw5e4pqtz5j3g2aui
-    path: patches/sodium-native@3.4.1.patch
+  monaco-editor@0.36.1:
+    hash: 35hhxhynaezsmn5scokclcr6au
+    path: patches/monaco-editor@0.36.1.patch
+  msgpackr-extract@3.0.2:
+    hash: 3brbfqqm3xc4jy263uvygsvzvm
+    path: patches/msgpackr-extract@3.0.2.patch
   os-locale@6.0.2:
     hash: 4ktr4lb7j2kpheabqfc43zx2ku
     path: patches/os-locale@6.0.2.patch
+  sodium-native@3.4.1:
+    hash: caazmcsdnvw5e4pqtz5j3g2aui
+    path: patches/sodium-native@3.4.1.patch
   tough-cookie-web-storage-store@1.0.0:
     hash: z2qgiy5mbqjgd4tmn4u2x7glxu
     path: patches/tough-cookie-web-storage-store@1.0.0.patch
   ts-node@10.9.1:
     hash: gdagwmwndeixxlcm7duqxqq3r4
     path: patches/ts-node@10.9.1.patch
-  msgpackr-extract@3.0.2:
-    hash: 3brbfqqm3xc4jy263uvygsvzvm
-    path: patches/msgpackr-extract@3.0.2.patch
-  monaco-editor@0.36.1:
-    hash: 2dzu2ftdn5lwf3pkbyw2gtuyca
-    path: patches/monaco-editor@0.36.1.patch
-  '@electron/rebuild@3.2.10':
-    hash: s67otkniavlc2p7fmimx5rc2ku
-    path: patches/@electron__rebuild@3.2.10.patch
 
 specifiers:
   '@angular-eslint/eslint-plugin': 15.2.1
@@ -294,7 +294,7 @@ devDependencies:
   lint-staged: 13.2.0
   lzutf8: 0.6.3
   mini-css-extract-plugin: 2.7.3_webpack@5.76.1
-  monaco-editor: 0.36.1_2dzu2ftdn5lwf3pkbyw2gtuyca
+  monaco-editor: 0.36.1_35hhxhynaezsmn5scokclcr6au
   mrmime: 1.0.1
   ndx: 1.0.2
   ndx-query: 1.0.1
@@ -5874,7 +5874,7 @@ packages:
     hasBin: true
     dev: true
 
-  /monaco-editor/0.36.1_2dzu2ftdn5lwf3pkbyw2gtuyca:
+  /monaco-editor/0.36.1_35hhxhynaezsmn5scokclcr6au:
     resolution: {integrity: sha512-/CaclMHKQ3A6rnzBzOADfwdSJ25BFoFT0Emxsc4zYVyav5SkK9iA6lEtIeuN/oRYbwPgviJT+t3l+sjFa28jYg==}
     dev: true
     patched: true
@@ -8227,6 +8227,7 @@ packages:
   /xmlbuilder/15.1.1:
     resolution: {integrity: sha512-yMqGBqtXyeN1e3TGYvgNgDVZ3j84W4cwkOXQswghol6APgZWaff9lnbvN7MHYJOiXsvGPXtjTYJEiC9J2wv9Eg==}
     engines: {node: '>=8.0'}
+    requiresBuild: true
     dev: true
 
   /xtend/4.0.2:

@@ -19,12 +19,17 @@ const attachLoggingBeforeCall = (api: ProviderApi, logger: Logger): void => {
         const group = api[groupProp] as Record<string, unknown>;
         for (const groupMemberProp of Object.keys(group)) {
             const groupMember = group[groupMemberProp];
-            if (typeof groupMember === "function") {
-                group[groupMemberProp] = (...args: unknown[]) => {
-                    logger.verbose(`calling provider api function: ${groupProp}.${groupMemberProp}`);
-                    return groupMember(...args); // eslint-disable-line @typescript-eslint/no-unsafe-return
-                };
+            if (
+                typeof groupMember !== "function"
+                ||
+                !Object.getOwnPropertyDescriptor(group, groupMemberProp)?.writable
+            ) {
+                continue;
             }
+            group[groupMemberProp] = (...args: unknown[]) => {
+                logger.verbose(`calling provider api function: ${groupProp}.${groupMemberProp}`);
+                return groupMember(...args); // eslint-disable-line @typescript-eslint/no-unsafe-return
+            };
         }
     }
 };
@@ -93,13 +98,13 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                     }),
                     distinctUntilChanged(),
                 ),
-                buildEventsApiUrlTester({entryApiUrl}) {
-                    const re = new RegExp(`^${entryApiUrl}/v4/events/.+$`);
-                    return (url) => re.test(url);
+                buildEventsApiUrlTester(/*{entryApiUrl}*/) {
+                    const substr = "/v4/events/";
+                    return (url) => url.includes(substr);
                 },
-                buildMessagesCountApiUrlTester({entryApiUrl}) {
-                    const re = new RegExp(`^${entryApiUrl}/mail/v4/messages/count$`);
-                    return (url) => re.test(url);
+                buildMessagesCountApiUrlTester(/*{entryApiUrl}*/) {
+                    const substr = "/v4/messages/count";
+                    return (url) => url.endsWith(substr);
                 },
                 async decryptMessage(message) {
                     const privateApi = await resolvePrivateApi();

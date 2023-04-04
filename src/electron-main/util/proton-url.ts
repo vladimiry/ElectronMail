@@ -50,7 +50,12 @@ export const protonApiUrlsUtil = {
 
     // https://github.com/vladimiry/ElectronMail/issues/522#issuecomment-1156989727
     patchAuthHeaders(urlPathname: string, requestHeaders: Record<string, string>): boolean {
-        if (!`${urlPathname}/`.startsWith("/api/auth/") && !`${urlPathname}/`.startsWith("/auth/")) {
+        if (
+            !`${urlPathname}/`.startsWith("/auth/")
+            &&
+            !`${urlPathname}/`.startsWith("/api/auth/")
+            &&
+            !`${urlPathname}/`.startsWith("/core/auth/")) {
             return false;
         }
 
@@ -68,7 +73,7 @@ export const protonApiUrlsUtil = {
     },
 
     patchMailApiHeaders(urlPathname: string, requestHeaders: Record<string, string>): boolean {
-        if (!`${urlPathname}/`.startsWith("/api/mail/v4/messages/") && !`${urlPathname}/`.startsWith("/mail/v4/messages/")) {
+        if (!urlPathname.includes("/mail/v4/messages/")) {
             return false;
         }
         // eslint-disable-next-line max-len

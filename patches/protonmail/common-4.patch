@@ -25,26 +25,6 @@ index 55715b89d..c87879ad4 100755
                  stdio: 'inherit',
              }
 
-diff --git a/packages/pack/webpack/css.loader.js b/packages/pack/webpack/css.loader.js
-index c50ab972c..a505eb314 100644
---- a/packages/pack/webpack/css.loader.js
-+++ b/packages/pack/webpack/css.loader.js
-@@ -44,11 +44,13 @@ module.exports = ({ browserslist }) => {
-         },
-         {
-             loader: require.resolve('resolve-url-loader'),
-+            options: {sourceMap: false},
-         },
-         {
-             loader: require.resolve('sass-loader'),
-             options: {
-                 additionalData: PREPEND_SASS,
-+                sourceMap: true, // to please "resolve-url-loader"
-             },
-         },
-     ].filter(Boolean);
-
-
 diff --git a/packages/shared/lib/helpers/browser.ts b/packages/shared/lib/helpers/browser.ts
 index 9aaa78a28..f3d24b47c 100644
 --- a/packages/shared/lib/helpers/browser.ts

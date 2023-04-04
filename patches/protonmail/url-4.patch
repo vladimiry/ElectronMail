@@ -73,31 +73,3 @@ index f0b3e2e31..90995e1fc 100644
 
  export const checkStatus = (response: Response, config: any) => {
      const { status } = response;
-
-diff --git a/applications/mail/src/app/helpers/message/messageImages.ts b/applications/mail/src/app/helpers/message/messageImages.ts
-index effa61709..2d54ff153 100644
---- a/applications/mail/src/app/helpers/message/messageImages.ts
-+++ b/applications/mail/src/app/helpers/message/messageImages.ts
-@@ -194,7 +194,7 @@ export const replaceProxyWithOriginalURLAttributes = (message: MessageState, doc
-
- export const forgeImageURL = (url: string, uid: string) => {
-     const config = getImage(url, 0, uid);
--    const prefixedUrl = `api/${config.url}`; // api/ is required to set the AUTH cookie
-+    const prefixedUrl = `___ELECTRON_MAIL_PROTON_API_ENTRY_URL_PLACEHOLDER___/${config.url}`;
-     const urlToLoad = createUrl(prefixedUrl, config.params);
-     return urlToLoad.toString();
- };
-
-diff --git a/packages/components/containers/contacts/helpers/senderImage.ts b/packages/components/containers/contacts/helpers/senderImage.ts
-index 24578bbc0..6b38625e0 100644
---- a/packages/components/containers/contacts/helpers/senderImage.ts
-+++ b/packages/components/containers/contacts/helpers/senderImage.ts
-@@ -58,7 +58,7 @@ export const getSenderImageUrl = (
-     mode?: SenderImageMode
- ) => {
-     const config = getLogo(emailAddress, size, bimiSelector, mode, UID);
--    const prefixedUrl = `api/${config.url}`; // api/ is required to set the AUTH cookie
-+    const prefixedUrl = `___ELECTRON_MAIL_PROTON_API_ENTRY_URL_PLACEHOLDER___/${config.url}`;
-     const url = createUrl(prefixedUrl, config.params);
-     return url.toString();
- };

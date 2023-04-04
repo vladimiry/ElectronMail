@@ -8,7 +8,7 @@ env: { ELECTRON_MAIL_NODE_VERSION: 16, PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 }
 jobs:
   build-proton-clients:
     if: github.event_name == 'push'
-    strategy: { matrix: { os: [ ubuntu-18.04 ] }, fail-fast: false }
+    strategy: { matrix: { os: [ ubuntu-20.04 ] }, fail-fast: false }
     runs-on: ${{ matrix.os }}
     steps:
       # <common> TODO use YAML anchors feature when it gets supported
@@ -35,7 +35,7 @@ jobs:
       - { name: tar artifact, run: tar -cvf proton-clients-artifact.tar ./output/git/backup ./app/assets/db-search-monaco-editor }
       - { name: upload artifact, uses: actions/upload-artifact@v2, with: { name: proton-clients-artifact, path: ./proton-clients-artifact.tar, if-no-files-found: error } }
   build-app:
-    strategy: { matrix: { os: [ ubuntu-18.04, windows-2019, macos-11 ] }, fail-fast: false }
+    strategy: { matrix: { os: [ ubuntu-20.04, windows-2019, macos-11 ] }, fail-fast: false }
     runs-on: ${{ matrix.os }}
     steps:
       # <common> TODO use YAML anchors feature when it gets supported
@@ -55,7 +55,7 @@ jobs:
   package-app:
     if: github.event_name == 'push'
     needs: [ build-proton-clients, build-app ]
-    strategy: { matrix: { os: [ ubuntu-18.04, windows-2019, macos-11, macos-latest ] }, fail-fast: false }
+    strategy: { matrix: { os: [ ubuntu-20.04, windows-2019, macos-11, macos-latest ] }, fail-fast: false }
     runs-on: ${{ matrix.os }}
     steps:
       # <common> TODO use YAML anchors feature when it gets supported

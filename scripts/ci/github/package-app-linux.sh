@@ -13,14 +13,14 @@ sudo apt-get install --yes --no-install-recommends snapcraft squashfs-tools
 # purpose: compiling "node-keytar" native module and keychain initialization
 sudo apt-get install --yes --no-install-recommends libsecret-1-dev
 # purpose: pacman build fails also due missing "bsdtar", see https://github.com/jordansissel/fpm/issues/1453#issuecomment-356138549
-sudo apt-get install --yes --no-install-recommends bsdtar # "libarchive-tools" package on newer than ubuntu 16.04/xenial versions
+sudo apt-get install --yes --no-install-recommends libarchive-tools
 # purpose: native modules compiling
 export CC=gcc-7
 export CXX=g++-7
 echo "::endgroup::"
 
-# assuming that "ubuntu-18.04" image comes with glibc v2.27, see https://github.com/vladimiry/ElectronMail/issues/389#issuecomment-812071591
-GLIBC_INFO_EXPECTED_SUB="release version 2.27"
+# assuming that "ubuntu-20.04" image comes with glibc v2.31, see https://github.com/vladimiry/ElectronMail/issues/389#issuecomment-812071591
+GLIBC_INFO_EXPECTED_SUB="release version 2.31"
 GLIBC_INFO=$(lsof -p $$ | grep libc | awk ' { print $NF" --version"; } ' | sh)
 echo $GLIBC_INFO
 if [[ "$GLIBC_INFO" != *"$GLIBC_INFO_EXPECTED_SUB"* ]]; then

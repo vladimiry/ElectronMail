@@ -9,7 +9,7 @@ import {LABEL_TYPE, SYSTEM_FOLDER_IDENTIFIERS, View} from "src/shared/model/data
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DbViewFolderComponent {
-    @Input()
+    @Input({required: true})
     folder!: View.Folder;
 
     get isCustom(): boolean {

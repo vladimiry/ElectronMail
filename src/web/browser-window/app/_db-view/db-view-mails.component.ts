@@ -43,7 +43,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
         return result;
     }
 
-    @Input()
+    @Input({required: true})
     mailsBundleKey!: MailsBundleKey;
 
     readonly mailsBundleKey$: Observable<MailsBundleKey> = this.ngChangesObservable("mailsBundleKey").pipe(
@@ -195,7 +195,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
 
     private _uid?: string;
 
-    @Input()
+    @Input({required: false})
     set uid(value: string | undefined) {
         if (this._uid && this._uid !== value) {
             this.store.dispatch(DB_VIEW_ACTIONS.Paging({

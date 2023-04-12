@@ -23,10 +23,10 @@ const selector = "electron-mail-db-view-mails-export";
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DbViewMailsExportComponent extends DbViewAbstractComponent implements OnInit {
-    @Input()
+    @Input({required: false})
     mailsBundleItems?: MailsBundle["items"];
 
-    @Input()
+    @Input({required: false})
     rootConversationNode?: View.RootConversationNode;
 
     readonly formControls: Record<"exportDir" | "fileType" | "includingAttachments", AbstractControl> = {
@@ -43,10 +43,10 @@ export class DbViewMailsExportComponent extends DbViewAbstractComponent implemen
 
     readonly form = new FormGroup(this.formControls);
 
-    @Input()
+    @Input({required: true})
     title = "";
 
-    @Input()
+    @Input({required: true})
     titleSuffix = "";
 
     modalRef?: BsModalRef;

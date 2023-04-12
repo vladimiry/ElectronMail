@@ -83,6 +83,11 @@ export function buildBaseConfig(
                     "src": srcRelativePath(),
                     "package.json": rootRelativePath("package.json"),
                 },
+                fallback: {
+                    // TODO resolve "stream-browserify" entry/main script path with "import.meta.resolve" vs hard-coding
+                    // "stream": import.meta.resolve("stream-browserify"),
+                    "stream": rootRelativePath("node_modules/stream-browserify/index.js"),
+                },
             },
             optimization: {
                 chunkIds: "named",

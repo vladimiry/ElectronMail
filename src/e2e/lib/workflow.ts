@@ -102,8 +102,8 @@ export const buildWorkflow = (testContext: TestContext) => {
                 const {savePassword: notificationDisplaying} = options;
                 {
                     const expected = notificationDisplaying
-                        ? "/(settings-outlet:settings/account-edit//accounts-outlet:accounts//notifications-outlet:notifications)"
-                        : "/(settings-outlet:settings/account-edit//accounts-outlet:accounts)";
+                        ? "/(accounts-outlet:accounts//notifications-outlet:notifications//settings-outlet:settings/account-edit)"
+                        : "/(accounts-outlet:accounts//settings-outlet:settings/account-edit)";
                     try {
                         await testContext.firstWindowPage.waitForURL(
                             `**${expected}`,
@@ -131,7 +131,7 @@ export const buildWorkflow = (testContext: TestContext) => {
             } else {
                 const expected = testContext.sinon.addAccountSpy.callCount
                     ? "/(accounts-outlet:accounts)"
-                    : "/(settings-outlet:settings/account-edit//accounts-outlet:accounts//stub-outlet:stub)";
+                    : "/(accounts-outlet:accounts//settings-outlet:settings/account-edit//stub-outlet:stub)";
                 try {
                     await testContext.firstWindowPage.waitForURL(
                         `**${expected}`,

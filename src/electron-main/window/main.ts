@@ -171,10 +171,10 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
         })
         .on("close", (event) => {
             if (state.forceClose) {
-                event.returnValue = true;
+                (event as typeof event & {returnValue: boolean}).returnValue = true;
             } else {
                 event.preventDefault();
-                event.returnValue = false;
+                (event as typeof event & {returnValue: boolean}).returnValue = false;
 
                 setTimeout(() => {
                     if (BUILD_DISABLE_CLOSE_TO_TRAY_FEATURE || !(readConfigSync(ctx) ?? initialConfig()).hideOnClose) {
@@ -186,7 +186,7 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
                 });
             }
 
-            return event.returnValue; // eslint-disable-line @typescript-eslint/no-unsafe-return
+            return (event as typeof event & {returnValue: boolean}).returnValue; // eslint-disable-line @typescript-eslint/no-unsafe-return
         });
 
     browserWindow.setMenu(null);

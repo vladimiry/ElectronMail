@@ -25,7 +25,7 @@ import {registerNativeThemeReaction} from "src/web/lib/native-theme";
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DbViewMailBodyComponent extends DbViewAbstractComponent implements OnInit, OnDestroy, AfterViewInit {
-    @Input()
+    @Input({required: false})
     selectedFolderData?: Instance["selectedFolderData"];
 
     selectedMailToggled$ = this.instance$.pipe(

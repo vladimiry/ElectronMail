@@ -42,9 +42,6 @@ import {SharedModule} from "src/web/browser-window/app/_shared/shared.module";
         DbViewMailTabComponent,
         DbViewMonacoEditorComponent,
     ],
-    entryComponents: [
-        DbViewEntryComponent,
-    ],
     providers: [
         {provide: DBVIEW_MODULE_ENTRY_COMPONENT_TOKEN, useValue: DbViewEntryComponent},
     ],

@@ -40,7 +40,7 @@ const componentDestroyingNotificationSubject$ = new Subject<void>();
 export class AccountViewComponent extends NgChangesObservableComponent implements OnInit, OnDestroy {
     static componentDestroyingNotification$ = componentDestroyingNotificationSubject$.asObservable();
 
-    @Input()
+    @Input({required: true})
     readonly login: string = "";
 
     readonly account$: Observable<WebAccount> = this.ngChangesObservable("login").pipe(
@@ -51,7 +51,7 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
     );
 
     // TODO angular: get rid of @HostBinding("class") /  @Input() workaround https://github.com/angular/angular/issues/7289
-    @Input()
+    @Input({required: false})
     readonly class: string = "";
 
     viewModeClass: "vm-live" | "vm-database" = "vm-live";

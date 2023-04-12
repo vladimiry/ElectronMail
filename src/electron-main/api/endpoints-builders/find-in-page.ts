@@ -118,6 +118,11 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             }
 
             const webContents = ElectronWebContents.fromId(ctx.selectedAccount.webContentId);
+
+            if (!webContents) {
+                throw new Error(`Failed to resolve "${nameof(webContents)}" by "${nameof(ctx.selectedAccount.webContentId)}"`);
+            }
+
             const requestId = webContents.findInPage(query, options);
 
             return {requestId};
@@ -142,6 +147,11 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             }
 
             const webContents = ElectronWebContents.fromId(ctx.selectedAccount.webContentId);
+
+            if (!webContents) {
+                throw new Error(`Failed to resolve "${nameof(webContents)}" by "${nameof(ctx.selectedAccount.webContentId)}"`);
+            }
+
             const notificationSubject = new Subject<Notification>();
             const notificationReset = ((): () => void => {
                 const eventSubscriptionArgs: ["found-in-page", (event: Electron.Event, result: Electron.FoundInPageResult) => void] = [

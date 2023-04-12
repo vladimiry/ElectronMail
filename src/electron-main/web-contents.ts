@@ -134,8 +134,9 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
         const uiContext = ctx.uiContext && await ctx.uiContext;
         const isFullTextSearchBrowserWindow = uiContext?.fullTextSearchBrowserWindow?.webContents === webContents;
 
-        webContents.on("certificate-error", ({type}, url, error) => logger.error(JSON.stringify({type, url}), error));
-        webContents.on("console-message", ({type}, level, message, line, sourceId) => {
+        webContents.on("certificate-error", (...[/*event*/, /*webContents*/, url, error]) =>
+            logger.error(JSON.stringify({type: "certificate-error", url}), error));
+        webContents.on("console-message", (...[/*event*/, level, message, line, sourceId]) => {
             const isWarn = Number(level) === 2;
             const isError = Number(level) === 3;
             const isFullTextSearchInstanceError = (
@@ -148,16 +149,16 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
             );
             if ((isWarn || isError) && !isFullTextSearchInstanceError) {
                 logger[lowerConsoleMessageEventLogLevel(isWarn ? "warn" : "error", message)](
-                    JSON.stringify({type, level, message: depersonalizeLoggedUrlsInString(message), line, sourceId}),
+                    JSON.stringify({type: "console-message", level, message: depersonalizeLoggedUrlsInString(message), line, sourceId}),
                 );
             }
         });
         webContents.on("did-fail-load", (
-            {type}, errorCode, errorDescription, validatedURL, isMainFrame, frameProcessId, frameRoutingId,
+            ...[/*event*/, errorCode, errorDescription, validatedURL, isMainFrame, frameProcessId, frameRoutingId]
         ) => {
             logger.error(
                 JSON.stringify({
-                    type,
+                    type: "did-fail-load",
                     errorCode,
                     errorDescription,
                     validatedURL,
@@ -168,11 +169,11 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
             );
         });
         webContents.on("did-fail-provisional-load", (
-            {type}, errorCode, errorDescription, validatedURL, isMainFrame, frameProcessId, frameRoutingId,
+            ...[/*event*/, errorCode, errorDescription, validatedURL, isMainFrame, frameProcessId, frameRoutingId]
         ) => { // eslint-disable-line sonarjs/no-identical-functions
             logger.error(
                 JSON.stringify({
-                    type,
+                    type: "did-fail-provisional-load",
                     errorCode,
                     errorDescription,
                     validatedURL,
@@ -182,10 +183,13 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
                 }),
             );
         });
-        webContents.on("crashed", ({type}) => logger.error(JSON.stringify({type})));
-        webContents.on("plugin-crashed", ({type}, name, version) => logger.error(JSON.stringify({type, name, version})));
-        webContents.on("preload-error", ({type}, preloadPath, error) => logger.error(JSON.stringify({type, preloadPath}), error));
-        webContents.on("render-process-gone", ({type}, details) => logger.error(JSON.stringify({type, details})));
+        webContents.on("crashed", () => logger.error(JSON.stringify({type: "crashed"})));
+        webContents.on("plugin-crashed", (...[/*event*/, name, version]) =>
+            logger.error(JSON.stringify({type: "plugin-crashed", name, version})));
+        webContents.on("preload-error", (...[/*event*/, preloadPath, error]) =>
+            logger.error(JSON.stringify({type: "preload-error", preloadPath}), error));
+        webContents.on("render-process-gone", (...[/*event*/, details]) =>
+            logger.error(JSON.stringify({type: "render-process-gone", details})));
         webContents.setWindowOpenHandler(({url}) => {
             if (isWebUri(url)) {
                 endpoints.openExternal({url}).catch((error) => {
@@ -290,32 +294,38 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
 
             if (menuItems.length) Menu.buildFromTemplate(menuItems).popup({});
         });
-        webContents.on("will-attach-webview", (...[event, webPreferences, {src}]) => {
-            if (!src) {
-                throw new Error(`Invalid/empty "src" value received in "${event.type}" handler`);
-            }
-            const bannedAccessMsg = verifyWebviewUrlAccess(src);
-            if (typeof bannedAccessMsg === "string") {
-                event.preventDefault();
-                notifyLogAndThrow(
-                    `Forbidden "webview.src" value: "${JSON.stringify({src, eventType: event.type})}". ${bannedAccessMsg}`,
-                );
-            }
-            if (!checkWebViewWebPreferencesDefaults(webPreferences)) {
-                Object.assign(webPreferences, DEFAULT_WEB_PREFERENCES);
-            }
-        });
-        webContents.on("did-attach-webview", (...[, webViewWebContents]) => {
-            webViewWebContents.on("will-navigate", (...[willNavigateEvent, src]) => {
+        {
+            const eventType = "will-attach-webview";
+            webContents.on(eventType, (...[event, webPreferences, {src}]) => {
+                if (!src) {
+                    throw new Error(`Invalid/empty "src" value received in "${eventType}" handler`);
+                }
                 const bannedAccessMsg = verifyWebviewUrlAccess(src);
                 if (typeof bannedAccessMsg === "string") {
-                    willNavigateEvent.preventDefault();
+                    event.preventDefault();
                     notifyLogAndThrow(
-                        `Forbidden "webview.src" value: "${JSON.stringify({src, eventType: willNavigateEvent.type})}". ${bannedAccessMsg}`,
+                        `Forbidden "webview.src" value: "${JSON.stringify({src, eventType})}". ${bannedAccessMsg}`,
                     );
                 }
+                if (!checkWebViewWebPreferencesDefaults(webPreferences)) {
+                    Object.assign(webPreferences, DEFAULT_WEB_PREFERENCES);
+                }
             });
-        });
+        }
+        {
+            const eventType = "did-attach-webview";
+            webContents.on(eventType, (...[, webViewWebContents]) => {
+                webViewWebContents.on("will-navigate", (...[willNavigateEvent, src]) => {
+                    const bannedAccessMsg = verifyWebviewUrlAccess(src);
+                    if (typeof bannedAccessMsg === "string") {
+                        willNavigateEvent.preventDefault();
+                        notifyLogAndThrow(
+                            `Forbidden "webview.src" value: "${JSON.stringify({src, eventType})}". ${bannedAccessMsg}`,
+                        );
+                    }
+                });
+            });
+        }
         webContents.on("update-target-url", (...[, url]) => {
             const focusedWindow = BrowserWindow.getFocusedWindow();
 

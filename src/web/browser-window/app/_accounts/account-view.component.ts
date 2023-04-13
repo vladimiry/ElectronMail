@@ -335,14 +335,9 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
         // eslint-disable-next-line @typescript-eslint/unbound-method
         this.logger.info(nameof(AccountViewComponent.prototype.onPrimaryViewLoadedOnce));
 
-        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-        const resolvePrimaryWebViewApiClient = async () => firstValueFrom(
-            this.electronService
-                .primaryWebViewClient({webView: primaryWebView, ...await this.resolveAccountIndex()}, {pingTimeoutMs: 7000}),
-        );
+        const primaryWebViewClient = this.electronService.primaryWebViewClient({webView: primaryWebView});
         const resolveLiveProtonClientSession = async (): Promise<ProtonClientSession> => {
-            const apiClient = await resolvePrimaryWebViewApiClient();
-            const value = await apiClient("resolveLiveProtonClientSession")(await this.resolveAccountIndex());
+            const value = await primaryWebViewClient("resolveLiveProtonClientSession")(await this.resolveAccountIndex());
             if (!value) {
                 throw new Error(`Failed to resolve "proton client session" object`);
             }
@@ -432,8 +427,7 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
                 const [clientSession, sessionStoragePatch] = await Promise.all([
                     resolveLiveProtonClientSession(),
                     (async () => {
-                        const apiClient = await resolvePrimaryWebViewApiClient();
-                        return apiClient("resolvedLiveSessionStoragePatch")(await this.resolveAccountIndex());
+                        return primaryWebViewClient("resolvedLiveSessionStoragePatch")(await this.resolveAccountIndex());
                     })(),
                 ]);
                 // TODO if "src$" has been set before, consider only refreshing the client session without full page reload

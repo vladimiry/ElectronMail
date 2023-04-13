@@ -10,7 +10,6 @@ const appDir = process.env.NODE_ENV === "development" ? "./app-dev" : "./app";
 ((): void => {
     const filePatterns = [
         `const moduleFactory = yield compiler.compileModuleAsync(DbViewModule);`,
-        `const apiClient = yield resolvePrimaryWebViewApiClient();`,
         `customCssKey = yield webView.insertCSS(customCSS);`,
     ] as const;
     const fileLocation = path.join(appDir, WEB_PROTOCOL_DIR, `./browser-window/_accounts.mjs`);

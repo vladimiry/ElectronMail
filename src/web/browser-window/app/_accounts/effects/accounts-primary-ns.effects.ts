@@ -44,12 +44,14 @@ export class AccountsPrimaryNsEffects {
                 logger.info("setup");
 
                 return merge(
-                    this.api.primaryWebViewClient({webView, accountIndex}, {finishPromise, pingTimeoutMs: 7011}).pipe(
-                        mergeMap((webViewClient) => {
-                            return from(
-                                webViewClient("notification")({login, entryApiUrl, apiEndpointOriginSS, accountIndex}),
-                            );
+                    from(
+                        this.api.primaryWebViewClient({webView}, {finishPromise})("notification")({
+                            login,
+                            entryApiUrl,
+                            apiEndpointOriginSS,
+                            accountIndex
                         }),
+                    ).pipe(
                         withLatestFrom(
                             this.store.pipe(
                                 select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
@@ -77,17 +79,16 @@ export class AccountsPrimaryNsEffects {
                         filter(({payload: {key}}) => key.login === login),
                         mergeMap(({payload}) => {
                             // TODO live attachments export: fire error if offline or not signed-in into the account
-                            return this.api.primaryWebViewClient({webView, accountIndex}, {finishPromise, pingTimeoutMs: 7012}).pipe(
-                                mergeMap((webViewClient) => {
-                                    return from(
-                                        webViewClient("exportMailAttachments", {timeoutMs: payload.timeoutMs})({
-                                            uuid: payload.uuid,
-                                            mailPk: payload.mailPk,
-                                            login: payload.key.login,
-                                            accountIndex,
-                                        }),
-                                    );
+                            return from(
+                                this.api.primaryWebViewClient({webView}, {finishPromise})(
+                                    "exportMailAttachments", {timeoutMs: payload.timeoutMs},
+                                )({
+                                    uuid: payload.uuid,
+                                    mailPk: payload.mailPk,
+                                    login: payload.key.login,
+                                    accountIndex,
                                 }),
+                            ).pipe(
                                 catchError((error) => {
                                     return from(
                                         this.api.ipcMainClient()("dbExportMailAttachmentsNotification")({

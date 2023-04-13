@@ -265,8 +265,8 @@ export function initWebRequestListenersByAccount(
                 requestHeaders[headerName] = getUserAgentByAccount({customUserAgent});
             }
 
-            protonApiUrlsUtil.patchAuthHeaders(String(url?.pathname), requestHeaders);
-            protonApiUrlsUtil.patchMailApiHeaders(String(url?.pathname), requestHeaders);
+            protonApiUrlsUtil.patchAuthRequestHeaders(String(url?.pathname), requestHeaders);
+            protonApiUrlsUtil.patchMailApiRequestHeaders(String(url?.pathname), requestHeaders);
 
             callback({requestHeaders});
         },

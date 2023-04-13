@@ -1,0 +1,49 @@
+diff --git a/packages/components/hooks/usePendingUserInvitations.ts b/packages/components/hooks/usePendingUserInvitations.ts
+index 6044196e1..b35ae94f5 100644
+--- a/packages/components/hooks/usePendingUserInvitations.ts
++++ b/packages/components/hooks/usePendingUserInvitations.ts
+@@ -2,11 +2,11 @@ import { useCallback } from 'react';
+
+ import { getInvitations } from '@proton/shared/lib/api/user';
+ import { Api, PendingInvitation as PendingUserInvitation } from '@proton/shared/lib/interfaces';
+-import { UserInvitationModel } from '@proton/shared/lib/models';
+
+ import useApi from './useApi';
+ import useCache from './useCache';
+ import useCachedModelResult from './useCachedModelResult';
++import { UserInvitationModelKey } from '@proton/shared/lib/models/userInvitationModel.key';
+
+ export const fetchPendingUserInvitations = (api: Api) =>
+     api<{ UserInvitations: PendingUserInvitation[] }>(getInvitations()).then(({ UserInvitations }) => {
+@@ -18,7 +18,7 @@ const usePendingUserInvitations = (): [PendingUserInvitation[] | undefined, bool
+     const cache = useCache();
+
+     const miss = useCallback(() => fetchPendingUserInvitations(api), [api]);
+-    return useCachedModelResult(cache, UserInvitationModel.key, miss);
++    return useCachedModelResult(cache, UserInvitationModelKey, miss);
+ };
+
+ export default usePendingUserInvitations;
+diff --git a/packages/shared/lib/models/userInvitationModel.js b/packages/shared/lib/models/userInvitationModel.js
+index 1fa9690b7..a9035e06d 100644
+--- a/packages/shared/lib/models/userInvitationModel.js
++++ b/packages/shared/lib/models/userInvitationModel.js
+@@ -1,9 +1,10 @@
+ import { fetchPendingUserInvitations } from '@proton/components/hooks/usePendingUserInvitations';
+
+ import updateCollection from '../helpers/updateCollection';
++import { UserInvitationModelKey as key } from './userInvitationModel.key';
+
+ export const UserInvitationModel = {
+-    key: 'UserInvitations',
++    key,
+     get: fetchPendingUserInvitations,
+     update: (model, events) => updateCollection({ model, events, itemKey: 'UserInvitation' }),
+ };
+diff --git a/packages/shared/lib/models/userInvitationModel.key.js b/packages/shared/lib/models/userInvitationModel.key.js
+new file mode 100644
+index 000000000..c07ff03fa
+--- /dev/null
++++ b/packages/shared/lib/models/userInvitationModel.key.js
+@@ -0,0 +1 @@
++export const UserInvitationModelKey = 'UserInvitations';

@@ -188,7 +188,7 @@ export function registerApi(providerApi: ProviderApi): void {
 
             const elements = await resolveDomElements(
                 {
-                    username: () => document.querySelector<HTMLInputElement>("form[name=loginForm] #login"),
+                    username: () => document.querySelector<HTMLInputElement>("form[name=loginForm] #username"),
                 },
                 logger,
             );
@@ -234,7 +234,7 @@ export function registerApi(providerApi: ProviderApi): void {
             logger.info();
 
             const resolveElementsConfig = {
-                input: () => document.querySelector<HTMLInputElement>("form[name=totpForm] #twoFa"),
+                input: () => document.querySelector<HTMLInputElement>("form[name=totpForm] #totp"),
                 button: () => document.querySelector<HTMLElement>("form[name=totpForm] [type=submit]"),
             };
             const elements = await resolveDomElements(resolveElementsConfig, logger);
@@ -269,7 +269,7 @@ export function registerApi(providerApi: ProviderApi): void {
 
             const elements = await resolveDomElements(
                 {
-                    mailboxPassword: () => document.querySelector<HTMLInputElement>("form[name=unlockForm] #password"),
+                    mailboxPassword: () => document.querySelector<HTMLInputElement>("form[name=unlockForm] #mailboxPassword"),
                     submit: () => document.querySelector<HTMLElement>("form[name=unlockForm] [type=submit]"),
                 },
                 logger,

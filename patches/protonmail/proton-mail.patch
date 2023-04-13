@@ -14,56 +14,18 @@ index 519a50349..819bdb911 100644
 +    }
  });
 
-diff --git a/packages/components/containers/login/MinimalLoginContainer.tsx b/packages/components/containers/login/MinimalLoginContainer.tsx
-index 6fef05c..1719cc8 100644
---- a/packages/components/containers/login/MinimalLoginContainer.tsx
-+++ b/packages/components/containers/login/MinimalLoginContainer.tsx
-@@ -25,6 +25,8 @@ import AbuseModal from './AbuseModal';
- import { AuthActionResponse, AuthCacheResult, AuthStep } from './interface';
- import { handleLogin, handleTotp, handleUnlock } from './loginActions';
-
-+const ELECTRON_MAIL_FORM_STYLE = { padding: '0.8rem' } as const;
-+
- const UnlockForm = ({
-     onSubmit,
-     cancelButton,
-@@ -43,6 +45,7 @@ const UnlockForm = ({
-                 withLoading(onSubmit(keyPassword)).catch(noop);
-             }}
-             method="post"
-+            style={ELECTRON_MAIL_FORM_STYLE}
-         >
-             <Label htmlFor="password">{c('Label').t`Mailbox password`}</Label>
-             <div className="mb1">
-@@ -87,6 +90,7 @@ const TOTPForm = ({
-                 withLoading(onSubmit(totp)).catch(noop);
-             }}
-             method="post"
-+            style={ELECTRON_MAIL_FORM_STYLE}
-         >
-             <Label htmlFor="twoFa">{c('Label').t`Two-factor authentication code`}</Label>
-             <div className="mb1">
-@@ -165,6 +169,7 @@ const LoginForm = ({
-                     withLoading(run()).catch(noop);
-                 }}
-                 method="post"
-+                style={ELECTRON_MAIL_FORM_STYLE}
-             >
-                 {hasChallenge && (
-                     <Challenge
-
 diff --git a/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx b/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx
-index 562696c4e..6531defba 100644
+index 472046bb0..a818a7d21 100644
 --- a/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx
 +++ b/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx
-@@ -247,6 +247,7 @@ const MailboxContainer = ({
+@@ -304,6 +304,7 @@ const MailboxContainer = ({
                  tabIndex={-1}
                  className="flex-item-fluid flex flex-column flex-nowrap outline-none"
                  data-testid="mailbox"
 +                electron-mail-mailbox-container-component
              >
                  {showToolbar && (
-                     <ErrorBoundary small>
+                     <Toolbar
 
 diff --git a/applications/mail/src/app/helpers/attachment/attachmentLoader.ts b/applications/mail/src/app/helpers/attachment/attachmentLoader.ts
 index c7d094d1b..3667af1eb 100644
@@ -367,11 +329,30 @@ index 2aaa779d3..487f54ff3 100644
  };
 
 diff --git a/applications/mail/src/app/components/header/search/MailSearch.tsx b/applications/mail/src/app/components/header/search/MailSearch.tsx
-index d1cb165a1..904bd2364 100644
+index 6318e40be..ebbce0086 100644
 --- a/applications/mail/src/app/components/header/search/MailSearch.tsx
 +++ b/applications/mail/src/app/components/header/search/MailSearch.tsx
-@@ -53,7 +53,7 @@ const MailSearch = ({ breakpoints }: Props) => {
-     const { isDBLimited, dropdownOpened } = getESDBStatus();
+@@ -11,10 +11,7 @@ import {
+     useMailSettings,
+     usePopperAnchor,
+     useToggle,
+-    useUser,
+ } from '@proton/components';
+-import { isMobile } from '@proton/shared/lib/helpers/browser';
+-import { isPaid } from '@proton/shared/lib/user/helpers';
+
+ import { ADVANCED_SEARCH_OVERLAY_CLOSE_EVENT } from '../../../constants';
+ import { useEncryptedSearchContext } from '../../../containers/EncryptedSearchProvider';
+@@ -40,7 +37,6 @@ const MailSearch = ({ breakpoints, labelID, location }: Props) => {
+     const { anchorRef, isOpen, open, close } = usePopperAnchor<HTMLInputElement>();
+     const searchParams = extractSearchParameters(location);
+     const [searchInputValue, setSearchInputValue] = useState(searchParams.keyword || '');
+-    const [user] = useUser();
+     const [, loadingMailSettings] = useMailSettings();
+     const [, loadingLabels] = useLabels();
+     const [, loadingFolders] = useFolders();
+@@ -49,7 +45,7 @@ const MailSearch = ({ breakpoints, labelID, location }: Props) => {
+     const { dropdownOpened } = getESDBStatus();
      const esState = useEncryptedSearchToggleState(isOpen);
 
 -    const showEncryptedSearch = !isMobile() && !!isPaid(user);
@@ -381,11 +362,11 @@ index d1cb165a1..904bd2364 100644
      const { state: showMore, toggle: toggleShowMore } = useToggle(false);
 
 diff --git a/packages/encrypted-search/lib/constants.ts b/packages/encrypted-search/lib/constants.ts
-index 1b28a2765..ee7c59df8 100644
+index ebdf5ee22..28adf6c62 100644
 --- a/packages/encrypted-search/lib/constants.ts
 +++ b/packages/encrypted-search/lib/constants.ts
-@@ -67,7 +67,7 @@ export const defaultESStatus = {
-     isBuilding: false,
+@@ -131,7 +131,7 @@ export const defaultESStatus = {
+     isEnablingContentSearch: false,
      isDBLimited: false,
      esEnabled: false,
 -    esSupported: true,
@@ -393,26 +374,3 @@ index 1b28a2765..ee7c59df8 100644
      isRefreshing: false,
      isSearchPartial: false,
      isSearching: false,
-
-diff --git a/packages/encrypted-search/lib/esHelpers/esUtils.ts b/packages/encrypted-search/lib/esHelpers/esUtils.ts
-index 2bb63cf10..c1440e969 100644
---- a/packages/encrypted-search/lib/esHelpers/esUtils.ts
-+++ b/packages/encrypted-search/lib/esHelpers/esUtils.ts
-@@ -296,15 +296,7 @@ export const updateSizeIDB = (userID: string, addend: number) => {
-  * Check whether ES can be used not just because the index key exists in localStorage
-  * but also because IDB is not corrupt, i.e. the object store exists
-  */
--export const canUseES = async (userID: string, storeName: string) => {
--    if (!indexKeyExists(userID)) {
--        return false;
--    }
--    const esDB = await openESDB(userID);
--    const isIntact = esDB.objectStoreNames.contains(storeName);
--    esDB.close();
--    return isIntact;
--};
-+export const canUseES = async (userID: string, storeName: string) => false;
-
- /**
-  * Request storage persistence to prevent the ES database from being evicted
-

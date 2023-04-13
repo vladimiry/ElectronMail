@@ -31,7 +31,7 @@ export const protonApiUrlsUtil = {
 
     // https://github.com/vladimiry/ElectronMail/issues/490#issuecomment-1046883249
     patchCaptchaResponseHeaders(urlPathname: string, responseHeaders: Record<string, string[]>): boolean {
-        if (!`${urlPathname}/`.includes("/captcha/")) {
+        if (!["/captcha/", "/challenge/"].some((value) => `${urlPathname}/`.includes(value))) {
             return false;
         }
 
@@ -49,13 +49,10 @@ export const protonApiUrlsUtil = {
     },
 
     // https://github.com/vladimiry/ElectronMail/issues/522#issuecomment-1156989727
-    patchAuthHeaders(urlPathname: string, requestHeaders: Record<string, string>): boolean {
+    patchAuthRequestHeaders(urlPathname: string, requestHeaders: Record<string, string>): boolean {
         if (
-            !`${urlPathname}/`.startsWith("/auth/")
-            &&
-            !`${urlPathname}/`.startsWith("/api/auth/")
-            &&
-            !`${urlPathname}/`.startsWith("/core/auth/")) {
+            !["/auth/", "/core/v4/auth/"].some((value) => `${urlPathname}/`.startsWith(value))
+        ) {
             return false;
         }
 
@@ -72,7 +69,7 @@ export const protonApiUrlsUtil = {
         return true;
     },
 
-    patchMailApiHeaders(urlPathname: string, requestHeaders: Record<string, string>): boolean {
+    patchMailApiRequestHeaders(urlPathname: string, requestHeaders: Record<string, string>): boolean {
         if (!urlPathname.includes("/mail/v4/messages/")) {
             return false;
         }

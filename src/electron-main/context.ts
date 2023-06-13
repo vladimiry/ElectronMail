@@ -122,7 +122,7 @@ function initLocations(
     };
 }
 
-function isProperLockfileError(value: unknown | ProperLockfileError): value is ProperLockfileError {
+function isProperLockfileError(value: unknown): value is ProperLockfileError {
     return (
         typeof value === "object"
         &&
@@ -283,7 +283,7 @@ export function initContext(
                     _this.write = ((write): typeof _this.write => {
                         const result: typeof _this.write = async (data, ...rest) => {
                             try {
-                                const dataToSave: StrictOmit<typeof data, "dataSaltBase64"> & Required<Pick<typeof data, "dataSaltBase64">>
+                                const dataToSave: Omit<typeof data, "dataSaltBase64"> & Required<Pick<typeof data, "dataSaltBase64">>
                                     = {
                                     ...data,
                                     dataSaltBase64: generateDataSaltBase64(ONE_KB_BYTES * 0.5, ONE_KB_BYTES * 2),

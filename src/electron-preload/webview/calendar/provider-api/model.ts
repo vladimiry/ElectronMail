@@ -12,7 +12,7 @@ export type ImmediateKeys = StrictExclude<Keys, LazyKeys>
 //      like: typeof import("output/git/proton-calendar/src/app/content/PrivateApp.tsx")
 export type ProviderInternals = AddInitializedProp<{
     [K in StrictExtract<ImmediateKeys, "./src/app/content/PrivateApp.tsx">]: DefineObservableValue<{
-        readonly privateScope: null | Exclude<unknown, null | undefined>
+        readonly privateScope: unknown
     }, (arg: unknown) => import("react").ReactNode>
 }>
 

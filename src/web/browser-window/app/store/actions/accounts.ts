@@ -35,9 +35,9 @@ export const ACCOUNTS_ACTIONS = propsRecordToActionsRecord(
         WireUpConfigs: props<DeepReadonly<{ accountConfigs: AccountConfig[] }>>(),
         PatchGlobalProgress: props<{ patch: State["globalProgress"] }>(),
         SelectMailOnline:
-            props<{ pk: WebAccountPk } & StrictOmit<ProtonPrimaryApiScan["ApiImplArgs"]["selectMailOnline"][0], "accountIndex">>(),
+            props<{ pk: WebAccountPk } & Omit<ProtonPrimaryApiScan["ApiImplArgs"]["selectMailOnline"][0], "accountIndex">>(),
         DeleteMessages:
-            props<{ pk: WebAccountPk } & StrictOmit<ProtonPrimaryApiScan["ApiImplArgs"]["deleteMessages"][0], "accountIndex">>(),
+            props<{ pk: WebAccountPk } & Omit<ProtonPrimaryApiScan["ApiImplArgs"]["deleteMessages"][0], "accountIndex">>(),
         FetchSingleMail: props<{ pk: WebAccountPk } & { mailPk: Mail["pk"] }>(),
         MakeMailRead: props<{ pk: WebAccountPk } & { messageIds: Array<Mail["id"]> }>(),
         SetMailFolder: props<{ pk: WebAccountPk } & { folderId: Folder["id"]; messageIds: Array<Mail["id"]> }>(),

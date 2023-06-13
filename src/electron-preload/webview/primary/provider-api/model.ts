@@ -92,6 +92,7 @@ export type ProviderInternals = AddInitializedProp<{
             location: ReturnType<typeof import("react-router").useHistory>["location"],
             params: {
                 labelID: RestModel.Label["ID"],
+                // eslint-disable-next-line @typescript-eslint/no-duplicate-type-constituents
                 elementID?: RestModel.Conversation["ID"] | RestModel.Message["ID"],
                 messageID?: RestModel.Message["ID"],
             },
@@ -174,6 +175,7 @@ export type ProviderApi = { _throwErrorOnRateLimitedMethodCall?: boolean } & Rea
     history: Readonly<{
         push: (
             options: {
+                // eslint-disable-next-line @typescript-eslint/no-duplicate-type-constituents
                 conversationId?: DatabaseModel.ConversationEntry["id"] | DatabaseModel.Mail["id"]
                 mailId?: DatabaseModel.Mail["id"]
                 folderId: DatabaseModel.Folder["id"]

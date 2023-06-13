@@ -19,7 +19,7 @@ interface ComponentState {
     contextMenuOpen: boolean
 }
 
-const initialComponentState: DeepReadonly<StrictOmit<ComponentState, "account">> = {
+const initialComponentState: DeepReadonly<Omit<ComponentState, "account">> = {
     // account: null,
     selected: false,
     stored: false,

@@ -113,7 +113,7 @@ const config = buildBaseWebConfig(
                     strictInjectionParameters: true,
                 };
 
-                const compilerOptions: StrictOmit<Required<AngularWebpackPluginOptions>["compilerOptions"],
+                const compilerOptions: Omit<Required<AngularWebpackPluginOptions>["compilerOptions"],
                     // skipping raw "string" props
                     Extract<keyof Required<AngularWebpackPluginOptions>["compilerOptions"], string>> = {
                     preserveWhitespaces: false,

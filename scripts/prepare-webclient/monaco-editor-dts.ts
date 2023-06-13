@@ -8,7 +8,7 @@ import {PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION} from "src/shared/const";
 import {PROTON_SHARED_MESSAGE_INTERFACE} from "src/shared/const/proton-apps";
 
 const dtsGenerator: { // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-    default: (arg: NoExtraProps<StrictOmit<DtsGeneratorOptions, "name">>) => ReturnType<typeof dtsGeneratorImport>
+    default: (arg: NoExtraProps<Omit<DtsGeneratorOptions, "name">>) => ReturnType<typeof dtsGeneratorImport>
 } = dtsGeneratorImport as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 export const generateDtsForMonacoEditor = async (

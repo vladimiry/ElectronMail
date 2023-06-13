@@ -1,0 +1,42 @@
+diff --git a/dist/transform.js b/dist/transform.js
+index 190beef9842d45c772317fe51d0d34431187b871..d1245f68ec84f6deb34864f876dbd581fb8ef0ec 100644
+--- a/dist/transform.js
++++ b/dist/transform.js
+@@ -32,12 +32,12 @@ var common_1 = require("@ts-nameof/common");
+ function transform(node, context) {
+     switch (node.kind) {
+         case "StringLiteral":
+-            return ts.createLiteral(node.value);
++            return ts.factory.createStringLiteral(node.value);
+         case "ArrayLiteral":
+-            return ts.createArrayLiteral(node.elements.map(function (element) { return transform(element, context); }));
++            return ts.factory.createArrayLiteral(node.elements.map(function (element) { return transform(element, context); }));
+         case "TemplateExpression":
+             if (node.parts.length === 1 && typeof node.parts[0] === "string")
+-                return ts.createNoSubstitutionTemplateLiteral(node.parts[0]);
++                return ts.factory.createNoSubstitutionTemplateLiteral(node.parts[0]);
+             return createTemplateExpression(node, context);
+         default:
+             return common_1.throwError("Unsupported node kind: " + node.kind);
+@@ -47,7 +47,7 @@ exports.transform = transform;
+ function createTemplateExpression(node, context) {
+     var firstPart = typeof node.parts[0] === "string" ? node.parts[0] : undefined;
+     var parts = firstPart != null ? node.parts.slice(1) : __spreadArrays(node.parts);
+-    return ts.createTemplateExpression(ts.createTemplateHead(firstPart || ""), getParts());
++    return ts.factory.createTemplateExpression(ts.factory.createTemplateHead(firstPart || ""), getParts());
+     function getParts() {
+         var templateSpans = [];
+         for (var i = 0; i < parts.length; i += 2) {
+@@ -59,10 +59,10 @@ function createTemplateExpression(node, context) {
+             if (typeof text !== "string")
+                 return common_1.throwError("Unexpected scenario where a string was expected, but an interpolated node was found.");
+             var tsExpression = interpolatedNode.expression;
+-            var tsText = !isLast ? ts.createTemplateMiddle(text) : ts.createTemplateTail(text);
++            var tsText = !isLast ? ts.factory.createTemplateMiddle(text) : ts.factory.createTemplateTail(text);
+             if (context != null)
+                 context.interpolateExpressions.delete(tsExpression);
+-            templateSpans.push(ts.createTemplateSpan(tsExpression, tsText));
++            templateSpans.push(ts.factory.createTemplateSpan(tsExpression, tsText));
+         }
+         return templateSpans;
+     }

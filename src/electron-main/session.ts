@@ -105,7 +105,7 @@ export const enableNetworkEmulationToAllAccountSessions = (
 };
 
 export const configureSessionByAccount = async (
-    account: DeepReadonly<StrictOmit<AccountConfig, "entryUrl">>,
+    account: DeepReadonly<Omit<AccountConfig, "entryUrl">>,
     {entryUrl}: DeepReadonly<Pick<AccountConfig, "entryUrl">>,
 ): Promise<void> => {
     _logger.info(nameof(configureSessionByAccount));
@@ -166,7 +166,7 @@ export const resetSessionStorages = async (
 
 export const initAccountSessions = async (
     ctx: DeepReadonly<Context>,
-    account: DeepReadonly<StrictOmit<AccountConfig, "entryUrl">>,
+    account: DeepReadonly<Omit<AccountConfig, "entryUrl">>,
 ): Promise<void> => {
     const logger = curryFunctionMembers(_logger, nameof(initAccountSessions));
 

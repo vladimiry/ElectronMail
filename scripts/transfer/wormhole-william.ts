@@ -7,6 +7,7 @@ const SERVICE_NAME = "wormhole-william";
 const SERVICE_VERSION = "1.0.4";
 const SERVICE_BINARY_DOWNLOAD_URL_PREFIX = `https://github.com/psanford/${SERVICE_NAME}/releases/download/v${SERVICE_VERSION}`;
 
+// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 const [, , ACTION_TYPE_ARG, FILE_ARG] = process.argv as [null, null, "upload" | string, string];
 
 async function resolveCommand(): Promise<{ command: string }> {

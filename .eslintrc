@@ -84,14 +84,6 @@
                     {
                         "allowExpressions": true
                     }
-                ],
-                "@typescript-eslint/ban-types": [
-                    "error",
-                    {
-                        "types": {
-                            "Omit": "TS: prefer `StrictOmit` to built-in `Omit` type"
-                        }
-                    }
                 ]
             }
         },

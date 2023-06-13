@@ -103,6 +103,7 @@ export function buildFoldersAndRootNodePrototypes(
 } {
     const conversationEntries = resolveAccountConversationNodes(account);
     type nodeLookupType = (
+        // eslint-disable-next-line @typescript-eslint/no-duplicate-type-constituents
         pk: ConversationEntry["pk"] | Required<ConversationEntry>["previousPk"],
         node?: View.ConversationNode,
     ) => View.ConversationNode;

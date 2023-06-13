@@ -7,6 +7,7 @@ import {processProtonCookieRecord} from "src/electron-main/util/proton-url";
 import {resolvePrimaryDomainNameFromUrlHostname, verifyUrlOriginValue} from "src/shared/util/url";
 
 export const getHeader = (
+    // eslint-disable-next-line @typescript-eslint/no-duplicate-type-constituents
     headers: Exclude<HeadersReceivedResponse["responseHeaders"] | BeforeSendResponse["requestHeaders"], undefined>,
     nameCriteria: string,
 ): GetHeaderCallResult => {

@@ -19,7 +19,7 @@ type ActionsRecord<P extends PropsRecord = PropsRecord> = {
 };
 
 // @ts-expect-error // TODO get rid of "ts-expect-error" thing
-export type UnionOf<T extends ActionsRecord> = Exclude<ReturnType<ValueOf<Omit<StrictOmit<T, MatchPropName>, symbol | number>>>, boolean>; // eslint-disable-line @typescript-eslint/ban-types, max-len
+export type UnionOf<T extends ActionsRecord> = Exclude<ReturnType<ValueOf<Omit<Omit<T, MatchPropName>, symbol | number>>>, boolean>; // eslint-disable-line @typescript-eslint/ban-types, max-len
 
 export type UnionOfRecord<P extends PropsRecord, T extends ActionsRecord<P> = ActionsRecord<P>>
     = { [K in Exclude<keyof T, MatchPropName>]: ReturnType<T[K]> };
@@ -77,10 +77,8 @@ export const propsRecordToActionsRecord = <P extends PropsRecord>(
             {} as ActionsRecord<P>,
         ),
         match(value, matchers) {
-            // @ts-expect-error // TODO get rid of "ts-expect-error" thing
             const matcher = mapKeys(matchers, (key) => resolvePrefixedType(key))[value.type] ?? matchers.default; // eslint-disable-line @typescript-eslint/no-unsafe-member-access, max-len
             if (typeof matcher !== "function") {
-                // @ts-expect-error // TODO get rid of "ts-expect-error" thing
                 throw new Error(`Failed to resolve matching handler for the "${String(value.type)}" action`);
             }
             const args = (
@@ -91,7 +89,7 @@ export const propsRecordToActionsRecord = <P extends PropsRecord>(
             );
             return matcher(
                 // @ts-expect-error // TODO get rid of "ts-expect-error" thing
-                ...args,
+                ...args, // eslint-disable-line @typescript-eslint/no-unsafe-argument
             );
         },
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any

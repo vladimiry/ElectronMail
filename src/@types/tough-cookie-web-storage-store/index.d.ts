@@ -4,7 +4,7 @@ declare module "tough-cookie-web-storage-store" {
     import {Store} from "tough-cookie";
 
     class WebStorageCookieStore extends Store {
-        public constructor(storage: WindowSessionStorage["sessionStorage"] & WindowLocalStorage["localStorage"]);
+        public constructor(storage: Storage);
     }
 
     export = WebStorageCookieStore;

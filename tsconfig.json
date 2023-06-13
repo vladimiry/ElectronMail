@@ -31,9 +31,6 @@
     "outDir": "./app",
     "baseUrl": ".",
     "paths": {
-      "remeda/*": [
-        "./node_modules/ndx/dist/*"
-      ],
       "patches/*": [
         "./patches/*"
       ],

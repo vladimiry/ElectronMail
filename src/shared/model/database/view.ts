@@ -6,7 +6,7 @@ export interface Folder extends Mutable<Model.Folder> {
     rootConversationNodes: RootConversationNode[];
 }
 
-export type Mail = StrictOmit<Model.Mail, "raw" | "body" | "attachments"> & NoExtraProps<{
+export type Mail = Omit<Model.Mail, "raw" | "body" | "attachments"> & NoExtraProps<{
     folders: Folder[];
     score?: number;
     attachmentsCount: number;

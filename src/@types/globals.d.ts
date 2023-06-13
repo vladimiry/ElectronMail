@@ -21,8 +21,6 @@ declare global {
     // TODO add "DeepNoExtraProps" type
     type NoExtraProps<T, U extends T = T> = U & Impossible<Exclude<keyof U, keyof T>>;
 
-    type StrictOmit<T, K extends keyof T> = import("ts-essentials").StrictOmit<T, K>;
-
     type StrictExclude<T, K extends T> = Exclude<T, K>;
 
     type StrictExtract<T, K extends T> = Extract<T, K>;

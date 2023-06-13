@@ -15,7 +15,7 @@ type resolveAccountFoldersType = (
 
 const resolveAccountFolders: resolveAccountFoldersType = (
     (): resolveAccountFoldersType => {
-        const staticFolders: ReadonlyArray<StrictOmit<Folder, "notify">> = (
+        const staticFolders: ReadonlyArray<Omit<Folder, "notify">> = (
             [
                 SYSTEM_FOLDER_IDENTIFIERS.Inbox,
                 SYSTEM_FOLDER_IDENTIFIERS.Drafts,

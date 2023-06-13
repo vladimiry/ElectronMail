@@ -42,9 +42,7 @@ export const applyZoomFactor = (_logger: Logger): void => {
     });
 };
 
-export const isProtonApiError = (
-    error: unknown | ProtonApiError
-): error is ProtonApiError => {
+export const isProtonApiError = (error: unknown): error is ProtonApiError => {
     const result = (
         typeof error === "object"
         &&

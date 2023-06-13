@@ -14,7 +14,7 @@ export class AppErrorHandler implements ErrorHandler {
     constructor(private readonly injector: Injector) {}
 
     handleError(
-        error: Error & { errors?: (Array<Error | string>) | unknown },
+        error: Error & { errors?: unknown },
     ): void {
         (() => {
             const {errors} = error;

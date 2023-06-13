@@ -123,7 +123,7 @@ export class SessionStorage {
         await this.saveToFileQueue.q(async () => {
             const store = await this.resolveStore();
             const {entity} = this;
-            const dataToSave: StrictOmit<typeof entity, "dataSaltBase64"> & Required<Pick<typeof entity, "dataSaltBase64">> = {
+            const dataToSave: Omit<typeof entity, "dataSaltBase64"> & Required<Pick<typeof entity, "dataSaltBase64">> = {
                 ...entity,
                 version: SESSION_STORAGE_VERSION,
                 dataSaltBase64: generateDataSaltBase64(ONE_KB_BYTES * 5, ONE_KB_BYTES * 10),

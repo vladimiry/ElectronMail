@@ -17,7 +17,7 @@ import {UnionOf} from "src/shared/util/ngrx";
 const logger = curryFunctionMembers(electronLog, __filename);
 
 type narrowIndexActionPayloadType = (
-    payload: StrictOmit<Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS>, { type: "Index" }>["payload"], "uid">,
+    payload: Omit<Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS>, { type: "Index" }>["payload"], "uid">,
 ) => typeof payload;
 
 export const narrowIndexActionPayload: narrowIndexActionPayloadType = ((): narrowIndexActionPayloadType => {

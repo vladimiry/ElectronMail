@@ -2,10 +2,8 @@ import {Contact, Context, Conversation, Message} from "src/electron-preload/webv
 import {Event} from "src/electron-preload/webview/lib/rest-model/response-entity/event";
 import {Label} from "src/electron-preload/webview/lib/rest-model/response-entity/folder";
 
-export const SUCCESS_RESPONSE = 1000;
-
 export interface Response {
-    Code: typeof SUCCESS_RESPONSE | number;
+    Code: number; // 1000 - success
 }
 
 export interface ConversationResponse extends Response {
@@ -26,7 +24,7 @@ export interface MessageResponse extends Response {
 export interface MessagesResponse extends Response {
     Total: number;
     Limit: number;
-    Messages: Array<StrictOmit<Message, "Body" | "Attachments" | "MIMEType" | "ParsedHeaders">>;
+    Messages: Array<Omit<Message, "Body" | "Attachments" | "MIMEType" | "ParsedHeaders">>;
 }
 
 export interface MessagesCountResponse extends Response {
@@ -40,7 +38,7 @@ export interface ContactResponse extends Response {
 export interface ContactsResponse extends Response {
     Total: number;
     Limit: number;
-    Contacts: Array<StrictOmit<Contact, "Cards" | "ContactEmails">>;
+    Contacts: Array<Omit<Contact, "Cards" | "ContactEmails">>;
 }
 
 export interface LabelsResponse extends Response {

@@ -60,7 +60,6 @@ snap:
     - password-manager-service
   environment:
     DISABLE_WAYLAND: 1
-    HUNSPELL_DICTIONARIES: $SNAP/usr/share/hunspell
 
 win:
   artifactName: ${name}-${version}-windows-${arch}.${ext}

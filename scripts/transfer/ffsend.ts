@@ -9,6 +9,7 @@ const SERVICE_BINARY_DOWNLOAD_URL_PREFIX = `https://github.com/timvisee/${SERVIC
 const SERVICE_DOWNLOAD_URL_PREFIX = "https://send.vis.ee/download/";
 const SERVICE_DOWNLOAD_COUNT = "1"; // only 1 is supported in anonymous mode
 
+// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 const [, , ACTION_TYPE_ARG, FILE_ARG] = process.argv as [null, null, "upload" | string, string];
 
 async function resolveCommand(): Promise<{ command: string }> {

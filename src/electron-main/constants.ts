@@ -11,7 +11,7 @@ import {PACKAGE_NAME} from "src/shared/const";
 export const PLATFORM = platform();
 
 export const INITIAL_STORES: {
-    readonly config: () => StrictOmit<Config, keyof BaseConfig | "jsFlags"> & Required<BaseConfig> & Required<Pick<Config, "jsFlags">>;
+    readonly config: () => Omit<Config, keyof BaseConfig | "jsFlags"> & Required<BaseConfig> & Required<Pick<Config, "jsFlags">>;
     readonly settings: () => Settings;
 } = Object.freeze({
     config: () => {

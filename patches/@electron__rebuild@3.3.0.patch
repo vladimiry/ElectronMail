@@ -1,8 +1,8 @@
 diff --git a/lib/module-rebuilder.js b/lib/module-rebuilder.js
-index dbb5e7b03ab4297bb376fd4d5802bebc0803b385..72c74b8d48386915f6cfe6ea7b1240cf70df97b3 100644
+index 7d87314a73780484064d1b883e316884c4eb5e65..ccd09a9133b109945df8161d3c143fe0215e46f3 100644
 --- a/lib/module-rebuilder.js
 +++ b/lib/module-rebuilder.js
-@@ -65,7 +65,8 @@ class ModuleRebuilder {
+@@ -67,7 +67,8 @@ class ModuleRebuilder {
       * Whether a prebuild-install-generated native module exists.
       */
      async prebuildInstallNativeModuleExists() {

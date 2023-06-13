@@ -48,7 +48,7 @@ export const resolveExistingFile = (file: string): string => {
 const definePluginValue = mapValues(
     {
         BUILD_ENVIRONMENT: ENVIRONMENT,
-        ...((): StrictOmit<BuildEnvVars, "BUILD_ENVIRONMENT"> => {
+        ...((): Omit<BuildEnvVars, "BUILD_ENVIRONMENT"> => {
             return {
                 BUILD_DISABLE_CLOSE_TO_TRAY_FEATURE: process.env.ELECTRON_MAIL_BUILD_DISABLE_CLOSE_TO_TRAY_FEATURE ?? false,
                 BUILD_DISABLE_START_HIDDEN_FEATURE: process.env.ELECTRON_MAIL_BUILD_DISABLE_START_HIDDEN_FEATURE ?? false,

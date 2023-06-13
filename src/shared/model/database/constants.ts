@@ -79,7 +79,7 @@ export const MIME_TYPES = buildEnumBundle({
     AUTOMATIC: "",
 } as const);
 
-export const INDEXABLE_MAIL_FIELDS: ReadonlyArray<keyof StrictOmit<IndexableMail, "pk">> = [
+export const INDEXABLE_MAIL_FIELDS: ReadonlyArray<keyof Omit<IndexableMail, "pk">> = [
     "subject",
     "body",
     "sender",

@@ -53,46 +53,6 @@ const trimNonLetterCharactersFilter: trimNonLetterCharactersFilterType = (
     }
 )();
 
-function htmlToTextViaIframe(html: string): string {
-    const csp = `default-src 'none';`;
-    const iframe = document.createElement("iframe");
-    const parent = document.body;
-
-    iframe.setAttribute(
-        "sandbox",
-        "allow-same-origin", // exclusion required to be able to call "document.open()" on iframe
-    );
-    iframe.setAttribute("csp", csp);
-
-    const {contentWindow} = parent.appendChild(iframe);
-
-    if (!contentWindow) {
-        throw new Error(`Failed to prepare email rendering "iframe"`);
-    }
-
-    contentWindow.document.open();
-    contentWindow.document.write(
-        `
-            <html>
-            <head>
-                <meta http-equiv="Content-Security-Policy" content="${csp}">
-                <meta http-equiv="X-Content-Security-Policy" content="${csp}">
-            </head>
-            <body>
-                ${html}
-            </body>
-            </html>
-        `,
-    );
-    contentWindow.document.close();
-
-    const {innerText: result} = contentWindow.document.body;
-
-    parent.removeChild(iframe);
-
-    return result;
-}
-
 function buildFieldDescription(): DeepReadonly<Record<typeof INDEXABLE_MAIL_FIELDS[number], {
     accessor: (doc: IndexableMail) => string;
     boost: number;
@@ -123,10 +83,7 @@ function buildFieldDescription(): DeepReadonly<Record<typeof INDEXABLE_MAIL_FIEL
                         const msg = `falling back to iframe-based "html-to-text" conversion`;
                         logger.error(msg, "error: ", error);
                         logger.verbose(msg, "subject: ", subject);
-
-                        return htmlToTextViaIframe(
-                            body,
-                        );
+                        return body;
                     }
                     throw error;
                 }

@@ -9,6 +9,7 @@ import type {OnChanges, OnDestroy, SimpleChanges} from "@angular/core";
 export abstract class NgChangesObservableComponent implements OnChanges, OnDestroy {
     protected ngChanges = new BehaviorSubject<Partial<{ [k in keyof this]: this[k] }>>({});
 
+    // TODO angular v16: use "takeUntilDestroyed"
     protected ngOnDestroy$ = new Subject<void>();
 
     ngOnChanges(changes: SimpleChanges): void {

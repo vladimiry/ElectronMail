@@ -2,7 +2,7 @@ import {Directive, ElementRef, EventEmitter, Injector, Input, NgZone, Output} fr
 import {filter, take, takeUntil} from "rxjs/operators";
 import {fromEvent, Observable, of, Subscription} from "rxjs";
 import {editor as monacoEditor, languages as monacoLanguages, Selection as MonacoSelection} from "monaco-editor";
-import type {OnInit} from "@angular/core";
+import type {OnDestroy, OnInit} from "@angular/core";
 import {select, Store} from "@ngrx/store";
 
 import {AccountConfig} from "src/shared/model/account";
@@ -15,8 +15,8 @@ import {State} from "src/web/browser-window/app/store/reducers/root";
 @Directive()
 // so weird not single-purpose directive huh, https://github.com/angular/angular/issues/30080#issuecomment-539194668
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
-export abstract class AbstractMonacoEditorComponent extends NgChangesObservableComponent implements OnInit {
-    @Input()
+export abstract class AbstractMonacoEditorComponent extends NgChangesObservableComponent implements OnInit, OnDestroy {
+    @Input({required: true})
     login!: AccountConfig["login"];
 
     @Output()
@@ -74,11 +74,6 @@ export abstract class AbstractMonacoEditorComponent extends NgChangesObservableC
                 const builtInTheme: Parameters<typeof monacoEditor.defineTheme>[1]["base"] = shouldUseDarkColors ? "vs-dark" : "vs";
                 monacoEditor.setTheme(builtInTheme);
             });
-
-        this.ngOnDestroy$.subscribe(() => {
-            this.editorInstance?.dispose();
-            delete this.editorInstance;
-        });
     }
 
     protected updateMonacoEditorWidthPostprocessing(value: number): number {
@@ -305,5 +300,10 @@ export abstract class AbstractMonacoEditorComponent extends NgChangesObservableC
 
     private propagateEditorContent(): void {
         this.content.emit({codeEditorContent: this.editorInstance?.getValue()});
+    }
+
+    ngOnDestroy(): void {
+        this.editorInstance?.dispose();
+        delete this.editorInstance;
     }
 }

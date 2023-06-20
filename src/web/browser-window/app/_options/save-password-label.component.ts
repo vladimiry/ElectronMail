@@ -18,7 +18,7 @@ import {State} from "src/web/browser-window/app/store/reducers/options";
 export class SavePasswordLabelComponent implements OnInit, OnDestroy {
     readonly userDataDir = __METADATA__.electronLocations.userDataDir;
 
-    @Input()
+    @Input({required: true})
     savePassword: boolean | null = false;
 
     keytarUnsupportedDetails = false;

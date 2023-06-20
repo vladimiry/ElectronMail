@@ -28,10 +28,10 @@ import {SPACER_PX} from "src/web/constants";
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountEditNotificationEditorComponent extends AbstractMonacoEditorComponent {
-    @Input()
+    @Input({required: true})
     editable = false;
 
-    @Input()
+    @Input({required: true})
     initialContent?: string;
 
     // TODO turn the hardcoded code samples library into the user-editable list of snippets

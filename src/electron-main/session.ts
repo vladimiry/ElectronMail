@@ -64,9 +64,12 @@ export const createSessionUtil: createSessionUtilType = (() => {
         }
 
         session.setSpellCheckerEnabled(false); // gets enabled later in app's "web-contents-created" event handler, based on the config
-        session.on("spellcheck-dictionary-download-failure", (...[event, languageCode]) => {
-            _logger.error(nameof.full(createSessionUtil.create), event.type, languageCode);
-        });
+        {
+            const eventType = "spellcheck-dictionary-download-failure";
+            session.on(eventType, (...[/*event*/, languageCode]) => {
+                _logger.error(nameof.full(createSessionUtil.create), eventType, languageCode);
+            });
+        }
 
         return session;
     };

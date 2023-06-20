@@ -33,7 +33,7 @@ const initialComponentState: DeepReadonly<StrictOmit<ComponentState, "account">>
     styleUrls: ["./account-title.component.scss"],
 })
 export class AccountTitleComponent implements OnInit, OnDestroy {
-    @Input()
+    @Input({required: false})
     highlighting = true;
 
     private readonly stateSubject$ = new BehaviorSubject<ComponentState>({...initialComponentState} as ComponentState);
@@ -54,7 +54,7 @@ export class AccountTitleComponent implements OnInit, OnDestroy {
 
     private readonly subscription = new Subscription();
 
-    @Input()
+    @Input({required: true})
     set account(account: WebAccount) {
         this.patchState({
             account,

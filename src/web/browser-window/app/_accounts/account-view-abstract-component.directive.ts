@@ -25,12 +25,12 @@ type ChildEvent = Parameters<typeof AccountViewComponent.prototype.onEventChild>
 // so weird not single-purpose directive huh, https://github.com/angular/angular/issues/30080#issuecomment-539194668
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
 export abstract class AccountViewAbstractComponent extends NgChangesObservableComponent implements OnDestroy {
-    @Input()
+    @Input({required: true})
     readonly login: string = "";
 
     readonly account$: Observable<WebAccount>;
 
-    @Input()
+    @Input({required: true})
     webViewSrc!: string;
 
     @Output()
@@ -190,7 +190,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
         ] as const;
         const domReadyArgs = [
             "dom-ready",
-            ({type}: import("electron").Event) => {
+            ({type}: import("electron").Event & { type: string }) => {
                 this.event.emit({type: "dom-ready", viewType: this.viewType, webView});
                 this.log("verbose", ["webview event", JSON.stringify({type, src: webView.src})]);
             },
@@ -222,7 +222,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
         ] as const;
         const crashedArgs = [
             "crashed",
-            (event: import("electron").Event) => {
+            (event: import("electron").Event & { type: string }) => {
                 this.log("error", ["webview event", JSON.stringify(pick(event, ["type"]))]);
             },
         ] as const;

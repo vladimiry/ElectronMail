@@ -13,10 +13,10 @@ import {State} from "src/web/browser-window/app/store/reducers/options";
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UnreadBadgeComponent implements OnInit, OnDestroy {
-    @Input()
+    @Input({required: true})
     value!: number;
 
-    @Input()
+    @Input({required: false})
     alwaysRenderTheValue = false;
 
     readonly doNotRenderNotificationBadgeValue$: Observable<boolean>;

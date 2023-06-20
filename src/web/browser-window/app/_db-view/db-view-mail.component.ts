@@ -17,7 +17,7 @@ export class DbViewMailComponent {
 
     mailAddressTotal?: number;
 
-    @Input()
+    @Input({required: false})
     conversationSize?: number;
 
     private _mail!: View.Mail;
@@ -26,7 +26,7 @@ export class DbViewMailComponent {
         return this._mail;
     }
 
-    @Input()
+    @Input({required: true})
     set mail(mail: View.Mail) {
         this._mail = mail;
 

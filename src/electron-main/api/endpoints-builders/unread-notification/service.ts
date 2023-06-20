@@ -100,7 +100,7 @@ export const executeUnreadNotificationShellCommand = async (
         return;
     }
 
-    const execOptions: DeepReadonly<Parameters<typeof exec>>[1] = {
+    const execOptions: Parameters<typeof exec>[1] = {
         cwd: options?.cwd,
         env: options?.env,
     };

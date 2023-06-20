@@ -24,7 +24,7 @@ export class NotificationItemComponent {
 
     private _item!: NotificationItem;
 
-    @Input()
+    @Input({required: true})
     set item(item: NotificationItem) {
         this._item = item;
         this.message = item.type_ === "update"

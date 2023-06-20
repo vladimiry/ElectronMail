@@ -1,9 +1,10 @@
 {
   "proton-mail": [
-    "common-3.patch",
-    "url-3.patch",
-    "constants-8.patch",
-    "sentry-11.patch",
+    "common-4.patch",
+    "drop-circular-dependency.patch",
+    "url-4.patch",
+    "constants-10.patch",
+    "sentry-12.patch",
     "pack-api-arg-4.patch",
     "pack-webpack-6.patch",
     "session-storage-5.patch",
@@ -12,9 +13,10 @@
     "proton-mail.patch"
   ],
   "proton-account": [
-    "common-3.patch",
+    "common-4.patch",
+    "drop-circular-dependency-2.patch",
     "url-4.patch",
-    "constants-8.patch",
+    "constants-10.patch",
     "sentry-12.patch",
     "pack-api-arg-4.patch",
     "pack-webpack-6.patch",
@@ -24,10 +26,11 @@
     "proton-account.patch"
   ],
   "proton-calendar": [
-    "common-3.patch",
-    "url-3.patch",
+    "common-4.patch",
+    "drop-circular-dependency.patch",
+    "url-4.patch",
     "constants-10.patch",
-    "sentry-11.patch",
+    "sentry-12.patch",
     "pack-api-arg-4.patch",
     "pack-webpack-6.patch",
     "session-storage-5.patch",
@@ -35,7 +38,8 @@
     "embedded-verification-3.patch"
   ],
   "proton-drive": [
-    "common-3.patch",
+    "common-4.patch",
+    "drop-circular-dependency.patch",
     "url-4.patch",
     "constants-10.patch",
     "sentry-12.patch",
@@ -48,6 +52,7 @@
   ],
   "proton-vpn-settings": [
     "common-4.patch",
+    "drop-circular-dependency-2.patch",
     "url-4.patch",
     "constants-10.patch",
     "sentry-12.patch",

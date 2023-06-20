@@ -1,0 +1,14 @@
+diff --git a/lib/module-rebuilder.js b/lib/module-rebuilder.js
+index dbb5e7b03ab4297bb376fd4d5802bebc0803b385..72c74b8d48386915f6cfe6ea7b1240cf70df97b3 100644
+--- a/lib/module-rebuilder.js
++++ b/lib/module-rebuilder.js
+@@ -65,7 +65,8 @@ class ModuleRebuilder {
+      * Whether a prebuild-install-generated native module exists.
+      */
+     async prebuildInstallNativeModuleExists() {
+-        return this.prebuildInstall.prebuiltModuleExists();
++        // return this.prebuildInstall.prebuiltModuleExists();
++        return false;
+     }
+     /**
+      * If the native module uses prebuildify, check to see if it comes with a prebuilt module for

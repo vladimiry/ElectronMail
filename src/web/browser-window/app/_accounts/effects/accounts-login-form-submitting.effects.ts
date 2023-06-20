@@ -1,5 +1,5 @@
 import {Actions, createEffect} from "@ngrx/effects";
-import {concatMap, delay, finalize, mergeMap, take} from "rxjs/operators";
+import {concatMap, finalize, mergeMap, take} from "rxjs/operators";
 import {EMPTY, from, merge, NEVER, Observable, of} from "rxjs";
 import {Injectable} from "@angular/core";
 import {select, Store} from "@ngrx/store";
@@ -7,7 +7,7 @@ import {select, Store} from "@ngrx/store";
 import {ACCOUNTS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
 import {AccountsService} from "src/web/browser-window/app/_accounts/accounts.service";
-import {consumeMemoryRateLimiter, curryFunctionMembers} from "src/shared/util";
+import {asyncDelay, consumeMemoryRateLimiter, curryFunctionMembers} from "src/shared/util";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {getWebLogger} from "src/web/browser-window/util";
 import {ofType} from "src/shared/util/ngrx-of-type";
@@ -66,15 +66,11 @@ export class AccountsLoginFormSubmittingEffects {
                     case "login": {
                         const onlyFillLoginAction = (): Observable<import("@ngrx/store").Action> => {
                             logger.info("fillLogin");
-
                             return merge(
                                 of(this.accountsService.buildLoginDelaysResetAction({login})),
-                                this.api.primaryWebViewClient({webView, accountIndex}, {pingTimeoutMs: 7008}).pipe(
-                                    mergeMap((webViewClient) => {
-                                        return from(
-                                            webViewClient("fillLogin")({login, accountIndex}),
-                                        );
-                                    }),
+                                from(
+                                    this.api.primaryWebViewClient({webView})("fillLogin")({login, accountIndex}),
+                                ).pipe(
                                     mergeMap(() => of(ACCOUNTS_ACTIONS.Patch({login, patch: {loginFilledOnce: true}}))),
                                 ),
                             );
@@ -87,22 +83,20 @@ export class AccountsLoginFormSubmittingEffects {
                                     of(this.accountsService.buildLoginDelaysResetAction({login})),
                                     of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {password: true}})),
                                     resetNotificationsState$,
-                                    this.api.primaryWebViewClient({webView, accountIndex}, {pingTimeoutMs: 7009}).pipe(
-                                        delay(
-                                            account.loggedInOnce
-                                                ? ONE_SECOND_MS
-                                                : 0,
-                                        ),
-                                        mergeMap((webViewClient) => {
+                                    from(
+                                        account.loggedInOnce ? asyncDelay(ONE_SECOND_MS) : Promise.resolve(),
+                                    ).pipe(
+                                        mergeMap(() => {
                                             return from(
-                                                webViewClient("login")({login, password, accountIndex}),
+                                                this.api.primaryWebViewClient({webView})("login")({login, password, accountIndex}),
+                                            ).pipe(
+                                                mergeMap(() => EMPTY),
+                                                finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({
+                                                    login,
+                                                    patch: {password: false}
+                                                }))),
                                             );
                                         }),
-                                        mergeMap(() => EMPTY),
-                                        finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({
-                                            login,
-                                            patch: {password: false}
-                                        }))),
                                     ),
                                 );
 
@@ -167,12 +161,9 @@ export class AccountsLoginFormSubmittingEffects {
                         const action$ = merge(
                             of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {twoFactorCode: true}})),
                             resetNotificationsState$,
-                            this.api.primaryWebViewClient({webView, accountIndex}, {pingTimeoutMs: 7010}).pipe(
-                                mergeMap((webViewClient) => {
-                                    return from(
-                                        webViewClient("login2fa")({secret, accountIndex}),
-                                    );
-                                }),
+                            from(
+                                this.api.primaryWebViewClient({webView})("login2fa")({secret, accountIndex}),
+                            ).pipe(
                                 mergeMap(() => EMPTY),
                                 finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({
                                     login,
@@ -199,13 +190,9 @@ export class AccountsLoginFormSubmittingEffects {
                         const action$ = merge(
                             of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {mailPassword: true}})),
                             resetNotificationsState$,
-                            // TODO TS: resolve "webViewClient" calling "this.api.webViewClient" as normally
-                            of(__ELECTRON_EXPOSURE__.buildIpcPrimaryWebViewClient(webView)).pipe(
-                                mergeMap((webViewClient) => {
-                                    return from(
-                                        webViewClient("unlock")({mailPassword, accountIndex}),
-                                    );
-                                }),
+                            from(
+                                this.api.primaryWebViewClient({webView})("unlock")({mailPassword, accountIndex}),
+                            ).pipe(
                                 mergeMap(() => EMPTY),
                                 finalize(() => this.store.dispatch(ACCOUNTS_ACTIONS.PatchProgress({
                                     login,

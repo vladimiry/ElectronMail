@@ -14,7 +14,7 @@ import {WebAccountPk} from "src/web/browser-window/app/model";
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DbViewEntryComponent implements OnDestroy, OnInit {
-    @Input()
+    @Input({required: true})
     webAccountPk!: WebAccountPk;
 
     private finishDeferred = new Deferred<void>();

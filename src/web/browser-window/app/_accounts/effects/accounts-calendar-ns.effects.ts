@@ -37,12 +37,9 @@ export class AccountsCalendarNsEffects {
                 logger.info("setup");
 
                 return merge(
-                    this.api.calendarWebViewClient({webView, accountIndex}, {finishPromise}).pipe(
-                        mergeMap((webViewClient) => {
-                            return from(
-                                webViewClient("notification")({accountIndex}),
-                            );
-                        }),
+                    from(
+                        this.api.calendarWebViewClient({webView}, {finishPromise})("notification")({accountIndex}),
+                    ).pipe(
                         withLatestFrom(
                             this.store.pipe(
                                 select(AccountsSelectors.ACCOUNTS.pickAccount({login})),

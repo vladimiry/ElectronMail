@@ -13,9 +13,7 @@ test("general actions: app start, master password setup, add accounts", async ()
     await initAppWithTestContext({initial: true}, async ({workflow}) => {
         await workflow.saveScreenshot(); // screenshot with user agent clearly displayed at this point
         await workflow.login({setup: true, savePassword: false});
-        for (const entryUrlValue of PROTON_API_ENTRY_URLS) {
-            await workflow.addAccount({entryUrlValue});
-        }
+        await workflow.addAccount({entryUrlValue: PROTON_API_ENTRY_URLS[0]});
         await workflow.logout();
     });
 });

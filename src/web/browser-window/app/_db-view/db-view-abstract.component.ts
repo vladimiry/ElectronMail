@@ -29,7 +29,7 @@ export class AnimationFrameTickScheduler {
 // so weird not single-purpose directive huh, https://github.com/angular/angular/issues/30080#issuecomment-539194668
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
 export abstract class DbViewAbstractComponent extends NgChangesObservableComponent {
-    @Input()
+    @Input({required: true})
     webAccountPk!: WebAccountPk;
 
     webAccountPk$: Observable<WebAccountPk> = this.ngChangesObservable("webAccountPk").pipe(

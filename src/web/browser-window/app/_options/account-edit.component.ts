@@ -25,7 +25,7 @@ import {validateLoginDelaySecondsRange} from "src/shared/util";
     preserveWhitespaces: true,
 })
 export class AccountEditComponent implements OnInit, OnDestroy {
-    @Input()
+    @Input({required: true})
     accountIndex = 0;
     readonly userDataDir = __METADATA__.electronLocations.userDataDir;
     entryUrlItems = [...PROTON_API_ENTRY_RECORDS];

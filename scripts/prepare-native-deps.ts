@@ -21,8 +21,8 @@ const compileNativeDeps = async (): Promise<void> => {
     const isCrossCompilation = destArch !== process.arch;
     const nativeModuleDirs = fastGlob.sync(sanitizeFastGlobPattern("./node_modules/*/binding.gyp")).map((v) => path.dirname(v));
 
-    if (nativeModuleDirs.length !== 4) {
-        throw new Error("Unexpected native modules count found");
+    if (nativeModuleDirs.length !== 3) {
+        throw new Error(`Unexpected native modules count found: ${nativeModuleDirs.join(", ")}`);
     }
 
     CONSOLE_LOG(JSON.stringify({nativeModuleDirs}, null, 2));
@@ -30,10 +30,6 @@ const compileNativeDeps = async (): Promise<void> => {
     for (const moduleDir of nativeModuleDirs) {
         const moduleName = path.basename(moduleDir);
         const isSodiumNativeModule = moduleName === "sodium-native";
-
-        if (moduleName === "lzma-native") {
-            continue;
-        }
 
         try {
             await execShell([

@@ -40,7 +40,7 @@ const componentDestroyingNotificationSubject$ = new Subject<void>();
 export class AccountViewComponent extends NgChangesObservableComponent implements OnInit, OnDestroy {
     static componentDestroyingNotification$ = componentDestroyingNotificationSubject$.asObservable();
 
-    @Input()
+    @Input({required: true})
     readonly login: string = "";
 
     readonly account$: Observable<WebAccount> = this.ngChangesObservable("login").pipe(
@@ -51,7 +51,7 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
     );
 
     // TODO angular: get rid of @HostBinding("class") /  @Input() workaround https://github.com/angular/angular/issues/7289
-    @Input()
+    @Input({required: false})
     readonly class: string = "";
 
     viewModeClass: "vm-live" | "vm-database" = "vm-live";
@@ -335,14 +335,9 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
         // eslint-disable-next-line @typescript-eslint/unbound-method
         this.logger.info(nameof(AccountViewComponent.prototype.onPrimaryViewLoadedOnce));
 
-        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-        const resolvePrimaryWebViewApiClient = async () => firstValueFrom(
-            this.electronService
-                .primaryWebViewClient({webView: primaryWebView, ...await this.resolveAccountIndex()}, {pingTimeoutMs: 7000}),
-        );
+        const primaryWebViewClient = this.electronService.primaryWebViewClient({webView: primaryWebView});
         const resolveLiveProtonClientSession = async (): Promise<ProtonClientSession> => {
-            const apiClient = await resolvePrimaryWebViewApiClient();
-            const value = await apiClient("resolveLiveProtonClientSession")(await this.resolveAccountIndex());
+            const value = await primaryWebViewClient("resolveLiveProtonClientSession")(await this.resolveAccountIndex());
             if (!value) {
                 throw new Error(`Failed to resolve "proton client session" object`);
             }
@@ -432,8 +427,7 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
                 const [clientSession, sessionStoragePatch] = await Promise.all([
                     resolveLiveProtonClientSession(),
                     (async () => {
-                        const apiClient = await resolvePrimaryWebViewApiClient();
-                        return apiClient("resolvedLiveSessionStoragePatch")(await this.resolveAccountIndex());
+                        return primaryWebViewClient("resolvedLiveSessionStoragePatch")(await this.resolveAccountIndex());
                     })(),
                 ]);
                 // TODO if "src$" has been set before, consider only refreshing the client session without full page reload

@@ -196,7 +196,7 @@ export interface MessageKeys {
 
 export interface MessageVerification {
     senderPinnedKeys: EncryptionPreferences["pinnedKeys"] | undefined;
-    senderVerified: boolean | undefined;
+    pinnedKeysVerified: boolean | undefined;
 }
 
 export type MessageExtended = NoExtraProps<{

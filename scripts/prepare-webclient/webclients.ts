@@ -35,22 +35,21 @@ async function configure(
 function resolveWebpackConfigPatchingCode(
     {
         webpackConfigVarName,
-        repoType,
         webpackIndexEntryItems,
     }: {
         webpackConfigVarName: string
-        repoType: keyof typeof PROVIDER_REPO_MAP,
         webpackIndexEntryItems?: unknown,
     },
 ): string {
     const disableMangling = Boolean(webpackIndexEntryItems);
+    const disableMinimizing = true; // disable compression to workaround "heap out of memory" issue of the "github actions" job
     const result = `
         ${webpackConfigVarName}.devtool = false;
 
         Object.assign(
             ${webpackConfigVarName}.optimization,
             {
-                minimize: ${!disableMangling /* eslint-disable-line @typescript-eslint/restrict-template-expressions */},
+                minimize: ${!disableMinimizing /* eslint-disable-line @typescript-eslint/restrict-template-expressions */},
                 moduleIds: "named",
 
                 // allows resolving individual modules from "window.webpackJsonp"
@@ -81,20 +80,19 @@ function resolveWebpackConfigPatchingCode(
             if (!terserPluginInstance) {
                 throw new Error("TerserPlugin instance resolving failed");
             }
-            // terserPluginInstance.options.minify = false;
+            terserPluginInstance.options.minify = false;
             terserPluginInstance.options.parallel = false;
-            Object.assign(
-                ${repoType === "proton-drive" || repoType === "proton-vpn-settings"
-            ? 'terserPluginInstance.options.terserOptions'
-            : 'terserPluginInstance.options.minimizer.options'},
-                {
-                    // proton v4: needed to preserve original function names
-                    //            just "{keep_fnames: true, mangle: false}" is not sufficient
-                    ...({keep_fnames: true, compress: false}),
-                },
-            );
+            const minimizerOptions = {
+                // proton v4: needed to preserve original function names
+                // just "{keep_fnames: true, mangle: false}" is not sufficient
+                ...({keep_fnames: true, compress: false}),
+            };
+            [
+                terserPluginInstance.options.terserOptions ?? (terserPluginInstance.options.terserOptions = {}),
+                (terserPluginInstance.options.minimizer ?? (terserPluginInstance.options.minimizer = {options: {}})),
+            ].forEach((value) => Object.assign(value, minimizerOptions));
         `
-        : `delete ${webpackConfigVarName}.optimization.minimizer;`}
+        : (disableMinimizing ? `${webpackConfigVarName}.optimization.minimizer = [];` : ``)}
 
         ${webpackIndexEntryItems
         ? `{
@@ -276,7 +274,7 @@ async function executeBuildFlow(
                     ? `/${PROVIDER_REPO_MAP[repoType].basePath}/`
                     : undefined;
 
-                if (repoType === "proton-mail" || repoType === "proton-calendar") {
+                {
                     const webpackIndexEntryItems = repoType === "proton-mail" || repoType === "proton-calendar"
                         ? PROVIDER_REPO_MAP[repoType].protonPack.webpackIndexEntryItems
                         : undefined;
@@ -289,7 +287,6 @@ async function executeBuildFlow(
                         ${
                             resolveWebpackConfigPatchingCode({
                                 webpackConfigVarName: "webpackConfig",
-                                repoType,
                                 webpackIndexEntryItems,
                             })
                         }
@@ -325,6 +322,7 @@ async function executeBuildFlow(
                                 ...process.env,
                                 ...(publicPath && {PUBLIC_PATH: publicPath}),
                                 NODE_ENV: "production",
+                                TS_NODE_PROJECT: "../../tsconfig.webpack.json", // picked "build" task of "applications/<app>/package.json"
                             },
                         },
                     ],

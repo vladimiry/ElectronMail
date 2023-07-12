@@ -1,0 +1,53 @@
+diff --git a/packages/pack/webpack.config.ts b/packages/pack/webpack.config.ts
+index 3db6a71ef1..ed58652d81 100644
+--- a/packages/pack/webpack.config.ts
++++ b/packages/pack/webpack.config.ts
+@@ -3,6 +3,7 @@ import { Configuration } from 'webpack';
+ import 'webpack-dev-server';
+ // @ts-ignore
+ import { parseResource } from 'webpack/lib/util/identifier';
++import fs from 'fs';
+
+ const { getJsLoaders } = require('./webpack/js.loader');
+ const getCssLoaders = require('./webpack/css.loader');
+@@ -23,7 +24,7 @@ const getConfig = (env: any): Configuration => {
+         api: env.api,
+         appMode: env.appMode || 'standalone',
+         featureFlags: env.featureFlags || '',
+-        writeSRI: env.writeSri !== 'false',
++        writeSRI: false,
+         browserslist: isProduction
+             ? `> 0.5%, not IE 11, Firefox ESR, Safari 11`
+             : 'last 1 chrome version, last 1 firefox version, last 1 safari version',
+@@ -44,7 +45,20 @@ const getConfig = (env: any): Configuration => {
+
+     const version = options.buildData.version;
+
+-    return {
++    return ((): (value: Configuration) => Configuration => {
++        const file = path.resolve("./proton.config.js");
++        if (fs.existsSync(file)) {
++            console.log(
++                /*reset:*/"\x1b[0m" +
++                /*yellow:*/"\x1b[33m" +
++                ">>>" +
++                /*reset:*/"\x1b[0m", +
++                    `Found ${file}, extend the config`,
++            )
++            return eval("require")(file);
++        }
++        return (value: Configuration) => value;
++    })()({
+         target: `browserslist:${options.browserslist}`,
+         mode: isProduction ? 'production' : 'development',
+         bail: isProduction,
+@@ -162,7 +176,7 @@ const getConfig = (env: any): Configuration => {
+                 ],
+             }),
+         },
+-    };
++    });
+ };
+
+ export default getConfig;
+

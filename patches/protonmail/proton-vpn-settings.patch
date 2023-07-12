@@ -1,0 +1,60 @@
+diff --git a/applications/vpn-settings/package.json b/applications/vpn-settings/package.json
+index 2232dbdee5..b12e610cf8 100644
+--- a/applications/vpn-settings/package.json
++++ b/applications/vpn-settings/package.json
+@@ -6,7 +6,6 @@
+     "author": "",
+     "main": "index.js",
+     "scripts": {
+-        "build": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --appMode=standalone --logical",
+         "check-types": "tsc",
+         "i18n:upgrade": "proton-i18n extract --verbose && proton-i18n crowdin --verbose",
+         "i18n:validate": "proton-i18n validate lint-functions",
+
+diff --git a/packages/pack/webpack/css.loader.js b/packages/pack/webpack/css.loader.js
+index 072d323cd4..4aed56dd87 100644
+--- a/packages/pack/webpack/css.loader.js
++++ b/packages/pack/webpack/css.loader.js
+@@ -10,17 +10,22 @@ const handleUrlResolve = (url) => {
+     return true;
+ };
+
++// required by "resolve-url-loader", but get disabled by "disabling minimizing", so getting it back for styles
++const sourceMap = true;
++
+ module.exports = ({ browserslist, logical }) => {
+     const sassLoaders = [
+         {
+             loader: require.resolve('css-loader'),
+             options: {
++                sourceMap,
+                 url: { filter: handleUrlResolve },
+             },
+         },
+         {
+             loader: require.resolve('postcss-loader'),
+             options: {
++                sourceMap,
+                 postcssOptions: {
+                     plugins: [
+                         require('autoprefixer')({
+@@ -35,9 +40,11 @@ module.exports = ({ browserslist, logical }) => {
+         },
+         {
+             loader: require.resolve('resolve-url-loader'),
++            options: {sourceMap},
+         },
+         {
+             loader: require.resolve('sass-loader'),
++            options: {sourceMap},
+         },
+     ].filter(Boolean);
+
+@@ -54,6 +61,7 @@ module.exports = ({ browserslist, logical }) => {
+                 {
+                     loader: require.resolve('css-loader'),
+                     options: {
++                        sourceMap,
+                         importLoaders: 1,
+                         url: { filter: handleUrlResolve },
+                     },

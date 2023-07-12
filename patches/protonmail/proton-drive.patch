@@ -1,3 +1,16 @@
+diff --git a/applications/drive/package.json b/applications/drive/package.json
+index 1ff78a9928..d232854a68 100644
+--- a/applications/drive/package.json
++++ b/applications/drive/package.json
+@@ -5,7 +5,6 @@
+     "author": "",
+     "main": "index.ts",
+     "scripts": {
+-        "build": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --appMode=sso",
+         "check-types": "tsc",
+         "i18n:getlatest": "proton-i18n upgrade",
+         "i18n:upgrade": "proton-i18n extract --verbose && proton-i18n crowdin -u --verbose",
+
 diff --git a/applications/drive/src/app/store/_downloads/fileSaver/download.ts b/applications/drive/src/app/store/_downloads/fileSaver/download.ts
 index 7bef98525..0650e8019 100644
 --- a/applications/drive/src/app/store/_downloads/fileSaver/download.ts
@@ -14,14 +27,14 @@ index 7bef98525..0650e8019 100644
  // initialize the download in the browser. The response has headers to
 
 diff --git a/applications/drive/src/app/store/_shares/shareUrl.ts b/applications/drive/src/app/store/_shares/shareUrl.ts
-index 733cf9242..ab5781793 100644
+index 76b907e2a1..a267a2d50c 100644
 --- a/applications/drive/src/app/store/_shares/shareUrl.ts
 +++ b/applications/drive/src/app/store/_shares/shareUrl.ts
-@@ -40,6 +40,6 @@ export const getSharedLink = (sharedURL?: {
+@@ -36,6 +36,6 @@ export const getSharedLink = (sharedURL?: {
 
-     const [generatedPassword] = splitGeneratedAndCustomPassword(sharedURL.Password, sharedURL);
+     const [generatedPassword] = splitGeneratedAndCustomPassword(sharedURL.password, sharedURL);
 
--    const url = sharedURL.PublicUrl ? sharedURL.PublicUrl : `${window.location.origin}/urls/${sharedURL.Token}`;
-+    const url = sharedURL.PublicUrl ? sharedURL.PublicUrl : `https://drive.protonmail.com/urls/${sharedURL.Token}`;
+-    const url = sharedURL.publicUrl ? sharedURL.publicUrl : `${window.location.origin}/urls/${sharedURL.token}`;
++    const url = sharedURL.publicUrl ? sharedURL.publicUrl : `https://drive.protonmail.com/urls/${sharedURL.token}`;
      return `${url}${generatedPassword !== '' ? `#${generatedPassword}` : ''}`;
  };

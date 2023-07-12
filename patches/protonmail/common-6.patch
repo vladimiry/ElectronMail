@@ -1,3 +1,17 @@
+diff --git a/packages/components/containers/unleash/UnleashFlagProvider.tsx b/packages/components/containers/unleash/UnleashFlagProvider.tsx
+index c3e007aa4b..f51a74683e 100644
+--- a/packages/components/containers/unleash/UnleashFlagProvider.tsx
++++ b/packages/components/containers/unleash/UnleashFlagProvider.tsx
+@@ -18,7 +18,7 @@ const UnleashFlagProvider = ({ UID, config, children }: Props) => {
+     const authHeaders = UID ? getUIDHeaders(UID) : undefined;
+     const appVersionHeaders = getAppVersionHeaders(clientId, config.APP_VERSION);
+     const unleashConfig: IConfig = {
+-        url: `${window.location.origin}${config.API_URL}/feature/v2/frontend`,
++        url: `${config.API_URL}/feature/v2/frontend`,
+         clientKey: '-', // set by the server
+         appName: '-', // set by the server
+         refreshInterval: 600, // refreshInterval in seconds, 10 mins
+
 diff --git a/packages/pack/scripts/validate.sh b/packages/pack/scripts/validate.sh
 index 1a2ea64..bae388c 100755
 --- a/packages/pack/scripts/validate.sh
@@ -36,9 +50,9 @@ index 9aaa78a28..f3d24b47c 100644
 +{
 +    const platform = String(navigator.platform);
 +    const userAgents = {
-+        linux: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36",
-+        windows: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36",
-+        macos: "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"
++        linux: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
++        windows: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
++        macos: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
 +    } as const;
 +    uaParser.setUA(
 +        platform.startsWith("Linux")
@@ -107,7 +121,7 @@ index 36bd0c712..c2fb3681c 100644
      }
 
 diff --git a/applications/mail/src/app/hooks/useShowUpsellBanner.ts b/applications/mail/src/app/hooks/useShowUpsellBanner.ts
-index b76334920b..2501a4d4ad 100644
+index d203f913fa..178153c592 100644
 --- a/applications/mail/src/app/hooks/useShowUpsellBanner.ts
 +++ b/applications/mail/src/app/hooks/useShowUpsellBanner.ts
 @@ -33,6 +33,7 @@ const useShowUpsellBanner = (labelID: string, otherBannerDisplayed: boolean) =>
@@ -116,7 +130,7 @@ index b76334920b..2501a4d4ad 100644
       */
 +    /* <electron-mail-mark> */
      const canDisplayUpsellBanner =
-         !user.hasPaidMail &&
+         user.isFree &&
          Date.now() > threeDaysAfterCreationDate &&
 @@ -40,6 +41,7 @@ const useShowUpsellBanner = (labelID: string, otherBannerDisplayed: boolean) =>
          needToShowUpsellBanner.current &&
@@ -138,18 +152,34 @@ index b76334920b..2501a4d4ad 100644
  };
 
 diff --git a/packages/components/containers/heading/PrivateHeader.tsx b/packages/components/containers/heading/PrivateHeader.tsx
-index 399435457d..7cf035baca 100644
+index a7d2452313..73ad8a6828 100644
 --- a/packages/components/containers/heading/PrivateHeader.tsx
 +++ b/packages/components/containers/heading/PrivateHeader.tsx
-@@ -74,7 +74,10 @@ const PrivateHeader = ({
+@@ -49,7 +49,10 @@ const PrivateHeader = ({
+
              <TopNavbar>
                  <TopNavbarList>
-                     {isNarrow && searchDropdown ? <TopNavbarListItem>{searchDropdown}</TopNavbarListItem> : null}
--                    {upsellButton !== undefined ? upsellButton : <TopNavbarUpsell app={app} />}
+-                    {upsellButton !== undefined ? upsellButton : !hideUpsellButton && <TopNavbarUpsell app={app} />}
 +                    {___ELECTRON_MAIL_PROTON_SUPPRESS_UPSELL_ADS_PLACEHOLDER___
 +                        ? null
-+                        : (upsellButton !== undefined ? upsellButton : <TopNavbarUpsell app={app} />)
++                        : (upsellButton !== undefined ? upsellButton : !hideUpsellButton && <TopNavbarUpsell app={app} />)
 +                    }
                      {feedbackButton ? <TopNavbarListItem noShrink>{feedbackButton}</TopNavbarListItem> : null}
-                     {contactsButton ? <TopNavbarListItem noShrink>{contactsButton}</TopNavbarListItem> : null}
-                     {settingsButton ? <TopNavbarListItem noShrink>{settingsButton}</TopNavbarListItem> : null}
+                     {settingsButton ? (
+                         <TopNavbarListItem noShrink className="no-mobile">
+
+diff --git a/packages/components/containers/api/ApiProvider.js b/packages/components/containers/api/ApiProvider.js
+index 3d1b81941c..6ac2f748fa 100644
+--- a/packages/components/containers/api/ApiProvider.js
++++ b/packages/components/containers/api/ApiProvider.js
+@@ -120,7 +120,9 @@ const ApiProvider = ({ config, onLogout, children, UID, noErrorState }) => {
+                             error.cancel = true;
+                             reject(error);
+                         }}
+-                    />
++                    />,
++                    // trying to force single instance, see https://github.com/vladimiry/ElectronMail/issues/621#issuecomment-1627389416
++                    "HumanVerificationModal_ID",
+                 );
+             });
+         };

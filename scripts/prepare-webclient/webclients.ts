@@ -325,6 +325,7 @@ async function executeBuildFlow(
                                 ...process.env,
                                 ...(publicPath && {PUBLIC_PATH: publicPath}),
                                 NODE_ENV: "production",
+                                TS_NODE_PROJECT: "../../tsconfig.webpack.json", // picked "build" task of "applications/<app>/package.json"
                             },
                         },
                     ],

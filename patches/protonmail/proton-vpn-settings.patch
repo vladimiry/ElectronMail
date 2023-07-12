@@ -1,0 +1,13 @@
+diff --git a/applications/vpn-settings/package.json b/applications/vpn-settings/package.json
+index 2232dbdee5..b12e610cf8 100644
+--- a/applications/vpn-settings/package.json
++++ b/applications/vpn-settings/package.json
+@@ -6,7 +6,6 @@
+     "author": "",
+     "main": "index.js",
+     "scripts": {
+-        "build": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --appMode=standalone --logical",
+         "check-types": "tsc",
+         "i18n:upgrade": "proton-i18n extract --verbose && proton-i18n crowdin --verbose",
+         "i18n:validate": "proton-i18n validate lint-functions",
+

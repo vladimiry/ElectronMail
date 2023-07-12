@@ -1,3 +1,16 @@
+diff --git a/applications/account/package.json b/applications/account/package.json
+index 3c5c6daff9..25828bb6b0 100644
+--- a/applications/account/package.json
++++ b/applications/account/package.json
+@@ -6,7 +6,6 @@
+     "author": "",
+     "main": "index.js",
+     "scripts": {
+-        "build": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --appMode=sso",
+         "check-types": "tsc",
+         "i18n:upgrade": "proton-i18n extract --verbose && proton-i18n crowdin --verbose",
+         "i18n:validate": "proton-i18n validate lint-functions",
+
 diff --git a/applications/account/src/app/Setup.tsx b/applications/account/src/app/Setup.tsx
 index 8f5e56ef0..a40d9dc17 100644
 --- a/applications/account/src/app/Setup.tsx
@@ -38,15 +51,15 @@ index 8f5e56ef0..a40d9dc17 100644
  export default Setup;
 
 diff --git a/applications/account/src/app/content/MainContainer.tsx b/applications/account/src/app/content/MainContainer.tsx
-index 32a57aa6d..472a7c9c9 100644
+index 575b59dcec..5e774e01a1 100644
 --- a/applications/account/src/app/content/MainContainer.tsx
 +++ b/applications/account/src/app/content/MainContainer.tsx
 @@ -132,7 +132,7 @@ const MainContainer = () => {
+     const loadingFeatures = featuresFlags.some(({ loading }) => loading) || loadingDataRecovery;
+     const recoveryNotification = useRecoveryNotification(false);
 
-     useDeviceRecovery();
-
--    const app = getAppFromPathnameSafe(location.pathname) || DEFAULT_APP;
-+    const app = getAppFromPathnameSafe(window.location.pathname) || DEFAULT_APP;
+-    const appFromPathname = getAppFromPathnameSafe(location.pathname);
++    const appFromPathname = getAppFromPathnameSafe(window.location.pathname);
+     const app = appFromPathname || getToApp(undefined, user);
      const appSlug = getSlugFromApp(app);
 
-     /*

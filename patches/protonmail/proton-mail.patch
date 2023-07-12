@@ -1,3 +1,16 @@
+diff --git a/applications/mail/package.json b/applications/mail/package.json
+index 8087743d3a..ce4cf05ff1 100644
+--- a/applications/mail/package.json
++++ b/applications/mail/package.json
+@@ -6,7 +6,6 @@
+     "author": "",
+     "main": "index.js",
+     "scripts": {
+-        "build": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --appMode=sso",
+         "check-types": "tsc",
+         "i18n:getlatest": "proton-i18n upgrade",
+         "i18n:upgrade": "proton-i18n extract --verbose && proton-i18n crowdin -u --verbose",
+
 diff --git a/packages/shared/lib/api/events.ts b/packages/shared/lib/api/events.ts
 index 519a50349..819bdb911 100644
 --- a/packages/shared/lib/api/events.ts
@@ -15,17 +28,17 @@ index 519a50349..819bdb911 100644
  });
 
 diff --git a/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx b/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx
-index 472046bb0..a818a7d21 100644
+index bbb73f6bc9..584e9324be 100644
 --- a/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx
 +++ b/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx
-@@ -304,6 +304,7 @@ const MailboxContainer = ({
+@@ -470,6 +470,7 @@ const MailboxContainer = ({
                  tabIndex={-1}
                  className="flex-item-fluid flex flex-column flex-nowrap outline-none"
                  data-testid="mailbox"
 +                electron-mail-mailbox-container-component
              >
-                 {showToolbar && (
-                     <Toolbar
+                 <MailHeader
+                     breakpoints={breakpoints}
 
 diff --git a/applications/mail/src/app/helpers/attachment/attachmentLoader.ts b/applications/mail/src/app/helpers/attachment/attachmentLoader.ts
 index c7d094d1b..3667af1eb 100644
@@ -86,10 +99,10 @@ index acfa71607..216229b0f 100644
   * Verify the extracted `signature` of a decryption result against its `decryptedRawContent`
 
 diff --git a/applications/mail/src/app/logic/messages/messagesTypes.ts b/applications/mail/src/app/logic/messages/messagesTypes.ts
-index 0531de00e..665b8d087 100644
+index 29d48870ab..fc19436f55 100644
 --- a/applications/mail/src/app/logic/messages/messagesTypes.ts
 +++ b/applications/mail/src/app/logic/messages/messagesTypes.ts
-@@ -44,6 +44,7 @@ export interface MessageVerification {
+@@ -49,20 +49,24 @@ export interface MessageVerification {
       */
      verificationErrors: Error[] | undefined;
 
@@ -97,10 +110,19 @@ index 0531de00e..665b8d087 100644
      /**
       * Pinned public keys of the sender which can verify, if any
       */
-@@ -58,6 +59,7 @@ export interface MessageVerification {
+     senderPinnedKeys: PublicKeyReference[] | undefined;
++    /* </electron-mail-mark> */
+
+     /**
+      * Sender public keys retrieved from API which can are not pinned
+      */
+     senderPinnableKeys: PublicKeyReference[] | undefined;
+
++    /* <electron-mail-mark> */
+     /**
       * If the sender is in the list of contacts, whether its contact signature has been verified
       */
-     senderVerified: boolean | undefined;
+     pinnedKeysVerified: boolean | undefined;
 +    /* </electron-mail-mark> */
 
      /**
@@ -231,80 +253,6 @@ index 35d7a0aba..352f1c8a3 100644
 
  export default useCache;
 
-diff --git a/applications/mail/src/app/App.tsx b/applications/mail/src/app/App.tsx
-index 50ae8f9a3..c79b724ee 100644
---- a/applications/mail/src/app/App.tsx
-+++ b/applications/mail/src/app/App.tsx
-@@ -22,11 +22,6 @@ newVersionUpdater(config);
- sentry({ config, uid: authentication.getUID(), sessionTracking: getSessionTrackingEnabled() });
- setVcalProdId(getProdId(config));
-
--// If the browser is Chromium based, register automatically the mailto protocol handler
--if ('chrome' in window) {
--    registerMailToProtocolHandler();
--}
--
- const App = () => {
-     const [hasInitialAuth] = useState(() => {
-         return !window.location.pathname.startsWith(G_OAUTH_REDIRECT_PATH);
-
-diff --git a/applications/mail/src/app/EOApp.tsx b/applications/mail/src/app/EOApp.tsx
-index fa8ab5f17..2c5bd2d2c 100644
---- a/applications/mail/src/app/EOApp.tsx
-+++ b/applications/mail/src/app/EOApp.tsx
-@@ -36,11 +36,6 @@ newVersionUpdater(config);
- sentry({ config, sessionTracking: getSessionTrackingEnabled() });
- setVcalProdId(getProdId(config));
-
--// If the browser is Chromium based, register automatically the mailto protocol handler
--if ('chrome' in window) {
--    registerMailToProtocolHandler();
--}
--
- const App = () => {
-     const cacheRef = useRef<Cache<string, any>>();
-     if (!cacheRef.current) {
-
-diff --git a/applications/mail/src/app/components/header/MailDefaultHandlerModal.tsx b/applications/mail/src/app/components/header/MailDefaultHandlerModal.tsx
-index bdabb99e0..a56b8cdcb 100644
---- a/applications/mail/src/app/components/header/MailDefaultHandlerModal.tsx
-+++ b/applications/mail/src/app/components/header/MailDefaultHandlerModal.tsx
-@@ -4,13 +4,10 @@ import { Href } from '@proton/components/components/link';
- import { MAIL_APP_NAME } from '@proton/shared/lib/constants';
- import { getKnowledgeBaseUrl } from '@proton/shared/lib/helpers/url';
-
--import { registerMailToProtocolHandler } from '../../helpers/url';
--
- const MailDefaultHandlerModal = (props: ModalProps) => {
-     const { onClose } = props;
-
-     const handleAskForPermission = () => {
--        registerMailToProtocolHandler();
-
-         onClose?.();
-     };
-
-diff --git a/applications/mail/src/app/components/header/MailHeader.tsx b/applications/mail/src/app/components/header/MailHeader.tsx
-index d86dc9880..e75180b46 100644
---- a/applications/mail/src/app/components/header/MailHeader.tsx
-+++ b/applications/mail/src/app/components/header/MailHeader.tsx
-@@ -38,7 +38,6 @@ import { setParamsInUrl } from '../../helpers/mailboxUrl';
- import { Breakpoints } from '../../models/utils';
- import MailOnboardingModal from '../onboarding/MailOnboardingModal';
- import ClearBrowserDataModal from './ClearBrowserDataModal';
--import MailDefaultHandlerModal from './MailDefaultHandlerModal';
- import MailSearch from './search/MailSearch';
-
- interface Props {
-@@ -192,7 +191,6 @@ const MailHeader = ({ labelID, elementID, breakpoints, expanded, onToggleExpand
-             <MailViewLayoutModal {...mailViewLayoutProps} />
-             <MailDensityModal {...mailDensityProps} />
-             <MailComposerModeModal {...mailComposerModeProps} />
--            <MailDefaultHandlerModal {...mailDefaultHandlerProps} />
-             <ClearBrowserDataModal {...clearBrowserDataProps} />
-             <RebrandingFeedbackModal {...feedbackModalProps} />
-         </>
-
 diff --git a/applications/mail/src/app/helpers/url.ts b/applications/mail/src/app/helpers/url.ts
 index 2aaa779d3..487f54ff3 100644
 --- a/applications/mail/src/app/helpers/url.ts
@@ -328,22 +276,107 @@ index 2aaa779d3..487f54ff3 100644
 +    // NOOP
  };
 
+diff --git a/applications/mail/src/app/components/drawer/MailQuickSettings.tsx b/applications/mail/src/app/components/drawer/MailQuickSettings.tsx
+index c0a72173cb..5baba25085 100644
+--- a/applications/mail/src/app/components/drawer/MailQuickSettings.tsx
++++ b/applications/mail/src/app/components/drawer/MailQuickSettings.tsx
+@@ -31,7 +31,6 @@ import { useGetStartedChecklist } from 'proton-mail/containers/onboardingCheckli
+
+ import { useEncryptedSearchContext } from '../../containers/EncryptedSearchProvider';
+ import ClearBrowserDataModal from '../header/ClearBrowserDataModal';
+-import MailDefaultHandlerModal from '../header/MailDefaultHandlerModal';
+
+ interface QuickSettingsSelectOption {
+     value: any;
+@@ -328,7 +327,6 @@ const MailQuickSettings = () => {
+                 )}
+             </QuickSettingsButtonSection>
+
+-            <MailDefaultHandlerModal {...mailDefaultHandlerProps} />
+             <ClearBrowserDataModal {...clearBrowserDataProps} />
+             <MailShortcutsModal {...mailShortcutsProps} />
+             <KeyTransparencyDetailsModal {...keyTransparencyDetailsModalProps} />
+
+diff --git a/applications/mail/src/app/components/header/MailDefaultHandlerModal.tsx b/applications/mail/src/app/components/header/MailDefaultHandlerModal.tsx
+deleted file mode 100644
+index 0d29745777..0000000000
+--- a/applications/mail/src/app/components/header/MailDefaultHandlerModal.tsx
++++ /dev/null
+@@ -1,41 +0,0 @@
+-import { c } from 'ttag';
+-
+-import { Button, Href } from '@proton/atoms';
+-import { ModalProps, Prompt } from '@proton/components';
+-import { MAIL_APP_NAME } from '@proton/shared/lib/constants';
+-import { getKnowledgeBaseUrl } from '@proton/shared/lib/helpers/url';
+-
+-import { registerMailToProtocolHandler } from '../../helpers/url';
+-
+-const MailDefaultHandlerModal = (props: ModalProps) => {
+-    const { onClose } = props;
+-
+-    const handleAskForPermission = () => {
+-        registerMailToProtocolHandler();
+-
+-        onClose?.();
+-    };
+-
+-    return (
+-        <Prompt
+-            title={c('Info').t`Default email application`}
+-            buttons={[
+-                <Button color="norm" onClick={handleAskForPermission}>{c('Action').t`Set as default`}</Button>,
+-                <Button onClick={onClose}>{c('Action').t`Cancel`}</Button>,
+-            ]}
+-            {...props}
+-        >
+-            <span>{c('Info')
+-                .t`Set ${MAIL_APP_NAME} as your default email application for this browser. ${MAIL_APP_NAME} will open automatically when you click an email link.`}</span>
+-            <Href
+-                className="ml-2"
+-                href={getKnowledgeBaseUrl('/set-default-email-handler')}
+-                title="Default mail handler"
+-            >
+-                {c('Info').t`Learn more`}
+-            </Href>
+-        </Prompt>
+-    );
+-};
+-
+-export default MailDefaultHandlerModal;
+
 diff --git a/applications/mail/src/app/components/header/search/MailSearch.tsx b/applications/mail/src/app/components/header/search/MailSearch.tsx
-index 6318e40be..ebbce0086 100644
+index 1736085ad3..5f102e159e 100644
 --- a/applications/mail/src/app/components/header/search/MailSearch.tsx
 +++ b/applications/mail/src/app/components/header/search/MailSearch.tsx
-@@ -11,10 +11,7 @@ import {
+@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
+ import { Location } from 'history';
+
+ import {
+-    FeatureCode,
+     TopNavbarListItemSearchButton,
+     generateUID,
+     useAddresses,
+@@ -11,14 +10,11 @@ import {
+     useLabels,
      useMailSettings,
      usePopperAnchor,
+-    useProgressiveRollout,
      useToggle,
 -    useUser,
  } from '@proton/components';
--import { isMobile } from '@proton/shared/lib/helpers/browser';
--import { isPaid } from '@proton/shared/lib/user/helpers';
 
  import { ADVANCED_SEARCH_OVERLAY_CLOSE_EVENT } from '../../../constants';
  import { useEncryptedSearchContext } from '../../../containers/EncryptedSearchProvider';
-@@ -40,7 +37,6 @@ const MailSearch = ({ breakpoints, labelID, location }: Props) => {
+-import { isEncryptedSearchAvailable } from '../../../helpers/encryptedSearch/esUtils';
+ import { extractSearchParameters } from '../../../helpers/mailboxUrl';
+ import { useClickMailContent } from '../../../hooks/useClickMailContent';
+ import { Breakpoints } from '../../../models/utils';
+@@ -39,11 +35,9 @@ interface Props {
+
+ const MailSearch = ({ breakpoints, labelID, location, columnMode }: Props) => {
+     const [uid] = useState(generateUID('advanced-search-overlay'));
+-    const isESUserInterfaceAvailable = useProgressiveRollout(FeatureCode.ESUserInterface);
      const { anchorRef, isOpen, open, close } = usePopperAnchor<HTMLInputElement>();
      const searchParams = extractSearchParameters(location);
      const [searchInputValue, setSearchInputValue] = useState(searchParams.keyword || '');
@@ -351,11 +384,11 @@ index 6318e40be..ebbce0086 100644
      const [, loadingMailSettings] = useMailSettings();
      const [, loadingLabels] = useLabels();
      const [, loadingFolders] = useFolders();
-@@ -49,7 +45,7 @@ const MailSearch = ({ breakpoints, labelID, location }: Props) => {
+@@ -51,7 +45,7 @@ const MailSearch = ({ breakpoints, labelID, location, columnMode }: Props) => {
+     const { getESDBStatus, cacheIndexedDB, closeDropdown } = useEncryptedSearchContext();
      const { dropdownOpened } = getESDBStatus();
      const esState = useEncryptedSearchToggleState(isOpen);
-
--    const showEncryptedSearch = !isMobile() && !!isPaid(user);
+-    const showEncryptedSearch = isEncryptedSearchAvailable(user, isESUserInterfaceAvailable);
 +    const showEncryptedSearch = false;
 
      // Show more from inside AdvancedSearch to persist the state when the overlay is closed

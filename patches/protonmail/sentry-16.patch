@@ -1,14 +1,16 @@
 diff --git a/packages/shared/lib/helpers/sentry.ts b/packages/shared/lib/helpers/sentry.ts
-index 731fc8566..6d6a3fb2a 100644
+index 952bbe2061..8186ab1afc 100644
 --- a/packages/shared/lib/helpers/sentry.ts
 +++ b/packages/shared/lib/helpers/sentry.ts
-@@ -1,14 +1,9 @@
+@@ -1,16 +1,9 @@
  import {
+     BrowserOptions,
+-    Integrations as SentryIntegrations,
      captureException,
 -    configureScope,
 -    init,
 -    makeFetchTransport,
-     captureMessage as sentryCaptureMessage,
+-    captureMessage as sentryCaptureMessage,
  } from '@sentry/browser';
 -import { BrowserTransportOptions } from '@sentry/browser/types/transports/types';
 
@@ -17,7 +19,7 @@ index 731fc8566..6d6a3fb2a 100644
  import { getUIDHeaders } from '../fetch/headers';
  import { ProtonConfig } from '../interfaces';
 
-@@ -61,21 +56,6 @@ export const getContentTypeHeaders = (input: RequestInfo | URL): HeadersInit =>
+@@ -68,21 +61,6 @@ export const getContentTypeHeaders = (input: RequestInfo | URL): HeadersInit =>
      return {};
  };
 
@@ -39,10 +41,10 @@ index 731fc8566..6d6a3fb2a 100644
  const isLocalhost = (host: string) => host.startsWith('localhost');
  const isProduction = (host: string) => host.endsWith('.proton.me') || host === VPN_HOSTNAME;
 
-@@ -94,143 +74,10 @@ function main({
-     sessionTracking = false,
-     sentryConfig = getDefaultSentryConfig(config),
+@@ -171,92 +149,10 @@ function main({
      ignore = ({ host }) => isLocalhost(host),
+     denyUrls = getDefaultDenyUrls(),
+     ignoreErrors = getDefaultIgnoreErrors(),
 -}: SentryOptions) {
 -    const { SENTRY_DSN, APP_VERSION } = config;
 -    const { host, release, environment } = sentryConfig;
@@ -51,8 +53,7 @@ index 731fc8566..6d6a3fb2a 100644
 -    if (!SENTRY_DSN || ignore(sentryConfig)) {
 -        return;
 -    }
-+}: SentryOptions) {}
-
+-
 -    setUID(uid);
 -
 -    // Assumes SENTRY_DSN is: https://111b3eeaaec34cae8e812df705690a36@sentry/11
@@ -66,6 +67,12 @@ index 731fc8566..6d6a3fb2a 100644
 -        normalizeDepth: 5,
 -        transport: makeProtonFetchTransport,
 -        autoSessionTracking: sessionTracking,
+-        // do not log calls to console.log, console.error, etc.
+-        integrations: [
+-            new SentryIntegrations.Breadcrumbs({
+-                console: false,
+-            }),
+-        ],
 -        // Disable client reports. Client reports are used by sentry to retry events that failed to send on visibility change.
 -        // Unfortunately Sentry does not use the custom transport for those, and thus fails to add the headers the API requires.
 -        sendClientReports: false,
@@ -76,12 +83,14 @@ index 731fc8566..6d6a3fb2a 100644
 -            if (stack && stack.match(/ferdi|franz/i)) {
 -                return null;
 -            }
--
--            // Not interested in uncaught API errors
--            if (error instanceof ApiError) {
++}: SentryOptions) {}
+
+-            // Not interested in uncaught API errors, or known errors
+-            if (error instanceof ApiError || error?.trace === false) {
 -                return null;
 -            }
--
++export const traceError = (...args: Parameters<typeof captureException>) => console.error(...args);
+
 -            if (!context.enabled) {
 -                return null;
 -            }
@@ -105,65 +114,8 @@ index 731fc8566..6d6a3fb2a 100644
 -        },
 -        // Some ignoreErrors and denyUrls are taken from this gist: https://gist.github.com/Chocksy/e9b2cdd4afc2aadc7989762c4b8b495a
 -        // This gist is suggested in the Sentry documentation: https://docs.sentry.io/clients/javascript/tips/#decluttering-sentry
--        ignoreErrors: [
--            // Ignore random plugins/extensions
--            'top.GLOBALS',
--            'canvas.contentDocument',
--            'MyApp_RemoveAllHighlights',
--            'atomicFindClose',
--            // See http://toolbar.conduit.com/Developer/HtmlAndGadget/Methods/JSInjection.aspx
--            'conduitPage',
--            // https://bugzilla.mozilla.org/show_bug.cgi?id=1678243
--            'XDR encoding failure',
--            'Request timed out',
--            'No network connection',
--            'Failed to fetch',
--            'NetworkError when attempting to fetch resource.',
--            'webkitExitFullScreen', // Bug in Firefox for iOS.
--            'InactiveSession',
--            'UnhandledRejection', // Happens too often in extensions and we have lints for that, so should be safe to ignore.
--            /chrome-extension/,
--            /moz-extension/,
--            'TransferCancel', // User action to interrupt upload or download in Drive.
--            'UploadConflictError', // User uploading the same file again in Drive.
--            'UploadUserError', // Upload error on user's side in Drive.
--            'ValidationError', // Validation error on user's side in Drive.
--            'ChunkLoadError', // WebPack loading source code.
--            /ResizeObserver loop/, // Chromium bug https://stackoverflow.com/questions/49384120/resizeobserver-loop-limit-exceeded
--            // See: http://blog.errorception.com/2012/03/tale-of-unfindable-js-error.html
--            'originalCreateNotification',
--            'http://tt.epicplay.com',
--            "Can't find variable: ZiteReader",
--            'jigsaw is not defined',
--            'ComboSearch is not defined',
--            'http://loading.retry.widdit.com/',
--            // Facebook borked
--            'fb_xd_fragment',
--            // ISP "optimizing" proxy - `Cache-Control: no-transform` seems to reduce this. (thanks @acdha)
--            // See http://stackoverflow.com/questions/4113268/how-to-stop-javascript-injection-from-vodafone-proxy
--            'bmi_SafeAddOnload',
--            'EBCallBackMessageReceived',
--            // Avast extension error
--            '_avast_submit',
--        ],
--        denyUrls: [
--            // Google Adsense
--            /pagead\/js/i,
--            // Facebook flakiness
--            /graph\.facebook\.com/i,
--            // Facebook blocked
--            /connect\.facebook\.net\/en_US\/all\.js/i,
--            // Woopra flakiness
--            /eatdifferent\.com\.woopra-ns\.com/i,
--            /static\.woopra\.com\/js\/woopra\.js/i,
--            // Chrome extensions
--            /extensions\//i,
--            /^chrome:\/\//i,
--            // Other plugins
--            /127\.0\.0\.1:4001\/isrunning/i, // Cacaoweb
--            /webappstoolbarba\.texthelp\.com\//i,
--            /metrics\.itunes\.apple\.com\.edgesuite\.net\//i,
--        ],
+-        ignoreErrors,
+-        denyUrls,
 -    });
 -
 -    configureScope((scope) => {
@@ -176,13 +128,13 @@ index 731fc8566..6d6a3fb2a 100644
 -        captureException(...args);
 -    }
 -};
-+export const traceError = (...args: Parameters<typeof captureException>) => console.error(...args);
-
+-
 -export const captureMessage = (...args: Parameters<typeof sentryCaptureMessage>) => {
 -    if (!isLocalhost(window.location.host)) {
 -        sentryCaptureMessage(...args);
 -    }
 -};
-+export const captureMessage = (...args: Parameters<typeof sentryCaptureMessage>) => console.log(...args);
++export const captureMessage = (...args: Parameters<typeof captureException>) => console.log(...args);
 
  export default main;
+--

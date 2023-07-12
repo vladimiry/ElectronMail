@@ -208,7 +208,7 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                     ): NoExtraProps<MessageVerification> => {
                         const result = {
                             senderPinnedKeys: encryptionPreferences.pinnedKeys,
-                            senderVerified: Boolean(encryptionPreferences.isContactSignatureVerified),
+                            pinnedKeysVerified: Boolean(encryptionPreferences.isContactSignatureVerified),
                         } as const;
                         // this proxy helps early detecting unexpected/not-yet-reviewed protonmail's "getDecryptedAttachment" behaviour
                         // if/likely-when the behaviour gets changed by protonmail

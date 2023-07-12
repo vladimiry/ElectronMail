@@ -1,0 +1,171 @@
+diff --git a/packages/pack/scripts/validate.sh b/packages/pack/scripts/validate.sh
+index 1a2ea64..bae388c 100755
+--- a/packages/pack/scripts/validate.sh
++++ b/packages/pack/scripts/validate.sh
+@@ -58,7 +58,7 @@ function main {
+   fi;
+
+   if [ "$hasSourceMap" -eq 0 ]; then
+-    hasError=true;
++    #hasError=true;
+     echo "[error] no SourceMaps found inside the directory: $OUTPUT_DIR";
+   fi;
+
+diff --git a/packages/pack/bin/protonPack.js b/packages/pack/bin/protonPack.js
+index 55715b89d..c87879ad4 100755
+--- a/packages/pack/bin/protonPack.js
++++ b/packages/pack/bin/protonPack.js
+@@ -81,7 +81,7 @@ addGlobalOptions(program.command('build').description('create an optimized produ
+         const outputPath = path.resolve('./dist');
+         await commandWithLog(`rm -rf ${outputPath}`);
+         await commandWithLog(
+-            `${require.resolve('webpack-cli/bin/cli.js')} --progress --output-path=${outputPath} ${webpackArgs}`,
++            `${require.resolve('webpack-cli/bin/cli.js')} --output-path=${outputPath} ${webpackArgs}`,
+             {
+                 stdio: 'inherit',
+             }
+
+diff --git a/packages/shared/lib/helpers/browser.ts b/packages/shared/lib/helpers/browser.ts
+index 9aaa78a28..f3d24b47c 100644
+--- a/packages/shared/lib/helpers/browser.ts
++++ b/packages/shared/lib/helpers/browser.ts
+@@ -1,6 +1,21 @@
+ import UAParser from 'ua-parser-js';
+
+ const uaParser = new UAParser();
++{
++    const platform = String(navigator.platform);
++    const userAgents = {
++        linux: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
++        windows: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
++        macos: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
++    } as const;
++    uaParser.setUA(
++        platform.startsWith("Linux")
++            ? userAgents.linux
++            : platform.startsWith("Win")
++                ? userAgents.windows
++                : userAgents.macos
++    );
++}
+ const ua = uaParser.getResult();
+
+ export const hasModulesSupport = () => {
+@@ -89,20 +104,10 @@ export const requireDirectAction = () => isSafari() || isFirefox() || isEdge();
+  * @links { https://mathiasbynens.github.io/rel-noopener/}
+  */
+ export const openNewTab = (url: string) => {
+-    if (isIE11()) {
+-        const otherWindow = window.open();
+-        if (!otherWindow) {
+-            return;
+-        }
+-        otherWindow.opener = null;
+-        otherWindow.location.href = url;
+-        return;
+-    }
+-    const anchor = document.createElement('a');
+-
+-    anchor.setAttribute('rel', 'noreferrer nofollow noopener');
+-    anchor.setAttribute('target', '_blank');
+-    anchor.href = url;
+-
+-    return anchor.click();
++    window.dispatchEvent(
++        new CustomEvent(
++            "electron-mail:packages/shared/lib/helpers/browser.ts:openNewTab",
++            {detail: {url}},
++        ),
++    );
+ };
+
+diff --git a/packages/components/components/link/SettingsLink.tsx b/packages/components/components/link/SettingsLink.tsx
+index 5081c4003..cde37c0cb 100644
+--- a/packages/components/components/link/SettingsLink.tsx
++++ b/packages/components/components/link/SettingsLink.tsx
+@@ -48,7 +48,7 @@ const SettingsLink = ({ path, app, children, ...rest }: Props, ref: Ref<HTMLAnch
+             ref={ref}
+             toApp={APPS.PROTONACCOUNT}
+             // If going to settings for the same app
+-            target={canOpenInSameTab(APP_NAME, settingsApp, toSettingsForApp) ? '_self' : '_blank'}
++            target={canOpenInSameTab(APP_NAME, settingsApp, toSettingsForApp) || app === APPS.PROTONVPN_SETTINGS ? '_self' : '_blank'}
+             {...rest}
+         >
+             {children}
+
+diff --git a/packages/components/helpers/earlyAccessDesynchronization.ts b/packages/components/helpers/earlyAccessDesynchronization.ts
+index 36bd0c712..c2fb3681c 100644
+--- a/packages/components/helpers/earlyAccessDesynchronization.ts
++++ b/packages/components/helpers/earlyAccessDesynchronization.ts
+@@ -42,6 +42,7 @@ export const handleEarlyAccessDesynchronization = ({
+     earlyAccessScope: Feature<Environment> | undefined;
+     appName: APP_NAMES;
+ }) => {
++    return;
+     if (doesNotSupportEarlyAccessVersion()) {
+         return;
+     }
+
+diff --git a/applications/mail/src/app/hooks/useShowUpsellBanner.ts b/applications/mail/src/app/hooks/useShowUpsellBanner.ts
+index d203f913fa..178153c592 100644
+--- a/applications/mail/src/app/hooks/useShowUpsellBanner.ts
++++ b/applications/mail/src/app/hooks/useShowUpsellBanner.ts
+@@ -33,6 +33,7 @@ const useShowUpsellBanner = (labelID: string, otherBannerDisplayed: boolean) =>
+     - No other banner is shown in the message list
+     - If a value is found in the localStorage that should trigger a new display
+      */
++    /* <electron-mail-mark> */
+     const canDisplayUpsellBanner =
+         user.isFree &&
+         Date.now() > threeDaysAfterCreationDate &&
+@@ -40,6 +41,7 @@ const useShowUpsellBanner = (labelID: string, otherBannerDisplayed: boolean) =>
+         needToShowUpsellBanner.current &&
+         !otherBannerDisplayed &&
+         showAgain;
++    /* </electron-mail-mark> */
+
+     const handleDismissBanner = () => {
+         // Set the ref to false so that we hide the banner and update the localStorage value
+@@ -72,6 +74,10 @@ const useShowUpsellBanner = (labelID: string, otherBannerDisplayed: boolean) =>
+         }
+     }, []);
+
++    if (___ELECTRON_MAIL_PROTON_SUPPRESS_UPSELL_ADS_PLACEHOLDER___) {
++        return { canDisplayUpsellBanner: false, needToShowUpsellBanner, handleDismissBanner };
++    }
++
+     return { canDisplayUpsellBanner, needToShowUpsellBanner, handleDismissBanner };
+ };
+
+diff --git a/packages/components/containers/heading/PrivateHeader.tsx b/packages/components/containers/heading/PrivateHeader.tsx
+index a7d2452313..73ad8a6828 100644
+--- a/packages/components/containers/heading/PrivateHeader.tsx
++++ b/packages/components/containers/heading/PrivateHeader.tsx
+@@ -49,7 +49,10 @@ const PrivateHeader = ({
+
+             <TopNavbar>
+                 <TopNavbarList>
+-                    {upsellButton !== undefined ? upsellButton : !hideUpsellButton && <TopNavbarUpsell app={app} />}
++                    {___ELECTRON_MAIL_PROTON_SUPPRESS_UPSELL_ADS_PLACEHOLDER___
++                        ? null
++                        : (upsellButton !== undefined ? upsellButton : !hideUpsellButton && <TopNavbarUpsell app={app} />)
++                    }
+                     {feedbackButton ? <TopNavbarListItem noShrink>{feedbackButton}</TopNavbarListItem> : null}
+                     {settingsButton ? (
+                         <TopNavbarListItem noShrink className="no-mobile">
+
+diff --git a/packages/components/containers/api/ApiProvider.js b/packages/components/containers/api/ApiProvider.js
+index 3d1b81941c..6ac2f748fa 100644
+--- a/packages/components/containers/api/ApiProvider.js
++++ b/packages/components/containers/api/ApiProvider.js
+@@ -120,7 +120,9 @@ const ApiProvider = ({ config, onLogout, children, UID, noErrorState }) => {
+                             error.cancel = true;
+                             reject(error);
+                         }}
+-                    />
++                    />,
++                    // trying to force single instance, see https://github.com/vladimiry/ElectronMail/issues/621#issuecomment-1627389416
++                    "HumanVerificationModal_ID",
+                 );
+             });
+         };

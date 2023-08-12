@@ -70,6 +70,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     layoutMode: (typeof import("src/shared/const").LAYOUT_MODES)[number]["value"]
     logLevel: LogLevel
     startHidden: boolean
+    suppressUpsellMessages: boolean
     themeSource: "system" | "dark" | "light"
     unreadNotifications: boolean
     zoomFactor: number
@@ -96,6 +97,7 @@ export type BaseConfig = Pick<Config,
     | "logLevel"
     | "spellcheck"
     | "startHidden"
+    | "suppressUpsellMessages"
     | "themeSource"
     | "unreadNotifications"
     | "zoomFactor">;

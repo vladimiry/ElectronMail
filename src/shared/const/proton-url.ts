@@ -10,6 +10,10 @@ export const PROTON_API_ENTRY_VALUE_PREFIX = "local:::";
 // WARN the value also used for patching the web clients
 export const PROTON_API_URL_PLACEHOLDER = "___ELECTRON_MAIL_PROTON_API_ENTRY_URL_PLACEHOLDER___";
 
+// WARN the value also used for patching the web clients
+export const PROTON_SUPPRESS_UPSELL_ADS_PLACEHOLDER
+    = "___ELECTRON_MAIL_PROTON_SUPPRESS_UPSELL_ADS_PLACEHOLDER___";
+
 export const PROTON_API_ENTRY_PRIMARY_VALUE = "https://mail.proton.me";
 
 export const PROTON_API_ENTRY_PRIMARY_DOMAIN_NAME = resolvePrimaryDomainNameFromUrlHostname(

@@ -1,6 +1,8 @@
 import _logger from "electron-log";
 import {app, protocol, ProtocolResponse, Session} from "electron";
+import {first} from "rxjs/operators";
 import fs from "fs";
+import {lastValueFrom, Observable} from "rxjs";
 import {lookup as lookupMimeType} from "mrmime";
 import path from "path";
 import pathIsInside from "path-is-inside";
@@ -8,12 +10,13 @@ import {promisify} from "util";
 import {Readable} from "stream";
 import {URL} from "@cliqz/url-parser";
 
-import {AccountConfig} from "src/shared/model/account";
+import type {AccountConfig} from "src/shared/model/account";
 import {AccountSessionAppData, Context} from "src/electron-main/model";
 import {assertEntryUrl} from "src/electron-main/util";
+import {Config} from "src/shared/model/options";
 import {curryFunctionMembers} from "src/shared/util";
 import {LOCAL_WEBCLIENT_DIR_NAME, LOCAL_WEBCLIENT_SCHEME_NAME, WEB_PROTOCOL_DIR, WEB_PROTOCOL_SCHEME} from "src/shared/const";
-import {PROTON_API_URL_PLACEHOLDER} from "src/shared/const/proton-url";
+import {PROTON_API_URL_PLACEHOLDER, PROTON_SUPPRESS_UPSELL_ADS_PLACEHOLDER} from "src/shared/const/proton-url";
 import {PROVIDER_REPO_MAP} from "src/shared/const/proton-apps";
 import {resolveProtonApiOrigin, resolveProtonAppTypeFromUrlHref} from "src/shared/util/proton-url";
 
@@ -112,19 +115,28 @@ async function resolveFileSystemResourceLocation(directory: string, requestUrl: 
 
 const readFileAndInjectApiUrl = async (
     fileLocation: string,
-    {entryUrl: accountEntryUrl, requestUrl}: Readonly<Pick<AccountConfig, "entryUrl">> & { requestUrl: URL },
+    {
+        entryUrl: accountEntryUrl,
+        requestUrl,
+        config$,
+    }: Readonly<Pick<AccountConfig, "entryUrl">> & { requestUrl: URL, config$: Observable<Config> },
 ): Promise<Readable> => {
     assertEntryUrl(accountEntryUrl);
 
+    const config = await lastValueFrom(config$.pipe(first()));
+    const {suppressUpsellMessages} = config;
+
     return Readable.from(
         Buffer.from(
-            (await fsAsync.readFile(fileLocation)).toString().replaceAll(
-                PROTON_API_URL_PLACEHOLDER,
-                resolveProtonApiOrigin({
-                    accountEntryUrl,
-                    subdomain: PROVIDER_REPO_MAP[resolveProtonAppTypeFromUrlHref(requestUrl.href).type].apiSubdomain,
-                }),
-            ),
+            (await fsAsync.readFile(fileLocation)).toString()
+                .replaceAll(
+                    PROTON_API_URL_PLACEHOLDER,
+                    resolveProtonApiOrigin({
+                        accountEntryUrl,
+                        subdomain: PROVIDER_REPO_MAP[resolveProtonAppTypeFromUrlHref(requestUrl.href).type].apiSubdomain,
+                    }),
+                )
+                .replaceAll(PROTON_SUPPRESS_UPSELL_ADS_PLACEHOLDER, String(suppressUpsellMessages)),
         ),
     );
 };
@@ -155,10 +167,14 @@ export async function registerAccountSessionProtocols(
             if (!mimeType) {
                 throw new Error(`Failed to resolve "${nameof(mimeType)}" by the ${JSON.stringify({resourceExt})} value`);
             }
-            const data: Readable = resourceExt === ".js" || resourceExt === ".html"
+            const data: Readable = [".js", ".cjs", ".mjs", ".html"].includes(resourceExt)
                 ? await readFileAndInjectApiUrl(
                     resourceLocation,
-                    {entryUrl: session._electron_mail_data_.entryUrl, requestUrl},
+                    {
+                        entryUrl: session._electron_mail_data_.entryUrl,
+                        requestUrl,
+                        config$: ctx.config$,
+                    },
                 )
                 : fs.createReadStream(resourceLocation);
             const callbackResponse: ProtocolResponse = {mimeType, data};

@@ -95,6 +95,7 @@ export function initialConfig(): Config {
             themeSource: "system",
             unreadNotifications: true,
             zoomFactor: ZOOM_FACTOR_DEFAULT,
+            suppressUpsellMessages: false,
         };
     }
 }

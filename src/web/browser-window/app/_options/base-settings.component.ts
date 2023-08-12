@@ -68,6 +68,7 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
         ),
         spellcheck: new FormControl(),
         startHidden: new FormControl(),
+        suppressUpsellMessages: new FormControl(),
         themeSource: new FormControl(),
         unreadNotifications: new FormControl(),
         zoomFactor: new FormControl(),

@@ -190,6 +190,30 @@
     <div class="custom-control custom-switch">
         <input
             class="custom-control-input"
+            formControlName="suppressUpsellMessages"
+            id="suppressUpsellMessagesCheckbox"
+            type="checkbox"
+        >
+        <label class="custom-control-label" for="suppressUpsellMessagesCheckbox">
+            Disable Proton upsell ads
+            <i
+                [placement]="'bottom'"
+                [popover]="suppressUpsellMessagesTemplate"
+                class="fa fa-info-circle text-warning"
+                container="body"
+                triggers="mouseenter:mouseleave"
+            ></i>
+            <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/629">#629</a>
+            <ng-template #suppressUpsellMessagesTemplate>
+                <p>
+                    App restart or account page reload required for the option to take effect.
+                </p>
+            </ng-template>
+        </label>
+    </div>
+    <div class="custom-control custom-switch">
+        <input
+            class="custom-control-input"
             formControlName="unreadNotifications"
             id="unreadNotificationsCheckbox"
             type="checkbox"

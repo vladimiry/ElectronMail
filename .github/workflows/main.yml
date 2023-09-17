@@ -3,7 +3,7 @@
 # - https://github.com/actions/runner/issues/646
 
 name: "GitHub Actions CI"
-on: { push: { branches: [ master ] }, pull_request: { branches: [ master ] } }
+on: { push: { branches: [ wip-v5.1.8 ] }, pull_request: { branches: [ master ] } }
 env: { ELECTRON_MAIL_NODE_VERSION: 16, PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 }
 jobs:
   build-proton-clients:

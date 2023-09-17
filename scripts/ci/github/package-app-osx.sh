@@ -14,9 +14,11 @@ echo "::endgroup::"
 
 echo "::group::test e2e"
 # TODO arm64: enable e2e tests running for darwin-arm64 build, see the blocker https://github.com/actions/virtual-environments/issues/2187
-if [[ ${ARCH} == "x64" ]]; then
-  pnpm run test:e2e
-fi
+# TODO get back e2e test on macos-x64 system
+# disabled since previously successful/released tags and new ones too started to get "electron.launch: Process failed to launch!" error on "github actions ci"
+#if [[ ${ARCH} == "x64" ]]; then
+#  pnpm run test:e2e
+#fi
 echo "::endgroup::"
 
 echo "::group::package"

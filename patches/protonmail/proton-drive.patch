@@ -1,3 +1,61 @@
+diff --git a/applications/drive/src/.htaccess b/applications/drive/src/.htaccess
+index 5b522f3deb..5523b5a5dc 100644
+--- a/applications/drive/src/.htaccess
++++ b/applications/drive/src/.htaccess
+@@ -39,11 +39,13 @@ ErrorDocument 404 /assets/404.html
+     Header set X-Robots-Tag "noindex"
+ </Files>
+
++# <electron-mail-mark>
+ # The download service worker gets chunk hash appended to the end of the filename
+ <Files ~ "^downloadSW">
+   Header set Service-Worker-Allowed "/"
+   Header set Service-Worker "script"
+ </Files>
++# </electron-mail-mark>
+
+ <IfModule mod_mime.c>
+   AddType application/font-woff2 .woff2
+
+diff --git a/applications/drive/src/app/store/_downloads/fileSaver/download.ts b/applications/drive/src/app/store/_downloads/fileSaver/download.ts
+index 66a9aba1cc..2a7ab63889 100644
+--- a/applications/drive/src/app/store/_downloads/fileSaver/download.ts
++++ b/applications/drive/src/app/store/_downloads/fileSaver/download.ts
+@@ -56,19 +56,26 @@ function serviceWorkerKeepAlive() {
+     }, 10000);
+ }
+
++/* <electron-mail-mark> */
+ export async function initDownloadSW() {
+     if (isUnsupported()) {
+         throw new Error('Saving file via download is unsupported by this browser');
+     }
+-    await navigator.serviceWorker.register(
+-        /* webpackChunkName: "downloadSW" */
+-        new URL('./downloadSW', import.meta.url),
+-        {
+-            scope: `/${stripLeadingAndTrailingSlash(PUBLIC_PATH)}`,
+-        }
+-    );
++    try {
++        await navigator.serviceWorker.register(
++            /* webpackChunkName: "downloadSW" */
++            new URL('./downloadSW', import.meta.url),
++            {
++                scope: `/${stripLeadingAndTrailingSlash(PUBLIC_PATH)}`,
++            }
++        );
++    } catch (e) {
++        console.error(`Failed to register service worker.`, e.message);
++        throw e;
++    }
+     serviceWorkerKeepAlive();
+ }
++/* </electron-mail-mark> */
+
+ /**
+  * Opens download stream into service worker. Use abort signal when pipeTo can't close the download stream.
+
 diff --git a/applications/drive/package.json b/applications/drive/package.json
 index 1ff78a9928..d232854a68 100644
 --- a/applications/drive/package.json

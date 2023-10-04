@@ -1,3 +1,4 @@
+import fastGlob from "fast-glob";
 import fs from "fs";
 import fsExtra from "fs-extra";
 import path from "path";
@@ -328,6 +329,23 @@ async function executeBuildFlow(
                     ],
                     publicPath ? {printEnvWhitelist: ["PUBLIC_PATH"]} : undefined,
                 );
+
+                if (repoType === "proton-drive") {
+                    // WARN if path changes, search "Service-Worker-Allowed" keyword in "src/electron-main" and make needed adjustments
+                    const downloadSW = path.join(repoDistDir, "assets", "downloadSW.*.chunk.js");
+                    if (
+                        fastGlob.sync(
+                            downloadSW,
+                            {
+                                deep: 1,
+                                onlyFiles: true,
+                                stats: false,
+                            },
+                        ).length !== 1
+                    ) {
+                        throw new Error(`Failed to resolve "${downloadSW}" assets file`);
+                    }
+                }
             }
 
             writeFile(

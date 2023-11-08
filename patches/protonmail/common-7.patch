@@ -1,3 +1,23 @@
+diff --git a/packages/shared/lib/helpers/desktop.ts b/packages/shared/lib/helpers/desktop.ts
+index 4696b429a7..fe63f75e55 100644
+--- a/packages/shared/lib/helpers/desktop.ts
++++ b/packages/shared/lib/helpers/desktop.ts
+@@ -1,13 +1,6 @@
+-import UAParser from 'ua-parser-js';
+-
+ import { isMac } from './browser';
+
+-const uaParser = new UAParser();
+-const ua = uaParser.getResult();
+-
+-export const isElectronApp = () => {
+-    return /electron/i.test(ua.ua);
+-};
++export const isElectronApp = () => false;
+
+ export const isElectronOnMac = () => {
+     return isElectronApp() && isMac();
+
 diff --git a/packages/components/containers/unleash/UnleashFlagProvider.tsx b/packages/components/containers/unleash/UnleashFlagProvider.tsx
 index 1531d1450b..a8a8d44677 100644
 --- a/packages/components/containers/unleash/UnleashFlagProvider.tsx

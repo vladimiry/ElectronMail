@@ -23,7 +23,7 @@ export const PROVIDER_REPO_MAP = {
         basePath: "",
         apiSubdomain: "mail-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-mail@5.0.29.7",
+        tag: "proton-mail@5.0.31.16",
         protonPack: {
             webpackIndexEntryItems: [
                 // immediate
@@ -31,7 +31,7 @@ export const PROVIDER_REPO_MAP = {
                 "../../packages/shared/lib/api/events.ts",
                 "../../packages/shared/lib/api/labels.ts",
                 "../../packages/shared/lib/api/messages.ts",
-                "../../packages/shared/lib/constants.ts",
+                "../../packages/shared/lib/mail/mailSettings.ts",
                 "../../packages/shared/lib/models/mailSettingsModel.js",
                 "./src/app/containers/PageContainer.tsx",
                 "./src/app/helpers/mailboxUrl.ts",
@@ -49,14 +49,14 @@ export const PROVIDER_REPO_MAP = {
         basePath: "account",
         apiSubdomain: "account-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-account@5.0.54.0",
+        tag: "proton-account@5.0.68.1",
         protonPack: {}
     },
     [PROVIDER_APP_NAMES[2]]: {
         basePath: "calendar",
         apiSubdomain: "calendar-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-calendar@5.0.15.5",
+        tag: "proton-calendar@5.0.16.13",
         protonPack: {
             webpackIndexEntryItems: [
                 // immediate
@@ -69,14 +69,14 @@ export const PROVIDER_REPO_MAP = {
         basePath: "drive",
         apiSubdomain: "drive-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-drive@5.0.15.4",
+        tag: "proton-drive@5.0.16.8",
         protonPack: {},
     },
     [PROVIDER_APP_NAMES[4]]: {
         basePath: "account/vpn",
         apiSubdomain: "account-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-vpn-settings@5.0.50.0",
+        tag: "proton-vpn-settings@5.0.59.0",
         protonPack: {},
     },
 } as const;

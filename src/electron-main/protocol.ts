@@ -182,7 +182,7 @@ export async function registerAccountSessionProtocols(
             // TODO tweak e2e test: navigate to "/drive" (requires to be signed-in into the mail account)
             //      so the scope misconfiguration-related error get printed to "log.log" file and the test gets failed then
             if (resourceLocation.startsWith(
-                path.join(directory, PROVIDER_REPO_MAP["proton-drive"].basePath, "assets", "downloadSW."),
+                path.join(directory, PROVIDER_REPO_MAP["proton-drive"].basePath, "downloadSW."),
             )) {
                 /* eslint-disable max-len */
                 // https://github.com/ProtonMail/proton-drive/blob/04d30ae6c9fbfbc33cfc91499831e2e6458a99b1/src/.htaccess#L42-L45

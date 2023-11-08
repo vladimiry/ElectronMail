@@ -149,26 +149,54 @@ index 4c16c85b5..8b93c6084 100644
 +}; /* </electron-mail-mark> */
 
 diff --git a/packages/components/hooks/useGetEncryptionPreferences.ts b/packages/components/hooks/useGetEncryptionPreferences.ts
-index fe83b9e8c..b944a61e8 100644
+index dae0d635c7..6308e24fa9 100644
 --- a/packages/components/hooks/useGetEncryptionPreferences.ts
 +++ b/packages/components/hooks/useGetEncryptionPreferences.ts
-@@ -24,7 +24,7 @@ const DEFAULT_LIFETIME = 5 * MINUTE;
-  * The logic for how those preferences are determined is laid out in the
-  * Confluence document 'Encryption preferences for outgoing email'
+@@ -5,7 +5,7 @@ import { MINUTE, RECIPIENT_TYPES } from '@proton/shared/lib/constants';
+ import { getSelfSendAddresses } from '@proton/shared/lib/helpers/address';
+ import { canonicalizeEmail, canonicalizeInternalEmail } from '@proton/shared/lib/helpers/email';
+ import { KT_VERIFICATION_STATUS } from '@proton/shared/lib/interfaces';
+-import { GetEncryptionPreferences } from '@proton/shared/lib/interfaces/hooks/GetEncryptionPreferences';
++import { GetEncryptionPreferences } from '@proton/shared/lib/interfaces/hooks/GetEncryptionPreferences'; /* <electron-mail-mark/> TODO "GetEncryptionPreferences" is used as a method signature */
+ import { getKeyHasFlagsToEncrypt } from '@proton/shared/lib/keys';
+ import { getActiveKeys } from '@proton/shared/lib/keys/getActiveKeys';
+ import { splitKeys } from '@proton/shared/lib/keys/keys';
+@@ -31,7 +31,7 @@ const DEFAULT_LIFETIME = 5 * MINUTE;
+  * Confluence document 'Encryption preferences for outgoing email'.
+  * NB: the current logic does not handle internal address keys belonging to external accounts, since these keys are not used by Inbox.
   */
 -const useGetEncryptionPreferences = () => {
-+const useGetEncryptionPreferences = () => { /* <electron-mail-mark> */
++const useGetEncryptionPreferences = () => { /* <electron-mail-mark> TODO "GetEncryptionPreferences" is used as a method signature */
      const api = useApi();
      const cache = useCache();
      const getAddresses = useGetAddresses();
-@@ -87,6 +87,6 @@ const useGetEncryptionPreferences = () => {
+@@ -109,6 +109,6 @@ const useGetEncryptionPreferences = () => {
          },
          [cache, getEncryptionPreferences]
      );
 -};
-+}; /* </electron-mail-mark> */
++}; /* <electron-mail-mark> */
 
  export default useGetEncryptionPreferences;
+
+diff --git a/packages/shared/lib/interfaces/hooks/GetEncryptionPreferences.ts b/packages/shared/lib/interfaces/hooks/GetEncryptionPreferences.ts
+index d31b0bf797..407bb22503 100644
+--- a/packages/shared/lib/interfaces/hooks/GetEncryptionPreferences.ts
++++ b/packages/shared/lib/interfaces/hooks/GetEncryptionPreferences.ts
+@@ -2,6 +2,7 @@ import { EncryptionPreferences } from '../../mail/encryptionPreferences';
+ import { ContactEmail } from '../contacts';
+
+ export type GetEncryptionPreferences = ({
++    /* <electron-mail-mark> TODO review signatures */
+     email,
+     intendedForEmail,
+     lifetime,
+@@ -15,4 +16,4 @@ export type GetEncryptionPreferences = ({
+     intendedForEmail?: boolean;
+     lifetime?: number;
+     contactEmailsMap?: { [email: string]: ContactEmail | undefined };
+-}) => Promise<EncryptionPreferences>;
++}) => Promise<EncryptionPreferences>;/* </electron-mail-mark> */
 
 diff --git a/packages/components/hooks/useApi.ts b/packages/components/hooks/useApi.ts
 index e2baface5..8b4317d5a 100644
@@ -346,10 +374,10 @@ index 0d29745777..0000000000
 -export default MailDefaultHandlerModal;
 
 diff --git a/applications/mail/src/app/components/header/search/MailSearch.tsx b/applications/mail/src/app/components/header/search/MailSearch.tsx
-index 1736085ad3..5f102e159e 100644
+index 9b542628da..f26b6a9ccc 100644
 --- a/applications/mail/src/app/components/header/search/MailSearch.tsx
 +++ b/applications/mail/src/app/components/header/search/MailSearch.tsx
-@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
+@@ -3,21 +3,17 @@ import { useEffect, useState } from 'react';
  import { Location } from 'history';
 
  import {
@@ -357,9 +385,8 @@ index 1736085ad3..5f102e159e 100644
      TopNavbarListItemSearchButton,
      generateUID,
      useAddresses,
-@@ -11,14 +10,11 @@ import {
+     useFolders,
      useLabels,
-     useMailSettings,
      usePopperAnchor,
 -    useProgressiveRollout,
      useToggle,
@@ -372,7 +399,7 @@ index 1736085ad3..5f102e159e 100644
  import { extractSearchParameters } from '../../../helpers/mailboxUrl';
  import { useClickMailContent } from '../../../hooks/useClickMailContent';
  import { Breakpoints } from '../../../models/utils';
-@@ -39,11 +35,9 @@ interface Props {
+@@ -37,17 +33,15 @@ interface Props {
 
  const MailSearch = ({ breakpoints, labelID, location, columnMode }: Props) => {
      const [uid] = useState(generateUID('advanced-search-overlay'));
@@ -381,13 +408,11 @@ index 1736085ad3..5f102e159e 100644
      const searchParams = extractSearchParameters(location);
      const [searchInputValue, setSearchInputValue] = useState(searchParams.keyword || '');
 -    const [user] = useUser();
-     const [, loadingMailSettings] = useMailSettings();
      const [, loadingLabels] = useLabels();
      const [, loadingFolders] = useFolders();
-@@ -51,7 +45,7 @@ const MailSearch = ({ breakpoints, labelID, location, columnMode }: Props) => {
-     const { getESDBStatus, cacheIndexedDB, closeDropdown } = useEncryptedSearchContext();
-     const { dropdownOpened } = getESDBStatus();
-     const esState = useEncryptedSearchToggleState(isOpen);
+     const [, loadingAddresses] = useAddresses();
+     const { esStatus, cacheIndexedDB, closeDropdown, esIndexingProgressState } = useEncryptedSearchContext();
+     const { dropdownOpened } = esStatus;
 -    const showEncryptedSearch = isEncryptedSearchAvailable(user, isESUserInterfaceAvailable);
 +    const showEncryptedSearch = false;
 

@@ -1,21 +1,20 @@
 diff --git a/applications/drive/src/.htaccess b/applications/drive/src/.htaccess
-index 5b522f3deb..5523b5a5dc 100644
+index b0b25a5fae..11d4e4af0f 100644
 --- a/applications/drive/src/.htaccess
 +++ b/applications/drive/src/.htaccess
-@@ -39,11 +39,13 @@ ErrorDocument 404 /assets/404.html
-     Header set X-Robots-Tag "noindex"
+@@ -40,10 +40,12 @@ ErrorDocument 404 /assets/404.html
  </Files>
 
-+# <electron-mail-mark>
  # The download service worker gets chunk hash appended to the end of the filename
++# <electron-mail-mark>
  <Files ~ "^downloadSW">
    Header set Service-Worker-Allowed "/"
    Header set Service-Worker "script"
  </Files>
 +# </electron-mail-mark>
 
- <IfModule mod_mime.c>
-   AddType application/font-woff2 .woff2
+ <IfModule mod_deflate.c>
+   AddOutputFilter INCLUDES;DEFLATE svg
 
 diff --git a/applications/drive/src/app/store/_downloads/fileSaver/download.ts b/applications/drive/src/app/store/_downloads/fileSaver/download.ts
 index 66a9aba1cc..2a7ab63889 100644

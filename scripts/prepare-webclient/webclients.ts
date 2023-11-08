@@ -332,7 +332,7 @@ async function executeBuildFlow(
 
                 if (repoType === "proton-drive") {
                     // WARN if path changes, search "Service-Worker-Allowed" keyword in "src/electron-main" and make needed adjustments
-                    const downloadSW = path.join(repoDistDir, "assets", "downloadSW.*.chunk.js");
+                    const downloadSW = path.join(repoDistDir, "downloadSW.js");
                     if (
                         fastGlob.sync(
                             downloadSW,

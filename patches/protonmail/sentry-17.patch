@@ -1,15 +1,16 @@
 diff --git a/packages/shared/lib/helpers/sentry.ts b/packages/shared/lib/helpers/sentry.ts
-index 503abd48a4..296afc18f4 100644
+index f60b06d7f8..8186ab1afc 100644
 --- a/packages/shared/lib/helpers/sentry.ts
 +++ b/packages/shared/lib/helpers/sentry.ts
-@@ -1,15 +1,10 @@
+@@ -1,19 +1,11 @@
  import {
      BrowserOptions,
+-    Integrations as SentryIntegrations,
      captureException,
 -    configureScope,
 -    init,
 -    makeFetchTransport,
-     captureMessage as sentryCaptureMessage,
+-    captureMessage as sentryCaptureMessage,
  } from '@sentry/browser';
 -import { BrowserTransportOptions } from '@sentry/browser/types/transports/types';
 
@@ -17,8 +18,11 @@ index 503abd48a4..296afc18f4 100644
 -import { ApiError } from '../fetch/ApiError';
  import { getUIDHeaders } from '../fetch/headers';
  import { ProtonConfig } from '../interfaces';
+-import { isElectronApp } from './desktop';
 
-@@ -67,21 +62,6 @@ export const getContentTypeHeaders = (input: RequestInfo | URL): HeadersInit =>
+ type SentryContext = {
+     authHeaders: { [key: string]: string };
+@@ -69,21 +61,6 @@ export const getContentTypeHeaders = (input: RequestInfo | URL): HeadersInit =>
      return {};
  };
 
@@ -40,25 +44,26 @@ index 503abd48a4..296afc18f4 100644
  const isLocalhost = (host: string) => host.startsWith('localhost');
  const isProduction = (host: string) => host.endsWith('.proton.me') || host === VPN_HOSTNAME;
 
-@@ -170,86 +150,10 @@ function main({
+@@ -172,94 +149,10 @@ function main({
      ignore = ({ host }) => isLocalhost(host),
      denyUrls = getDefaultDenyUrls(),
      ignoreErrors = getDefaultIgnoreErrors(),
 -}: SentryOptions) {
--    const { SENTRY_DSN, APP_VERSION } = config;
+-    const { SENTRY_DSN, SENTRY_DESKTOP_DSN, APP_VERSION } = config;
+-    const isElectron = isElectronApp();
+-    const sentryDSN = isElectron ? SENTRY_DESKTOP_DSN || SENTRY_DSN : SENTRY_DSN;
 -    const { host, release, environment } = sentryConfig;
 -
 -    // No need to configure it if we don't load the DSN
--    if (!SENTRY_DSN || ignore(sentryConfig)) {
+-    if (!sentryDSN || ignore(sentryConfig)) {
 -        return;
 -    }
-+}: SentryOptions) {}
-
+-
 -    setUID(uid);
 -
--    // Assumes SENTRY_DSN is: https://111b3eeaaec34cae8e812df705690a36@sentry/11
+-    // Assumes sentryDSN is: https://111b3eeaaec34cae8e812df705690a36@sentry/11
 -    // To get https://111b3eeaaec34cae8e812df705690a36@protonmail.com/api/core/v4/reports/sentry/11
--    const dsn = SENTRY_DSN.replace('sentry', `${host}/api/core/v4/reports/sentry`);
+-    const dsn = sentryDSN.replace('sentry', `${host}/api/core/v4/reports/sentry`);
 -
 -    init({
 -        dsn,
@@ -67,6 +72,12 @@ index 503abd48a4..296afc18f4 100644
 -        normalizeDepth: 5,
 -        transport: makeProtonFetchTransport,
 -        autoSessionTracking: sessionTracking,
+-        // do not log calls to console.log, console.error, etc.
+-        integrations: [
+-            new SentryIntegrations.Breadcrumbs({
+-                console: false,
+-            }),
+-        ],
 -        // Disable client reports. Client reports are used by sentry to retry events that failed to send on visibility change.
 -        // Unfortunately Sentry does not use the custom transport for those, and thus fails to add the headers the API requires.
 -        sendClientReports: false,
@@ -77,12 +88,14 @@ index 503abd48a4..296afc18f4 100644
 -            if (stack && stack.match(/ferdi|franz/i)) {
 -                return null;
 -            }
--
++}: SentryOptions) {}
+
 -            // Not interested in uncaught API errors, or known errors
 -            if (error instanceof ApiError || error?.trace === false) {
 -                return null;
 -            }
--
++export const traceError = (...args: Parameters<typeof captureException>) => console.error(...args);
+
 -            if (!context.enabled) {
 -                return null;
 -            }
@@ -120,14 +133,12 @@ index 503abd48a4..296afc18f4 100644
 -        captureException(...args);
 -    }
 -};
-+export const traceError = (...args: Parameters<typeof captureException>) => console.error(...args);
-
+-
 -export const captureMessage = (...args: Parameters<typeof sentryCaptureMessage>) => {
 -    if (!isLocalhost(window.location.host)) {
 -        sentryCaptureMessage(...args);
 -    }
 -};
-+export const captureMessage = (...args: Parameters<typeof sentryCaptureMessage>) => console.log(...args);
++export const captureMessage = (...args: Parameters<typeof captureException>) => console.log(...args);
 
  export default main;
---

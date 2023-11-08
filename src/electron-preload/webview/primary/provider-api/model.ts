@@ -21,8 +21,15 @@ export type ImmediateKeys = StrictExclude<Keys, LazyKeys>
 export type ProviderInternals = AddInitializedProp<{
     [K in StrictExtract<ImmediateKeys, "./src/app/containers/PageContainer.tsx">]: DefineObservableValue<{
         readonly privateScope: null | {
-            // https://github.com/ProtonMail/react-components/blob/276aeddfba47dd473e96a54dbd2b12d6214a6359/hooks/useGetEncryptionPreferences.ts
-            readonly getEncryptionPreferences: (senderAddress: RestModel.Message["Sender"]["Address"]) => Promise<EncryptionPreferences>
+            // https://github.com/ProtonMail/WebClients/blob/3768deb904dd7865487fb71cb1bcee328cf32c30/packages/shared/lib/interfaces/hooks/GetEncryptionPreferences.ts
+            readonly getEncryptionPreferences: (
+                attr: {
+                    email: RestModel.Message["Sender"]["Address"]
+                    intendedForEmail?: boolean;
+                    lifetime?: number;
+                    contactEmailsMap?: { [email: string]: RestModel.ContactEmail | undefined };
+                }
+            ) => Promise<EncryptionPreferences>
             // https://github.com/ProtonMail/proton-mail/blob/77b133013cdb5695aa23c0c4c29cc6578878faa5/src/app/hooks/message/useGetMessageKeys.ts#L13
             readonly getMessageKeys: (message: Pick<RestModel.Message, "AddressID">) => Promise<MessageKeys>
             // https://github.com/ProtonMail/proton-mail/blob/77b133013cdb5695aa23c0c4c29cc6578878faa5/src/app/helpers/attachment/attachmentLoader.ts#L46
@@ -54,7 +61,7 @@ export type ProviderInternals = AddInitializedProp<{
         }>>
     }
 } & {
-    [K in StrictExtract<ImmediateKeys, "../../packages/shared/lib/constants.ts">]: {
+    [K in StrictExtract<ImmediateKeys, "../../packages/shared/lib/mail/mailSettings.ts">]: {
         readonly VIEW_MODE: { readonly GROUP: number; readonly SINGLE: number }
     }
 } & {
@@ -124,7 +131,7 @@ export type ProviderApi = { _throwErrorOnRateLimitedMethodCall?: boolean } & Rea
         buildMessagesCountApiUrlTester: (options: { entryApiUrl: string }) => (url: string) => boolean
         decryptMessage: (message: RestModel.Message) => Promise<{ decryptedSubject?: string, decryptedBody: string }>
     }>
-    constants: ProviderInternals["../../packages/shared/lib/constants.ts"]["value"],
+    constants: ProviderInternals["../../packages/shared/lib/mail/mailSettings.ts"]["value"],
     label: Readonly<{
         get: (
             ...args: Parameters<ProviderInternals["../../packages/shared/lib/api/labels.ts"]["value"]["get"]>

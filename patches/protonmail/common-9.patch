@@ -1,3 +1,13 @@
+diff --git a/packages/shared/lib/helpers/desktop.ts b/packages/shared/lib/helpers/desktop.ts
+new file mode 100644
+index 0000000000..6ece6922a0
+--- /dev/null
++++ b/packages/shared/lib/helpers/desktop.ts
+@@ -0,0 +1,3 @@
++/* <electron-mail-mark> */
++// TODO remove when ./packages/shared/lib/helpers/desktop.ts gets added for the "drive" app
++/* </electron-mail-mark> */
+
 diff --git a/packages/components/containers/unleash/UnleashFlagProvider.tsx b/packages/components/containers/unleash/UnleashFlagProvider.tsx
 index c3e007aa4b..f51a74683e 100644
 --- a/packages/components/containers/unleash/UnleashFlagProvider.tsx
@@ -120,10 +130,10 @@ index 36bd0c712..c2fb3681c 100644
          return;
      }
 
-diff --git a/applications/mail/src/app/components/list/auto-delete/variations/AutoDeleteFreeBanner.tsx b/applications/mail/src/app/components/list/auto-delete/variations/AutoDeleteFreeBanner.tsx
+diff --git a/applications/mail/src/app/components/list/banners/auto-delete/variations/AutoDeleteFreeBanner.tsx b/applications/mail/src/app/components/list/banners/auto-delete/variations/AutoDeleteFreeBanner.tsx
 index 24c56ef6fe..a6046b391c 100644
---- a/applications/mail/src/app/components/list/auto-delete/variations/AutoDeleteFreeBanner.tsx
-+++ b/applications/mail/src/app/components/list/auto-delete/variations/AutoDeleteFreeBanner.tsx
+--- a/applications/mail/src/app/components/list/banners/auto-delete/variations/AutoDeleteFreeBanner.tsx
++++ b/applications/mail/src/app/components/list/banners/auto-delete/variations/AutoDeleteFreeBanner.tsx
 @@ -7,6 +7,10 @@ import { AutoDeleteUpsellModal, useModalState } from '@proton/components/compone
  import { PromotionBanner } from '@proton/components/containers';
 
@@ -137,10 +147,10 @@ index 24c56ef6fe..a6046b391c 100644
      return (
 
 diff --git a/applications/mail/src/app/hooks/useShowUpsellBanner.ts b/applications/mail/src/app/hooks/useShowUpsellBanner.ts
-index d203f913fa..178153c592 100644
+index b82b7ae976..0907c85ec6 100644
 --- a/applications/mail/src/app/hooks/useShowUpsellBanner.ts
 +++ b/applications/mail/src/app/hooks/useShowUpsellBanner.ts
-@@ -33,6 +33,7 @@ const useShowUpsellBanner = (labelID: string, otherBannerDisplayed: boolean) =>
+@@ -33,12 +33,14 @@ const useShowUpsellBanner = (labelID: string) => {
      - No other banner is shown in the message list
      - If a value is found in the localStorage that should trigger a new display
       */
@@ -148,15 +158,14 @@ index d203f913fa..178153c592 100644
      const canDisplayUpsellBanner =
          user.isFree &&
          Date.now() > threeDaysAfterCreationDate &&
-@@ -40,6 +41,7 @@ const useShowUpsellBanner = (labelID: string, otherBannerDisplayed: boolean) =>
+         isInbox &&
          needToShowUpsellBanner.current &&
-         !otherBannerDisplayed &&
          showAgain;
 +    /* </electron-mail-mark> */
 
      const handleDismissBanner = () => {
          // Set the ref to false so that we hide the banner and update the localStorage value
-@@ -72,6 +74,10 @@ const useShowUpsellBanner = (labelID: string, otherBannerDisplayed: boolean) =>
+@@ -71,6 +73,10 @@ const useShowUpsellBanner = (labelID: string) => {
          }
      }, []);
 

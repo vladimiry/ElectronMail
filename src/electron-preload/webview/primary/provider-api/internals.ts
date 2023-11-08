@@ -25,7 +25,7 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
             "./src/app/helpers/message/messageDecrypt.ts": {
                 value: {decryptMessage: NEVER_FN},
             },
-            "../../packages/shared/lib/constants.ts": {
+            "../../packages/shared/lib/mail/mailSettings.ts": {
                 value: {VIEW_MODE: {GROUP: NaN, SINGLE: NaN}},
             },
             "../../packages/shared/lib/models/mailSettingsModel.js": {
@@ -140,7 +140,7 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
                     if (typeof value?.key !== "string") {
                         throw new Error(`Export item validation failed: ${JSON.stringify({resultKey, key})}`);
                     }
-                } else if (resultKey === "../../packages/shared/lib/constants.ts") {
+                } else if (resultKey === "../../packages/shared/lib/mail/mailSettings.ts") {
                     type ValueType = (typeof result)[typeof resultKey]["value"];
                     const key: keyof ValueType = "VIEW_MODE";
                     const value = webpack_exports[key] as Partial<ValueType[typeof key]> | null;

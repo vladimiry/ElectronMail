@@ -1,58 +1,45 @@
 {
   "proton-mail": [
-    "common-5.patch",
+    "common-7.patch",
     "drop-circular-dependency-2.patch",
     "url-6.patch",
-    "constants-10.patch",
-    "sentry-16.patch",
+    "constants-11.patch",
+    "sentry-17.patch",
     "pack-api-arg-5.patch",
-    "pack-webpack-8.patch",
+    "pack-webpack-9.patch",
     "session-storage-5.patch",
     "link-handler-7.patch",
     "embedded-verification-3.patch",
-    "proton-mail.patch"
+    "app-mail.patch"
   ],
   "proton-account": [
-    "common-7.patch",
+    "common-8.patch",
     "drop-circular-dependency-2.patch",
     "url-6.patch",
-    "constants-10.patch",
-    "sentry-16.patch",
+    "constants-11.patch",
+    "sentry-18.patch",
     "pack-api-arg-5.patch",
     "pack-webpack-9.patch",
     "session-storage-5.patch",
     "link-handler-7.patch",
     "embedded-verification-3.patch",
-    "proton-account.patch"
+    "app-account.patch"
   ],
   "proton-calendar": [
-    "common-5.patch",
+    "common-7.patch",
     "drop-circular-dependency-2.patch",
     "url-6.patch",
-    "constants-10.patch",
-    "sentry-16.patch",
+    "constants-11.patch",
+    "sentry-17.patch",
     "pack-api-arg-5.patch",
-    "pack-webpack-8.patch",
+    "pack-webpack-9.patch",
     "session-storage-5.patch",
     "link-handler-7.patch",
     "embedded-verification-3.patch",
-    "proton-calendar.patch"
+    "app-calendar.patch"
   ],
   "proton-drive": [
-    "common-6.patch",
-    "drop-circular-dependency-2.patch",
-    "url-6.patch",
-    "constants-10.patch",
-    "sentry-15.patch",
-    "pack-api-arg-5.patch",
-    "pack-webpack-8.patch",
-    "session-storage-5.patch",
-    "link-handler-7.patch",
-    "embedded-verification-3.patch",
-    "proton-drive.patch"
-  ],
-  "proton-vpn-settings": [
-    "common-7.patch",
+    "common-9.patch",
     "drop-circular-dependency-2.patch",
     "url-6.patch",
     "constants-10.patch",
@@ -62,6 +49,19 @@
     "session-storage-5.patch",
     "link-handler-7.patch",
     "embedded-verification-3.patch",
-    "proton-vpn-settings.patch"
+    "app-drive.patch"
+  ],
+  "proton-vpn-settings": [
+    "common-8.patch",
+    "drop-circular-dependency-2.patch",
+    "url-6.patch",
+    "constants-11.patch",
+    "sentry-18.patch",
+    "pack-api-arg-5.patch",
+    "pack-webpack-9.patch",
+    "session-storage-5.patch",
+    "link-handler-7.patch",
+    "embedded-verification-3.patch",
+    "app-vpn-settings.patch"
   ]
 }

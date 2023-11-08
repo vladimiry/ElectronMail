@@ -237,7 +237,7 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                         const [protonApi, messageKeys, encryptionPreferences] = await Promise.all([
                             resolveHttpApi(),
                             privateApi.getMessageKeys(message),
-                            privateApi.getEncryptionPreferences(message.Sender.Address),
+                            privateApi.getEncryptionPreferences({email: message.Sender.Address}),
                         ]);
                         const verification = constructMessageVerification(encryptionPreferences);
                         const {data} = await privateApi.getDecryptedAttachment(
@@ -258,7 +258,7 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                     return result;
                 })(),
             },
-            constants: internals["../../packages/shared/lib/constants.ts"].value,
+            constants: internals["../../packages/shared/lib/mail/mailSettings.ts"].value,
             history: {
                 async push({folderId, conversationId, mailId}) {
                     // eslint-disable-next-line max-len

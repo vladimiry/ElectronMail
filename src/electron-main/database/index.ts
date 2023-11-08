@@ -1,6 +1,6 @@
 import asap from "asap-es";
 import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/lib/private/constants";
-import electronLog, {ElectronLog} from "electron-log";
+import electronLog, {LogFunctions} from "electron-log";
 import {EncryptionAdapter, KeyBasedPreset} from "fs-json-store-encryption-adapter";
 import * as FsJsonStore from "fs-json-store";
 import path from "path";
@@ -110,7 +110,7 @@ export class Database {
         return targetPatched;
     }
 
-    private readonly logger: ElectronLog;
+    private readonly logger: LogFunctions;
 
     private readonly saveToFileQueue = new asap();
 

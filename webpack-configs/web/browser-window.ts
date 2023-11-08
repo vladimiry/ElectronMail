@@ -44,7 +44,7 @@ const config = buildBaseWebConfig(
                                 linkerPlugin,
                                 "@babel/plugin-syntax-import-assertions",
                                 // always transform async/await to support zone.js thing
-                                "@babel/plugin-proposal-async-generator-functions",
+                                "@babel/plugin-transform-async-generator-functions",
                                 "@babel/plugin-transform-async-to-generator",
                                 // babel's equivalent to typescript's "importHelpers" option
                                 "@babel/plugin-transform-runtime",

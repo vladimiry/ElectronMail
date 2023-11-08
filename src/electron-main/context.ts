@@ -80,7 +80,7 @@ function initLocations(
         }
     );
 
-    logger.transports.file.file = path.join(userDataDir, "log.log");
+    logger.transports.file.resolvePathFn = (/* variables */) => path.join(userDataDir, "log.log");
     logger.transports.file.maxSize = ONE_MB_BYTES * 50;
     logger.transports.file.level = INITIAL_STORES.config().logLevel;
     logger.transports.console.level = false;

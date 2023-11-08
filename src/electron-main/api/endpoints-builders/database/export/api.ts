@@ -154,9 +154,7 @@ export async function buildDbExportEndpoints(
 
                             // TODO live attachments export: consider presenting per email error messages in the UI
                             IPC_MAIN_API_NOTIFICATION$.next(
-                                IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({
-                                    message: message1 + ` See details in the "${String(logger.transports.file.file)}" file.`,
-                                }),
+                                IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({message: message1 + ` See details in the log file.`}),
                             );
                         }
                     });

@@ -1,4 +1,4 @@
-import _logger, {ElectronLog} from "electron-log";
+import _logger, {LogFunctions} from "electron-log";
 import asap from "asap-es";
 import {BASE64_ENCODING, KEY_BYTES_32} from "fs-json-store-encryption-adapter/lib/private/constants";
 import {EncryptionAdapter, KeyBasedPreset} from "fs-json-store-encryption-adapter";
@@ -21,7 +21,7 @@ import {verifyUrlOriginValue} from "src/shared/util/url";
 export class SessionStorage {
     private entity: SessionStorageModel = emptySessionStorageEntity();
 
-    private readonly logger: ElectronLog;
+    private readonly logger: LogFunctions;
 
     private readonly saveToFileQueue = new asap();
 

@@ -4,7 +4,7 @@
 
 name: "GitHub Actions CI"
 on: { push: { branches: [ master ] }, pull_request: { branches: [ master ] } }
-env: { ELECTRON_MAIL_NODE_VERSION: 16, PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 }
+env: { ELECTRON_MAIL_NODE_VERSION: 18, PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 }
 jobs:
   build-proton-clients:
     if: github.event_name == 'push'

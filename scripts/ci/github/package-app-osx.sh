@@ -28,5 +28,5 @@ echo "::endgroup::"
 
 echo "::group::hash & upload"
 pnpm run scripts/dist-packages/print-hashes
-pnpm run scripts/dist-packages/upload
+# pnpm run scripts/dist-packages/upload
 echo "::endgroup::"

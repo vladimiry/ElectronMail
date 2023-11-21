@@ -365,6 +365,15 @@ export function registerApi(providerApi: ProviderApi): void {
                 (() => {
                     const isEventsApiUrl = providerApi._custom_.buildEventsApiUrlTester({entryApiUrl});
                     const isMessagesCountApiUrl = providerApi._custom_.buildMessagesCountApiUrlTester({entryApiUrl});
+                    const excludeLabelIdsFromUnreadCalculation = ((excludeIds: string[]) => {
+                        return (labelID: string) => excludeIds.includes(labelID);
+                    })([
+                        SYSTEM_FOLDER_IDENTIFIERS.Archive,
+                        SYSTEM_FOLDER_IDENTIFIERS.Spam,
+                        SYSTEM_FOLDER_IDENTIFIERS.Trash,
+                        SYSTEM_FOLDER_IDENTIFIERS["All Mail"],
+                        SYSTEM_FOLDER_IDENTIFIERS["Almost All Mail"],
+                    ]);
                     const responseListeners = [
                         {
                             tester: {test: isMessagesCountApiUrl},
@@ -373,7 +382,7 @@ export function registerApi(providerApi: ProviderApi): void {
                                     return;
                                 }
                                 return Counts
-                                    .filter(({LabelID}) => LabelID === SYSTEM_FOLDER_IDENTIFIERS.Inbox)
+                                    .filter(({LabelID}) => !excludeLabelIdsFromUnreadCalculation(LabelID))
                                     .reduce((accumulator, item) => accumulator + item.Unread, 0);
                             },
                         },
@@ -384,7 +393,7 @@ export function registerApi(providerApi: ProviderApi): void {
                                     return;
                                 }
                                 return MessageCounts
-                                    .filter(({LabelID}) => LabelID === SYSTEM_FOLDER_IDENTIFIERS.Inbox)
+                                    .filter(({LabelID}) => !excludeLabelIdsFromUnreadCalculation(LabelID))
                                     .reduce((accumulator, item) => accumulator + item.Unread, 0);
                             },
                         },

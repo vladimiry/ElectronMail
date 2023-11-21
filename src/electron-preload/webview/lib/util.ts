@@ -371,7 +371,12 @@ export const attachUnhandledErrorHandler = (logger: Logger): void => {
             return;
         }
         // TODO figure the "ResizeObserver loop limit exceeded" error cause (raised by proton)
-        logger[message === "ResizeObserver loop limit exceeded" ? "warn" : "error"](
+        const logLevel = (
+            String(filename).startsWith(`${LOCAL_WEBCLIENT_ORIGIN}/`)
+            &&
+            String(message).startsWith("ResizeObserver loop")
+        ) ? "warn" : "error";
+        logger[logLevel](
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             {message, filename: depersonalizeProtonApiUrl(filename), lineno, colno, error: getPlainErrorProps(error)},
         );

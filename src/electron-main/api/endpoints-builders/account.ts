@@ -1,5 +1,5 @@
 import electronLog from "electron-log";
-import {equals} from "remeda";
+import {isDeepEqual} from "remeda";
 
 import {AccountConfig} from "src/shared/model/account";
 import {assertEntryUrl} from "src/electron-main/util";
@@ -21,13 +21,17 @@ const assertExternalContentProxyUrlPattern = (
 
 export async function buildEndpoints(
     ctx: Context,
-): Promise<Pick<IpcMainApiEndpoints,
-    | "addAccount"
-    | "updateAccount"
-    | "enableNetworkEmulationForAccountSessions"
-    | "changeAccountOrder"
-    | "toggleAccountDisabling"
-    | "removeAccount">> {
+): Promise<
+    Pick<
+        IpcMainApiEndpoints,
+        | "addAccount"
+        | "updateAccount"
+        | "enableNetworkEmulationForAccountSessions"
+        | "changeAccountOrder"
+        | "toggleAccountDisabling"
+        | "removeAccount"
+    >
+> {
     const endpoints: Unpacked<ReturnType<typeof buildEndpoints>> = {
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async addAccount(
@@ -88,7 +92,6 @@ export async function buildEndpoints(
             return result;
         },
 
-
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async updateAccount(
             {
@@ -123,19 +126,12 @@ export async function buildEndpoints(
 
                 const settings = await ctx.settingsStore.readExisting();
                 const account = pickAccountStrict(settings.accounts, {login});
-                const shouldConfigureSession = (
-                    account.entryUrl !== entryUrl
-                    ||
-                    !equals(account.proxy, proxy)
-                    ||
-                    account.blockNonEntryUrlBasedRequests !== blockNonEntryUrlBasedRequests
-                    ||
-                    account.externalContentProxyUrlPattern !== externalContentProxyUrlPattern
-                    ||
-                    account.enableExternalContentProxy !== enableExternalContentProxy
-                    ||
-                    account.customUserAgent !== customUserAgent
-                );
+                const shouldConfigureSession = account.entryUrl !== entryUrl
+                    || !isDeepEqual(account.proxy, proxy)
+                    || account.blockNonEntryUrlBasedRequests !== blockNonEntryUrlBasedRequests
+                    || account.externalContentProxyUrlPattern !== externalContentProxyUrlPattern
+                    || account.enableExternalContentProxy !== enableExternalContentProxy
+                    || account.customUserAgent !== customUserAgent;
                 logger.verbose(JSON.stringify({shouldConfigureSession}));
 
                 account.customNotification = customNotification;
@@ -173,8 +169,10 @@ export async function buildEndpoints(
                 const updatedSettings = ctx.settingsStore.write(settings);
 
                 if (shouldConfigureSession) {
-                    await (await ctx.deferredEndpoints.promise)
-                        .enableNetworkEmulationForAccountSessions({login: account.login, value: "offline"});
+                    await (await ctx.deferredEndpoints.promise).enableNetworkEmulationForAccountSessions({
+                        login: account.login,
+                        value: "offline",
+                    });
                     await configureSessionByAccount(account, {entryUrl: account.entryUrl});
                 }
 

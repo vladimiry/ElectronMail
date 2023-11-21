@@ -1,7 +1,7 @@
 import {ChangeDetectionStrategy, Component} from "@angular/core";
 import {combineLatest, Observable, Subscription} from "rxjs";
 import {distinctUntilChanged, map} from "rxjs/operators";
-import {equals} from "remeda";
+import {isDeepEqual} from "remeda";
 import type {OnDestroy, OnInit} from "@angular/core";
 import {select, Store} from "@ngrx/store";
 
@@ -54,7 +54,7 @@ export class AccountsComponent implements OnInit, OnDestroy {
         this.subscription.add(
             combineLatest([
                 this.store.select(AccountsSelectors.ACCOUNTS.loggedInAndUnreadSummary).pipe(
-                    distinctUntilChanged((prev, curr) => equals(prev, curr)), // TODO => "distinctUntilChanged(equals)",
+                    distinctUntilChanged((prev, curr) => isDeepEqual(prev, curr)), // TODO => "distinctUntilChanged(isDeepEqual)",
                 ),
                 this.store.pipe(select(OptionsSelectors.CONFIG.trayIconColor)),
                 this.store.pipe(select(OptionsSelectors.CONFIG.unreadBgColor)),

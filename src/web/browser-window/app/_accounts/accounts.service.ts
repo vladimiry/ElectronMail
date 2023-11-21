@@ -1,8 +1,7 @@
-import {Actions} from "@ngrx/effects";
 import {delay, distinctUntilChanged, filter, map, mergeMap, pairwise, switchMap, take, takeUntil, tap} from "rxjs/operators";
 import {EMPTY, merge, Observable, of, race, timer} from "rxjs";
-import {equals, pick} from "remeda";
 import {Injectable} from "@angular/core";
+import {isDeepEqual, pick} from "remeda";
 import {select, Store} from "@ngrx/store";
 
 import {ACCOUNTS_ACTIONS} from "src/web/browser-window/app/store/actions";
@@ -10,7 +9,6 @@ import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
 import {getRandomInt} from "src/shared/util";
 import {getWebLogger} from "src/web/browser-window/util";
 import {LoginFieldContainer} from "src/shared/model/container";
-import {ofType} from "src/shared/util/ngrx-of-type";
 import {ONE_SECOND_MS} from "src/shared/const";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {WebAccount} from "src/web/browser-window/app/model";
@@ -19,8 +17,8 @@ import {WebAccount} from "src/web/browser-window/app/model";
 export class AccountsService {
     constructor(
         private readonly store: Store<State>,
-        private readonly actions$: Actions,
-    ) {}
+    ) {
+    }
 
     generatePrimaryNotificationsStateResetAction(
         {login, optionalAccount}: { login: string; optionalAccount?: boolean }
@@ -64,7 +62,7 @@ export class AccountsService {
             mergeMap((account) => account ? [account] as const : [] as const),
             distinctUntilChanged(({accountConfig: prev}, {accountConfig: curr}) => {
                 // check if related props changed
-                return equals(pick(prev, props), pick(curr, props));
+                return isDeepEqual(pick(prev, props), pick(curr, props));
             }),
             // WARN: "switchMap" used to drop previously setup notification (we don't need them to run in parallel)
             // so we re-setup the "delay" logic if related props changed (see above "distinctUntilChanged" check)
@@ -132,11 +130,6 @@ export class AccountsService {
                 }
 
                 const delayTriggersDispose$ = race(
-                    this.actions$.pipe(
-                        ofType(ACCOUNTS_ACTIONS.TryToLogin),
-                        filter(({payload}) => payload.account.accountConfig.login === login),
-                        map(({type: actionType}) => `another "${actionType}" action triggered`),
-                    ),
                     account$.pipe(
                         mergeMap((account) => account ? [account] : []),
                         map(({notifications: {pageType}}) => pageType.type),

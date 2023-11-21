@@ -1,4 +1,3 @@
-import {identity} from "remeda";
 import TurndownService from "turndown";
 
 export const htmlToText: (html: string) => string = (() => {
@@ -44,7 +43,7 @@ export const htmlToText: (html: string) => string = (() => {
     ]);
 
     // https://github.com/mixmark-io/turndown#escaping-markdown-characters
-    turndownService.escape = identity;
+    turndownService.escape = (value: string) => value;
 
     return (html: string): string => {
         return turndownService

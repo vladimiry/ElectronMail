@@ -1,9 +1,9 @@
 import {Actions, createEffect} from "@ngrx/effects";
 import {catchError, concatMap, filter, finalize, map, mergeMap, startWith, switchMap, take, withLatestFrom} from "rxjs/operators";
 import type {DecryptionError} from "fs-json-store-encryption-adapter/lib/errors";
+import {doNothing} from "remeda";
 import {EMPTY, from, merge, of, timer} from "rxjs";
 import {Injectable, NgZone} from "@angular/core";
-import {noop} from "remeda";
 import {select, Store} from "@ngrx/store";
 
 import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
@@ -54,7 +54,7 @@ export class OptionsEffects {
                                 NativeTheme: ({shouldUseDarkColors}) => {
                                     this.store.dispatch(OPTIONS_ACTIONS.ShouldUseDarkColors({shouldUseDarkColors}));
                                 },
-                                default: noop,
+                                default: doNothing,
                             },
                         );
                         return of(OPTIONS_ACTIONS.PatchMainProcessNotification({action: value}));

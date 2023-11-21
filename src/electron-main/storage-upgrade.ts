@@ -9,7 +9,7 @@ import {randomString} from "remeda";
 import {AccountConfig} from "src/shared/model/account";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import {Context} from "src/electron-main/model";
-import {curryFunctionMembers, pickBaseConfigProperties} from "src/shared/util";
+import {curryFunctionMembers} from "src/shared/util";
 import {Database} from "./database";
 import {DB_INSTANCE_PROP_NAME} from "src/electron-main/database/constants";
 import {DbAccountPk, LABEL_TYPE, MIME_TYPES} from "src/shared/model/database";
@@ -19,6 +19,7 @@ import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/act
 import {LAYOUT_MODES, PACKAGE_VERSION, ZOOM_FACTORS} from "src/shared/const";
 import {NumericBoolean} from "src/shared/model/common";
 import {parseProtonRestModel} from "src/shared/util/entity";
+import {pickBaseConfigProperties} from "src/shared/util/config";
 import {
     PROTON_API_ENTRY_PRIMARY_VALUE, PROTON_API_ENTRY_PROTONMAIL_CH_VALUE, PROTON_API_ENTRY_PROTONMAIL_COM_VALUE,
     PROTON_API_ENTRY_TOR_V2_VALUE, PROTON_API_ENTRY_TOR_V3_VALUE, PROTON_API_ENTRY_TOR_V4_VALUE, PROTON_API_ENTRY_URLS,

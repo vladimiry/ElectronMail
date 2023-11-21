@@ -37,6 +37,7 @@ export const resolveUnreadNotificationMessage = async (
     {login, title: alias}: Pick<AccountConfig, "login" | "title">,
     code: string,
 ): Promise<string> => {
+    // TODO quickJS: chunk mails to portions and process them in reduce/batch mode
     // TODO TS: don't hardcode the typings
     const evalCode = `
         (() => {
@@ -57,6 +58,7 @@ export const resolveUnreadNotificationMessage = async (
         })()
     `;
 
+    // TODO quickJS: improve performance (execute function on context with preset variables/functions)
     return (await resolveCachedQuickJSInstance()).evalCode(
         evalCode,
         {shouldInterrupt: shouldInterruptAfterDeadline(Date.now() + evalCodeTimeout)},
@@ -68,6 +70,7 @@ export const executeUnreadNotificationShellCommand = async (
     {login, title: alias}: Pick<AccountConfig, "login" | "title">,
     code: string,
 ): Promise<void> => {
+    // TODO quickJS: chunk mails to portions and process them in reduce/batch mode
     const evalCode = `
         (() => {
             let ${QUICK_JS_EVAL_CODE_VARIABLE_NAME};
@@ -90,6 +93,7 @@ export const executeUnreadNotificationShellCommand = async (
         })()
     `;
 
+    // TODO quickJS: improve performance (execute function on context with preset variables/functions)
     const {command, options} = (await resolveCachedQuickJSInstance()).evalCode(
         evalCode,
         {shouldInterrupt: shouldInterruptAfterDeadline(Date.now() + evalCodeTimeout)},

@@ -1,0 +1,12 @@
+diff --git a/build/types/lib/url-search-params.d.ts b/build/types/lib/url-search-params.d.ts
+index afd381876c68bb40c97449e816af482666dd84d0..8ca067d72ee769b0699bfcbdf952b2aa50df684e 100644
+--- a/build/types/lib/url-search-params.d.ts
++++ b/build/types/lib/url-search-params.d.ts
+@@ -24,6 +24,7 @@ export default class SearchParams implements IURLSearchParams {
+     toString(): string;
+     values(): IterableIterator<string>;
+     [Symbol.iterator](): IterableIterator<[string, string]>;
++    readonly size: number;
+ }
+ export declare function extractParams(urlString: string, start: number, end: number, params: SearchParams, separators: number[], equals: number, breakCodes: number[], { encode }?: {
+     encode: boolean;

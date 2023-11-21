@@ -1,11 +1,11 @@
 import {app, dialog, nativeTheme, shell} from "electron";
 import {compareVersions} from "compare-versions";
 import electronLog from "electron-log";
-import {equals} from "remeda";
 import fetch from "electron-fetch";
 import {first, map, startWith, switchMap} from "rxjs/operators";
 import {from, lastValueFrom, merge, of, throwError} from "rxjs";
 import {inspect} from "util";
+import {isDeepEqual} from "remeda";
 import {isWebUri} from "valid-url";
 
 import {applyZoomFactor} from "src/electron-main/window/util";
@@ -20,7 +20,8 @@ import {PLATFORM} from "src/electron-main/constants";
 import {resolveUiContextStrict} from "src/electron-main/util";
 import {showAboutBrowserWindow} from "src/electron-main/window/about";
 
-type Methods = keyof Pick<IpcMainApiEndpoints,
+type Methods = keyof Pick<
+    IpcMainApiEndpoints,
     | "activateBrowserWindow"
     | "openAboutWindow"
     | "openExternal"
@@ -33,10 +34,10 @@ type Methods = keyof Pick<IpcMainApiEndpoints,
     | "toggleLocalDbMailsListViewMode"
     | "updateCheck"
     | "notification"
-    | "log">;
+    | "log"
+>;
 
-type ContextAwareMethods = keyof Pick<IpcMainApiEndpoints,
-    | "hotkey">;
+type ContextAwareMethods = keyof Pick<IpcMainApiEndpoints, "hotkey">;
 
 const logger = curryFunctionMembers(electronLog, __filename);
 
@@ -112,8 +113,7 @@ export async function buildEndpoints(
 
             if (
                 (arg && arg.forcedState)
-                ||
-                !browserWindow.isVisible()
+                || !browserWindow.isVisible()
             ) {
                 await endpoints.activateBrowserWindow(browserWindow);
             } else {
@@ -130,17 +130,14 @@ export async function buildEndpoints(
             const needToCloseFindInPageWindow = (
                 // reset: no accounts in the list
                 !newSelectedAccount
-                ||
                 // "find in page" is not available in "local store" mode (since this view currently doesn't have own "webContent")
                 // TODO figure how to hide webview from search while in database view mode
                 //      webview can't be detached from DOM as it gets reloaded when reattached
                 //      search is not available in database view mode until then
-                newSelectedAccount.databaseView
-                ||
-                ( // changed selected account
+                || newSelectedAccount.databaseView
+                || ( // changed selected account
                     prevSelectedAccount
-                    &&
-                    !equals(prevSelectedAccount, newSelectedAccount)
+                    && !isDeepEqual(prevSelectedAccount, newSelectedAccount)
                 )
             );
 
@@ -153,46 +150,37 @@ export async function buildEndpoints(
         },
 
         selectPath() {
-            return from(
-                (async (): Promise<import("electron").BrowserWindow | undefined> => {
-                    return (await resolveUiContextStrict(ctx)).browserWindow;
-                })(),
-            ).pipe(
-                switchMap((browserWindow) => {
-                    if (!browserWindow) {
-                        return throwError(() => new Error("Failed to resolve main app window"));
-                    }
-                    return merge(
-                        // resets api calling timeouts (dialog potentially can be opened for a long period of time)
-                        of({message: "timeout-reset"} as const),
-                        from(
-                            dialog.showOpenDialog(
-                                browserWindow,
-                                {
-                                    title: "Select file system directory ...",
-                                    defaultPath: app.getPath("home"),
-                                    properties: ["openDirectory"],
-                                },
-                            ),
-                        ).pipe(
-                            map(({canceled, filePaths: [location]}) => {
-                                if (canceled) {
-                                    return {message: "canceled"} as const;
-                                }
-                                if (!location) {
-                                    throw new Error("Location resolving failed");
-                                }
-                                return {location} as const;
-                            }),
-                        ),
-                    );
-                }),
-            );
+            return from((async (): Promise<import("electron").BrowserWindow | undefined> => {
+                return (await resolveUiContextStrict(ctx)).browserWindow;
+            })()).pipe(switchMap((browserWindow) => {
+                if (!browserWindow) {
+                    return throwError(() => new Error("Failed to resolve main app window"));
+                }
+                return merge(
+                    // resets api calling timeouts (dialog potentially can be opened for a long period of time)
+                    of({message: "timeout-reset"} as const),
+                    from(
+                        dialog.showOpenDialog(browserWindow, {
+                            title: "Select file system directory ...",
+                            defaultPath: app.getPath("home"),
+                            properties: ["openDirectory"],
+                        }),
+                    ).pipe(map(({canceled, filePaths: [location]}) => {
+                        if (canceled) {
+                            return {message: "canceled"} as const;
+                        }
+                        if (!location) {
+                            throw new Error("Location resolving failed");
+                        }
+                        return {location} as const;
+                    })),
+                );
+            }));
         },
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async hotkey({type}) {
-            const methodContext = this;  // eslint-disable-line @typescript-eslint/no-this-alias
+            const methodContext = this; // eslint-disable-line @typescript-eslint/no-this-alias
 
             if (!methodContext) {
                 throw new Error(`Failed to resolve "hotkey" method execution context`);
@@ -223,93 +211,60 @@ export async function buildEndpoints(
         updateCheck: (() => {
             const releasesUrlPrefix = `${PACKAGE_GITHUB_PROJECT_URL}/releases/tag`;
             const tagNameFilterRe = /[^a-z0-9._-]/gi;
-            const filterAssetName: (name: string) => boolean = (
-                (): (name: string) => boolean => {
-                    const assetNameRegExpKeywords: Readonly<Partial<Record<NodeJS.Platform, readonly string[]>>> = {
-                        darwin: [
-                            "-darwin",
-                            "-mac",
-                            "-osx",
-                            ".dmg$",
-                        ],
-                        linux: [
-                            "-freebsd",
-                            "-linux",
-                            "-openbsd",
-                            ".AppImage$",
-                            ".deb$",
-                            ".freebsd$",
-                            ".pacman$",
-                            ".rpm$",
-                            ".snap$",
-                        ],
-                        win32: [
-                            "-win",
-                            // "-win32",
-                            // "-windows",
-                            ".exe$",
-                        ],
-                    };
-                    const assetNameRegExp = new RegExp(
-                        (
-                            assetNameRegExpKeywords[PLATFORM]
-                            ||
-                            // any file name for any platform other than darwin/linux/win32
-                            [".*"]
-                        ).join("|"),
-                        "i",
-                    );
-                    let assetNameRegExpLogged = false;
+            const filterAssetName: (name: string) => boolean = ((): (name: string) => boolean => {
+                const assetNameRegExpKeywords: Readonly<Partial<Record<NodeJS.Platform, readonly string[]>>> = {
+                    darwin: ["-darwin", "-mac", "-osx", ".dmg$"],
+                    linux: ["-freebsd", "-linux", "-openbsd", ".AppImage$", ".deb$", ".freebsd$", ".pacman$", ".rpm$", ".snap$"],
+                    win32: [
+                        "-win",
+                        // "-win32",
+                        // "-windows",
+                        ".exe$",
+                    ],
+                };
+                const assetNameRegExp = new RegExp(
+                    (assetNameRegExpKeywords[PLATFORM]
+                        // any file name for any platform other than darwin/linux/win32
+                        || [".*"]).join("|"),
+                    "i",
+                );
+                let assetNameRegExpLogged = false;
 
-                    return (name: string): boolean => {
-                        if (!assetNameRegExpLogged) {
-                            assetNameRegExpLogged = true;
-                            logger.verbose(nameof(endpoints.updateCheck), inspect({assetNameRegExp}));
-                        }
-                        return assetNameRegExp.test(name);
-                    };
-                }
-            )();
+                return (name: string): boolean => {
+                    if (!assetNameRegExpLogged) {
+                        assetNameRegExpLogged = true;
+                        logger.verbose(nameof(endpoints.updateCheck), inspect({assetNameRegExp}));
+                    }
+                    return assetNameRegExp.test(name);
+                };
+            })();
             let session: import("electron").Session | undefined;
 
             return async (): Promise<IpcMainServiceScan["ApiImplReturns"]["updateCheck"]> => {
                 const config = await lastValueFrom(ctx.config$.pipe(first()));
                 const {updateCheck: {releasesUrl, proxyRules, proxyBypassRules}} = config;
-                const response = await fetch(
-                    releasesUrl,
-                    {
-                        method: "GET",
-                        timeout: UPDATE_CHECK_FETCH_TIMEOUT,
-                        useElectronNet: true,
-                        useSessionCookies: false,
-                        session: session ?? await (async () => {
-                            session = createSessionUtil.create(`partition/main-process-endpoints/${nameof(endpoints.updateCheck)}`);
-                            const proxyConfig: Readonly<Parameters<typeof session.setProxy>[0]> = {proxyRules, proxyBypassRules};
-                            if (proxyConfig.proxyRules) {
-                                await session.setProxy(proxyConfig);
-                            }
-                            return session;
-                        })(),
-                    },
-                );
+                const response = await fetch(releasesUrl, {
+                    method: "GET",
+                    timeout: UPDATE_CHECK_FETCH_TIMEOUT,
+                    useElectronNet: true,
+                    useSessionCookies: false,
+                    session: session ?? await (async () => {
+                        session = createSessionUtil.create(`partition/main-process-endpoints/${nameof(endpoints.updateCheck)}`);
+                        const proxyConfig: Readonly<Parameters<typeof session.setProxy>[0]> = {proxyRules, proxyBypassRules};
+                        if (proxyConfig.proxyRules) {
+                            await session.setProxy(proxyConfig);
+                        }
+                        return session;
+                    })(),
+                });
 
                 if (!response.ok) {
                     // https://developer.github.com/v3/#rate-limiting
-                    const rateLimitResetHeaderValue = Number(
-                        response.headers.get("X-RateLimit-Reset"),
-                    );
-                    const rateLimitError = (
-                        response.status === 403
-                        &&
-                        !isNaN(rateLimitResetHeaderValue)
-                        &&
-                        rateLimitResetHeaderValue > 0
-                    );
-                    const errorMessageData = JSON.stringify({
-                        url: releasesUrl,
-                        status: response.status,
-                        statusText: response.statusText,
-                    });
+                    const rateLimitResetHeaderValue = Number(response.headers.get("X-RateLimit-Reset"));
+                    const rateLimitError = response.status === 403
+                        && !isNaN(rateLimitResetHeaderValue)
+                        && rateLimitResetHeaderValue > 0;
+                    const errorMessageData = JSON.stringify({url: releasesUrl, status: response.status, statusText: response.statusText});
 
                     if (rateLimitError) {
                         // TODO consider enabling retry logic
@@ -326,37 +281,25 @@ export async function buildEndpoints(
                 // TODO use some GitHub Rest API interaction library with built-in response format runtime validation
                 //      rather than doing blind/dev-time-only casting
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                const releases: ReadonlyArray<{
-                    tag_name: string
-                    published_at: string
-                    prerelease: boolean
-                    assets: Array<{ name: string }>
-                }> = await response.json();
+                const releases: ReadonlyArray<
+                    {tag_name: string; published_at: string; prerelease: boolean; assets: Array<{name: string}>}
+                > = await response.json();
 
-                logger.verbose(
-                    nameof(endpoints.updateCheck),
-                    JSON.stringify({
-                        releasesCount: releases.length,
-                        PACKAGE_VERSION,
-                        PLATFORM,
-                    }),
-                );
+                logger.verbose(nameof(endpoints.updateCheck), JSON.stringify({releasesCount: releases.length, PACKAGE_VERSION, PLATFORM}));
 
-                const newReleaseItems = releases
-                    .filter(({prerelease}) => !prerelease)
-                    .filter(({tag_name: tagName}) => compareVersions(tagName, PACKAGE_VERSION) > 0)
-                    .filter(({assets}) => assets.some(({name}) => filterAssetName(name)))
-                    .sort((o1, o2) => compareVersions(o1.tag_name, o2.tag_name))
-                    .reverse()
-                    .map(({tag_name: tagName, published_at: date}) => {
-                        const title = tagName.replace(tagNameFilterRe, "");
-                        const tagNameValid = title === tagName;
-                        // we don't use a raw "html_url" value but sanitize the url
-                        const url = tagNameValid
-                            ? `${releasesUrlPrefix}/${tagName}`
-                            : undefined;
-                        return {title, url, date} as const;
-                    });
+                const newReleaseItems = releases.filter(({prerelease}) => !prerelease).filter(({tag_name: tagName}) =>
+                    compareVersions(tagName, PACKAGE_VERSION) > 0
+                ).filter(({assets}) => assets.some(({name}) => filterAssetName(name))).sort((o1, o2) =>
+                    compareVersions(o1.tag_name, o2.tag_name)
+                ).reverse().map(({tag_name: tagName, published_at: date}) => {
+                    const title = tagName.replace(tagNameFilterRe, "");
+                    const tagNameValid = title === tagName;
+                    // we don't use a raw "html_url" value but sanitize the url
+                    const url = tagNameValid
+                        ? `${releasesUrlPrefix}/${tagName}`
+                        : undefined;
+                    return {title, url, date} as const;
+                });
 
                 logger.verbose(nameof(endpoints.updateCheck), JSON.stringify({newReleaseItems}, null, 2));
 
@@ -366,19 +309,14 @@ export async function buildEndpoints(
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async toggleControls(arg) {
-            IPC_MAIN_API_NOTIFICATION$.next(
-                IPC_MAIN_API_NOTIFICATION_ACTIONS.ConfigUpdated(
-                    await ctx.configStoreQueue.q(async () => {
-                        const config = await lastValueFrom(ctx.config$.pipe(first()));
-                        const {hideControls} = arg || {hideControls: !config.hideControls};
+            IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.ConfigUpdated(
+                await ctx.configStoreQueue.q(async () => {
+                    const config = await lastValueFrom(ctx.config$.pipe(first()));
+                    const {hideControls} = arg || {hideControls: !config.hideControls};
 
-                        return ctx.configStore.write({
-                            ...config,
-                            hideControls,
-                        });
-                    }),
-                ),
-            );
+                    return ctx.configStore.write({...config, hideControls});
+                }),
+            ));
         },
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types

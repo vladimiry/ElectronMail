@@ -1,9 +1,9 @@
 import {authenticator} from "otplib";
+import {doNothing} from "remeda";
 import electronLog from "electron-log";
 import {first} from "rxjs/operators";
 import fs from "fs";
 import {lastValueFrom} from "rxjs";
-import {noop} from "remeda";
 import path from "path";
 import UUID from "pure-uuid";
 
@@ -65,25 +65,20 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async staticInit() {
             const fsPromise = await import("fs/promises");
-            const monacoEditorExtraLibArgs: IpcMainServiceScan["ApiImplReturns"]["staticInit"]["monacoEditorExtraLibArgs"]
-                = {system: [""], protonMessage: [""]};
+            const monacoEditorExtraLibArgs: IpcMainServiceScan["ApiImplReturns"]["staticInit"]["monacoEditorExtraLibArgs"] = {
+                system: [""],
+                protonMessage: [""],
+            };
 
             for (const key of Object.keys(monacoEditorExtraLibArgs) as Array<keyof typeof monacoEditorExtraLibArgs>) {
                 // TODO read file once (cache the content)
                 const fileContent = await fsPromise.readFile(
                     path.join(ctx.locations.appDir, PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION[key]),
                 );
-                monacoEditorExtraLibArgs[key] = [
-                    fileContent.toString(),
-                    PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION[key],
-                ];
+                monacoEditorExtraLibArgs[key] = [fileContent.toString(), PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION[key]];
             }
 
-            return {
-                electronLocations: ctx.locations,
-                monacoEditorExtraLibArgs,
-                os: {platform: PLATFORM},
-            };
+            return {electronLocations: ctx.locations, monacoEditorExtraLibArgs, os: {platform: PLATFORM}};
         },
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
@@ -99,7 +94,7 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
                 logger.error(
                     nameof(endpoints.init),
                     `"keytar" module is unsupported by the system: `,
-                    (Object(error) as { message?: string }).message,
+                    (Object(error) as {message?: string}).message,
                 );
                 // log full error in "warn" mode only so it doesn't affect the e2e tests
                 logger.warn(nameof(endpoints.init), error);
@@ -107,23 +102,13 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
                 ctx.keytarSupport = false;
 
                 // eslint-disable-next-line  @typescript-eslint/no-unsafe-member-access
-                const errorMessage = String((Object(error) as { message?: string }).message).toLowerCase();
+                const errorMessage = String((Object(error) as {message?: string}).message).toLowerCase();
 
-                ctx.snapPasswordManagerServiceHint = (
-                    errorMessage.includes("snap")
-                    &&
-                    (
-                        errorMessage.includes(PACKAGE_NAME)
-                        ||
-                        errorMessage.includes(PRODUCT_NAME)
-                    )
-                    &&
-                    (
-                        errorMessage.includes("org.freedesktop.secret.")
-                        ||
-                        errorMessage.includes("gnome-keyring")
-                    )
-                );
+                ctx.snapPasswordManagerServiceHint = errorMessage.includes("snap")
+                    && (errorMessage.includes(PACKAGE_NAME)
+                        || errorMessage.includes(PRODUCT_NAME))
+                    && (errorMessage.includes("org.freedesktop.secret.")
+                        || errorMessage.includes("gnome-keyring"));
             }
 
             return {
@@ -132,8 +117,7 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
                 hasSavedPassword,
                 checkUpdateAndNotify: Boolean(
                     BUILD_ENVIRONMENT !== "e2e"
-                    &&
-                    (await endpoints.readConfig()).checkUpdateAndNotify,
+                        && (await endpoints.readConfig()).checkUpdateAndNotify,
                 ),
             };
         },
@@ -154,9 +138,7 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
             await detachFullTextIndexWindow(ctx);
             clearIdleTimeLogOut();
 
-            IPC_MAIN_API_NOTIFICATION$.next(
-                IPC_MAIN_API_NOTIFICATION_ACTIONS.SignedInStateChange({signedIn: false}),
-            );
+            IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.SignedInStateChange({signedIn: false}));
         },
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
@@ -186,10 +168,7 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
 
             if (updatedConfig.zoomFactor !== previousConfig.zoomFactor) {
                 const uiContext = ctx.uiContext && await ctx.uiContext;
-                for (const webContents of [
-                    uiContext?.aboutBrowserWindow?.webContents,
-                    uiContext?.browserWindow?.webContents,
-                ]) {
+                for (const webContents of [uiContext?.aboutBrowserWindow?.webContents, uiContext?.browserWindow?.webContents]) {
                     if (webContents) {
                         await applyZoomFactor(ctx, webContents);
                     }
@@ -233,11 +212,9 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
             const settings = await ctx.settingsStoreQueue.q(async () => {
                 const existingSettings = await store.read();
                 return existingSettings
-                    ? (
-                        upgradeSettings(existingSettings, ctx)
-                            ? store.write(existingSettings)
-                            : existingSettings
-                    )
+                    ? (upgradeSettings(existingSettings, ctx)
+                        ? store.write(existingSettings)
+                        : existingSettings)
                     : store.write(ctx.initialStores.settings);
             });
 
@@ -262,9 +239,7 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
                 await setupIdleTimeLogOut({idleTimeLogOutSec});
             })();
 
-            IPC_MAIN_API_NOTIFICATION$.next(
-                IPC_MAIN_API_NOTIFICATION_ACTIONS.SignedInStateChange({signedIn: true}),
-            );
+            IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.SignedInStateChange({signedIn: true}));
 
             return settings;
         },
@@ -273,10 +248,7 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
         async reEncryptSettings({encryptionPreset, password}) {
             // update the config first (as the consequent actions require it to be updated)
             await ctx.configStoreQueue.q(async () => {
-                await ctx.configStore.write({
-                    ...await ctx.configStore.readExisting(),
-                    encryptionPreset,
-                });
+                await ctx.configStore.write({...await ctx.configStore.readExisting(), encryptionPreset});
             });
 
             const [result] = await Promise.all([
@@ -330,25 +302,21 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
                     } else {
                         // case: "primary db" saving after merging got failed
                         // action: NOOP (new merging will happen next in the code)
-                        noop(); // to please linting (TODO just ignore the linting rule)
+                        doNothing(); // to please linting (TODO just ignore the linting rule)
                     }
                 }
             }
 
             { // merging
                 const shouldMerge = await ctx.sessionDb.persisted();
-                const shouldSaveMerged = (
-                    shouldMerge
-                    &&
-                    fs.statSync(ctx.sessionDb.options.file).size >= config.dbMergeBytesFileSizeThreshold
-                );
+                const shouldSaveMerged = shouldMerge
+                    && fs.statSync(ctx.sessionDb.options.file).size >= config.dbMergeBytesFileSizeThreshold;
                 logger.verbose(nameof(endpoints.loadDatabase), JSON.stringify({shouldMerge, shouldSaveMerged}));
                 if (shouldMerge) {
                     for (const {pk: accountPk} of ctx.sessionDb) {
                         if (
                             Database.mergeAccount(ctx.sessionDb, ctx.db, accountPk)
-                            &&
-                            shouldSaveMerged
+                            && shouldSaveMerged
                         ) {
                             needToSave.db = true;
                         }
@@ -397,9 +365,7 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async generateTOTPToken({secret}) {
-            return {
-                token: authenticator.generate(secret),
-            };
+            return {token: authenticator.generate(secret)};
         },
     };
 

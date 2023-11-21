@@ -1,7 +1,8 @@
 @use "src/web/theming-variables-dark" as theming-variables-dark;
 @import "src/web/variables";
 
-$hovered-href-highlighter-render-visible-class: "visible";
+// gets injected via sass-loader's "additionalData" option
+// $hovered-href-highlighter-render-visible-class: "visible";
 
 :host {
     $background-color: theming-variables-dark.$secondary;
@@ -28,8 +29,4 @@ $hovered-href-highlighter-render-visible-class: "visible";
             display: flex;
         }
     }
-}
-
-:export {
-    renderVisibleClass: #{$hovered-href-highlighter-render-visible-class},
 }

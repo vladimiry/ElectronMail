@@ -2,7 +2,7 @@ import type {AfterViewInit, OnDestroy, OnInit} from "@angular/core";
 import {BehaviorSubject, combineLatest, EMPTY, Observable, Subject, Subscription} from "rxjs";
 import {ChangeDetectionStrategy, Component, ElementRef, Input, NgZone, QueryList, ViewChildren} from "@angular/core";
 import {delay, distinctUntilChanged, filter, first, map, mergeMap, pairwise, withLatestFrom} from "rxjs/operators";
-import {equals} from "remeda";
+import {isDeepEqual} from "remeda";
 import {select} from "@ngrx/store";
 import UUID from "pure-uuid";
 
@@ -38,7 +38,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
             &&
             prev.conversationMail.body === curr.conversationMail.body
             &&
-            equals(prev.conversationMail.failedDownload, curr.conversationMail.failedDownload)
+            isDeepEqual(prev.conversationMail.failedDownload, curr.conversationMail.failedDownload)
         )),
     );
 

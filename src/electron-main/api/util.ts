@@ -1,10 +1,12 @@
-import {getQuickJS, QuickJSWASMModule} from "quickjs-emscripten";
+import {getQuickJS} from "quickjs-emscripten";
+import type {QuickJSWASMModule} from "quickjs-emscripten";
 
 import {Folder, LABEL_TYPE, Mail, View} from "src/shared/model/database";
 import {htmlToText} from "src/shared/util/html-to-text";
 import {parseProtonRestModel, readMailBody} from "src/shared/util/entity";
 import * as RestModel from "src/electron-preload/webview/lib/rest-model";
 
+// TODO quickJS: consider separating it to "Worker threads"
 export const resolveCachedQuickJSInstance: () => Promise<QuickJSWASMModule> = (() => {
     let getQuickJSPromise: ReturnType<typeof getQuickJS> | undefined;
     return async () => getQuickJSPromise ??= getQuickJS();

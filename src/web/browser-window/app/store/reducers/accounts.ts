@@ -1,4 +1,3 @@
-import {noop} from "remeda";
 import {produce} from "immer";
 
 import {accountPickingPredicate} from "src/shared/util";
@@ -194,7 +193,9 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
             PatchGlobalProgress({patch}) {
                 draftState.globalProgress = {...draftState.globalProgress, ...patch};
             },
-            default: noop,
+            default() {
+                // NOOP
+            },
         });
     });
 }

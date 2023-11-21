@@ -1,6 +1,6 @@
 import _logger from "electron-log";
 import {ClassType, transformAndValidate, TransformValidationOptions} from "class-transformer-validator";
-import {flatten} from "remeda";
+import {flat} from "remeda";
 import {ValidationError} from "class-validator";
 
 import {Contact, Entity, Folder, FsDbDataContainer, Mail, ValidatedEntity} from "src/shared/model/database";
@@ -34,7 +34,7 @@ function flattenValidationError(rawError: Error): Error | string {
         return rawError;
     }
 
-    const errors: ValidationError[] = flatten(rawError); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+    const errors: ValidationError[] = flat(rawError); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
     const messages: string[] = [];
 
     if (!errors.length || !(errors[0] instanceof ValidationError)) {
@@ -50,12 +50,8 @@ function flattenValidationError(rawError: Error): Error | string {
 
         messages.push(
             error.property
-            +
-            ": "
-            +
-            Object.entries(error.constraints ?? {})
-                .map(([key, value]) => `${key}: ${value}`)
-                .join(", "),
+                + ": "
+                + Object.entries(error.constraints ?? {}).map(([key, value]) => `${key}: ${value}`).join(", "),
         );
 
         if (error.children) {
@@ -66,18 +62,11 @@ function flattenValidationError(rawError: Error): Error | string {
     return messages.join("; ");
 }
 
-export async function validateEntity<T extends Entity>(
-    entityType: keyof FsDbDataContainer,
-    entity: T,
-): Promise<T & ValidatedEntity> {
+export async function validateEntity<T extends Entity>(entityType: keyof FsDbDataContainer, entity: T): Promise<T & ValidatedEntity> {
     const classType = entityClassesMap[entityType] as unknown as ClassType<T>;
 
     try {
-        const validatedEntityInstance = await transformAndValidate(
-            classType,
-            entity,
-            transformValidationOptions,
-        );
+        const validatedEntityInstance = await transformAndValidate(classType, entity, transformValidationOptions);
 
         // TODO performance: why JSON.parse <= JSON.stringify call?
         return JSON.parse( // eslint-disable-line @typescript-eslint/no-unsafe-return
@@ -92,21 +81,13 @@ export async function validateEntity<T extends Entity>(
                     entityType,
                     ...(() => { // eslint-disable-line @typescript-eslint/explicit-function-return-type
                         if (entityType === "mails") {
-                            return {
-                                sentDate: (entity as unknown as Mail).sentDate,
-                                subject: (entity as unknown as Mail).subject,
-                            };
+                            return {sentDate: (entity as unknown as Mail).sentDate, subject: (entity as unknown as Mail).subject};
                         }
                         if (entityType === "contacts") {
-                            return {
-                                firstName: (entity as unknown as Contact).firstName,
-                                lastName: (entity as unknown as Contact).lastName,
-                            };
+                            return {firstName: (entity as unknown as Contact).firstName, lastName: (entity as unknown as Contact).lastName};
                         }
                         if (entityType === "folders") {
-                            return {
-                                folderName: (entity as unknown as Folder).name,
-                            };
+                            return {folderName: (entity as unknown as Folder).name};
                         }
                         return {};
                     })(),
@@ -115,8 +96,6 @@ export async function validateEntity<T extends Entity>(
             }),
         );
 
-        throw new Error(
-            `Local database saving and data syncing iterations aborted due to the "${entityType}" entity validation error`,
-        );
+        throw new Error(`Local database saving and data syncing iterations aborted due to the "${entityType}" entity validation error`);
     }
 }

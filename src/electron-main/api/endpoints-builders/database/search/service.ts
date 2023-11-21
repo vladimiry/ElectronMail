@@ -66,6 +66,9 @@ export const secondSearchStep = async (
         throw new Error("Failed to resolve the account");
     }
 
+    // TODO quickJS:
+    //  - improve performance (execute function on context with preset variables/functions)
+    //  - process mails in batch mode vs per-email function calling)
     const quickJS = codeFilter && await resolveCachedQuickJSInstance();
     const filters = {
         byFolder: folderIds

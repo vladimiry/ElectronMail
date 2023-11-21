@@ -1,5 +1,5 @@
 import {CommonModule} from "@angular/common";
-import {LetModule} from "@ngrx/component";
+import {LetDirective} from "@ngrx/component";
 import {NgModule} from "@angular/core";
 import {NgSelectModule} from "@ng-select/ng-select";
 import {ReactiveFormsModule} from "@angular/forms";
@@ -10,7 +10,7 @@ import {UnreadBadgeComponent} from "src/web/browser-window/app/_shared/unread-ba
     imports: [
         CommonModule,
         NgSelectModule,
-        LetModule,
+        LetDirective,
         ReactiveFormsModule,
     ],
     declarations: [
@@ -19,7 +19,7 @@ import {UnreadBadgeComponent} from "src/web/browser-window/app/_shared/unread-ba
     exports: [
         CommonModule,
         NgSelectModule,
-        LetModule,
+        LetDirective,
         ReactiveFormsModule,
         UnreadBadgeComponent,
     ],

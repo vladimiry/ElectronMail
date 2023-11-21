@@ -2,7 +2,7 @@ import {produce} from "immer";
 
 import {Config} from "src/shared/model/options";
 import * as fromRoot from "src/web/browser-window/app/store/reducers/root";
-import {initialConfig} from "src/shared/util";
+import {initialConfig} from "src/shared/util/config";
 import {InitResponse} from "src/shared/api/main-process";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {NAVIGATION_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";

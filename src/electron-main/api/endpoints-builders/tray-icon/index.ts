@@ -1,6 +1,6 @@
 import {app} from "electron";
-import {equals} from "remeda";
 import {first} from "rxjs/operators";
+import {isDeepEqual} from "remeda";
 import {lastValueFrom} from "rxjs";
 
 import {BaseConfig} from "src/shared/model/options";
@@ -10,10 +10,7 @@ import {DEFAULT_TRAY_ICON_COLOR, DEFAULT_UNREAD_BADGE_BG_COLOR, DEFAULT_UNREAD_B
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {loggedOutBundle, recolor, trayIconBundleFromPath, unreadNative} from "./lib";
 
-const trayStyle: DeepReadonly<{
-    loggedOut: CircleConfig;
-    unread: CircleConfig & { textColor: string };
-}> = {
+const trayStyle: DeepReadonly<{loggedOut: CircleConfig; unread: CircleConfig & {textColor: string}}> = {
     loggedOut: {scale: .25, color: "#F9C83E"},
     unread: {scale: .75, color: DEFAULT_UNREAD_BADGE_BG_COLOR, textColor: DEFAULT_UNREAD_BADGE_BG_TEXT},
 };
@@ -21,13 +18,15 @@ const trayStyle: DeepReadonly<{
 type resolveStateType = (
     ctx: DeepReadonly<Context>,
     sizeConfig: Pick<BaseConfig, "customTrayIconSize" | "customTrayIconSizeValue">,
-) => Promise<{
-    readonly fileIcon: ImageBundle;
-    trayIconColor: string;
-    customSizeConfig?: typeof sizeConfig;
-    defaultIcon: ImageBundle;
-    loggedOutIcon: ImageBundle;
-}>;
+) => Promise<
+    {
+        readonly fileIcon: ImageBundle;
+        trayIconColor: string;
+        customSizeConfig?: typeof sizeConfig;
+        defaultIcon: ImageBundle;
+        loggedOutIcon: ImageBundle;
+    }
+>;
 
 const resolveState: resolveStateType = (() => {
     let state: Unpacked<ReturnType<resolveStateType>> | undefined;
@@ -41,12 +40,7 @@ const resolveState: resolveStateType = (() => {
         const defaultIcon = fileIcon;
         const loggedOutIcon = await loggedOutBundle(defaultIcon, trayStyle.loggedOut, sizeConfig);
 
-        state = {
-            trayIconColor: DEFAULT_TRAY_ICON_COLOR,
-            fileIcon,
-            defaultIcon,
-            loggedOutIcon,
-        };
+        state = {trayIconColor: DEFAULT_TRAY_ICON_COLOR, fileIcon, defaultIcon, loggedOutIcon};
 
         return state;
     };
@@ -54,9 +48,7 @@ const resolveState: resolveStateType = (() => {
     return resultFn;
 })();
 
-export async function buildEndpoints(
-    ctx: DeepReadonly<Context>,
-): Promise<Pick<IpcMainApiEndpoints, "updateOverlayIcon">> {
+export async function buildEndpoints(ctx: DeepReadonly<Context>): Promise<Pick<IpcMainApiEndpoints, "updateOverlayIcon">> {
     return {
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async updateOverlayIcon({hasLoggedOut, unread}) {
@@ -81,17 +73,13 @@ export async function buildEndpoints(
 
             if (
                 (state.trayIconColor !== customTrayIconColor)
-                ||
-                !equals(state.customSizeConfig, customSizeConfig)
+                || !isDeepEqual(state.customSizeConfig, customSizeConfig)
             ) {
-                state.defaultIcon = await recolor(
-                    {
-                        source: state.fileIcon.bitmap,
-                        fromColor: DEFAULT_TRAY_ICON_COLOR,
-                        toColor: customTrayIconColor,
-                    },
-                    customSizeConfig,
-                );
+                state.defaultIcon = await recolor({
+                    source: state.fileIcon.bitmap,
+                    fromColor: DEFAULT_TRAY_ICON_COLOR,
+                    toColor: customTrayIconColor,
+                }, customSizeConfig);
                 state.loggedOutIcon = await loggedOutBundle(state.defaultIcon, trayStyle.loggedOut, customSizeConfig);
                 state.trayIconColor = customTrayIconColor;
                 state.customSizeConfig = customSizeConfig;

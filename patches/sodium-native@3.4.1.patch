@@ -1,3 +1,13 @@
+diff --git a/binding.c b/binding.c
+index d05f87ceb0b981fa3c6c74451403b76eb9fb4788..c14170d5f7cf046a05732eaf54da02e2bc15349b 100644
+--- a/binding.c
++++ b/binding.c
+@@ -1,4 +1,5 @@
+ #define NAPI_EXPERIMENTAL
++#define NODE_API_EXPERIMENTAL_NOGC_ENV_OPT_OUT
+ #include <node_api.h>
+ #include <string.h>
+ #include <assert.h>
 diff --git a/deps/bin.js b/deps/bin.js
 index 086a7575961ffab16857ac03cdf5dd903b4d7987..1b8a9ab2bc8e93da3379182642665282b01c8691 100755
 --- a/deps/bin.js

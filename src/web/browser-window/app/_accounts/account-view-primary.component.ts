@@ -1,22 +1,22 @@
-import {combineLatest, firstValueFrom, race, Subject} from "rxjs";
 import {Component, Injector} from "@angular/core";
-import {distinctUntilChanged, filter, map, pairwise, takeUntil, withLatestFrom} from "rxjs/operators";
-import {equals, pick} from "remeda";
+import {distinctUntilChanged, map, takeUntil, withLatestFrom} from "rxjs/operators";
+import {firstValueFrom, race, Subject} from "rxjs";
+import {isDeepEqual} from "remeda";
 import type {OnInit} from "@angular/core";
 
-import {AccountConfig} from "src/shared/model/account";
 import {ACCOUNTS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsService} from "./accounts.service";
 import {AccountViewAbstractComponent} from "./account-view-abstract-component.directive";
-import {getWebLogger} from "src/web/browser-window/util";
-import {testProtonMailAppPage} from "src/shared/util/proton-webclient";
+import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
+import {IPC_WEBVIEW_API_CHANNELS_MAP} from "src/shared/api/webview/const";
+import {ONE_SECOND_MS} from "src/shared/const";
 
 @Component({
     selector: "electron-mail-account-view-primary",
     template: "",
 })
 export class AccountViewPrimaryComponent extends AccountViewAbstractComponent implements OnInit {
-    private readonly logger = getWebLogger(__filename, nameof(AccountViewPrimaryComponent));
+    // private readonly logger = getWebLogger(__filename, nameof(AccountViewPrimaryComponent));
 
     private readonly accountsService: AccountsService;
 
@@ -28,105 +28,73 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
     }
 
     ngOnInit(): void {
+        const cancelPreviousSyncing$ = new Subject<void>();
+
         this.addSubscription(
-            combineLatest([
-                // resolves the "webview" and also triggers the login on "entry url change"
-                this.filterDomReadyEvent().pipe(
-                    filter(({webView: {src: url}}) => testProtonMailAppPage({url, logger: this.logger}).projectType === "proton-mail"),
-                ),
-                // triggers the login on certain account changes
-                this.account$.pipe(
-                    pairwise(),
-                    filter(([prev, curr]) => {
-                        return (
-                            // login view displayed
-                            (
-                                curr.notifications.pageType.type !== "unknown"
-                                &&
-                                prev.notifications.pageType.type !== curr.notifications.pageType.type
-                            )
-                            ||
-                            // credentials changed
-                            !equals(this.pickCredentialFields(prev.accountConfig), this.pickCredentialFields(curr.accountConfig))
-                            ||
-                            // login delay changed
-                            !equals(this.pickLoginDelayFields(prev.accountConfig), this.pickLoginDelayFields(curr.accountConfig))
+            this.filterEvent("ipc-message")
+                .pipe(withLatestFrom(this.account$))
+                .subscribe(async ([{webView, channel}, account]) => {
+                    if (channel === IPC_WEBVIEW_API_CHANNELS_MAP["primary-login"].registered) {
+                        // TODO move to "effects"
+                        const {login} = account.accountConfig;
+                        await this.injector.get(ElectronService).primaryLoginWebViewClient(
+                            {webView}, {
+                                finishPromise: firstValueFrom(this.buildNavigationOrDestroyingSingleNotification()),
+                                timeoutMs: ONE_SECOND_MS * 10
+                            },
+                        )("fillLogin")({accountIndex: account.accountIndex, login});
+                        this.action(ACCOUNTS_ACTIONS.Patch({login, patch: {loginFilledOnce: true}}));
+                    } else if (channel === IPC_WEBVIEW_API_CHANNELS_MAP.primary.registered) {
+                        this.action(
+                            ACCOUNTS_ACTIONS.SetupPrimaryNotificationChannel(
+                                {
+                                    account,
+                                    webView,
+                                    finishPromise: firstValueFrom(this.buildNavigationOrDestroyingSingleNotification()),
+                                },
+                            ),
                         );
-                    }),
-                )
-            ]).pipe(
-                withLatestFrom(this.account$),
-            ).subscribe(([[{webView}], account]) => {
-                if (account.notifications.pageType.type === "unknown") {
-                    return;
-                }
-                this.log("info", [`dispatch "TryToLogin"`]);
-                this.action(ACCOUNTS_ACTIONS.TryToLogin({account, webView}));
-            }),
+
+                        this.account$
+                            .pipe(
+                                map(({notifications, accountConfig, accountIndex}) => ({
+                                    pk: {login: accountConfig.login, accountIndex},
+                                    data: {loggedIn: notifications.loggedIn, database: accountConfig.database},
+                                })),
+                                // process switching of either "loggedIn" or "database" flags
+                                distinctUntilChanged(({data: prev}, {data: curr}) => isDeepEqual(prev, curr)),
+                                takeUntil(this.buildNavigationOrDestroyingSingleNotification()),
+                            )
+                            .subscribe(({pk, data: {loggedIn, database}}) => {
+                                cancelPreviousSyncing$.next(void 0);
+                                if (!loggedIn || !database) {
+                                    return; // syncing disabled
+                                }
+                                this.action(
+                                    ACCOUNTS_ACTIONS.ToggleSyncing({
+                                        pk,
+                                        webView,
+                                        finishPromise: firstValueFrom(
+                                            race(this.buildNavigationOrDestroyingSingleNotification(), cancelPreviousSyncing$),
+                                        ),
+                                    }),
+                                );
+                            });
+                    }
+                }),
         );
 
         this.addSubscription(
-            this.filterDomReadyEvent()
+            this.filterEvent("dom-ready")
                 .pipe(withLatestFrom(this.account$))
-                .subscribe(([{webView}, account]) => {
+                .subscribe(([, account]) => {
                     // app set's app notification channel on webview.dom-ready event
                     // which means user is not logged-in yet at this moment, so resetting the state
                     this.action(
                         this.accountsService
                             .generatePrimaryNotificationsStateResetAction({login: account.accountConfig.login}),
                     );
-
-                    if (!testProtonMailAppPage({url: webView.src, logger: this.logger}).shouldInitProviderApi) {
-                        this.log("info", [`skip webview.dom-ready processing for ${webView.src} page`]);
-                        return;
-                    }
-
-                    const finishNotification$ = this.domReadyOrDestroyedSingleNotification();
-                    const breakPreviousSyncing$ = new Subject<void>();
-
-                    this.action(
-                        ACCOUNTS_ACTIONS.SetupPrimaryNotificationChannel(
-                            {account, webView, finishPromise: firstValueFrom(finishNotification$)},
-                        ),
-                    );
-
-                    this.account$
-                        .pipe(
-                            map(({notifications, accountConfig, accountIndex}) => ({
-                                pk: {login: accountConfig.login, accountIndex},
-                                data: {loggedIn: notifications.loggedIn, database: accountConfig.database},
-                            })),
-                            // process switching of either "loggedIn" or "database" flags
-                            distinctUntilChanged(({data: prev}, {data: curr}) => equals(prev, curr)),
-                            takeUntil(finishNotification$),
-                        )
-                        .subscribe(({pk, data: {loggedIn, database}}) => {
-                            breakPreviousSyncing$.next(void 0);
-                            if (!loggedIn || !database) {
-                                return; // syncing disabled
-                            }
-                            this.action(
-                                ACCOUNTS_ACTIONS.ToggleSyncing({
-                                    pk,
-                                    webView,
-                                    finishPromise: firstValueFrom(
-                                        race(
-                                            finishNotification$,
-                                            breakPreviousSyncing$,
-                                        ),
-                                    ),
-                                }),
-                            );
-                        });
                 }),
         );
-    }
-
-    private pickCredentialFields(value: AccountConfig): Pick<AccountConfig, "credentials"> {
-        return pick(value, ["credentials"]);
-    }
-
-    private pickLoginDelayFields(value: AccountConfig): Pick<AccountConfig, "loginDelayUntilSelected" | "loginDelaySecondsRange"> {
-        return pick(value, ["loginDelayUntilSelected", "loginDelaySecondsRange"]);
     }
 }

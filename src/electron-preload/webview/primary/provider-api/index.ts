@@ -99,11 +99,11 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                     distinctUntilChanged(),
                 ),
                 buildEventsApiUrlTester(/*{entryApiUrl}*/) {
-                    const substr = "/v4/events/";
+                    const substr = "/core/v4/events/";
                     return (url) => url.includes(substr);
                 },
                 buildMessagesCountApiUrlTester(/*{entryApiUrl}*/) {
-                    const substr = "/v4/messages/count";
+                    const substr = "/mail/v4/messages/count";
                     return (url) => url.endsWith(substr);
                 },
                 async decryptMessage(message) {

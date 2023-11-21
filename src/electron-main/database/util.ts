@@ -39,6 +39,7 @@ const resolveAccountFolders: resolveAccountFoldersType = (
             // this folder should not affect the combined "unread" state calculation
             // so "notify" should be set to 0/disabled since otherwise desktop notifications will always be displayed
             SYSTEM_FOLDER_IDENTIFIERS["All Mail"],
+            SYSTEM_FOLDER_IDENTIFIERS["Almost All Mail"],
         ];
         return (account, includingSpam) => [
             ...Object.values(account.folders),

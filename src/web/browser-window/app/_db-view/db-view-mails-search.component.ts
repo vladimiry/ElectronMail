@@ -98,6 +98,7 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
     private readonly defaultUncheckedFolderIds: ReadonlySet<Unpacked<typeof SYSTEM_FOLDER_IDENTIFIERS._.values>> = new Set([
         SYSTEM_FOLDER_IDENTIFIERS["Virtual Unread"],
         SYSTEM_FOLDER_IDENTIFIERS["All Mail"],
+        SYSTEM_FOLDER_IDENTIFIERS["Almost All Mail"],
         SYSTEM_FOLDER_IDENTIFIERS.Spam,
     ]);
 

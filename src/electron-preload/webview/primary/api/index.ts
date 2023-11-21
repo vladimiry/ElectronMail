@@ -63,8 +63,10 @@ export function registerApi(providerApi: ProviderApi): void {
                 {system: [], custom: []},
             );
             const {id: mailId, conversationEntryPk: conversationId} = input.mail;
-            const [systemFolderId = systemMailFolderIds[0] /* falling back to first value if no other than "all mail" folder resolved */]
-                = systemMailFolderIds.filter((id) => id !== SYSTEM_FOLDER_IDENTIFIERS["All Mail"]);
+            // falling back to first value if no other than "all mail" folder resolved
+            const [systemFolderId = systemMailFolderIds[0]] = systemMailFolderIds.filter((id) => {
+                return id !== SYSTEM_FOLDER_IDENTIFIERS["All Mail"] && id !== SYSTEM_FOLDER_IDENTIFIERS["Almost All Mail"];
+            });
             // TODO resolve "folder.id" value from the folder that contains a minimum items count
             //      so narrowest result if multiple items resolved (so protonmail will have to load less data, pagination thing)
             const folderId: string | undefined =

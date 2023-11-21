@@ -10,6 +10,7 @@ export const SYSTEM_FOLDER_IDENTIFIERS = buildEnumBundle({
     Trash: "3",
     Spam: "4",
     ["All Mail"]: "5",
+    ["Almost All Mail"]: "15",
     Starred: "10",
     Archive: "6",
     Sent: "7",

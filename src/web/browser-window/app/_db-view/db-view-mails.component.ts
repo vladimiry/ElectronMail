@@ -159,6 +159,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
                 SYSTEM_FOLDER_IDENTIFIERS["All Drafts"],
                 SYSTEM_FOLDER_IDENTIFIERS["All Sent"],
                 SYSTEM_FOLDER_IDENTIFIERS["All Mail"],
+                SYSTEM_FOLDER_IDENTIFIERS["Almost All Mail"],
                 SYSTEM_FOLDER_IDENTIFIERS.Search,
                 SYSTEM_FOLDER_IDENTIFIERS.Label,
             ]);

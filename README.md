@@ -2,7 +2,7 @@
   <img src="src/assets/og-image/github-og-image-readme.png">
 </p>
 
-ElectronMail is an [Electron](https://electronjs.org)-based unofficial desktop client for [ProtonMail](https://protonmail.com/). The app aims to provide enhanced desktop user experience enabling features that are not supported by the official in-browser web clients.
+ElectronMail is an [Electron](https://electronjs.org)-based unofficial desktop client for [ProtonMail](https://protonmail.com/). The app aims to provide enhanced desktop user experience enabling features that are not supported by the official in-browser [web clients](https://github.com/ProtonMail/WebClients).
 It is written in [TypeScript](http://www.typescriptlang.org) and uses [Angular](https://angular.io).
 
 [![GitHub Actions CI](https://img.shields.io/github/actions/workflow/status/vladimiry/ElectronMail/main.yml?branch=master&logo=github&label=GitHub%20Actions%20CI)](https://github.com/vladimiry/ElectronMail/actions)

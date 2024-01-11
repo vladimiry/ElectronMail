@@ -1,19 +1,16 @@
-import {
-    buffer, concatMap, debounceTime, distinctUntilChanged, filter, first, map, mergeMap, switchMap, tap, throttleTime, withLatestFrom,
-} from "rxjs/operators";
-import {EMPTY, from, interval, lastValueFrom, merge, Observable} from "rxjs";
+import {buffer, concatMap, debounceTime, distinctUntilChanged, filter, map, mergeMap, switchMap, tap, throttleTime} from "rxjs/operators";
+import {EMPTY, from, merge, Observable} from "rxjs";
 import {pick} from "remeda";
 import {serializeError} from "serialize-error";
 
 import {buildDbPatch, buildDbPatchEndpoint} from "./db-patch";
 import {curryFunctionMembers, isEntityUpdatesPatchNotEmpty} from "src/shared/util";
-import {
-    documentCookiesForCustomScheme, fillInputValue, getLocationHref, resolveDomElements, submitTotpToken,
-} from "src/electron-preload/webview/lib/util";
+import {documentCookiesForCustomScheme} from "src/electron-preload/webview/lib/util";
 import {dumpProtonSharedSession} from "src/electron-preload/webview/primary/shared-session";
 import {FETCH_NOTIFICATION$} from "src/electron-preload/webview/primary/provider-api/notifications";
+import {getLocationHref} from "src/shared/util/web";
 import {IpcMainServiceScan} from "src/shared/api/main-process";
-import {ONE_SECOND_MS, WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS} from "src/shared/const";
+import {ONE_SECOND_MS} from "src/shared/const";
 import {parseProtonRestModel} from "src/shared/util/entity";
 import {PROTON_PRIMARY_IPC_WEBVIEW_API, ProtonPrimaryApi, ProtonPrimaryNotificationOutput} from "src/shared/api/webview/primary";
 import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
@@ -21,7 +18,6 @@ import {resolveIpcMainApi} from "src/electron-preload/lib/util";
 import * as RestModel from "src/electron-preload/webview/lib/rest-model";
 import {SYSTEM_FOLDER_IDENTIFIERS} from "src/shared/model/database";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
-import * as WebviewConstants from "src/electron-preload/webview/lib/const";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, __filename);
 
@@ -38,17 +34,15 @@ export function registerApi(providerApi: ProviderApi): void {
     const endpoints: ProtonPrimaryApi = {
         ...buildDbPatchEndpoint(providerApi),
 
-        async ping() {}, // eslint-disable-line @typescript-eslint/no-empty-function
+        async ping({accountIndex}) {
+            return {value: JSON.stringify({accountIndex})};
+        },
 
         async selectMailOnline(input) {
             _logger.info(nameof(endpoints.selectMailOnline), input.accountIndex);
 
-            const cachedMailSettingsModel = await lastValueFrom(
-                providerApi._custom_.cachedMailSettingsModel$
-                    .pipe(first()),
-            );
-            const {ViewMode: viewMode} = cachedMailSettingsModel;
-            const messagesViewMode = viewMode === providerApi.constants.VIEW_MODE.SINGLE;
+            const mailSettingsModel = await providerApi._custom_.getMailSettingsModel();
+            const messagesViewMode = mailSettingsModel.ViewMode === providerApi.constants.VIEW_MODE.SINGLE;
             const {system: systemMailFolderIds, custom: [customFolderId]} = input.mail.mailFolderIds.reduce(
                 (accumulator: {
                      readonly system: typeof input.mail.mailFolderIds; // can't be empty
@@ -183,104 +177,6 @@ export function registerApi(providerApi: ProviderApi): void {
             });
         },
 
-        async fillLogin({login, accountIndex}) {
-            const logger = curryFunctionMembers(_logger, nameof(endpoints.fillLogin), accountIndex);
-
-            logger.info();
-
-            const elements = await resolveDomElements(
-                {
-                    username: () => document.querySelector<HTMLInputElement>("form[name=loginForm] #username"),
-                },
-                logger,
-            );
-            logger.verbose(`elements resolved`);
-
-            fillInputValue(elements.username, login);
-            logger.verbose(`input values filled`);
-
-            elements.username.readOnly = true;
-        },
-
-        async login({login, password, accountIndex}) {
-            const logger = curryFunctionMembers(_logger, nameof(endpoints.login), accountIndex);
-
-            logger.info();
-
-            await endpoints.fillLogin({login, accountIndex});
-            logger.verbose(`fillLogin() executed`);
-
-            const elements = await resolveDomElements(
-                {
-                    password: () => document.querySelector<HTMLInputElement>("form[name=loginForm] #password"),
-                    submit: () => document.querySelector<HTMLElement>("form[name=loginForm] [type=submit]"),
-                },
-                logger,
-            );
-            logger.verbose(`elements resolved`);
-
-            if (elements.password.value) {
-                throw new Error(`Password is not supposed to be filled already on "login" stage`);
-            }
-
-            fillInputValue(elements.password, password);
-            logger.verbose(`input values filled`);
-
-            elements.submit.click();
-            logger.verbose(`clicked`);
-        },
-
-        async login2fa({secret, accountIndex}) {
-            const logger = curryFunctionMembers(_logger, nameof(endpoints.login2fa), accountIndex);
-
-            logger.info();
-
-            const resolveElementsConfig = {
-                input: () => document.querySelector<HTMLInputElement>("form[name=totpForm] #totp"),
-                button: () => document.querySelector<HTMLElement>("form[name=totpForm] [type=submit]"),
-            };
-            const elements = await resolveDomElements(resolveElementsConfig, logger);
-
-            logger.verbose("elements resolved");
-
-            return submitTotpToken(
-                elements.input,
-                elements.button,
-                async () => {
-                    const response = await resolveIpcMainApi({logger})("generateTOTPToken")({secret});
-                    return response.token;
-                },
-                logger,
-                {
-                    submittingDetection: async () => {
-                        try {
-                            await resolveDomElements(resolveElementsConfig, logger, {iterationsLimit: 1});
-                        } catch {
-                            return true;
-                        }
-                        return false;
-                    },
-                },
-            );
-        },
-
-        async unlock({mailPassword, accountIndex}) {
-            const logger = curryFunctionMembers(_logger, nameof(endpoints.unlock), accountIndex);
-
-            logger.info(accountIndex);
-
-            const elements = await resolveDomElements(
-                {
-                    mailboxPassword: () => document.querySelector<HTMLInputElement>("form[name=unlockForm] #mailboxPassword"),
-                    submit: () => document.querySelector<HTMLElement>("form[name=unlockForm] [type=submit]"),
-                },
-                logger,
-            );
-
-            fillInputValue(elements.mailboxPassword, mailPassword);
-            elements.submit.click();
-        },
-
         async resolveLiveProtonClientSession({accountIndex}) {
             _logger.info(nameof(endpoints.resolveLiveProtonClientSession), accountIndex);
             return dumpProtonSharedSession();
@@ -297,69 +193,16 @@ export function registerApi(providerApi: ProviderApi): void {
             logger.info();
 
             type LoggedInOutput = Required<Pick<ProtonPrimaryNotificationOutput, "loggedIn">>;
-            type PageTypeOutput = Required<Pick<ProtonPrimaryNotificationOutput, "pageType">>;
             type UnreadOutput = Required<Pick<ProtonPrimaryNotificationOutput, "unread">>;
             type BatchEntityUpdatesCounterOutput = Required<Pick<ProtonPrimaryNotificationOutput, "batchEntityUpdatesCounter">>;
 
             const observables: [
                 Observable<LoggedInOutput>,
-                Observable<PageTypeOutput>,
                 Observable<UnreadOutput>,
                 Observable<BatchEntityUpdatesCounterOutput>
             ] = [
                 providerApi._custom_.loggedIn$.pipe(
                     map((loggedIn) => ({loggedIn})),
-                    tap(({loggedIn}) => {
-                        if (loggedIn) {
-                            window.sessionStorage.removeItem(WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS);
-                        }
-                    }),
-                ),
-
-                // TODO listen instead of polling
-                interval(WebviewConstants.NOTIFICATION_PAGE_TYPE_POLLING_INTERVAL).pipe(
-                    withLatestFrom(providerApi._custom_.loggedIn$),
-                    map(
-                        (() => {
-                            const formNamesToPageTypeMapping
-                                = new Map([["loginForm", "login"], ["totpForm", "login2fa"], ["unlockForm", "unlock"]] as const);
-
-                            return ([, loggedIn]: [number, boolean]) => {
-                                const pageType: PageTypeOutput["pageType"] = {type: "unknown"};
-
-                                if (!loggedIn) {
-                                    for (const [formName, type] of formNamesToPageTypeMapping) {
-                                        if (
-                                            // test for form element and it's visibility
-                                            document.querySelector<HTMLFormElement>(`form[name=${formName}]`)?.offsetParent
-                                        ) {
-                                            pageType.type = type;
-                                            break;
-                                        }
-                                    }
-                                }
-
-                                return {pageType};
-                            };
-                        })(),
-                    ),
-                    distinctUntilChanged(({pageType: prev}, {pageType: curr}) => curr.type === prev.type),
-                    map((value) => {
-                        if (value.pageType.type !== "login") {
-                            return value;
-                        }
-
-                        const pageType: typeof value.pageType = {
-                            ...value.pageType,
-                            skipLoginDelayLogic: Boolean(
-                                window.sessionStorage.getItem(WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS),
-                            ),
-                        };
-
-                        window.sessionStorage.removeItem(WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS);
-
-                        return {pageType};
-                    }),
                 ),
 
                 (() => {
@@ -426,7 +269,7 @@ export function registerApi(providerApi: ProviderApi): void {
                                 })
                             );
                         }),
-                        distinctUntilChanged((prev, curr) => curr.unread === prev.unread),
+                        distinctUntilChanged(({unread: prev}, {unread: curr}) => curr === prev),
                     );
                 })(),
 

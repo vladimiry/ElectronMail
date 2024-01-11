@@ -31,7 +31,6 @@ export const ACCOUNTS_ACTIONS = propsRecordToActionsRecord(
         Synced: props<{ pk: WebAccountPk }>(),
         SetupPrimaryNotificationChannel: props<{ account: WebAccount; webView: Electron.WebviewTag; finishPromise: Promise<void> }>(),
         SetupCalendarNotificationChannel: props<{ account: WebAccount; webView: Electron.WebviewTag; finishPromise: Promise<void> }>(),
-        TryToLogin: props<{ account: WebAccount; webView: Electron.WebviewTag }>(),
         WireUpConfigs: props<DeepReadonly<{ accountConfigs: AccountConfig[] }>>(),
         PatchGlobalProgress: props<{ patch: State["globalProgress"] }>(),
         SelectMailOnline:

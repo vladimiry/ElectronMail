@@ -1,20 +1,29 @@
+import {IPC_WEBVIEW_API_CHANNELS_MAP} from "src/shared/api/webview/const";
+import {PROTON_APP_MAIL_LOGIN_PATHNAME} from "src/shared/const/proton-url";
+
 const main = async (): Promise<void> => {
     const [
+        {ipcRenderer},
         {WEBVIEW_LOGGERS},
         {curryFunctionMembers},
         {testProtonMailAppPage},
-        {documentCookiesForCustomScheme, getLocationHref, attachUnhandledErrorHandler},
+        {documentCookiesForCustomScheme, attachUnhandledErrorHandler},
+        {getLocationHref},
         {initProviderApi},
         {registerApi},
+        {registerApi: registerLoginApi},
         {setupProtonOpenNewTabEventHandler},
         {setupProviderIntegration},
     ] = await Promise.all([
+        import("electron"),
         import("src/electron-preload/webview/lib/const"),
         import("src/shared/util"),
         import("src/shared/util/proton-webclient"),
         import("src/electron-preload/webview/lib/util"),
+        import("src/shared/util/web"),
         import("./provider-api"),
         import("./api"),
+        import("./api/login"),
         import("src/electron-preload/webview/lib/custom-event"),
         import("./provider-api/setup"),
     ]);
@@ -27,6 +36,11 @@ const main = async (): Promise<void> => {
     documentCookiesForCustomScheme.enable(logger);
     setupProtonOpenNewTabEventHandler(logger);
     setupProviderIntegration(protonAppPageStatus);
+
+    if (protonAppPageStatus.packagedWebClientUrl?.pathname === PROTON_APP_MAIL_LOGIN_PATHNAME) {
+        registerLoginApi();
+        return;
+    }
 
     if (!protonAppPageStatus.shouldInitProviderApi) {
         return;
@@ -41,6 +55,8 @@ const main = async (): Promise<void> => {
         logger.error(error);
         throw error;
     }
+
+    ipcRenderer.sendToHost(IPC_WEBVIEW_API_CHANNELS_MAP.primary.registered);
 };
 
 (async () => {

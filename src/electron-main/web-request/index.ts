@@ -255,7 +255,9 @@ export function initWebRequestListenersByAccount(
                 requestHeaders[headerName] = getUserAgentByAccount({customUserAgent});
             }
 
-            protonApiUrlsUtil.patchAuthRequestHeaders(String(url?.pathname), requestHeaders);
+            // the "x-pm-appversion" header gets set to "web-account" automatically after login form moved to a separate page
+            // so for now skipping manual headers setting
+            // protonApiUrlsUtil.patchAuthRequestHeaders(String(url?.pathname), requestHeaders);
             protonApiUrlsUtil.patchMailApiRequestHeaders(String(url?.pathname), requestHeaders);
 
             callback({requestHeaders});

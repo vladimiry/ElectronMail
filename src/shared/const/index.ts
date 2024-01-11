@@ -104,8 +104,6 @@ export const LAYOUT_MODES = [
     {value: "left-thin", title: "Left (thin)"},
 ] as const;
 
-export const WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS = "ELECTRON_MAIL_SKIP_LOGIN_DELAYS";
-
 // TODO electron: get rid of "baseURLForDataURL" workaround, see https://github.com/electron/electron/issues/20700
 export const WEB_PROTOCOL_SCHEME = "web";
 

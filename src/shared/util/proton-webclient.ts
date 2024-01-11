@@ -3,6 +3,7 @@ import {URL} from "@cliqz/url-parser";
 
 import {AccountConfig} from "src/shared/model/account";
 import {LOCAL_WEBCLIENT_ORIGIN, WEB_CLIENTS_BLANK_HTML_FILE_NAME} from "src/shared/const";
+import {PROTON_APP_MAIL_LOGIN_PATHNAME} from "src/shared/const/proton-url";
 import {PROVIDER_REPO_MAP} from "src/shared/const/proton-apps";
 import {resolveProtonAppTypeFromUrlHref} from "src/shared/util/proton-url";
 
@@ -30,7 +31,7 @@ const testProtonAppPage = (
         (projectType = resolvePackagedWebClientApp(packagedWebClientUrl).project) === targetProjectType
     );
     const result = {
-        shouldInitProviderApi: protonMailProject,
+        shouldInitProviderApi: protonMailProject && packagedWebClientUrl?.pathname !== PROTON_APP_MAIL_LOGIN_PATHNAME,
         blankHtmlPage,
         packagedWebClientUrl,
         projectType,

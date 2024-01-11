@@ -1,0 +1,26 @@
+diff --git a/packages/components/containers/app/ProductLink.tsx b/packages/components/containers/app/ProductLink.tsx
+index 1c73b72a03..43ec8d9a88 100644
+--- a/packages/components/containers/app/ProductLink.tsx
++++ b/packages/components/containers/app/ProductLink.tsx
+@@ -1,10 +1,8 @@
+ import { ReactNode } from 'react';
+
+-import { IS_PROTON_USER_COOKIE_NAME } from '@proton/components/hooks/useIsProtonUserCookie';
+ import { getPublicUserProtonAddressApps, getSSOVPNOnlyAccountApps } from '@proton/shared/lib/apps/apps';
+ import { getAppName } from '@proton/shared/lib/apps/helper';
+ import { APPS, APP_NAMES, SETUP_ADDRESS_PATH } from '@proton/shared/lib/constants';
+-import { getCookie } from '@proton/shared/lib/helpers/cookies';
+ import { isElectronMail } from '@proton/shared/lib/helpers/desktop';
+ import { getAppStaticUrl } from '@proton/shared/lib/helpers/url';
+ import { UserModel } from '@proton/shared/lib/interfaces';
+@@ -63,9 +61,7 @@ const ProductLink = ({ ownerApp, app, appToLinkTo, user, current, className, chi
+         );
+     }
+
+-    // This does not allow to get any user information but allow us to know if the user was already logged in Proton
+-    const isProtonUser = !!getCookie(IS_PROTON_USER_COOKIE_NAME);
+-    if (!isProtonUser) {
++    if (appToLinkTo === APPS.PROTONPASS) { // only PAss service is not yet embedded into the ElectronMail app
+         return (
+             <a
+                 href={getAppStaticUrl(appToLinkTo)}

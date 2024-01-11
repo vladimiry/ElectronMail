@@ -16,7 +16,9 @@ import {assertEntryUrl} from "src/electron-main/util";
 import {Config} from "src/shared/model/options";
 import {curryFunctionMembers} from "src/shared/util";
 import {LOCAL_WEBCLIENT_DIR_NAME, LOCAL_WEBCLIENT_SCHEME_NAME, WEB_PROTOCOL_DIR, WEB_PROTOCOL_SCHEME} from "src/shared/const";
-import {PROTON_API_URL_PLACEHOLDER, PROTON_SUPPRESS_UPSELL_ADS_PLACEHOLDER} from "src/shared/const/proton-url";
+import {
+    PROTON_API_URL_PLACEHOLDER, PROTON_APP_MAIL_LOGIN_PATHNAME, PROTON_SUPPRESS_UPSELL_ADS_PLACEHOLDER,
+} from "src/shared/const/proton-url";
 import {PROVIDER_REPO_MAP} from "src/shared/const/proton-apps";
 import {resolveProtonApiOrigin, resolveProtonAppTypeFromUrlHref} from "src/shared/util/proton-url";
 
@@ -27,9 +29,11 @@ const fsAsync = {
     readFile: promisify(fs.readFile),
 } as const;
 
-const basePaths: readonly string[] = Object
+const nonEmptyBasePathsSortedByLengthDesc: readonly string[] = Object
     .values(PROVIDER_REPO_MAP)
-    .map(({basePath}) => basePath);
+    .filter(Boolean) // keeping non-empty values only
+    .map(({basePath}) => basePath)
+    .sort((a, b) => b.length - a.length);
 
 export const registerStandardSchemes = (): void => {
     // WARN: "protocol.registerStandardSchemes" needs to be called once, see https://github.com/electron/electron/issues/15943
@@ -70,22 +74,16 @@ export function registerWebFolderFileProtocol(ctx: Context, session: Session): v
 }
 
 async function resolveFileSystemResourceLocation(directory: string, requestUrl: URL): Promise<string | null> {
-    const resource = (() => {
-        const urlBasedResource = path.normalize(
-            path.join(directory, requestUrl.pathname),
-        );
-        return path.extname(urlBasedResource)
-            ? urlBasedResource
-            : (() => {
-                const leadingFolder = path
-                    .relative(directory, urlBasedResource)
-                    .split(path.sep)
-                    .shift();
-                return leadingFolder && basePaths.includes(leadingFolder)
-                    ? path.join(directory, leadingFolder)
-                    : directory;
-            })();
-    })();
+    const requestPathname = requestUrl.pathname === PROTON_APP_MAIL_LOGIN_PATHNAME
+        ? "login.html"
+        : requestUrl.pathname;
+    const resourcePathname: string | undefined = requestPathname !== "/" && !path.extname(requestPathname)
+        ? nonEmptyBasePathsSortedByLengthDesc.find((value) => `${requestPathname}/`.startsWith(`/${value}/`))
+        : requestPathname;
+    if (typeof resourcePathname !== "string") {
+        throw new Error(`Failed to resolve file system resource directory from the "${requestUrl.href}" request`);
+    }
+    const resource = path.join(directory, resourcePathname);
 
     logger.verbose(nameof(resolveFileSystemResourceLocation), {directory, resource});
 

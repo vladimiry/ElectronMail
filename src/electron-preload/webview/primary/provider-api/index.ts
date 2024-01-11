@@ -1,13 +1,13 @@
 import {chunk} from "remeda";
-import {combineLatest, EMPTY, lastValueFrom} from "rxjs";
-import {distinctUntilChanged, first, map, mergeMap} from "rxjs/operators";
+import {combineLatest, lastValueFrom} from "rxjs";
+import {distinctUntilChanged, first, map} from "rxjs/operators";
 
-import {assertTypeOf, curryFunctionMembers} from "src/shared/util";
 import {attachRateLimiting} from "./rate-limiting";
-import {EncryptionPreferences, MessageVerification, ProviderApi} from "./model";
+import {curryFunctionMembers} from "src/shared/util";
 import {FETCH_NOTIFICATION_SKIP_SYMBOL} from "./const";
 import {HttpApi, resolveStandardSetupPublicApi} from "src/electron-preload/webview/lib/provider-api/standart-setup-internals";
 import {Logger} from "src/shared/model/common";
+import {MessageVerification, ProviderApi, VerificationPreferences} from "./model";
 import {PROTON_MAX_QUERY_PORTION_LIMIT, WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 import {resolveProviderInternals} from "./internals";
 
@@ -77,29 +77,13 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                     }),
                     distinctUntilChanged(),
                 ),
-                cachedMailSettingsModel$: standardSetupPublicApi.cache$.pipe(
-                    mergeMap((cache) => {
-                        const cachedModel = cache.get<{
-                            value: Unpacked<ProviderApi["_custom_"]["cachedMailSettingsModel$"]>
-                            // eslint-disable-next-line max-len
-                            // TODO pick "MailSettingsModel.status" type from https://github.com/ProtonMail/proton-shared/blob/137d769c6cd47337593d3a47302eb23245762154/lib/models/cache.ts
-                            status: number
-                        }>(
-                            internals["../../packages/shared/lib/models/mailSettingsModel.js"].value.MailSettingsModel.key,
-                        );
-                        if (cachedModel?.value) {
-                            assertTypeOf(
-                                {value: cachedModel.value.ViewMode, expectedType: "number"},
-                                `Invalid "mail settings model" detected`,
-                            );
-                            return [cachedModel.value];
-                        }
-                        return EMPTY;
-                    }),
-                    distinctUntilChanged(),
-                ),
+                async getMailSettingsModel() {
+                    const privateApi = await resolvePrivateApi();
+                    const [mailSettings/*, loadingMailSettings */] = privateApi.mailSettings;
+                    return mailSettings;
+                },
                 buildEventsApiUrlTester(/*{entryApiUrl}*/) {
-                    const substr = "/core/v4/events/";
+                    const substr = "/core/v5/events/";
                     return (url) => url.includes(substr);
                 },
                 buildMessagesCountApiUrlTester(/*{entryApiUrl}*/) {
@@ -203,13 +187,8 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
             },
             attachmentLoader: {
                 getDecryptedAttachment: (() => {
-                    const constructMessageVerification = (
-                        encryptionPreferences: EncryptionPreferences,
-                    ): NoExtraProps<MessageVerification> => {
-                        const result = {
-                            senderPinnedKeys: encryptionPreferences.pinnedKeys,
-                            pinnedKeysVerified: Boolean(encryptionPreferences.isContactSignatureVerified),
-                        } as const;
+                    const buildVerification = (verificationPreferences: VerificationPreferences): NoExtraProps<MessageVerification> => {
+                        const result = {verifyingKeys: verificationPreferences.verifyingKeys} as const;
                         // this proxy helps early detecting unexpected/not-yet-reviewed protonmail's "getDecryptedAttachment" behaviour
                         // if/likely-when the behaviour gets changed by protonmail
                         return new Proxy(
@@ -234,12 +213,13 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                     };
                     const result: ProviderApi["attachmentLoader"]["getDecryptedAttachment"] = async (attachment, message) => {
                         const privateApi = await resolvePrivateApi();
-                        const [protonApi, messageKeys, encryptionPreferences] = await Promise.all([
+                        const contactEmailsMap = privateApi.contactsMap;
+                        const [protonApi, messageKeys, verificationPreferences] = await Promise.all([
                             resolveHttpApi(),
                             privateApi.getMessageKeys(message),
-                            privateApi.getEncryptionPreferences({email: message.Sender.Address}),
+                            privateApi.getVerificationPreferences({email: message.Sender.Address, lifetime: 0, contactEmailsMap}),
                         ]);
-                        const verification = constructMessageVerification(encryptionPreferences);
+                        const verification = buildVerification(verificationPreferences);
                         const {data} = await privateApi.getDecryptedAttachment(
                             attachment,
                             verification,

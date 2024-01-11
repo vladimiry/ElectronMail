@@ -1,6 +1,10 @@
-import {attachUnhandledErrorHandler, documentCookiesForCustomScheme, getLocationHref} from "src/electron-preload/webview/lib/util";
+import {ipcRenderer} from "electron";
+
+import {attachUnhandledErrorHandler, documentCookiesForCustomScheme} from "src/electron-preload/webview/lib/util";
 import {curryFunctionMembers} from "src/shared/util";
+import {getLocationHref} from "src/shared/util/web";
 import {initProviderApi} from "./provider-api";
+import {IPC_WEBVIEW_API_CHANNELS_MAP} from "src/shared/api/webview/const";
 import {registerApi} from "./api";
 import {setupProtonOpenNewTabEventHandler} from "src/electron-preload/webview/lib/custom-event";
 import {testProtonCalendarAppPage} from "src/shared/util/proton-webclient";
@@ -20,6 +24,7 @@ if (protonAppPageStatus.shouldInitProviderApi) {
     // TODO set up timeout
     initProviderApi()
         .then(registerApi)
+        .then(() => ipcRenderer.sendToHost(IPC_WEBVIEW_API_CHANNELS_MAP.calendar.registered))
         .catch((error) => {
             logger.error(error);
             throw error;

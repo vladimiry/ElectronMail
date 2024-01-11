@@ -1,69 +1,16 @@
 diff --git a/packages/shared/lib/helpers/desktop.ts b/packages/shared/lib/helpers/desktop.ts
-index 4696b429a7..fe63f75e55 100644
+index bd4ceeeca4..84157797a4 100644
 --- a/packages/shared/lib/helpers/desktop.ts
 +++ b/packages/shared/lib/helpers/desktop.ts
-@@ -1,13 +1,6 @@
--import UAParser from 'ua-parser-js';
--
- import { isMac } from './browser';
+@@ -8,7 +8,7 @@ import { isLinux, isMac, isWindows } from './browser';
+ const uaParser = new UAParser();
+ const ua = uaParser.getResult();
 
--const uaParser = new UAParser();
--const ua = uaParser.getResult();
--
--export const isElectronApp = () => {
--    return /electron/i.test(ua.ua);
--};
-+export const isElectronApp = () => false;
-
- export const isElectronOnMac = () => {
-     return isElectronApp() && isMac();
-
-diff --git a/packages/components/containers/unleash/UnleashFlagProvider.tsx b/packages/components/containers/unleash/UnleashFlagProvider.tsx
-index e9adc4f7f1..2e8d0388fd 100644
---- a/packages/components/containers/unleash/UnleashFlagProvider.tsx
-+++ b/packages/components/containers/unleash/UnleashFlagProvider.tsx
-@@ -3,20 +3,21 @@ import { ReactNode } from 'react';
- import FlagProvider from '@protontech/proxy-client-react';
- import { IConfig } from 'unleash-proxy-client';
-
--import { Api } from '@proton/shared/lib/interfaces';
-+import { Api, ProtonConfig } from '@proton/shared/lib/interfaces';
-
- import useApi from '../../hooks/useApi';
-+import { useConfig } from '@proton/components/hooks';
-
- // Just something dummy to have a valid domain because the library does new URL
- const prefix = 'https://proton.me/';
- const url = new URL(prefix);
-
- const customFetch =
--    (api: Api): typeof window.fetch =>
-+    (api: Api, {API_URL}: ProtonConfig): typeof window.fetch =>
-     (url, config) => {
-         if (typeof url === 'string') {
-             return api({
--                url: `feature/v2/frontend${url.replace(prefix, '')}`,
-+                url: `${API_URL}/feature/v2/frontend${url.replace(prefix, '')}`,
-                 headers: config?.headers,
-                 silence: true,
-                 output: 'raw',
-@@ -30,6 +31,7 @@ interface Props {
- }
-
- const UnleashFlagProvider = ({ children }: Props) => {
-+    const config = useConfig();
-     const api = useApi();
-     const unleashConfig: IConfig = {
-         url,
-@@ -37,7 +39,7 @@ const UnleashFlagProvider = ({ children }: Props) => {
-         appName: '-', // set by the server
-         refreshInterval: 600, // refreshInterval in seconds, 10 mins
-         disableMetrics: true,
--        fetch: customFetch(api),
-+        fetch: customFetch(api, config),
-     };
-
-     return <FlagProvider config={unleashConfig}>{children}</FlagProvider>;
+-export const isElectronApp = /electron/i.test(ua.ua);
++export const isElectronApp = false;
+ export const isElectronOnMac = isElectronApp && isMac();
+ export const isElectronOnWindows = isElectronApp && isWindows();
+ export const isElectronOnLinux = isElectronApp && isLinux();
 
 diff --git a/packages/pack/scripts/validate.sh b/packages/pack/scripts/validate.sh
 index 1a2ea64..bae388c 100755
@@ -92,6 +39,40 @@ index 55715b89d..c87879ad4 100755
                  stdio: 'inherit',
              }
 
+diff --git a/packages/pack/webpack/entries.ts b/packages/pack/webpack/entries.ts
+index 30db3c5c9f..0a8a32dfba 100644
+--- a/packages/pack/webpack/entries.ts
++++ b/packages/pack/webpack/entries.ts
+@@ -27,25 +27,15 @@ export const mergeEntry = (originalEntry: any, entry: any) => {
+     };
+ };
+
+-export const addDevEntry = (config: any) => {
+-    if (config.mode === 'production') {
+-        return;
+-    }
++export const addLoginEntry = (config: any) => {
+     // @ts-ignore
+-    config.entry.dev = [require.resolve('@proton/components/containers/app/StandaloneApp.tsx')];
++    config.entry.login = [require.resolve('@proton/components/containers/app/StandaloneApp.tsx')];
+     config.plugins.push(
+         new HtmlWebpackPlugin({
+             filename: 'login.html',
+             templateContent: `<html><body><div class="app-root"></div></body></html>`,
+-            chunks: ['dev'],
++            chunks: ['login'],
+             inject: 'body',
+         })
+     );
+-    // @ts-ignore
+-    config.devServer.historyApiFallback.rewrites = config.devServer.historyApiFallback.rewrites || [];
+-    // @ts-ignore
+-    config.devServer.historyApiFallback.rewrites.push({
+-        from: '/login',
+-        to: '/login.html',
+-    });
+ };
+
 diff --git a/packages/shared/lib/helpers/browser.ts b/packages/shared/lib/helpers/browser.ts
 index 9aaa78a28..f3d24b47c 100644
 --- a/packages/shared/lib/helpers/browser.ts
@@ -103,9 +84,9 @@ index 9aaa78a28..f3d24b47c 100644
 +{
 +    const platform = String(navigator.platform);
 +    const userAgents = {
-+        linux: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
-+        windows: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
-+        macos: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
++        linux: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
++        windows: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
++        macos: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
 +    } as const;
 +    uaParser.setUA(
 +        platform.startsWith("Linux")
@@ -220,10 +201,10 @@ index b82b7ae976..0907c85ec6 100644
  };
 
 diff --git a/packages/components/containers/heading/PrivateHeader.tsx b/packages/components/containers/heading/PrivateHeader.tsx
-index a7d2452313..73ad8a6828 100644
+index f7678c871b..fcaee27280 100644
 --- a/packages/components/containers/heading/PrivateHeader.tsx
 +++ b/packages/components/containers/heading/PrivateHeader.tsx
-@@ -49,7 +49,10 @@ const PrivateHeader = ({
+@@ -58,7 +58,10 @@ const PrivateHeader = ({
 
              <TopNavbar>
                  <TopNavbarList>
@@ -234,13 +215,13 @@ index a7d2452313..73ad8a6828 100644
 +                    }
                      {feedbackButton ? <TopNavbarListItem noShrink>{feedbackButton}</TopNavbarListItem> : null}
                      {settingsButton ? (
-                         <TopNavbarListItem noShrink className="no-mobile">
+                         <TopNavbarListItem noShrink className="hidden md:flex">
 
-diff --git a/packages/components/containers/api/ApiProvider.js b/packages/components/containers/api/ApiProvider.js
-index 3d1b81941c..6ac2f748fa 100644
---- a/packages/components/containers/api/ApiProvider.js
-+++ b/packages/components/containers/api/ApiProvider.js
-@@ -120,7 +120,9 @@ const ApiProvider = ({ config, onLogout, children, UID, noErrorState }) => {
+diff --git a/packages/components/containers/api/ApiProvider.tsx b/packages/components/containers/api/ApiProvider.tsx
+index 75ab18a25e..f52c461a80 100644
+--- a/packages/components/containers/api/ApiProvider.tsx
++++ b/packages/components/containers/api/ApiProvider.tsx
+@@ -111,7 +111,9 @@ const ApiProvider = ({ api, children }: { api: ApiWithListener; children: ReactN
                              error.cancel = true;
                              reject(error);
                          }}
@@ -249,5 +230,62 @@ index 3d1b81941c..6ac2f748fa 100644
 +                    // trying to force single instance, see https://github.com/vladimiry/ElectronMail/issues/621#issuecomment-1627389416
 +                    "HumanVerificationModal_ID",
                  );
-             });
-         };
+             }
+
+diff --git a/packages/components/containers/app/StandaloneApp.tsx b/packages/components/containers/app/StandaloneApp.tsx
+index a7ef1a26ad..0e89cf1ea8 100644
+--- a/packages/components/containers/app/StandaloneApp.tsx
++++ b/packages/components/containers/app/StandaloneApp.tsx
+@@ -12,7 +12,7 @@ import '@proton/styles/scss/_proton-account.scss';
+
+ import StandalonePublicApp from './StandalonePublicApp';
+
+-const config = { APP_NAME: APPS.PROTONACCOUNT, APP_VERSION: '5.0.999.999', API_URL: '/api' } as ProtonConfig;
++const config = { APP_NAME: APPS.PROTONACCOUNT, APP_VERSION: '5.0.999.999', API_URL: '___ELECTRON_MAIL_PROTON_API_ENTRY_URL_PLACEHOLDER___' } as ProtonConfig;
+ const api = createApi({ config });
+ const authentication = createAuthentication();
+
+diff --git a/packages/components/containers/login/MinimalLoginContainer.tsx b/packages/components/containers/login/MinimalLoginContainer.tsx
+index 07f4d21ead..4f7c23f908 100644
+--- a/packages/components/containers/login/MinimalLoginContainer.tsx
++++ b/packages/components/containers/login/MinimalLoginContainer.tsx
+@@ -190,7 +190,7 @@ const LoginForm = ({
+                 </div>
+             )}
+             <form
+-                name="loginForm"
++                name="loginForm" // tracking this
+                 className={challengeLoading ? 'hidden' : undefined}
+                 onSubmit={(event) => {
+                     event.preventDefault();
+@@ -222,7 +222,8 @@ const LoginForm = ({
+                     />
+                 )}
+                 <InputFieldTwo
+-                    id="username"
++                    id="username" // tracking this
++                    readonly
+                     bigger
+                     label={c('Label').t`Email or username`}
+                     error={validator([requiredValidator(username)])}
+
+diff --git a/packages/components/hooks/useLoad.ts b/packages/components/hooks/useLoad.ts
+index f03f7b667e..44a8b8ef77 100644
+--- a/packages/components/hooks/useLoad.ts
++++ b/packages/components/hooks/useLoad.ts
+@@ -1,13 +1,3 @@
+-import { useEffect } from 'react';
+-
+-import { formatURLForAjaxRequest } from '@proton/shared/lib/helpers/url';
+-import noop from '@proton/utils/noop';
+-
+-const useLoad = () => {
+-    useEffect(() => {
+-        const url = formatURLForAjaxRequest(window.location.href);
+-        fetch(url).catch(noop);
+-    }, []);
+-};
++const useLoad = () => {};
+
+ export default useLoad;
+

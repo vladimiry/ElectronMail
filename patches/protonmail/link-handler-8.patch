@@ -1,5 +1,5 @@
 diff --git a/packages/components/hooks/useLinkHandler.tsx b/packages/components/hooks/useLinkHandler.tsx
-index 4038ff8b0..8faca2d95 100644
+index e5ee651c66..c9bf768d52 100644
 --- a/packages/components/hooks/useLinkHandler.tsx
 +++ b/packages/components/hooks/useLinkHandler.tsx
 @@ -2,6 +2,7 @@ import { ReactNode, RefObject, useEffect, useState } from 'react';
@@ -10,18 +10,18 @@ index 4038ff8b0..8faca2d95 100644
  import { PROTON_DOMAINS } from '@proton/shared/lib/constants';
  import { getSecondLevelDomain } from '@proton/shared/lib/helpers/url';
  import { MailSettings } from '@proton/shared/lib/interfaces';
-@@ -128,6 +129,10 @@ export const useLinkHandler: UseLinkHandler = (
+@@ -129,6 +130,10 @@ export const useLinkHandler: UseLinkHandler = (
              return;
          }
 
 +        event.preventDefault();
 +        event.stopPropagation(); // Required for Safari
-+        const encodedLink = await punycodeUrl(src.encoded || src.raw);
++        const encodedLink = punycodeUrl(src.encoded || src.raw);
 +
          if (
              (askForConfirmation || isPhishingAttempt) &&
-             isExternal(src.raw) &&
-@@ -135,12 +140,10 @@ export const useLinkHandler: UseLinkHandler = (
+             isExternal(src.raw, window.location.hostname) &&
+@@ -136,12 +141,10 @@ export const useLinkHandler: UseLinkHandler = (
                  .filter(isTruthy) // currentDomain can be null
                  .some((domain) => isSubDomain(hostname, domain))
          ) {

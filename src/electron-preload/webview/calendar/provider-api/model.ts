@@ -11,7 +11,7 @@ export type ImmediateKeys = StrictExclude<Keys, LazyKeys>
 // TODO clone the proton project on npm postinstall hook and reference the modules signatures from their typescript code
 //      like: typeof import("output/git/proton-calendar/src/app/content/PrivateApp.tsx")
 export type ProviderInternals = AddInitializedProp<{
-    [K in StrictExtract<ImmediateKeys, "./src/app/content/PrivateApp.tsx">]: DefineObservableValue<{
+    [K in StrictExtract<ImmediateKeys, "./src/app/./containers/calendar/MainContainer">]: DefineObservableValue<{
         readonly privateScope: unknown
     }, (arg: unknown) => import("react").ReactNode>
 }>

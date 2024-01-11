@@ -50,3 +50,5 @@ export const PROTON_API_ENTRY_URLS = PROTON_API_ENTRY_RECORDS.map(({value: url})
 export const PROTON_API_SUBDOMAINS = [
     ...Object.values(PROVIDER_REPO_MAP).map(({apiSubdomain}) => apiSubdomain),
 ] as const;
+
+export const PROTON_APP_MAIL_LOGIN_PATHNAME = "/login";

@@ -10,9 +10,11 @@ export type Keys = StrictExclude<(typeof PROVIDER_REPO_MAP)["proton-mail"]["prot
     typeof PROVIDER_REPO_STANDARD_SETUP_WEBPACK_INDEX_ENTRY_ITEMS[number]>
 
 export type LazyKeys = StrictExclude<StrictExtract<Keys,
-    | "../../packages/components/hooks/useGetEncryptionPreferences.ts"
+    | "../../packages/components/hooks/useGetVerificationPreferences.ts"
+    | "../../packages/mail/mailSettings/hooks.ts"
     | "./src/app/helpers/attachment/attachmentLoader.ts"
-    | "./src/app/hooks/message/useGetMessageKeys.ts">, never>
+    | "./src/app/hooks/message/useGetMessageKeys.ts"
+    | "./src/app/hooks/contact/useContacts.ts">, never>
 
 export type ImmediateKeys = StrictExclude<Keys, LazyKeys>
 
@@ -21,15 +23,16 @@ export type ImmediateKeys = StrictExclude<Keys, LazyKeys>
 export type ProviderInternals = AddInitializedProp<{
     [K in StrictExtract<ImmediateKeys, "./src/app/containers/PageContainer.tsx">]: DefineObservableValue<{
         readonly privateScope: null | {
-            // https://github.com/ProtonMail/WebClients/blob/3768deb904dd7865487fb71cb1bcee328cf32c30/packages/shared/lib/interfaces/hooks/GetEncryptionPreferences.ts
-            readonly getEncryptionPreferences: (
+            // https://github.com/ProtonMail/WebClients/blob/a3e170b4831899c1bc6cda3bea20b668a7670541/packages/components/hooks/useGetVerificationPreferences.ts#L31
+            readonly getVerificationPreferences: (
                 attr: {
                     email: RestModel.Message["Sender"]["Address"]
-                    intendedForEmail?: boolean;
-                    lifetime?: number;
-                    contactEmailsMap?: { [email: string]: RestModel.ContactEmail | undefined };
+                    lifetime?: number
+                    contactEmailsMap?: { [email: string]: RestModel.ContactEmail | undefined }
                 }
-            ) => Promise<EncryptionPreferences>
+            ) => Promise<VerificationPreferences>
+            // https://github.com/ProtonMail/WebClients/blob/a3e170b4831899c1bc6cda3bea20b668a7670541/applications/mail/src/app/hooks/useMailModel.ts
+            readonly mailSettings: [mailSettings: { ViewMode: unknown }, loadingMailSettings?: boolean]
             // https://github.com/ProtonMail/proton-mail/blob/77b133013cdb5695aa23c0c4c29cc6578878faa5/src/app/hooks/message/useGetMessageKeys.ts#L13
             readonly getMessageKeys: (message: Pick<RestModel.Message, "AddressID">) => Promise<MessageKeys>
             // https://github.com/ProtonMail/proton-mail/blob/77b133013cdb5695aa23c0c4c29cc6578878faa5/src/app/helpers/attachment/attachmentLoader.ts#L46
@@ -39,6 +42,8 @@ export type ProviderInternals = AddInitializedProp<{
                 messageKeys: MessageKeys,
                 api: HttpApi,
             ) => Promise<{ data: Uint8Array }>
+            // https://github.com/ProtonMail/WebClients/blob/a3e170b4831899c1bc6cda3bea20b668a7670541/applications/mail/src/app/hooks/contact/useContacts.ts#L11
+            readonly contactsMap: { [email: string]: RestModel.ContactEmail | undefined }
         }
     }, (arg: unknown) => import("react").ReactNode>
 } & WrapToValueProp<{
@@ -63,10 +68,6 @@ export type ProviderInternals = AddInitializedProp<{
 } & {
     [K in StrictExtract<ImmediateKeys, "../../packages/shared/lib/mail/mailSettings.ts">]: {
         readonly VIEW_MODE: { readonly GROUP: number; readonly SINGLE: number }
-    }
-} & {
-    [K in StrictExtract<ImmediateKeys, "../../packages/shared/lib/models/mailSettingsModel.js">]: {
-        readonly MailSettingsModel: { readonly key: string }
     }
 } & {
     [K in StrictExtract<ImmediateKeys, "../../packages/shared/lib/api/labels.ts">]: {
@@ -110,12 +111,20 @@ export type ProviderInternals = AddInitializedProp<{
 type PrivateScope = StrictExclude<Unpacked<ProviderInternals["./src/app/containers/PageContainer.tsx"]["value$"]>["privateScope"], null>;
 
 export type ProviderInternalsLazy = AddInitializedProp<{
-    [K in StrictExtract<LazyKeys, "../../packages/components/hooks/useGetEncryptionPreferences.ts">]: {
-        default: () => PrivateScope["getEncryptionPreferences"]
+    [K in StrictExtract<LazyKeys, "../../packages/components/hooks/useGetVerificationPreferences.ts">]: {
+        default: () => PrivateScope["getVerificationPreferences"]
     }
 } & {
     [K in StrictExtract<LazyKeys, "./src/app/hooks/message/useGetMessageKeys.ts">]: {
         useGetMessageKeys: () => PrivateScope["getMessageKeys"]
+    }
+} & {
+    [K in StrictExtract<LazyKeys, "./src/app/hooks/contact/useContacts.ts">]: {
+        useContactsMap: () => PrivateScope["contactsMap"]
+    }
+} & {
+    [K in StrictExtract<LazyKeys, "../../packages/mail/mailSettings/hooks.ts">]: {
+        useMailSettings: () => PrivateScope["mailSettings"]
     }
 } & {
     [K in StrictExtract<LazyKeys, "./src/app/helpers/attachment/attachmentLoader.ts">]: {
@@ -126,7 +135,7 @@ export type ProviderInternalsLazy = AddInitializedProp<{
 export type ProviderApi = { _throwErrorOnRateLimitedMethodCall?: boolean } & Readonly<{
     _custom_: Readonly<{
         loggedIn$: import("rxjs").Observable<boolean>
-        cachedMailSettingsModel$: import("rxjs").Observable<{ readonly ViewMode: number }>
+        getMailSettingsModel: () => Promise<{ ViewMode: unknown }>
         buildEventsApiUrlTester: (options: { entryApiUrl: string }) => (url: string) => boolean
         buildMessagesCountApiUrlTester: (options: { entryApiUrl: string }) => (url: string) => boolean
         decryptMessage: (message: RestModel.Message) => Promise<{ decryptedSubject?: string, decryptedBody: string }>
@@ -191,9 +200,8 @@ export type ProviderApi = { _throwErrorOnRateLimitedMethodCall?: boolean } & Rea
     }>,
 }>;
 
-export interface EncryptionPreferences {
-    readonly pinnedKeys: readonly unknown[]
-    readonly isContactSignatureVerified?: boolean;
+export interface VerificationPreferences {
+    verifyingKeys?: readonly unknown[]
 }
 
 export interface MessageKeys {
@@ -202,8 +210,7 @@ export interface MessageKeys {
 }
 
 export interface MessageVerification {
-    senderPinnedKeys: EncryptionPreferences["pinnedKeys"] | undefined;
-    pinnedKeysVerified: boolean | undefined;
+    verifyingKeys?: readonly unknown[]
 }
 
 export type MessageExtended = NoExtraProps<{

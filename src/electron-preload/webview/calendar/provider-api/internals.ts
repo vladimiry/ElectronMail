@@ -14,9 +14,9 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
 
     return new Promise<ProviderInternals>((resolve /*, reject */) => { // TODO reject on timeout
         const result: ProviderInternals = {
-            "./src/app/content/PrivateApp.tsx": {
+            "./src/app/./containers/calendar/MainContainer": {
                 value$: new BehaviorSubject(
-                    {privateScope: null} as Unpacked<ProviderInternals["./src/app/content/PrivateApp.tsx"]["value$"]>
+                    {privateScope: null} as Unpacked<ProviderInternals["./src/app/./containers/calendar/MainContainer"]["value$"]>
                 ),
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
                 _valueShape: null as any,
@@ -28,7 +28,7 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
             resultKeys: Object.keys(result) as ReadonlyArray<keyof typeof result>,
             preChunkItemOverridingHook({resultKey}) {
                 if (
-                    resultKey === "./src/app/content/PrivateApp.tsx"
+                    resultKey === "./src/app/./containers/calendar/MainContainer"
                 ) {
                     // mark lazy-loaded modules as initialized immediately since these modules get
                     // loaded only after the user gets logged in but we need to resolve the promise on initial load
@@ -36,13 +36,13 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
                 }
             },
             chunkItemHook({resultKey, webpack_exports, webpack_require}) {
-                if (resultKey === "./src/app/content/PrivateApp.tsx") {
+                if (resultKey === "./src/app/./containers/calendar/MainContainer") {
                     webpackJsonpPushUtil.handleObservableValue(
                         result,
                         {
                             resultKey,
                             webpack_exports,
-                            itemName: "PrivateApp",
+                            itemName: "default",
                             itemCallResultTypeValidation: "object", // import("react").ReactNode
                             itemCallResultHandler: (itemCallResult, notify, markAsInitialized) => {
                                 const {createElement, useEffect}

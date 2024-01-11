@@ -7,7 +7,6 @@ import {AccountsComponent} from "./accounts.component";
 import {AccountsDbSyncingEffects} from "./effects/accounts-db-syncing.effects";
 import {AccountsEffects} from "./effects/accounts.effects";
 import {AccountsGuard} from "./accounts.guard";
-import {AccountsLoginFormSubmittingEffects} from "./effects/accounts-login-form-submitting.effects";
 import {AccountsPrimaryNsEffects} from "./effects/accounts-primary-ns.effects";
 import {AccountsRoutingModule} from "./accounts.routing.module";
 import {AccountsService} from "./accounts.service";
@@ -27,7 +26,6 @@ import {SharedModule} from "src/web/browser-window/app/_shared/shared.module";
             AccountsCalendarNsEffects,
             AccountsDbSyncingEffects,
             AccountsEffects,
-            AccountsLoginFormSubmittingEffects,
             AccountsPrimaryNsEffects,
         ]),
     ],

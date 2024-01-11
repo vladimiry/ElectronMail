@@ -1,11 +1,11 @@
 diff --git a/packages/shared/lib/helpers/url.ts b/packages/shared/lib/helpers/url.ts
-index 576f743891..1105a2ae62 100644
+index 71d95d8e42..e7cd4b1b05 100644
 --- a/packages/shared/lib/helpers/url.ts
 +++ b/packages/shared/lib/helpers/url.ts
 @@ -185,63 +185,16 @@ export const getSecondLevelDomain = (hostname: string) => {
      return hostname.slice(hostname.indexOf('.') + 1);
  };
- 
+
 -export const getRelativeApiHostname = (hostname: string) => {
 -    const idx = hostname.indexOf('.');
 -    const first = hostname.slice(0, idx);
@@ -16,7 +16,7 @@ index 576f743891..1105a2ae62 100644
  export const getIsDohDomain = (origin: string) => {
      return DOH_DOMAINS.some((dohDomain) => origin.endsWith(dohDomain));
  };
- 
+
 -const doesHostnameLookLikeIP = (hostname: string) => {
 -    // Quick helper function to tells us if hostname string seems to be IP address or DNS name.
 -    // Relies on a fact, that no TLD ever will probably end with a digit. So if last char is
@@ -28,8 +28,8 @@ index 576f743891..1105a2ae62 100644
 -    return /\d$/.test(hostname) || hostname.includes(':');
 -};
 -
- export const getApiSubdomainUrl = (pathname: string) => {
--    const url = new URL('', window.location.origin);
+ export const getApiSubdomainUrl = (pathname: string, origin: string) => {
+-    const url = new URL('', origin);
 -
 -    const usePathPrefix =
 -        url.hostname === 'localhost' || getIsDohDomain(url.origin) || doesHostnameLookLikeIP(url.hostname);
@@ -43,7 +43,7 @@ index 576f743891..1105a2ae62 100644
      url.pathname = pathname;
      return url;
  };
- 
+
 -export const getAppUrlFromApiUrl = (apiUrl: string, appName: APP_NAMES) => {
 -    const { subdomain } = APPS_CONFIGURATION[appName];
 -    const url = new URL(apiUrl);
@@ -65,22 +65,22 @@ index 576f743891..1105a2ae62 100644
 -};
 -
  let cache = '';
- export const getStaticURL = (path: string) => {
+ export const getStaticURL = (path: string, location = window.location) => {
      if (
 
 diff --git a/packages/shared/lib/fetch/helpers.ts b/packages/shared/lib/fetch/helpers.ts
-index 666b9f56c6..246f0e03b4 100644
+index 8bf57abc3e..24e4890f93 100644
 --- a/packages/shared/lib/fetch/helpers.ts
 +++ b/packages/shared/lib/fetch/helpers.ts
-@@ -11,6 +11,7 @@ const appendQueryParams = (url: URL, params: { [key: string]: any }) => {
+@@ -10,6 +10,7 @@ const appendQueryParams = (url: URL, params: { [key: string]: any }) => {
      });
  };
 
 +/* <electron-mail-mark> */
- export const createUrl = (urlString: string, params: { [key: string]: any } = {}) => {
+ export const createUrl = (urlString: string, params: { [key: string]: any } = {}, origin?: string) => {
      let url: URL;
-     if (typeof window !== 'undefined') {
-@@ -21,6 +22,7 @@ export const createUrl = (urlString: string, params: { [key: string]: any } = {}
+     if (origin) {
+@@ -20,6 +21,7 @@ export const createUrl = (urlString: string, params: { [key: string]: any } = {}
      appendQueryParams(url, params);
      return url;
  };

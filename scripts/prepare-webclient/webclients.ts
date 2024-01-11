@@ -213,6 +213,14 @@ async function executeBuildFlow(
                 }
             }
 
+            // eslint-disable-next-line import/no-relative-parent-imports
+            for (const patchFileName of (await import("../../patches/protonmail/meta.json", {assert: {type: "json"}})).default[repoType]) {
+                await applyPatch({
+                    patchFile: path.join(CWD_ABSOLUTE_DIR, "./patches/protonmail", patchFileName),
+                    cwd: repoDir,
+                });
+            }
+
             if (process.env.CI) { // TODO drop "yarn install" hacks when executing on CI env
                 // hacks applied to avoid the following error:
                 //     eslint-disable-next-line max-len
@@ -233,14 +241,6 @@ async function executeBuildFlow(
                 ]);
             } else {
                 await execShell(["yarn", ["install"], {cwd: repoDir}], {printStdOut: false});
-            }
-
-            // eslint-disable-next-line import/no-relative-parent-imports
-            for (const patchFileName of (await import("../../patches/protonmail/meta.json", {assert: {type: "json"}})).default[repoType]) {
-                await applyPatch({
-                    patchFile: path.join(CWD_ABSOLUTE_DIR, "./patches/protonmail", patchFileName),
-                    cwd: repoDir,
-                });
             }
         },
     };
@@ -323,7 +323,8 @@ async function executeBuildFlow(
                                 ...process.env,
                                 ...(publicPath && {PUBLIC_PATH: publicPath}),
                                 NODE_ENV: "production",
-                                TS_NODE_PROJECT: "../../tsconfig.webpack.json", // picked "build" task of "applications/<app>/package.json"
+                                // picked "build" task of "applications/<app>/package.json", "package.json" patching tracks the change
+                                TS_NODE_PROJECT: path.join(repoDir, "tsconfig.webpack.json"),
                             },
                         },
                     ],

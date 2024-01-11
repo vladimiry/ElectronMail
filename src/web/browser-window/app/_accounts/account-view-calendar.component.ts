@@ -1,20 +1,19 @@
 import {Component, Injector} from "@angular/core";
+import {filter, withLatestFrom} from "rxjs/operators";
 import {firstValueFrom} from "rxjs";
 import type {OnInit} from "@angular/core";
-import {withLatestFrom} from "rxjs/operators";
 
 import {ACCOUNTS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsService} from "./accounts.service";
 import {AccountViewAbstractComponent} from "./account-view-abstract-component.directive";
-import {getWebLogger} from "src/web/browser-window/util";
-import {testProtonCalendarAppPage} from "src/shared/util/proton-webclient";
+import {IPC_WEBVIEW_API_CHANNELS_MAP} from "src/shared/api/webview/const";
 
 @Component({
     selector: "electron-mail-account-view-calendar",
     template: "",
 })
 export class AccountViewCalendarComponent extends AccountViewAbstractComponent implements OnInit {
-    private readonly logger = getWebLogger(__filename, nameof(AccountViewCalendarComponent));
+    // private readonly logger = getWebLogger(__filename, nameof(AccountViewCalendarComponent));
 
     private readonly accountsService: AccountsService;
 
@@ -27,27 +26,31 @@ export class AccountViewCalendarComponent extends AccountViewAbstractComponent i
 
     ngOnInit(): void {
         this.addSubscription(
-            this.filterDomReadyEvent()
-                .pipe(withLatestFrom(this.account$))
+            this.filterEvent("ipc-message")
+                .pipe(
+                    filter(({channel}) => channel === IPC_WEBVIEW_API_CHANNELS_MAP.calendar.registered),
+                    withLatestFrom(this.account$),
+                )
                 .subscribe(([{webView}, account]) => {
+                    this.action(
+                        ACCOUNTS_ACTIONS.SetupCalendarNotificationChannel({
+                            account,
+                            webView,
+                            finishPromise: firstValueFrom(this.buildNavigationOrDestroyingSingleNotification()),
+                        }),
+                    );
+                }),
+        );
+
+        this.addSubscription(
+            this.filterEvent("dom-ready")
+                .pipe(withLatestFrom(this.account$))
+                .subscribe(([, account]) => {
                     // app set's app notification channel on webview.dom-ready event
                     // which means user is not logged-in yet at this moment, so resetting the state
                     this.action(
                         this.accountsService
                             .generateCalendarNotificationsStateResetAction({login: account.accountConfig.login}),
-                    );
-
-                    if (!testProtonCalendarAppPage({url: webView.src, logger: this.logger}).shouldInitProviderApi) {
-                        this.log("info", [`skip webview.dom-ready processing for ${webView.src} page`]);
-                        return;
-                    }
-
-                    this.action(
-                        ACCOUNTS_ACTIONS.SetupCalendarNotificationChannel({
-                            account,
-                            webView,
-                            finishPromise: firstValueFrom(this.domReadyOrDestroyedSingleNotification()),
-                        }),
                     );
                 }),
         );

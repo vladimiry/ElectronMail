@@ -14,7 +14,7 @@ export const resolveStandardSetupStandardSetupProviderInternals = async (
 
     return new Promise((resolve /*, reject */) => { // TODO reject on timeout
         const result: StandardSetupProviderInternals = {
-            "../../packages/components/containers/app/StandardSetup.tsx": {
+            "../../packages/components/containers/app/StandardPrivateApp.tsx": {
                 value$: new ReplaySubject(1),
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
                 _valueShape: null as any,
@@ -25,13 +25,13 @@ export const resolveStandardSetupStandardSetupProviderInternals = async (
         webpackJsonpPushUtil.overridePushMethodGlobally({
             resultKeys: Object.keys(result) as ReadonlyArray<keyof typeof result>,
             chunkItemHook({resultKey, webpack_exports, webpack_require}) {
-                if (resultKey === "../../packages/components/containers/app/StandardSetup.tsx") {
+                if (resultKey === "../../packages/components/containers/app/StandardPrivateApp.tsx") {
                     webpackJsonpPushUtil.handleObservableValue(
                         result,
                         {
                             resultKey,
                             webpack_exports,
-                            itemName: "StandardSetup",
+                            itemName: "StandardPrivateApp",
                             itemCallResultTypeValidation: "object", // import("react").ReactNode
                             itemCallResultHandler: (itemCallResult, notify, markAsInitialized) => {
                                 const {createElement, useEffect}

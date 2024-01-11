@@ -2,7 +2,7 @@ import {map, tap} from "rxjs/operators";
 import {merge, Observable} from "rxjs";
 
 import {curryFunctionMembers} from "src/shared/util";
-import {getLocationHref} from "src/electron-preload/webview/lib/util";
+import {getLocationHref} from "src/shared/util/web";
 import {PROTON_CALENDAR_IPC_WEBVIEW_API, ProtonCalendarApi, ProtonCalendarNotificationOutput} from "src/shared/api/webview/calendar";
 import {ProviderApi} from "./provider-api/model";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
@@ -11,7 +11,9 @@ const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.calendar, __filename);
 
 export const registerApi = (providerApi: ProviderApi): void => {
     const endpoints: ProtonCalendarApi = {
-        async ping() {}, // eslint-disable-line @typescript-eslint/no-empty-function
+        async ping({accountIndex}) {
+            return {value: JSON.stringify({accountIndex})};
+        },
 
         notification({accountIndex}) {
             const logger = curryFunctionMembers(_logger, nameof.full(endpoints.notification), accountIndex);

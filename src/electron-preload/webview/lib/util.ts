@@ -7,110 +7,15 @@ import WebStorageCookieStore from "tough-cookie-web-storage-store";
 import {asyncDelay, curryFunctionMembers, getPlainErrorProps, isDatabaseBootstrapped} from "src/shared/util";
 import {DbPatch} from "src/shared/api/common";
 import {depersonalizeProtonApiUrl} from "src/shared/util/proton-url";
+import {fillInputValue, getLocationHref} from "src/shared/util/web";
 import {FsDbAccount} from "src/shared/model/database";
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {LOCAL_WEBCLIENT_ORIGIN, ONE_MINUTE_MS, ONE_SECOND_MS} from "src/shared/const";
 import {Logger} from "src/shared/model/common";
 import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
 import {RATE_LIMITED_METHOD_CALL_MESSAGE} from "src/electron-preload/webview/lib/const";
-import {resolveCachedConfig, resolveIpcMainApi} from "src/electron-preload/lib/util";
+import {resolveIpcMainApi} from "src/electron-preload/lib/util";
 import * as RestModel from "src/electron-preload/webview/lib/rest-model";
-
-export const resolveDomElements = async <E extends Element | null,
-    Q extends Readonly<Record<string, () => E>>,
-    K extends keyof Q,
-    R extends { [key in K]: Exclude<ReturnType<Q[key]>, null> }>(
-    query: Q,
-    logger: Logger,
-    opts: { timeoutMs?: number; iterationsLimit?: number } = {},
-): Promise<R> => {
-    const {timeouts: {domElementsResolving}} = await resolveCachedConfig(logger);
-
-    return new Promise((resolve, reject) => {
-        const OPTS = {
-            timeoutMs: (
-                opts.timeoutMs
-                ??
-                domElementsResolving
-                ??
-                ONE_SECOND_MS * 10
-            ),
-            iterationsLimit: opts.iterationsLimit || 0, // 0 - unlimited
-            delayMinMs: 300,
-        };
-
-        const startTime = Date.now();
-        const delayMs = OPTS.timeoutMs / 50;
-        const queryKeys = Object.keys(query) as K[];
-        const resolvedElements: Partial<R> = {};
-        let it = 0;
-
-        const scanElements: () => void = () => {
-            it++;
-
-            queryKeys.forEach((key) => {
-                if (key in resolvedElements) {
-                    return;
-                }
-                const queryFn = query[key];
-                if (typeof queryFn !== "function") {
-                    throw new Error("Failed to resolved query function");
-                }
-                const element = queryFn();
-                if (element) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any,  @typescript-eslint/no-unsafe-assignment
-                    resolvedElements[key] = element as any;
-                }
-            });
-
-            if (Object.keys(resolvedElements).length === queryKeys.length) {
-                return resolve(resolvedElements as R);
-            }
-
-            if (OPTS.iterationsLimit && (it >= OPTS.iterationsLimit)) {
-                return reject(
-                    new Error(
-                        `Failed to resolve some DOM elements from the list [${queryKeys.join(", ")}] having "${it}" iterations performed`,
-                    ),
-                );
-            }
-
-            if (Date.now() - startTime > OPTS.timeoutMs) {
-                return reject(new Error(
-                    `Failed to resolve some DOM elements from the list [${queryKeys.join(", ")}] within "${OPTS.timeoutMs}" milliseconds`,
-                ));
-            }
-
-            setTimeout(scanElements, Math.max(OPTS.delayMinMs, delayMs));
-        };
-
-        scanElements();
-    });
-};
-
-export function getLocationHref(): string {
-    return window.location.href;
-}
-
-export function fillInputValue(input: HTMLInputElement, value: string): void {
-    const setValue = (() => {
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        const valueSetter = Object.getOwnPropertyDescriptor(input, "value")?.set;
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        const prototypeValueSetter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(input), "value")?.set;
-
-        return prototypeValueSetter && valueSetter !== prototypeValueSetter
-            ? prototypeValueSetter
-            : valueSetter;
-    })();
-
-    if (!setValue) {
-        throw new Error("Form input control value setter resolving failed");
-    }
-
-    setValue.call(input, value);
-    input.dispatchEvent(new Event("input", {bubbles: true}));
-}
 
 export async function submitTotpToken(
     input: HTMLInputElement,

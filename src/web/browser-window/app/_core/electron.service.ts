@@ -60,6 +60,16 @@ export class ElectronService implements OnDestroy {
         );
     }
 
+    primaryLoginWebViewClient(
+        {webView}: { webView: Electron.WebviewTag },
+        options?: LimitedCallOptions,
+    ): ReturnType<typeof __ELECTRON_EXPOSURE__.buildIpcPrimaryLoginWebViewClient> {
+        return __ELECTRON_EXPOSURE__.buildIpcPrimaryLoginWebViewClient(
+            webView,
+            {options: this.buildApiCallOptions(options)},
+        );
+    }
+
     calendarWebViewClient(
         {webView}: { webView: Electron.WebviewTag },
         options?: LimitedCallOptions,

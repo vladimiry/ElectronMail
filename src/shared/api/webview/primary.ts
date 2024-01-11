@@ -1,25 +1,18 @@
 import {ActionType, createWebViewApiService, ScanService} from "electron-rpc-api";
 
 import {buildLoggerBundle} from "src/electron-preload/lib/util";
-import {DbAccountPk, Folder, FsDbAccount, Mail} from "src/shared/model/database";
-import {IpcMainServiceScan} from "src/shared/api/main-process";
-import {LoginFieldContainer, MailPasswordFieldContainer, PasswordFieldContainer} from "src/shared/model/container";
-import {Notifications} from "src/shared/model/account";
-import {PACKAGE_NAME} from "src/shared/const";
-import {ProtonClientSession} from "src/shared/model/proton";
+import type {DbAccountPk, Folder, FsDbAccount, Mail} from "src/shared/model/database";
+import {IPC_WEBVIEW_API_CHANNELS_MAP} from "src/shared/api/webview/const";
+import type {IpcMainServiceScan} from "src/shared/api/main-process";
+import type {LoginFieldContainer} from "src/shared/model/container";
+import type {Notifications} from "src/shared/model/account";
+import type {ProtonClientSession} from "src/shared/model/proton";
 
 const {Promise, Observable} = ActionType;
 
 // TODO drop "{ accountIndex: number}" use
-export const PROTON_PRIMARY_IPC_WEBVIEW_API_DEFINITION = {
-    ping:
-        Promise<DeepReadonly<{ accountIndex: number }>>(),
-    fillLogin:
-        Promise<DeepReadonly<LoginFieldContainer & { accountIndex: number }>>(),
-    login:
-        Promise<DeepReadonly<LoginFieldContainer & PasswordFieldContainer & { accountIndex: number }>>(),
-    login2fa:
-        Promise<DeepReadonly<{ secret: string } & { accountIndex: number }>>(),
+const PROTON_PRIMARY_IPC_WEBVIEW_API_DEFINITION = {
+    ping: Promise<DeepReadonly<{ accountIndex: number }>, { value: string }>(),
     buildDbPatch:
         Observable<DeepReadonly<DbAccountPk & { metadata: Readonly<FsDbAccount["metadata"]> | null } & { accountIndex: number }>,
             { progress: string }>(),
@@ -42,18 +35,18 @@ export const PROTON_PRIMARY_IPC_WEBVIEW_API_DEFINITION = {
     notification:
         Observable<DeepReadonly<LoginFieldContainer & { apiEndpointOriginSS: string, entryApiUrl: string, accountIndex: number }>,
             ProtonPrimaryNotificationOutput>(),
-    unlock:
-        ActionType.Promise<MailPasswordFieldContainer & { accountIndex: number }>(),
     resolveLiveProtonClientSession: ActionType
         .Promise<DeepReadonly<{ accountIndex: number }>, ProtonClientSession | null>(),
     resolvedLiveSessionStoragePatch: ActionType
         .Promise<DeepReadonly<{ accountIndex: number }>, IpcMainServiceScan["ApiImplReturns"]["resolvedSavedSessionStoragePatch"] | null>(),
 } as const;
 
+const channel = IPC_WEBVIEW_API_CHANNELS_MAP.primary.communication;
+
 export const PROTON_PRIMARY_IPC_WEBVIEW_API = createWebViewApiService({
-    apiDefinition: PROTON_PRIMARY_IPC_WEBVIEW_API_DEFINITION,
-    channel: `${PACKAGE_NAME}:webview-api:primary`,
-    logger: buildLoggerBundle(`${__filename} [webview-api:primary]`),
+    apiDefinition: PROTON_PRIMARY_IPC_WEBVIEW_API_DEFINITION, // WARN referenced from "export const" to prevent "electron" injection
+    channel,
+    logger: buildLoggerBundle(`${__filename} [${channel}]`),
 });
 
 export type ProtonPrimaryApiScan = ScanService<typeof PROTON_PRIMARY_IPC_WEBVIEW_API>;

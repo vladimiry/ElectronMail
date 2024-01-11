@@ -1,5 +1,4 @@
 import {ActionType, createIpcMainApiService, ScanService} from "electron-rpc-api";
-import {BrowserWindow} from "electron";
 import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 
 import type {AccountConfig, AccountSessionStoragePatchBundle} from "src/shared/model/account";
@@ -139,7 +138,7 @@ export const ENDPOINTS_DEFINITION = {
 
     loadDatabase: ActionType.Promise<Pick<Settings, "accounts">>(),
 
-    activateBrowserWindow: ActionType.Promise<BrowserWindow | void>(),
+    activateBrowserWindow: ActionType.Promise<import("electron").BrowserWindow | void>(),
 
     toggleBrowserWindow: ActionType.Promise<{ forcedState: boolean } | void>(),
 

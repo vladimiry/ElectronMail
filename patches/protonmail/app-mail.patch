@@ -11,29 +11,127 @@ index 8087743d3a..ce4cf05ff1 100644
          "i18n:getlatest": "proton-i18n upgrade",
          "i18n:upgrade": "proton-i18n extract --verbose && proton-i18n crowdin -u --verbose",
 
+diff --git a/applications/mail/webpack.config.ts b/applications/mail/webpack.config.ts
+index 4715626d02..31fd093099 100644
+--- a/applications/mail/webpack.config.ts
++++ b/applications/mail/webpack.config.ts
+@@ -5,7 +5,7 @@ import { Configuration, ProvidePlugin } from 'webpack';
+ import { InjectManifest } from 'workbox-webpack-plugin';
+
+ import getConfig from '@proton/pack/webpack.config';
+-import { addDevEntry, getIndexChunks, getSupportedEntry, mergeEntry } from '@proton/pack/webpack/entries';
++import { addLoginEntry, getIndexChunks } from '@proton/pack/webpack/entries';
+
+ const result = (env: any): Configuration => {
+     setAutoFreeze(false);
+@@ -40,14 +40,6 @@ const result = (env: any): Configuration => {
+         );
+         // }
+
+-        // The order is important so that the unsupported file is loaded after
+-        config.entry = mergeEntry(config.entry, {
+-            eo: [path.resolve('./src/app/eo.tsx'), getSupportedEntry()],
+-        });
+-
+-        // @ts-ignore
+-        config.devServer.historyApiFallback.rewrites = [{ from: /^\/eo/, to: '/eo.html' }];
+-
+         const htmlPlugin = config.plugins.find((plugin): plugin is HtmlWebpackPlugin => {
+             return plugin instanceof HtmlWebpackPlugin;
+         });
+@@ -56,8 +48,8 @@ const result = (env: any): Configuration => {
+         }
+         const htmlIndex = config.plugins.indexOf(htmlPlugin);
+
+-        if (env.appMode === 'standalone') {
+-            addDevEntry(config);
++        if (env.appMode === 'bundle') { // including login page for the "mail" app
++            addLoginEntry(config);
+         }
+
+         // We keep the order because the other plugins have an impact
+@@ -74,19 +66,6 @@ const result = (env: any): Configuration => {
+                 inject: 'body',
+             })
+         );
+-        // Add another webpack plugin on top
+-        config.plugins.splice(
+-            htmlIndex,
+-            0,
+-            new HtmlWebpackPlugin({
+-                filename: 'eo.html',
+-                template: path.resolve('./src/eo.ejs'),
+-                templateParameters: htmlPlugin.userOptions.templateParameters,
+-                scriptLoading: 'defer',
+-                chunks: getIndexChunks('eo'),
+-                inject: 'body',
+-            })
+-        );
+     });
+ };
+
+diff --git a/packages/shared/lib/api/auth.ts b/packages/shared/lib/api/auth.ts
+index efbf28b89f..432f24b303 100644
+--- a/packages/shared/lib/api/auth.ts
++++ b/packages/shared/lib/api/auth.ts
+@@ -17,7 +17,7 @@ export const auth = (
+     persistent: boolean
+ ) => ({
+     method: 'post',
+-    url: 'core/v4/auth',
++    url: 'core/v4/auth', // url used by "patchAuthRequestHeaders" in src/electron-main/util/proton-url.ts
+     data: {
+         ...data,
+         PersistentCookies: Number(persistent),
+
 diff --git a/packages/shared/lib/api/events.ts b/packages/shared/lib/api/events.ts
-index 519a50349..819bdb911 100644
+index 9bf8da627c..476f8f581e 100644
 --- a/packages/shared/lib/api/events.ts
 +++ b/packages/shared/lib/api/events.ts
-@@ -6,5 +6,9 @@ export const getLatestID = () => ({
+@@ -4,7 +4,11 @@ export const getLatestID = () => ({
+ });
+
  export const getEvents = (eventID: string, params?: { ConversationCounts: 1 | 0; MessageCounts: 1 | 0 }) => ({
-     url: `core/v4/events/${eventID}`,
+-    url: `core/v5/events/${eventID}`,
++    url: `core/v5/events/${eventID}`, // url used by "buildEventsApiUrlTester" in src/electron-preload/webview/primary/provider-api/index.ts
      method: 'get',
 -    params,
 +    params: {
 +        ...params,
 +        ConversationCounts: 1,
-+        MessageCounts: 1
-+    }
++        MessageCounts: 1,
++    },
+ });
+
+diff --git a/packages/shared/lib/api/messages.ts b/packages/shared/lib/api/messages.ts
+index aef6b86137..0593fd7ea1 100644
+--- a/packages/shared/lib/api/messages.ts
++++ b/packages/shared/lib/api/messages.ts
+@@ -42,7 +42,7 @@ export const queryMessageMetadata = ({
+     AnchorID,
+ }: MailboxItemsQueryParams) => ({
+     method: 'get',
+-    url: 'mail/v4/messages',
++    url: 'mail/v4/messages', // url used by "patchMailApiRequestHeaders" in src/electron-main/util/proton-url.ts
+     params: {
+         Location,
+         Page,
+@@ -72,7 +72,7 @@ export const queryMessageMetadata = ({
+
+ export const queryMessageCount = (AddressID?: string) => ({
+     method: 'get',
+-    url: 'mail/v4/messages/count',
++    url: 'mail/v4/messages/count', // url used by "buildMessagesCountApiUrlTester" in src/electron-preload/webview/primary/provider-api/index.ts
+     params: { AddressID },
  });
 
 diff --git a/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx b/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx
-index bbb73f6bc9..584e9324be 100644
+index 5be6a93078..aa37ede95c 100644
 --- a/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx
 +++ b/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx
-@@ -470,6 +470,7 @@ const MailboxContainer = ({
+@@ -486,6 +486,7 @@ const MailboxContainer = ({
                  tabIndex={-1}
-                 className="flex-item-fluid flex flex-column flex-nowrap outline-none"
+                 className="flex-1 flex flex-column flex-nowrap outline-none"
                  data-testid="mailbox"
 +                electron-mail-mailbox-container-component
              >
@@ -41,18 +139,31 @@ index bbb73f6bc9..584e9324be 100644
                      breakpoints={breakpoints}
 
 diff --git a/applications/mail/src/app/helpers/attachment/attachmentLoader.ts b/applications/mail/src/app/helpers/attachment/attachmentLoader.ts
-index c7d094d1b..3667af1eb 100644
+index ed1a65d71f..f324ebf164 100644
 --- a/applications/mail/src/app/helpers/attachment/attachmentLoader.ts
 +++ b/applications/mail/src/app/helpers/attachment/attachmentLoader.ts
-@@ -48,6 +48,7 @@ export const getRequest = ({ ID = '' }: Attachment = {}, api: Api, messageKeys:
+@@ -49,6 +49,7 @@ export const getRequest = ({ ID = '' }: Attachment = {}, api: Api, messageKeys:
      return api(getAttachment(ID));
  };
 
-+/* <electron-mail-mark> */
++/* <electron-mail-mark> 1) track signature/args 2) track "verification" props use ("verifyingKeys" prop only at the moment) */
  export const getDecryptedAttachment = async (
      attachment: Attachment,
      verification: MessageVerification | undefined,
-@@ -82,6 +83,7 @@ export const getDecryptedAttachment = async (
+@@ -66,10 +67,10 @@ export const getDecryptedAttachment = async (
+                 encryptedBinary,
+                 sessionKey,
+                 attachment.Signature,
+-                verification?.verifyingKeys
++                verification?.verifyingKeys // track that only "verifyingKeys" prop is used from "verification"
+             );
+
+-            const verified = getVerificationStatusFromKeys(decryptedAttachment, verification?.verifyingKeys || []);
++            const verified = getVerificationStatusFromKeys(decryptedAttachment, verification?.verifyingKeys || []);  // track that only "verifyingKeys" prop is used from "verification"
+
+             return {
+                 ...decryptedAttachment,
+@@ -96,6 +97,7 @@ export const getDecryptedAttachment = async (
          throw newError;
      }
  };
@@ -60,6 +171,84 @@ index c7d094d1b..3667af1eb 100644
 
  export const getAndVerify = async (
      attachment: Attachment = {},
+
+diff --git a/applications/mail/src/app/hooks/contact/useContacts.ts b/applications/mail/src/app/hooks/contact/useContacts.ts
+index 18737e3e35..7f542185b7 100644
+--- a/applications/mail/src/app/hooks/contact/useContacts.ts
++++ b/applications/mail/src/app/hooks/contact/useContacts.ts
+@@ -8,9 +8,11 @@ import {
+     recipientsLabelCache,
+ } from '../../store/contacts/contactsSelectors';
+
++/* <electron-mail-mark> */
+ export const useContactsMap = () => {
+     return useMailSelector(contactsMap);
+ };
++/* </electron-mail-mark> */
+
+ export const useContactGroupsMap = () => {
+     return useMailSelector(contactGroupsMap);
+
+diff --git a/applications/mail/src/app/store/messages/messagesTypes.ts b/applications/mail/src/app/store/messages/messagesTypes.ts
+index 328d40aeac..24bf9b7de0 100644
+--- a/applications/mail/src/app/store/messages/messagesTypes.ts
++++ b/applications/mail/src/app/store/messages/messagesTypes.ts
+@@ -95,10 +95,12 @@ export interface MessageVerification {
+      */
+     apiKeysErrors: string[] | undefined;
+
++    /* <electron-mail-mark> */
+     /**
+      * Verifying keys, if any
+      */
+-    verifyingKeys: PublicKeyReference[] | undefined;
++    verifyingKeys: PublicKeyReference[] | undefined; // tracking used prop
++    /* </electron-mail-mark> */
+ }
+
+ export interface AbstractMessageImage {
+
+diff --git a/packages/components/hooks/useGetVerificationPreferences.ts b/packages/components/hooks/useGetVerificationPreferences.ts
+index 5b4d93ee06..e311e43009 100644
+--- a/packages/components/hooks/useGetVerificationPreferences.ts
++++ b/packages/components/hooks/useGetVerificationPreferences.ts
+@@ -37,8 +37,9 @@ const useGetVerificationPreferences = () => {
+     const getPublicKeysForInbox = useGetPublicKeysForInbox();
+     const getMailSettings = useGetMailSettings();
+
++    /* <electron-mail-mark> 1) track signature/args: email, lifetime, contactEmailsMap 2) "verifyingKeys" gets returned */
+     const getVerificationPreferences = useCallback<GetVerificationPreferences>(
+-        async ({ email, lifetime, contactEmailsMap }) => {
++        async ({ email, lifetime, contactEmailsMap }) => { // track signature/args: email, lifetime, contactEmailsMap
+             const addresses = await getAddresses();
+             const canonicalEmail = canonicalizeInternalEmail(email);
+             const selfAddress = addresses.find(({ Email }) => canonicalizeInternalEmail(Email) === canonicalEmail);
+@@ -59,7 +60,7 @@ const useGetVerificationPreferences = () => {
+                 const verifyingKeys = getVerifyingKeys(activePublicKeys, compromisedFingerprints);
+                 return {
+                     isOwnAddress: true,
+-                    verifyingKeys,
++                    verifyingKeys, // "verifyingKeys" gets returned
+                     apiKeys: activePublicKeys,
+                     pinnedKeys: [],
+                     compromisedFingerprints,
+@@ -103,7 +104,7 @@ const useGetVerificationPreferences = () => {
+             }
+             return {
+                 isOwnAddress: false,
+-                verifyingKeys,
++                verifyingKeys, // "verifyingKeys" gets returned
+                 pinnedKeys,
+                 apiKeys: apiPublicKeys,
+                 ktVerificationResult,
+@@ -115,6 +116,7 @@ const useGetVerificationPreferences = () => {
+         },
+         [api, getAddressKeys, getAddresses, getPublicKeysForInbox, getMailSettings]
+     );
++    /* <electron-mail-mark/> */
+
+     return useCallback<GetVerificationPreferences>(
+         ({ email, lifetime = DEFAULT_LIFETIME, contactEmailsMap }) => {
 
 diff --git a/applications/mail/src/app/helpers/message/messageDecrypt.ts b/applications/mail/src/app/helpers/message/messageDecrypt.ts
 index acfa71607..216229b0f 100644
@@ -98,36 +287,6 @@ index acfa71607..216229b0f 100644
  /**
   * Verify the extracted `signature` of a decryption result against its `decryptedRawContent`
 
-diff --git a/applications/mail/src/app/logic/messages/messagesTypes.ts b/applications/mail/src/app/logic/messages/messagesTypes.ts
-index 29d48870ab..fc19436f55 100644
---- a/applications/mail/src/app/logic/messages/messagesTypes.ts
-+++ b/applications/mail/src/app/logic/messages/messagesTypes.ts
-@@ -49,20 +49,24 @@ export interface MessageVerification {
-      */
-     verificationErrors: Error[] | undefined;
-
-+    /* <electron-mail-mark> */
-     /**
-      * Pinned public keys of the sender which can verify, if any
-      */
-     senderPinnedKeys: PublicKeyReference[] | undefined;
-+    /* </electron-mail-mark> */
-
-     /**
-      * Sender public keys retrieved from API which can are not pinned
-      */
-     senderPinnableKeys: PublicKeyReference[] | undefined;
-
-+    /* <electron-mail-mark> */
-     /**
-      * If the sender is in the list of contacts, whether its contact signature has been verified
-      */
-     pinnedKeysVerified: boolean | undefined;
-+    /* </electron-mail-mark> */
-
-     /**
-      * If the message is signed, the public key that verifies the signature
-
 diff --git a/applications/mail/src/app/hooks/message/useGetMessageKeys.ts b/applications/mail/src/app/hooks/message/useGetMessageKeys.ts
 index 4c16c85b5..8b93c6084 100644
 --- a/applications/mail/src/app/hooks/message/useGetMessageKeys.ts
@@ -147,56 +306,6 @@ index 4c16c85b5..8b93c6084 100644
      );
 -};
 +}; /* </electron-mail-mark> */
-
-diff --git a/packages/components/hooks/useGetEncryptionPreferences.ts b/packages/components/hooks/useGetEncryptionPreferences.ts
-index dae0d635c7..6308e24fa9 100644
---- a/packages/components/hooks/useGetEncryptionPreferences.ts
-+++ b/packages/components/hooks/useGetEncryptionPreferences.ts
-@@ -5,7 +5,7 @@ import { MINUTE, RECIPIENT_TYPES } from '@proton/shared/lib/constants';
- import { getSelfSendAddresses } from '@proton/shared/lib/helpers/address';
- import { canonicalizeEmail, canonicalizeInternalEmail } from '@proton/shared/lib/helpers/email';
- import { KT_VERIFICATION_STATUS } from '@proton/shared/lib/interfaces';
--import { GetEncryptionPreferences } from '@proton/shared/lib/interfaces/hooks/GetEncryptionPreferences';
-+import { GetEncryptionPreferences } from '@proton/shared/lib/interfaces/hooks/GetEncryptionPreferences'; /* <electron-mail-mark/> TODO "GetEncryptionPreferences" is used as a method signature */
- import { getKeyHasFlagsToEncrypt } from '@proton/shared/lib/keys';
- import { getActiveKeys } from '@proton/shared/lib/keys/getActiveKeys';
- import { splitKeys } from '@proton/shared/lib/keys/keys';
-@@ -31,7 +31,7 @@ const DEFAULT_LIFETIME = 5 * MINUTE;
-  * Confluence document 'Encryption preferences for outgoing email'.
-  * NB: the current logic does not handle internal address keys belonging to external accounts, since these keys are not used by Inbox.
-  */
--const useGetEncryptionPreferences = () => {
-+const useGetEncryptionPreferences = () => { /* <electron-mail-mark> TODO "GetEncryptionPreferences" is used as a method signature */
-     const api = useApi();
-     const cache = useCache();
-     const getAddresses = useGetAddresses();
-@@ -109,6 +109,6 @@ const useGetEncryptionPreferences = () => {
-         },
-         [cache, getEncryptionPreferences]
-     );
--};
-+}; /* <electron-mail-mark> */
-
- export default useGetEncryptionPreferences;
-
-diff --git a/packages/shared/lib/interfaces/hooks/GetEncryptionPreferences.ts b/packages/shared/lib/interfaces/hooks/GetEncryptionPreferences.ts
-index d31b0bf797..407bb22503 100644
---- a/packages/shared/lib/interfaces/hooks/GetEncryptionPreferences.ts
-+++ b/packages/shared/lib/interfaces/hooks/GetEncryptionPreferences.ts
-@@ -2,6 +2,7 @@ import { EncryptionPreferences } from '../../mail/encryptionPreferences';
- import { ContactEmail } from '../contacts';
-
- export type GetEncryptionPreferences = ({
-+    /* <electron-mail-mark> TODO review signatures */
-     email,
-     intendedForEmail,
-     lifetime,
-@@ -15,4 +16,4 @@ export type GetEncryptionPreferences = ({
-     intendedForEmail?: boolean;
-     lifetime?: number;
-     contactEmailsMap?: { [email: string]: ContactEmail | undefined };
--}) => Promise<EncryptionPreferences>;
-+}) => Promise<EncryptionPreferences>;/* </electron-mail-mark> */
 
 diff --git a/packages/components/hooks/useApi.ts b/packages/components/hooks/useApi.ts
 index e2baface5..8b4317d5a 100644
@@ -232,10 +341,10 @@ index 2bab0ad85..51fc1fd18 100644
  export default useAuthentication;
 
 diff --git a/packages/components/components/editor/rooster/hooks/useInitRooster.ts b/packages/components/components/editor/rooster/hooks/useInitRooster.ts
-index dea411d80..caeec9fc5 100644
+index f092dd0201..f42ecbc0b4 100644
 --- a/packages/components/components/editor/rooster/hooks/useInitRooster.ts
 +++ b/packages/components/components/editor/rooster/hooks/useInitRooster.ts
-@@ -42,7 +42,9 @@ const useInitRooster = ({
+@@ -56,7 +56,9 @@ const useInitRooster = ({
 
      const initRooster = useCallback(async () => {
          const iframe = iframeRef.current as HTMLIFrameElement;
@@ -243,9 +352,9 @@ index dea411d80..caeec9fc5 100644
          const iframeDocument = iframe.contentWindow?.document as Document;
 +        /* </electron-mail-mark> */
 
-         iframeDocument.open();
-         iframeDocument.write(`
-@@ -102,6 +104,13 @@ const useInitRooster = ({
+         /**
+          * Disable Dark Reader on the composer iframe to avoid sending censored emails
+@@ -125,6 +127,13 @@ const useInitRooster = ({
 
          onReady(actions);
 
@@ -374,13 +483,13 @@ index 0d29745777..0000000000
 -export default MailDefaultHandlerModal;
 
 diff --git a/applications/mail/src/app/components/header/search/MailSearch.tsx b/applications/mail/src/app/components/header/search/MailSearch.tsx
-index 9b542628da..f26b6a9ccc 100644
+index 73a363c143..c2a5ef9208 100644
 --- a/applications/mail/src/app/components/header/search/MailSearch.tsx
 +++ b/applications/mail/src/app/components/header/search/MailSearch.tsx
-@@ -3,21 +3,17 @@ import { useEffect, useState } from 'react';
- import { Location } from 'history';
+@@ -4,21 +4,17 @@ import { Location } from 'history';
 
  import {
+     Breakpoints,
 -    FeatureCode,
      TopNavbarListItemSearchButton,
      generateUID,
@@ -398,8 +507,8 @@ index 9b542628da..f26b6a9ccc 100644
 -import { isEncryptedSearchAvailable } from '../../../helpers/encryptedSearch/esUtils';
  import { extractSearchParameters } from '../../../helpers/mailboxUrl';
  import { useClickMailContent } from '../../../hooks/useClickMailContent';
- import { Breakpoints } from '../../../models/utils';
-@@ -37,17 +33,15 @@ interface Props {
+ import AdvancedSearch from './AdvancedSearch';
+@@ -36,17 +32,15 @@ interface Props {
 
  const MailSearch = ({ breakpoints, labelID, location, columnMode }: Props) => {
      const [uid] = useState(generateUID('advanced-search-overlay'));
@@ -415,7 +524,6 @@ index 9b542628da..f26b6a9ccc 100644
      const { dropdownOpened } = esStatus;
 -    const showEncryptedSearch = isEncryptedSearchAvailable(user, isESUserInterfaceAvailable);
 +    const showEncryptedSearch = false;
-
      // Show more from inside AdvancedSearch to persist the state when the overlay is closed
      const { state: showMore, toggle: toggleShowMore } = useToggle(false);
 
@@ -432,3 +540,31 @@ index ebdf5ee22..28adf6c62 100644
      isRefreshing: false,
      isSearchPartial: false,
      isSearching: false,
+
+diff --git a/applications/mail/src/app/hooks/useMailModel.ts b/applications/mail/src/app/hooks/useMailModel.ts
+index 92034469a9..a49c3d54bb 100644
+--- a/applications/mail/src/app/hooks/useMailModel.ts
++++ b/applications/mail/src/app/hooks/useMailModel.ts
+@@ -1,6 +1,6 @@
+ import { useMailSettings } from '@proton/components/hooks';
+
+-type MailModel = 'MailSettings';
++type MailModel = 'MailSettings'; // tracking "MailSettings" constant
+
+ const useMailModel = (key: MailModel) => {
+     const [mailSettings] = useMailSettings();
+
+diff --git a/packages/shared/lib/interfaces/MailSettings.ts b/packages/shared/lib/interfaces/MailSettings.ts
+index 083e514552..8fa361ab75 100644
+--- a/packages/shared/lib/interfaces/MailSettings.ts
++++ b/packages/shared/lib/interfaces/MailSettings.ts
+@@ -49,7 +49,7 @@ export interface MailSettings {
+     ComposerMode: COMPOSER_MODE;
+     MessageButtons: MESSAGE_BUTTONS;
+     ShowMoved: number;
+-    ViewMode: VIEW_MODE;
++    ViewMode: VIEW_MODE; // track "ViewMode" prop
+     ViewLayout: VIEW_LAYOUT;
+     SwipeLeft: number;
+     SwipeRight: number;
+

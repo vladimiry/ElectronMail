@@ -47,7 +47,6 @@ export type Notifications = NoExtraProps<{
     loggedInCalendar: boolean
     pageType: NoExtraProps<{
         url?: string
-        type: "unknown" | "login" | "login2fa" | "unlock"
-        skipLoginDelayLogic?: boolean
+        type: "unknown"
     }>
 }>;

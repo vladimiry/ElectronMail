@@ -11,3 +11,24 @@ index 6d44ef4129..8ff11b06cf 100644
          "i18n:upgrade": "proton-i18n extract --verbose && proton-i18n crowdin --verbose",
          "i18n:validate": "proton-i18n validate lint-functions",
 
+diff --git a/applications/calendar/webpack.config.ts b/applications/calendar/webpack.config.ts
+index 729c7fc564..8c21b9143e 100644
+--- a/applications/calendar/webpack.config.ts
++++ b/applications/calendar/webpack.config.ts
+@@ -1,12 +1,12 @@
+ import { Configuration } from 'webpack';
+
+ import getConfig from '@proton/pack/webpack.config';
+-import { addDevEntry } from '@proton/pack/webpack/entries';
++import { addLoginEntry } from '@proton/pack/webpack/entries';
+
+ const result = (env: any): Configuration => {
+     const config = getConfig(env);
+-    if (env.appMode === 'standalone') {
+-        addDevEntry(config);
++    if (env.appMode === 'standalone') { // keeping original condition, so login page only included for the "mail" app
++        addLoginEntry(config);
+     }
+     return config;
+ };
+

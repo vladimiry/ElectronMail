@@ -28,9 +28,6 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
             "../../packages/shared/lib/mail/mailSettings.ts": {
                 value: {VIEW_MODE: {GROUP: NaN, SINGLE: NaN}},
             },
-            "../../packages/shared/lib/models/mailSettingsModel.js": {
-                value: {MailSettingsModel: {key: ""}},
-            },
             "../../packages/shared/lib/api/labels.ts": {
                 value: {get: NEVER_FN},
             },
@@ -83,34 +80,48 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
                                     = webpack_require<typeof import("react")>("../../node_modules/react/index.js");
                                 const result = [
                                     createElement(() => {
-                                        const useGetEncryptionPreferencesModule = (() => {
-                                            const key = "../../packages/components/hooks/useGetEncryptionPreferences.ts";
-                                            return webpack_require<ProviderInternalsLazy[typeof key]>(key);
-                                        })();
-                                        const getDecryptedAttachmentModule = (() => {
-                                            const key = "./src/app/helpers/attachment/attachmentLoader.ts";
+                                        const useGetVerificationPreferencesModule = (() => {
+                                            const key = "../../packages/components/hooks/useGetVerificationPreferences.ts";
                                             return webpack_require<ProviderInternalsLazy[typeof key]>(key);
                                         })();
                                         const useGetMessageKeysModule = (() => {
                                             const key = "./src/app/hooks/message/useGetMessageKeys.ts";
                                             return webpack_require<ProviderInternalsLazy[typeof key]>(key);
                                         })();
+                                        const useContactsModule = (() => {
+                                            const key = "./src/app/hooks/contact/useContacts.ts";
+                                            return webpack_require<ProviderInternalsLazy[typeof key]>(key);
+                                        })();
+                                        const useMailSettingsModule = (() => {
+                                            const key = "../../packages/mail/mailSettings/hooks.ts";
+                                            return webpack_require<ProviderInternalsLazy[typeof key]>(key);
+                                        })();
+                                        const getDecryptedAttachmentModule = (() => {
+                                            const key = "./src/app/helpers/attachment/attachmentLoader.ts";
+                                            return webpack_require<ProviderInternalsLazy[typeof key]>(key);
+                                        })();
 
                                         // WARN contexts should be resolved outside of the "useEffect" handler
                                         // TODO validate resolved proton entities (at least test the "typeof" result)
-                                        const getEncryptionPreferences = useGetEncryptionPreferencesModule.default();
-                                        const {getDecryptedAttachment} = getDecryptedAttachmentModule;
+                                        const getVerificationPreferences = useGetVerificationPreferencesModule.default();
+                                        const mailSettings = useMailSettingsModule.useMailSettings();
                                         const getMessageKeys = useGetMessageKeysModule.useGetMessageKeys();
+                                        const contactsMap = useContactsModule.useContactsMap();
+                                        const {getDecryptedAttachment} = getDecryptedAttachmentModule;
 
                                         useEffect(() => {
+                                            const [/* mailSettings */, loadingMailSettings] = mailSettings;
+                                            // TODO consider notifying null on component destroying stage
+                                            if (loadingMailSettings) return;
                                             notify({
                                                 privateScope: {
-                                                    getEncryptionPreferences,
+                                                    getVerificationPreferences,
+                                                    mailSettings,
                                                     getMessageKeys,
+                                                    contactsMap,
                                                     getDecryptedAttachment,
                                                 },
                                             });
-                                            // TODO consider notifying null on component destroying stage
                                         });
 
                                         return null; // no rendering needed
@@ -133,14 +144,7 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
                 }
 
                 // TODO enable declarative custom validation support
-                if (resultKey === "../../packages/shared/lib/models/mailSettingsModel.js") {
-                    type ValueType = (typeof result)[typeof resultKey]["value"];
-                    const key: keyof ValueType = "MailSettingsModel";
-                    const value = webpack_exports[key] as Partial<ValueType[typeof key]> | null;
-                    if (typeof value?.key !== "string") {
-                        throw new Error(`Export item validation failed: ${JSON.stringify({resultKey, key})}`);
-                    }
-                } else if (resultKey === "../../packages/shared/lib/mail/mailSettings.ts") {
+                if (resultKey === "../../packages/shared/lib/mail/mailSettings.ts") {
                     type ValueType = (typeof result)[typeof resultKey]["value"];
                     const key: keyof ValueType = "VIEW_MODE";
                     const value = webpack_exports[key] as Partial<ValueType[typeof key]> | null;

@@ -1,66 +1,58 @@
 diff --git a/applications/account/package.json b/applications/account/package.json
-index 3c5c6daff9..25828bb6b0 100644
+index 4ec5d0b741..93c94c449f 100644
 --- a/applications/account/package.json
 +++ b/applications/account/package.json
 @@ -6,7 +6,6 @@
      "author": "",
      "main": "index.js",
      "scripts": {
--        "build": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --appMode=sso",
+-        "build": "cross-env NODE_ENV=production WEBPACK_PARALLELISM=2 TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --appMode=sso",
          "check-types": "tsc",
          "i18n:upgrade": "proton-i18n extract --verbose && proton-i18n crowdin --verbose",
          "i18n:validate": "proton-i18n validate lint-functions",
 
-diff --git a/applications/account/src/app/Setup.tsx b/applications/account/src/app/Setup.tsx
-index 8f5e56ef0..a40d9dc17 100644
---- a/applications/account/src/app/Setup.tsx
-+++ b/applications/account/src/app/Setup.tsx
-@@ -2,14 +2,30 @@ import { PrivateAuthenticationStore, PublicAuthenticationStore, useAuthenticatio
- import { locales } from '@proton/shared/lib/i18n/locales';
+diff --git a/applications/account/webpack.config.ts b/applications/account/webpack.config.ts
+index 54f99267f9..68f5892f11 100644
+--- a/applications/account/webpack.config.ts
++++ b/applications/account/webpack.config.ts
+@@ -6,7 +6,7 @@ import 'webpack-dev-server';
 
- import PrivateApp from './content/PrivateApp';
--import PublicApp from './content/PublicApp';
-+
-+import * as _ElectronMail_React_import_ from 'react';
-+
-+const RedirectToOrigin = () => {
-+    const timeoutMs = 5000;
-+    const { origin: destination } = window.location;
-+    const message = `Redirecting to "${destination}" in ${timeoutMs}ms`;
-+    let timeoutId: undefined | ReturnType<typeof setTimeout>;
-+    _ElectronMail_React_import_.useEffect(() => {
-+        timeoutId = setTimeout(
-+            () => window.location.replace(destination),
-+            timeoutMs
-+        );
-+        return () => clearTimeout(timeoutId);
-+    });
-+    return _ElectronMail_React_import_.createElement(_ElectronMail_React_import_.Fragment, null, message);
-+};
+ import getConfig from '@proton/pack/webpack.config';
+ import CopyIndexHtmlWebpackPlugin from '@proton/pack/webpack/copy-index-html-webpack-plugin';
+-import { addDevEntry, getIndexChunks, getSupportedEntry } from '@proton/pack/webpack/entries';
++import { /*addLoginEntry,*/ getIndexChunks, getSupportedEntry } from '@proton/pack/webpack/entries';
 
- const Setup = () => {
--    const { UID, login, logout } = useAuthentication() as PublicAuthenticationStore & PrivateAuthenticationStore;
-+    const { UID, logout } = useAuthentication() as PublicAuthenticationStore & PrivateAuthenticationStore;
-     if (UID) {
-         return <PrivateApp locales={locales} onLogout={logout} />;
+ import { HrefLang } from './pages/interface';
+ import { getPages } from './pages/pages';
+@@ -55,7 +55,7 @@ const result = async (env: any): Promise<webpack.Configuration> => {
+
+     const { pre, unsupported } = config.entry as any;
+
+-    if (env.appMode === 'standalone') {
++    if (env.appMode === 'bundle') {
+         config.entry = {
+             pre,
+             private: [path.resolve('./src/app/private.tsx'), getSupportedEntry()],
+@@ -75,7 +75,7 @@ const result = async (env: any): Promise<webpack.Configuration> => {
+             })
+         );
+
+-        addDevEntry(config);
++        // addLoginEntry(config); // login page supposed to be used in the app only for the entry/mail app
+
+         return config;
      }
--    return <PublicApp locales={locales} onLogin={login} />;
-+    return <RedirectToOrigin />;
- };
-
- export default Setup;
 
 diff --git a/applications/account/src/app/content/MainContainer.tsx b/applications/account/src/app/content/MainContainer.tsx
-index 8009f7f074..1938e387fb 100644
+index 5a578b4b7d..80150502c4 100644
 --- a/applications/account/src/app/content/MainContainer.tsx
 +++ b/applications/account/src/app/content/MainContainer.tsx
-@@ -137,7 +137,7 @@ const MainContainer = () => {
-     const loadingFeatures = featuresFlags.some(({ loading }) => loading);
+@@ -133,7 +133,7 @@ const MainContainer = () => {
+     const [isSessionRecoveryAvailable, loadingIsSessionRecoveryAvailable] = useIsSessionRecoveryAvailable();
      const recoveryNotification = useRecoveryNotification(false);
 
 -    const appFromPathname = getAppFromPathnameSafe(location.pathname);
 +    const appFromPathname = getAppFromPathnameSafe(window.location.pathname);
      const app = appFromPathname || getToApp(undefined, user);
      const appSlug = getSlugFromApp(app);
-
 

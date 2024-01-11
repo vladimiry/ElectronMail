@@ -1,0 +1,74 @@
+diff --git a/packages/pack/webpack.config.ts b/packages/pack/webpack.config.ts
+index a78945215f..b9b6605555 100644
+--- a/packages/pack/webpack.config.ts
++++ b/packages/pack/webpack.config.ts
+@@ -3,6 +3,7 @@ import { Configuration } from 'webpack';
+ import 'webpack-dev-server';
+ // @ts-ignore
+ import { parseResource } from 'webpack/lib/util/identifier';
++import fs from 'fs';
+
+ import { getEntries } from './webpack/entries';
+
+@@ -25,10 +26,8 @@ const getConfig = (env: any): Configuration => {
+         api: env.api,
+         appMode: env.appMode || 'standalone',
+         featureFlags: env.featureFlags || '',
+-        writeSRI: env.writeSri !== 'false',
+-        browserslist: isProduction
+-            ? `> 0.5%, not IE 11, Firefox ESR, Safari 11`
+-            : 'last 1 chrome version, last 1 firefox version, last 1 safari version',
++        writeSRI: false,
++        browserslist: 'Chrome >= 118',
+         buildData: {
+             version: env.version,
+             commit: env.commit,
+@@ -46,8 +45,21 @@ const getConfig = (env: any): Configuration => {
+
+     const version = options.buildData.version;
+
+-    return {
+-        target: `browserslist:${options.browserslist}`,
++    return ((): (value: Configuration) => Configuration => {
++        const file = path.resolve("./proton.config.js");
++        if (fs.existsSync(file)) {
++            console.log(
++                /*reset:*/"\x1b[0m" +
++                /*yellow:*/"\x1b[33m" +
++                ">>>" +
++                /*reset:*/"\x1b[0m",
++                `Found ${file}, extend the config`,
++            )
++            return eval("require")(file);
++        }
++        return (value: Configuration) => value;
++    })()({
++        target: [`browserslist:${options.browserslist}`, 'es5' /* prevent ES modules target, as those can't be easily monkey-patched */],
+         mode: isProduction ? 'production' : 'development',
+         bail: isProduction,
+         devtool: isProduction ? 'source-map' : 'cheap-module-source-map',
+@@ -163,7 +175,7 @@ const getConfig = (env: any): Configuration => {
+                 ],
+             }),
+         },
+-    };
++    });
+ };
+
+ export default getConfig;
+
+diff --git a/packages/shared/lib/webpack.constants.ts b/packages/shared/lib/webpack.constants.ts
+index 9a14e94e98..ca7230f42a 100644
+--- a/packages/shared/lib/webpack.constants.ts
++++ b/packages/shared/lib/webpack.constants.ts
+@@ -3,8 +3,7 @@ declare const WEBPACK_FEATURE_FLAGS: string;
+ export const FEATURE_FLAGS = typeof WEBPACK_FEATURE_FLAGS === 'undefined' ? '' : WEBPACK_FEATURE_FLAGS;
+
+ declare const WEBPACK_APP_MODE: string;
+-export const APP_MODE = typeof WEBPACK_APP_MODE === 'undefined' ? '' : WEBPACK_APP_MODE;
+-export const appMode = APP_MODE === 'sso' ? 'sso' : 'standalone';
++export const appMode = typeof WEBPACK_APP_MODE === 'undefined' ? 'standalone' : WEBPACK_APP_MODE;
+
+ declare const WEBPACK_PUBLIC_PATH: string;
+ export const PUBLIC_PATH = typeof WEBPACK_PUBLIC_PATH === 'undefined' ? '' : WEBPACK_PUBLIC_PATH;
+

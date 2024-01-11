@@ -1,7 +1,7 @@
 import {mapValues} from "remeda";
 import {URL} from "@cliqz/url-parser";
 
-import {PROTON_API_ENTRY_URLS, PROTON_API_SUBDOMAINS} from "src/shared/const/proton-url";
+import {PROTON_API_ENTRY_URLS, PROTON_API_SUBDOMAINS, PROTON_APP_MAIL_LOGIN_PATHNAME} from "src/shared/const/proton-url";
 import {PROVIDER_REPO_MAP} from "src/shared/const/proton-apps";
 import {resolvePathnameDirFromUrlHref, resolvePrimaryDomainNameFromUrlHostname} from "src/shared/util/url";
 
@@ -16,7 +16,7 @@ export const resolveProtonAppTypeFromUrlHref = (href: string): { requestBasePath
     const requestBasePath = resolvePathnameDirFromUrlHref(href);
     const protonProjectResultType = {requestBasePath, type: "proton-mail"} as const;
 
-    if (requestBasePath === "/" || requestBasePath === "/inbox") {
+    if (requestBasePath === "/" || requestBasePath === "/inbox" || requestBasePath === PROTON_APP_MAIL_LOGIN_PATHNAME) {
         return protonProjectResultType;
     }
 

@@ -12,7 +12,7 @@ import {ACCOUNTS_ACTIONS, NAVIGATION_ACTIONS} from "src/web/browser-window/app/s
 import {asyncDelay, curryFunctionMembers} from "src/shared/util";
 import {FIRE_SYNCING_ITERATION$, SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
 import {IpcMainServiceScan} from "src/shared/api/main-process";
-import {LOCAL_WEBCLIENT_ORIGIN, WEB_CLIENTS_BLANK_HTML_FILE_NAME, WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS} from "src/shared/const";
+import {LOCAL_WEBCLIENT_ORIGIN, WEB_CLIENTS_BLANK_HTML_FILE_NAME} from "src/shared/const";
 import {ofType} from "src/shared/util/ngrx-of-type";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {parseUrlOriginWithNullishCheck} from "src/shared/util/url";
@@ -120,7 +120,6 @@ export class CoreService {
                         })();`;
                     };
                     const finalCodePart = `(() => {
-                        window.sessionStorage.setItem(${JSON.stringify(WEB_VIEW_SESSION_STORAGE_KEY_SKIP_LOGIN_DELAYS)}, 1);
                         window.location.assign("./${PROVIDER_REPO_MAP[repoType].basePath}")
                     })();`;
                     const prependCodeParts: string[] = [];

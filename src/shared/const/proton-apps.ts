@@ -8,9 +8,9 @@ export const PROVIDER_APP_NAMES = [
 
 export const PROVIDER_REPO_STANDARD_SETUP_WEBPACK_INDEX_ENTRY_ITEMS = [
     // immediate
-    "../../packages/components/containers/app/StandardSetup.tsx",
+    "../../packages/components/containers/app/StandardPrivateApp.tsx",
     // lazy/dynamic
-    // triggered via "../../packages/components/containers/app/StandardSetup.tsx":
+    // triggered via "../../packages/components/containers/app/StandardPrivateApp.tsx":
     "../../packages/components/hooks/useApi.ts",
     "../../packages/components/hooks/useAuthentication.ts",
     "../../packages/components/hooks/useCache.ts",
@@ -23,7 +23,7 @@ export const PROVIDER_REPO_MAP = {
         basePath: "",
         apiSubdomain: "mail-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-mail@5.0.31.16",
+        tag: "proton-mail@5.0.37.10",
         protonPack: {
             webpackIndexEntryItems: [
                 // immediate
@@ -32,15 +32,16 @@ export const PROVIDER_REPO_MAP = {
                 "../../packages/shared/lib/api/labels.ts",
                 "../../packages/shared/lib/api/messages.ts",
                 "../../packages/shared/lib/mail/mailSettings.ts",
-                "../../packages/shared/lib/models/mailSettingsModel.js",
                 "./src/app/containers/PageContainer.tsx",
                 "./src/app/helpers/mailboxUrl.ts",
                 "./src/app/helpers/message/messageDecrypt.ts",
                 // lazy/dynamic
                 // triggered via "./src/app/containers/PageContainer.tsx":
-                "../../packages/components/hooks/useGetEncryptionPreferences.ts",
+                "../../packages/components/hooks/useGetVerificationPreferences.ts",
+                "../../packages/mail/mailSettings/hooks.ts",
                 "./src/app/helpers/attachment/attachmentLoader.ts",
                 "./src/app/hooks/message/useGetMessageKeys.ts",
+                "./src/app/hooks/contact/useContacts.ts",
                 ...PROVIDER_REPO_STANDARD_SETUP_WEBPACK_INDEX_ENTRY_ITEMS,
             ],
         },
@@ -49,18 +50,18 @@ export const PROVIDER_REPO_MAP = {
         basePath: "account",
         apiSubdomain: "account-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-account@5.0.68.1",
+        tag: "proton-account@5.0.111.0",
         protonPack: {}
     },
     [PROVIDER_APP_NAMES[2]]: {
         basePath: "calendar",
         apiSubdomain: "calendar-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-calendar@5.0.16.13",
+        tag: "proton-calendar@5.0.22.9",
         protonPack: {
             webpackIndexEntryItems: [
                 // immediate
-                "./src/app/content/PrivateApp.tsx",
+                "./src/app/./containers/calendar/MainContainer",
                 ...PROVIDER_REPO_STANDARD_SETUP_WEBPACK_INDEX_ENTRY_ITEMS,
             ],
         },
@@ -69,14 +70,14 @@ export const PROVIDER_REPO_MAP = {
         basePath: "drive",
         apiSubdomain: "drive-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-drive@5.0.16.8",
+        tag: "proton-drive@5.0.20.4",
         protonPack: {},
     },
     [PROVIDER_APP_NAMES[4]]: {
         basePath: "account/vpn",
         apiSubdomain: "account-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-vpn-settings@5.0.59.0",
+        tag: "proton-vpn-settings@5.0.95.0",
         protonPack: {},
     },
 } as const;

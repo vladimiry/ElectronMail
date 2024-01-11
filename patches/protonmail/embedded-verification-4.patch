@@ -1,11 +1,11 @@
 diff --git a/packages/components/containers/index.ts b/packages/components/containers/index.ts
-index a83ab6ba5..44da559d6 100644
+index ef8e3cabce..c9d227dad2 100644
 --- a/packages/components/containers/index.ts
 +++ b/packages/components/containers/index.ts
-@@ -60,5 +60,4 @@ export * from './sessions';
- export * from './support';
+@@ -64,5 +64,4 @@ export * from './support';
  export * from './themes';
  export * from './topBanners';
+ export * from './unleash';
 -export * from './verification';
  export * from './vpn';
 

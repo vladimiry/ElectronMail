@@ -315,6 +315,8 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
 
     onEventChild(
         event:
+            | { type: "did-start-navigation"; url: string }
+            | { type: "ipc-message"; channel: string, webView: Electron.WebviewTag }
             | { type: "dom-ready"; viewType: keyof typeof AccountViewComponent.prototype.webViewsState; webView: Electron.WebviewTag }
             | { type: "action"; payload: Action }
             | { type: "log"; data: [LogLevel, ...string[]] },
@@ -328,7 +330,9 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
             this.store.dispatch(event.payload);
             return;
         }
-        this.webViewsState[event.viewType].domReady$.next(event.webView);
+        if (event.type === "dom-ready") {
+            this.webViewsState[event.viewType].domReady$.next(event.webView);
+        }
     }
 
     onPrimaryViewLoadedOnce(primaryWebView: Electron.WebviewTag): void {

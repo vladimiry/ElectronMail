@@ -47,7 +47,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
     protected constructor(
         private readonly viewType:
             Extract<keyof typeof __METADATA__.electronLocations.preload, "primary" | "calendar">,
-        private readonly injector: Injector,
+        protected readonly injector: Injector,
     ) {
         super();
 
@@ -68,7 +68,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
             let customCssKey: string | undefined;
             this.addSubscription(
                 combineLatest([
-                    this.filterDomReadyEvent(),
+                    this.filterEvent("dom-ready"),
                     this.account$.pipe(
                         map(({accountConfig: {customCSS}}) => customCSS),
                         distinctUntilChanged(),
@@ -90,7 +90,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
 
         if (BUILD_ENVIRONMENT === "development") {
             this.addSubscription(
-                this.filterDomReadyEvent()
+                this.filterEvent("dom-ready")
                     .pipe(take(1))
                     .subscribe(({webView}) => webView.openDevTools()),
             );
@@ -103,7 +103,11 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
         this.log("info", [nameof(AccountViewAbstractComponent.prototype.ngOnDestroy)]);
         this.subscription.unsubscribe();
         this.action(
-            ACCOUNTS_ACTIONS.Patch({login: this.login, patch: {webviewSrcValues: {[this.viewType]: ""}}, optionalAccount: true}),
+            ACCOUNTS_ACTIONS.Patch({
+                login: this.login,
+                patch: {webviewSrcValues: {[this.viewType]: ""}},
+                optionalAccount: true
+            }),
         );
     }
 
@@ -115,18 +119,17 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
         this.event.emit({type: "action", payload});
     }
 
-    protected filterDomReadyEvent(): Observable<Extract<ChildEvent, { type: "dom-ready" }>> {
+    protected filterEvent<T extends ChildEvent["type"]>(type: T): Observable<Extract<ChildEvent, { type: T }>> {
         return this.event.pipe(
-            filter(({type}) => type === "dom-ready"),
+            filter((event) => event.type === type),
             // TODO TS drop type casting "map" https://github.com/microsoft/TypeScript/issues/16069 (or use "mergeMap", see below)
-            map((event) => event as Extract<Unpacked<typeof AccountViewAbstractComponent.prototype.event>, { type: "dom-ready" }>),
-            // mergeMap((event) => event.type === "dom-ready" ? [event] : []),
+            map((event) => event as Unpacked<Observable<Extract<ChildEvent, { type: T }>>>),
         );
     }
 
-    protected domReadyOrDestroyedSingleNotification(): Observable<void> {
+    protected buildNavigationOrDestroyingSingleNotification(): Observable<void> {
         return race(
-            this.filterDomReadyEvent(),
+            this.filterEvent("did-start-navigation"),
             this.ngOnDestroy$,
         ).pipe(
             take(1),
@@ -165,7 +168,11 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
                     this.webView = document.createElement("webView") as Electron.WebviewTag;
                     this.registerWebViewEventsHandlingOnce(this.webView);
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                    Object.assign(this.webView, {src, partition, preload: __METADATA__.electronLocations.preload[this.viewType]});
+                    Object.assign(this.webView, {
+                        src,
+                        partition,
+                        preload: __METADATA__.electronLocations.preload[this.viewType]
+                    });
                 }
                 { // mounting
                     const elementRef = this.injector.get<ElementRef<HTMLElement>>(ElementRef);
@@ -180,6 +187,28 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
         // eslint-disable-next-line @typescript-eslint/unbound-method
         this.log("info", [nameof(AccountViewAbstractComponent.prototype.registerWebViewEventsHandlingOnce)]);
 
+        const didStartNavigationArgs = [
+            "did-start-navigation",
+            (event: import("electron").Event & {
+                type: string,
+                isInPlace: boolean,
+                isMainFrame: boolean,
+                url: string
+            }) => {
+                // console.log(`did-start-navigation`, event);
+                const {type, isInPlace, isMainFrame, url} = event;
+                if (isInPlace || !isMainFrame) return;
+                this.event.emit({type: "did-start-navigation", url});
+                this.log("verbose", ["webview event", JSON.stringify({type, src: webView.src})]);
+            },
+        ] as const;
+        const ipcMessageArgs = [
+            "ipc-message",
+            ({type, channel}: import("electron").Event & { type: string, channel: string }) => {
+                this.event.emit({type: "ipc-message", channel, webView});
+                this.log("verbose", ["webview event", JSON.stringify({type, src: webView.src})]);
+            },
+        ] as const;
         const didNavigateArgs = [
             "did-navigate",
             ({url}: import("electron").DidNavigateEvent) => {
@@ -203,7 +232,13 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
                 if (isWarn || isError) {
                     this.log(
                         lowerConsoleMessageEventLogLevel(isWarn ? "warn" : "error", message),
-                        ["webview event", JSON.stringify({type, level, message: depersonalizeLoggedUrlsInString(message), line, sourceId})],
+                        ["webview event", JSON.stringify({
+                            type,
+                            level,
+                            message: depersonalizeLoggedUrlsInString(message),
+                            line,
+                            sourceId
+                        })],
                     );
                 }
             },
@@ -237,6 +272,8 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
         //      it's currently not possible since TS doesn't support overloaded methods narrowing:
         //      - https://github.com/Microsoft/TypeScript/issues/26591
         //      - https://github.com/Microsoft/TypeScript/issues/25352
+        webView.addEventListener(...didStartNavigationArgs);
+        webView.addEventListener(...ipcMessageArgs);
         webView.addEventListener(...didNavigateArgs);
         webView.addEventListener(...domReadyArgs);
         webView.addEventListener(...consoleMessageArgs);
@@ -248,6 +285,8 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
 
         this.addSubscription({
             unsubscribe: () => {
+                webView.removeEventListener(...didStartNavigationArgs);
+                webView.removeEventListener(...ipcMessageArgs);
                 webView.removeEventListener(...didNavigateArgs);
                 webView.removeEventListener(...domReadyArgs);
                 webView.removeEventListener(...consoleMessageArgs);

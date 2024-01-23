@@ -121,6 +121,8 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
     const verifyWebviewUrlAccess = buildUrlOriginsFailedMsgTester([LOCAL_WEBCLIENT_ORIGIN]);
 
     app.on("web-contents-created", async (...[, webContents]) => {
+        webContents.setWebRTCIPHandlingPolicy("default_public_interface_only");
+
         setImmediate(async () => {
             const config = await lastValueFrom(ctx.config$.pipe(first()));
             await applySpellcheckOptionsChange(ctx, {

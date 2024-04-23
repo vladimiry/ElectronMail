@@ -34,7 +34,7 @@ const fileExists = async (file: string): Promise<boolean> => {
     try {
         return (await fsAsync.stat(file)).isFile();
     } catch (error) {
-        if ((Object(error) as { code?: unknown }).code === "ENOENT") {
+        if ((Object(error) as {code?: unknown}).code === "ENOENT") {
             return false;
         }
         throw error;
@@ -62,27 +62,23 @@ const generateFileName: generateFileNameType = (() => {
             }
             return file;
         }
-        throw new Error(
-            `Failed to generate unique file name for email with "${mail.subject}" subject after ${generatingLimit} iterations`,
-        );
+        throw new Error(`Failed to generate unique file name for email with "${mail.subject}" subject after ${generatingLimit} iterations`);
     };
     return resultFn;
 })();
 
-const validateAttachmentsCount = ({downloaded, declared}: { downloaded?: number, declared: number }): void => {
+const validateAttachmentsCount = ({downloaded, declared}: {downloaded?: number; declared: number}): void => {
     if (typeof downloaded === "number" && downloaded !== declared) {
         throw new Error(`Invalid attachments content items array length (downloaded: ${downloaded}; declared: ${declared})`);
     }
 };
 
 const formatExportedAttachmentContent = (attachmentContent: DeepReadonly<DbExportMailAttachmentItem>): string => {
-    return Buffer
-        .from(
-            "data" in attachmentContent
-                ? attachmentContent.data
-                : deserializeError(attachmentContent.serializedError).message
-        )
-        .toString("base64");
+    return Buffer.from(
+        "data" in attachmentContent
+            ? attachmentContent.data
+            : deserializeError(attachmentContent.serializedError).message,
+    ).toString("base64");
 };
 
 const formatEmlAttachment = (
@@ -92,31 +88,32 @@ const formatEmlAttachment = (
 ): string => {
     validateAttachmentsCount({downloaded: attachmentsContent?.length, declared: attachments.length});
 
-    return attachments.reduce(
-        (accumulator, {mimeType, name, id}, currentIndex) => {
-            const base64Name = `=?UTF-8?B?${Base64.encode(name)}?=`;
-            // TODO throw error of "attachment content" is falsy
-            const attachmentContent = attachmentsContent && attachmentsContent[currentIndex];
-            const contentDispositionType = (attachmentContent && attachmentContent.Headers["content-disposition"]) || "attachment";
-            const contentId = (attachmentContent && attachmentContent.Headers["content-id"]) || id;
+    return attachments.reduce((accumulator, {mimeType, name, id}, currentIndex) => {
+        const base64Name = `=?UTF-8?B?${Base64.encode(name)}?=`;
+        // TODO throw error of "attachment content" is falsy
+        const attachmentContent = attachmentsContent && attachmentsContent[currentIndex];
+        const contentDispositionType = (attachmentContent && attachmentContent.Headers["content-disposition"]) || "attachment";
+        const contentId = (attachmentContent && attachmentContent.Headers["content-id"]) || id;
 
-            return accumulator + [
-                `--${boundaryString}`, eol,
-                `Content-Type: ${mimeType || "application/octet-stream"}; filename="${base64Name}"; name="${base64Name}"`, eol,
-                "Content-Transfer-Encoding: base64", eol,
-                `Content-Disposition: ${contentDispositionType}; filename=${base64Name}`, eol,
-                `Content-ID: ${contentId}`, eol,
+        return accumulator
+            + [
+                `--${boundaryString}`,
                 eol,
-                (
-                    attachmentContent
-                        ? formatExportedAttachmentContent(attachmentContent)
-                        // TODO throw error of "attachment content" is falsy
-                        : ""
-                ) + eol,
+                `Content-Type: ${mimeType || "application/octet-stream"}; filename="${base64Name}"; name="${base64Name}"`,
+                eol,
+                "Content-Transfer-Encoding: base64",
+                eol,
+                `Content-Disposition: ${contentDispositionType}; filename=${base64Name}`,
+                eol,
+                `Content-ID: ${contentId}`,
+                eol,
+                eol,
+                (attachmentContent
+                    ? formatExportedAttachmentContent(attachmentContent)
+                    // TODO throw error of "attachment content" is falsy
+                    : "") + eol,
             ].join("");
-        },
-        "",
-    );
+    }, "");
 };
 
 const formatAddresses = (prop: string, addresses: readonly MailAddress[]): ReadonlyArray<string> | string[] => {
@@ -126,9 +123,7 @@ const formatAddresses = (prop: string, addresses: readonly MailAddress[]): Reado
 
     return [
         `${prop}: `,
-        addresses
-            .reduce((items: string[], {name, address}) => items.concat([name ? `"${name}" <${address}>` : address]), [])
-            .join(", "),
+        addresses.reduce((items: string[], {name, address}) => items.concat([name ? `"${name}" <${address}>` : address]), []).join(", "),
         eol,
     ];
 };
@@ -152,8 +147,10 @@ const formatEmlDate: (mail: Mail) => string = (() => {
 })();
 
 // TODO consider sanitizing "mail.body"
-const contentBuilders: Record<"eml" | "json",
-    (mail: DeepReadonly<Mail>, attachmentsContent?: DeepReadonly<DbExportMailAttachmentItem[]>) => string> = {
+const contentBuilders: Record<
+    "eml" | "json",
+    (mail: DeepReadonly<Mail>, attachmentsContent?: DeepReadonly<DbExportMailAttachmentItem[]>) => string
+> = {
     eml(mail, attachmentsContent) {
         const mixedBoundary = `=mixed-${new UUID(4).format()}@${PACKAGE_NAME}`;
         const relatedBoundary = `=related-${new UUID(4).format()}@${PACKAGE_NAME}`;
@@ -162,36 +159,50 @@ const contentBuilders: Record<"eml" | "json",
         const body = Base64.encode(
             mail.failedDownload
                 ? mail.failedDownload.errorMessage
-                : readMailBody(mail)
+                : readMailBody(mail),
         );
         const rawMail = parseProtonRestModel(mail);
         const lines = [
-            "MIME-Version: 1.0", eol,
+            "MIME-Version: 1.0",
+            eol,
             ...formatAddresses("From", [mail.sender]),
             ...formatAddresses("To", mail.toRecipients),
             ...formatAddresses("CC", mail.ccRecipients),
             ...formatAddresses("BCC", mail.bccRecipients),
-            `Subject: ${subject}`, eol,
-            `Date: ${formatEmlDate(mail)}`, eol,
-            `Message-Id: <${rawMail.ExternalID || mail.id}>`, eol,
+            `Subject: ${subject}`,
+            eol,
+            `Date: ${formatEmlDate(mail)}`,
+            eol,
+            `Message-Id: <${rawMail.ExternalID || mail.id}>`,
+            eol,
             ...[ /// mixed
-                `Content-Type: multipart/mixed; boundary="${mixedBoundary}"`, eol,
+                `Content-Type: multipart/mixed; boundary="${mixedBoundary}"`,
                 eol,
-                `--${mixedBoundary}`, eol,
+                eol,
+                `--${mixedBoundary}`,
+                eol,
                 ...[ // related
-                    `Content-Type: multipart/related; boundary="${relatedBoundary}"`, eol,
+                    `Content-Type: multipart/related; boundary="${relatedBoundary}"`,
                     eol,
-                    `--${relatedBoundary}`, eol,
+                    eol,
+                    `--${relatedBoundary}`,
+                    eol,
                     ...[ // alternative
-                        `Content-Type: multipart/alternative; boundary="${alternativeBoundary}"`, eol,
+                        `Content-Type: multipart/alternative; boundary="${alternativeBoundary}"`,
                         eol,
-                        `--${alternativeBoundary}`, eol,
-                        "Content-Type: text/html; charset=utf-8", eol,
-                        "Content-Transfer-Encoding: base64", eol,
                         eol,
-                        body, eol,
+                        `--${alternativeBoundary}`,
                         eol,
-                        `--${alternativeBoundary}--`, eol,
+                        "Content-Type: text/html; charset=utf-8",
+                        eol,
+                        "Content-Transfer-Encoding: base64",
+                        eol,
+                        eol,
+                        body,
+                        eol,
+                        eol,
+                        `--${alternativeBoundary}--`,
+                        eol,
                         eol,
                     ],
                     ...(
@@ -201,7 +212,8 @@ const contentBuilders: Record<"eml" | "json",
                             ? formatEmlAttachment(mail.attachments, relatedBoundary, attachmentsContent)
                             : []
                     ),
-                    `--${relatedBoundary}--`, eol,
+                    `--${relatedBoundary}--`,
+                    eol,
                 ],
                 ...formatEmlAttachment(mail.attachments, mixedBoundary, attachmentsContent), // attachments ("mixed" boundary)
                 `--${mixedBoundary}--`,
@@ -212,7 +224,6 @@ const contentBuilders: Record<"eml" | "json",
         // TODO export conversation thread headers: Message-ID, References
 
         return lines.join("");
-
     },
     json(mail, attachmentsContent) {
         validateAttachmentsCount({downloaded: attachmentsContent?.length, declared: mail.attachments.length});
@@ -228,10 +239,7 @@ const contentBuilders: Record<"eml" | "json",
                         if (typeof attachmentContent === "undefined") {
                             throw new Error(`Failed to resolve attachment content by ${index} index`);
                         }
-                        return {
-                            ...attachment,
-                            Content: formatExportedAttachmentContent(attachmentContent),
-                        };
+                        return {...attachment, Content: formatExportedAttachmentContent(attachmentContent)};
                     })
                     : rawMail.Attachments,
             },
@@ -242,13 +250,8 @@ const contentBuilders: Record<"eml" | "json",
 };
 
 export const writeFile = async (
-    options: DeepReadonly<{
-        mail: Mail,
-        fileType: "eml" | "json",
-        exportDir: string,
-        attachments?: DbExportMailAttachmentItem[]
-    }>
-): Promise<{ file: string }> => {
+    options: DeepReadonly<{mail: Mail; fileType: "eml" | "json"; exportDir: string; attachments?: DbExportMailAttachmentItem[]}>,
+): Promise<{file: string}> => {
     const file = await generateFileName(options.mail, options.exportDir, options.fileType);
     const content = contentBuilders[options.fileType](options.mail, options.attachments);
 

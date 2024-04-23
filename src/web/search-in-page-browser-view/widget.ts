@@ -5,9 +5,7 @@ import {from, fromEvent, Subscription} from "rxjs";
 import {ONE_SECOND_MS} from "src/shared/const";
 
 export class SearchInPageWidget {
-    private readonly apiClient = __ELECTRON_EXPOSURE__.buildIpcMainClient({
-        options: {timeoutMs: ONE_SECOND_MS},
-    });
+    private readonly apiClient = __ELECTRON_EXPOSURE__.buildIpcMainClient({options: {timeoutMs: ONE_SECOND_MS}});
     private readonly apiMethods = {
         findInPage: this.apiClient("findInPage"),
         findInPageStop: this.apiClient("findInPageStop"),
@@ -30,7 +28,7 @@ export class SearchInPageWidget {
     private maxIdx?: number;
     private query?: string;
 
-    constructor({els}: { els: typeof SearchInPageWidget.prototype.els }) {
+    constructor({els}: {els: typeof SearchInPageWidget.prototype.els}) {
         this.els = els;
         this.initEvents();
         this.initFoundNotification();
@@ -71,15 +69,13 @@ export class SearchInPageWidget {
 
     protected initEvents(): void {
         this.subscription.add(
-            fromEvent<KeyboardEvent>(this.els.input, "keydown")
-                .pipe(
-                    debounceTime(150),
-                    // tslint:disable-next-line ban
-                    switchMap(({shiftKey, code}) => from(this.find(!shiftKey, ["Enter", "NumpadEnter"].includes(code)))),
-                )
-                .subscribe(async () => {
-                    // setTimeout(() => this.els.input.focus());
-                }),
+            fromEvent<KeyboardEvent>(this.els.input, "keydown").pipe(
+                debounceTime(150),
+                // tslint:disable-next-line ban
+                switchMap(({shiftKey, code}) => from(this.find(!shiftKey, ["Enter", "NumpadEnter"].includes(code)))),
+            ).subscribe(async () => {
+                // setTimeout(() => this.els.input.focus());
+            }),
         );
 
         this.subscription.add(
@@ -101,10 +97,7 @@ export class SearchInPageWidget {
         );
 
         this.subscription.add(
-            fromEvent<KeyboardEvent>(this.els.root, "keydown")
-                .pipe(
-                    filter((event) => event.key === "Escape" || event.key === "Esc"),
-                )
+            fromEvent<KeyboardEvent>(this.els.root, "keydown").pipe(filter((event) => event.key === "Escape" || event.key === "Esc"))
                 .subscribe(async () => {
                     await this.close();
                 }),
@@ -127,11 +120,8 @@ export class SearchInPageWidget {
     }
 
     protected isSearching(): boolean {
-        return (
-            this.requestId !== null
-            &&
-            typeof this.query === "string"
-        );
+        return (this.requestId !== null
+            && typeof this.query === "string");
     }
 
     protected async startFind(query: string): Promise<void> {

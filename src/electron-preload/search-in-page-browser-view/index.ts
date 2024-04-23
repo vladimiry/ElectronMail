@@ -6,7 +6,4 @@ export const LOGGER = buildLoggerBundle(__filename);
 
 exposeElectronStuffToWindow();
 
-registerDocumentKeyDownEventListener(
-    document,
-    LOGGER,
-);
+registerDocumentKeyDownEventListener(document, LOGGER);

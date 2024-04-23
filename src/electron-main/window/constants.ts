@@ -13,16 +13,16 @@ export const DEFAULT_WEB_PREFERENCES_KEYS = [
     "webviewTag",
 ] as const;
 
-export const DEFAULT_WEB_PREFERENCES: Readonly<NoExtraProps<Pick<Required<WebPreferences>, typeof DEFAULT_WEB_PREFERENCES_KEYS[number]>>>
-    = {
-    backgroundThrottling: false,
-    contextIsolation: false, // TODO disable "contextIsolation" flag
-    devTools: BUILD_ENVIRONMENT !== "production",
-    disableBlinkFeatures: "Auxclick",
-    nodeIntegration: false,
-    nodeIntegrationInWorker: false,
-    sandbox: true,
-    spellcheck: true,
-    webSecurity: true,
-    webviewTag: false,
-};
+export const DEFAULT_WEB_PREFERENCES: Readonly<NoExtraProps<Pick<Required<WebPreferences>, typeof DEFAULT_WEB_PREFERENCES_KEYS[number]>>> =
+    {
+        backgroundThrottling: false,
+        contextIsolation: false, // TODO disable "contextIsolation" flag
+        devTools: BUILD_ENVIRONMENT !== "production",
+        disableBlinkFeatures: "Auxclick",
+        nodeIntegration: false,
+        nodeIntegrationInWorker: false,
+        sandbox: true,
+        spellcheck: true,
+        webSecurity: true,
+        webviewTag: false,
+    };

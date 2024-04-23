@@ -7,8 +7,7 @@ export async function upgradeExistingConfig(ctx: DeepReadonly<Context>): Promise
 
         if (
             existingConfig
-            &&
-            upgradeConfig(existingConfig) // got mutated
+            && upgradeConfig(existingConfig) // got mutated
         ) {
             await ctx.configStore.write(existingConfig); // write mutated config
         }

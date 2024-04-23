@@ -17,20 +17,14 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
         const result: ProviderInternals = {
             "./src/app/containers/PageContainer.tsx": {
                 value$: new BehaviorSubject(
-                    {privateScope: null} as Unpacked<ProviderInternals["./src/app/containers/PageContainer.tsx"]["value$"]>
+                    {privateScope: null} as Unpacked<ProviderInternals["./src/app/containers/PageContainer.tsx"]["value$"]>,
                 ),
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
                 _valueShape: null as any,
             },
-            "./src/app/helpers/message/messageDecrypt.ts": {
-                value: {decryptMessage: NEVER_FN},
-            },
-            "../../packages/shared/lib/mail/mailSettings.ts": {
-                value: {VIEW_MODE: {GROUP: NaN, SINGLE: NaN}},
-            },
-            "../../packages/shared/lib/api/labels.ts": {
-                value: {get: NEVER_FN},
-            },
+            "./src/app/helpers/message/messageDecrypt.ts": {value: {decryptMessage: NEVER_FN}},
+            "../../packages/shared/lib/mail/mailSettings.ts": {value: {VIEW_MODE: {GROUP: NaN, SINGLE: NaN}}},
+            "../../packages/shared/lib/api/labels.ts": {value: {get: NEVER_FN}},
             "../../packages/shared/lib/api/messages.ts": {
                 value: {
                     queryMessageCount: NEVER_FN,
@@ -41,15 +35,9 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
                     deleteMessages: NEVER_FN,
                 },
             },
-            "../../packages/shared/lib/api/contacts.ts": {
-                value: {queryContacts: NEVER_FN, getContact: NEVER_FN},
-            },
-            "../../packages/shared/lib/api/events.ts": {
-                value: {getEvents: NEVER_FN, getLatestID: NEVER_FN},
-            },
-            "./src/app/helpers/mailboxUrl.ts": {
-                value: {setParamsInLocation: NEVER_FN},
-            },
+            "../../packages/shared/lib/api/contacts.ts": {value: {queryContacts: NEVER_FN, getContact: NEVER_FN}},
+            "../../packages/shared/lib/api/events.ts": {value: {getEvents: NEVER_FN, getLatestID: NEVER_FN}},
+            "./src/app/helpers/mailboxUrl.ts": {value: {setParamsInLocation: NEVER_FN}},
         };
         const resolveIfFullyInitialized = webpackJsonpPushUtil.buildFullyInitializedResolver(result, resolve, logger);
 
@@ -58,8 +46,7 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
             preChunkItemOverridingHook({resultKey}) {
                 if (
                     resultKey === "./src/app/containers/PageContainer.tsx"
-                    ||
-                    resultKey === "./src/app/helpers/message/messageDecrypt.ts"
+                    || resultKey === "./src/app/helpers/message/messageDecrypt.ts"
                 ) {
                     // mark lazy-loaded modules as initialized immediately since these modules get
                     // loaded only after the user gets logged in but we need to resolve the promise on initial load
@@ -68,77 +55,72 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
             },
             chunkItemHook({resultKey, webpack_exports, webpack_require}) {
                 if (resultKey === "./src/app/containers/PageContainer.tsx") {
-                    webpackJsonpPushUtil.handleObservableValue(
-                        result,
-                        {
-                            resultKey,
-                            webpack_exports,
-                            itemName: "PageParamsParser",
-                            itemCallResultTypeValidation: "object", // import("react").ReactNode
-                            itemCallResultHandler: (itemCallResult, notify, markAsInitialized) => {
-                                const {createElement, useEffect}
-                                    = webpack_require<typeof import("react")>("../../node_modules/react/index.js");
-                                const result = [
-                                    createElement(() => {
-                                        const useGetVerificationPreferencesModule = (() => {
-                                            const key = "../../packages/components/hooks/useGetVerificationPreferences.ts";
-                                            return webpack_require<ProviderInternalsLazy[typeof key]>(key);
-                                        })();
-                                        const useGetMessageKeysModule = (() => {
-                                            const key = "./src/app/hooks/message/useGetMessageKeys.ts";
-                                            return webpack_require<ProviderInternalsLazy[typeof key]>(key);
-                                        })();
-                                        const useContactsModule = (() => {
-                                            const key = "./src/app/hooks/contact/useContacts.ts";
-                                            return webpack_require<ProviderInternalsLazy[typeof key]>(key);
-                                        })();
-                                        const useMailSettingsModule = (() => {
-                                            const key = "../../packages/mail/mailSettings/hooks.ts";
-                                            return webpack_require<ProviderInternalsLazy[typeof key]>(key);
-                                        })();
-                                        const getDecryptedAttachmentModule = (() => {
-                                            const key = "./src/app/helpers/attachment/attachmentLoader.ts";
-                                            return webpack_require<ProviderInternalsLazy[typeof key]>(key);
-                                        })();
+                    webpackJsonpPushUtil.handleObservableValue(result, {
+                        resultKey,
+                        webpack_exports,
+                        itemName: "PageParamsParser",
+                        itemCallResultTypeValidation: "object", // import("react").ReactNode
+                        itemCallResultHandler: (itemCallResult, notify, markAsInitialized) => {
+                            const {createElement, useEffect} = webpack_require<typeof import("react")>("../../node_modules/react/index.js");
+                            const result = [
+                                createElement(() => {
+                                    const useGetVerificationPreferencesModule = (() => {
+                                        const key = "../../packages/components/hooks/useGetVerificationPreferences.ts";
+                                        return webpack_require<ProviderInternalsLazy[typeof key]>(key);
+                                    })();
+                                    const useGetMessageKeysModule = (() => {
+                                        const key = "./src/app/hooks/message/useGetMessageKeys.ts";
+                                        return webpack_require<ProviderInternalsLazy[typeof key]>(key);
+                                    })();
+                                    const useContactsModule = (() => {
+                                        const key = "./src/app/hooks/contact/useContacts.ts";
+                                        return webpack_require<ProviderInternalsLazy[typeof key]>(key);
+                                    })();
+                                    const useMailSettingsModule = (() => {
+                                        const key = "../../packages/mail/mailSettings/hooks.ts";
+                                        return webpack_require<ProviderInternalsLazy[typeof key]>(key);
+                                    })();
+                                    const getDecryptedAttachmentModule = (() => {
+                                        const key = "./src/app/helpers/attachment/attachmentLoader.ts";
+                                        return webpack_require<ProviderInternalsLazy[typeof key]>(key);
+                                    })();
 
-                                        // WARN contexts should be resolved outside of the "useEffect" handler
-                                        // TODO validate resolved proton entities (at least test the "typeof" result)
-                                        const getVerificationPreferences = useGetVerificationPreferencesModule.default();
-                                        const mailSettings = useMailSettingsModule.useMailSettings();
-                                        const getMessageKeys = useGetMessageKeysModule.useGetMessageKeys();
-                                        const contactsMap = useContactsModule.useContactsMap();
-                                        const {getDecryptedAttachment} = getDecryptedAttachmentModule;
+                                    // WARN contexts should be resolved outside of the "useEffect" handler
+                                    // TODO validate resolved proton entities (at least test the "typeof" result)
+                                    const getVerificationPreferences = useGetVerificationPreferencesModule.default();
+                                    const mailSettings = useMailSettingsModule.useMailSettings();
+                                    const getMessageKeys = useGetMessageKeysModule.useGetMessageKeys();
+                                    const contactsMap = useContactsModule.useContactsMap();
+                                    const {getDecryptedAttachment} = getDecryptedAttachmentModule;
 
-                                        useEffect(() => {
-                                            const [/* mailSettings */, loadingMailSettings] = mailSettings;
-                                            // TODO consider notifying null on component destroying stage
-                                            if (loadingMailSettings) return;
-                                            notify({
-                                                privateScope: {
-                                                    getVerificationPreferences,
-                                                    mailSettings,
-                                                    getMessageKeys,
-                                                    contactsMap,
-                                                    getDecryptedAttachment,
-                                                },
-                                            });
+                                    useEffect(() => {
+                                        const [/* mailSettings */, loadingMailSettings] = mailSettings;
+                                        // TODO consider notifying null on component destroying stage
+                                        if (loadingMailSettings) return;
+                                        notify({
+                                            privateScope: {
+                                                getVerificationPreferences,
+                                                mailSettings,
+                                                getMessageKeys,
+                                                contactsMap,
+                                                getDecryptedAttachment,
+                                            },
                                         });
+                                    });
 
-                                        return null; // no rendering needed
-                                    }),
-                                    itemCallResult,
-                                ];
+                                    return null; // no rendering needed
+                                }),
+                                itemCallResult,
+                            ];
 
-                                // immediate initialization mark set since this component doesn't get instantiated right on proton
-                                // app start but after the user gets logged-in (we need to resolve the promise on initial load)
-                                markAsInitialized();
+                            // immediate initialization mark set since this component doesn't get instantiated right on proton
+                            // app start but after the user gets logged-in (we need to resolve the promise on initial load)
+                            markAsInitialized();
 
-                                return result;
-                            },
-                            resolveIfFullyInitialized,
+                            return result;
                         },
-                        logger,
-                    );
+                        resolveIfFullyInitialized,
+                    }, logger);
 
                     return;
                 }
@@ -150,8 +132,7 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
                     const value = webpack_exports[key] as Partial<ValueType[typeof key]> | null;
                     if (
                         typeof value?.GROUP !== "number"
-                        ||
-                        typeof value?.SINGLE !== "number"
+                        || typeof value?.SINGLE !== "number"
                     ) {
                         throw new Error(`Export item validation failed: ${JSON.stringify({resultKey, key})}`);
                     }
@@ -164,7 +145,7 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
                         webpackJsonpPushUtil.markInternalsRecordAsInitialized(result, resultKey, resolveIfFullyInitialized, logger);
                     },
                     webpack_exports,
-                    logger
+                    logger,
                 });
             },
             logger,

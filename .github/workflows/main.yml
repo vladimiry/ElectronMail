@@ -2,25 +2,25 @@
 # - https://github.com/actions/runner/issues/438
 # - https://github.com/actions/runner/issues/646
 
-name: "GitHub Actions CI"
-on: { push: { branches: [ master ] }, pull_request: { branches: [ master ] } }
+name: 'GitHub Actions CI'
+on: { push: { branches: [master] }, pull_request: { branches: [master] } }
 env: { ELECTRON_MAIL_NODE_VERSION: 20, PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 }
 jobs:
   build-proton-clients:
     if: github.event_name == 'push'
-    strategy: { matrix: { os: [ ubuntu-20.04 ] }, fail-fast: false }
+    strategy: { matrix: { os: [ubuntu-20.04] }, fail-fast: false }
     runs-on: ${{ matrix.os }}
     steps:
       # <common> TODO use YAML anchors feature when it gets supported
       - { uses: actions/checkout@v4 }
-      - { uses: pnpm/action-setup@v3, with: { version: "latest" } }
+      - { uses: pnpm/action-setup@v3, with: { version: 'latest' } }
       - { name: pnpm patch, if: runner.os == 'Windows', run: ./scripts/ci/github/patch-pnpm.ps1 }
-      - { uses: actions/setup-node@v4, with: { node-version: "${{ env.ELECTRON_MAIL_NODE_VERSION }}", cache: "pnpm" } }
+      - { uses: actions/setup-node@v4, with: { node-version: '${{ env.ELECTRON_MAIL_NODE_VERSION }}', cache: 'pnpm' } }
       - { name: system setup, if: runner.os == 'Linux', run: ./scripts/ci/github/system-setup-linux.sh }
       - { name: install node-gyp, if: runner.os == 'Windows', run: ./scripts/ci/github/install-node-gyp.ps1 }
-      - { uses: actions/setup-python@v5, with: { python-version: "3.9" } }
+      - { uses: actions/setup-python@v5, with: { python-version: '3.9' } }
       - { name: envinfo, run: npx envinfo }
-      - { name: install node modules, run: "pnpm install --frozen-lockfile --reporter=append-only" }
+      - { name: install node modules, run: 'pnpm install --frozen-lockfile --reporter=append-only' }
       # </common>
       - name: cache artifact
         uses: actions/cache@v2
@@ -33,52 +33,70 @@ jobs:
       - { name: build, run: ./scripts/ci/prepare-webclients.sh }
       - { name: print ./output/git/backup files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./output/git/backup }
       - { name: tar artifact, run: tar -cvf proton-clients-artifact.tar ./output/git/backup ./app/assets/db-search-monaco-editor }
-      - { name: upload artifact, uses: actions/upload-artifact@v4, with: { name: proton-clients-artifact, path: ./proton-clients-artifact.tar, if-no-files-found: error } }
+      - {
+          name: upload artifact,
+          uses: actions/upload-artifact@v4,
+          with: { name: proton-clients-artifact, path: ./proton-clients-artifact.tar, if-no-files-found: error },
+        }
   build-app:
-    strategy: { matrix: { os: [ ubuntu-20.04, windows-2019, macos-11 ] }, fail-fast: false }
+    strategy: { matrix: { os: [ubuntu-20.04, windows-2019, macos-11] }, fail-fast: false }
     runs-on: ${{ matrix.os }}
     steps:
       # <common> TODO use YAML anchors feature when it gets supported
       - { uses: actions/checkout@v4 }
-      - { uses: pnpm/action-setup@v3, with: { version: "latest" } }
+      - { uses: pnpm/action-setup@v3, with: { version: 'latest' } }
       - { name: pnpm patch, if: runner.os == 'Windows', run: ./scripts/ci/github/patch-pnpm.ps1 }
-      - { uses: actions/setup-node@v4, with: { node-version: "${{ env.ELECTRON_MAIL_NODE_VERSION }}", cache: "pnpm" } }
+      - { uses: actions/setup-node@v4, with: { node-version: '${{ env.ELECTRON_MAIL_NODE_VERSION }}', cache: 'pnpm' } }
       - { name: system setup, if: runner.os == 'Linux', run: ./scripts/ci/github/system-setup-linux.sh }
       - { name: install node-gyp, if: runner.os == 'Windows', run: ./scripts/ci/github/install-node-gyp.ps1 }
-      - { uses: actions/setup-python@v5, with: { python-version: "3.9" } }
+      - { uses: actions/setup-python@v5, with: { python-version: '3.9' } }
       - { name: envinfo, run: npx envinfo }
-      - { name: install node modules, run: "pnpm install --frozen-lockfile --reporter=append-only" }
+      - { name: install node modules, run: 'pnpm install --frozen-lockfile --reporter=append-only' }
       # </common>
       - { name: build, run: 'npm exec --package=npm-run-all -- npm-run-all lint build' }
       - { name: print ./app files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./app }
-      - { name: upload artifact, uses: actions/upload-artifact@v4, with: { name: 'app-artifact-${{ runner.os }}', path: ./app, if-no-files-found: error } }
+      - {
+          name: upload artifact,
+          uses: actions/upload-artifact@v4,
+          with: { name: 'app-artifact-${{ runner.os }}', path: ./app, if-no-files-found: error },
+        }
   package-app:
     if: github.event_name == 'push'
-    needs: [ build-proton-clients, build-app ]
-    strategy: { matrix: { os: [ ubuntu-20.04, windows-2019, macos-11, macos-latest ] }, fail-fast: false }
+    needs: [build-proton-clients, build-app]
+    strategy: { matrix: { os: [ubuntu-20.04, windows-2019, macos-11, macos-latest] }, fail-fast: false }
     runs-on: ${{ matrix.os }}
     steps:
       # <common> TODO use YAML anchors feature when it gets supported
       - { uses: actions/checkout@v4 }
-      - { uses: pnpm/action-setup@v3, with: { version: "latest" } }
+      - { uses: pnpm/action-setup@v3, with: { version: 'latest' } }
       - { name: pnpm patch, if: runner.os == 'Windows', run: ./scripts/ci/github/patch-pnpm.ps1 }
-      - { uses: actions/setup-node@v4, with: { node-version: "${{ env.ELECTRON_MAIL_NODE_VERSION }}", cache: "pnpm" } }
+      - { uses: actions/setup-node@v4, with: { node-version: '${{ env.ELECTRON_MAIL_NODE_VERSION }}', cache: 'pnpm' } }
       - { name: system setup, if: runner.os == 'Linux', run: ./scripts/ci/github/system-setup-linux.sh }
       - { name: install node-gyp, if: runner.os == 'Windows', run: ./scripts/ci/github/install-node-gyp.ps1 }
-      - { uses: actions/setup-python@v5, with: { python-version: "3.9" } }
+      - { uses: actions/setup-python@v5, with: { python-version: '3.9' } }
       - { name: envinfo, run: npx envinfo }
-      - { name: install node modules, run: "pnpm install --frozen-lockfile --reporter=append-only" }
+      - { name: install node modules, run: 'pnpm install --frozen-lockfile --reporter=append-only' }
       # </common>
       - { name: download proton clients artifact, uses: actions/download-artifact@v2, with: { name: proton-clients-artifact } }
       - { name: unpack proton clients artifact, shell: bash, run: tar -xvf ./proton-clients-artifact.tar }
       - { name: download app artifact, uses: actions/download-artifact@v2, with: { name: 'app-artifact-${{ runner.os }}', path: ./app } }
-      - { name: assets, run: "yarn assets", env: { ELECTRON_MAIL_SHOULD_FAIL_ON_BUILD: "true" } }
+      - { name: assets, run: 'yarn assets', env: { ELECTRON_MAIL_SHOULD_FAIL_ON_BUILD: 'true' } }
       - { name: print ./app files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./app }
       - { name: build, if: runner.os == 'Windows', run: ./scripts/ci/github/package-app.ps1 }
       - { name: build, if: runner.os == 'Linux', run: ./scripts/ci/github/package-app-linux.sh }
-      - { name: build, if: matrix.os == 'macos-11', run: ./scripts/ci/github/package-app-osx.sh, env: { MACOSX_DEPLOYMENT_TARGET: "10.10" } }
-      - { name: build, if: matrix.os == 'macos-latest', run: ./scripts/ci/github/package-app-osx.sh, env: { MACOSX_DEPLOYMENT_TARGET: "11.0", ELECTRON_DEST_MAIL_ARCH: "arm64" } }
+      - {
+          name: build,
+          if: matrix.os == 'macos-11',
+          run: ./scripts/ci/github/package-app-osx.sh,
+          env: { MACOSX_DEPLOYMENT_TARGET: '10.10' },
+        }
+      - {
+          name: build,
+          if: matrix.os == 'macos-latest',
+          run: ./scripts/ci/github/package-app-osx.sh,
+          env: { MACOSX_DEPLOYMENT_TARGET: '11.0', ELECTRON_DEST_MAIL_ARCH: 'arm64' },
+        }
       - name: upload e2e/spectron output
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
-        with: { name: "output-e2e-artifact-${{ matrix.os }}",  path: ./output/e2e }
+        with: { name: 'output-e2e-artifact-${{ matrix.os }}', path: ./output/e2e }

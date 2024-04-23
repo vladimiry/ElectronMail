@@ -5,25 +5,15 @@ import {resolveIpcMainApi} from "src/electron-preload/lib/util";
 
 type ObservableElement = Pick<HTMLElement, "addEventListener" | "removeEventListener">;
 
-const processedKeyDownElements
-    // eslint-disable-next-line @typescript-eslint/no-use-before-define
-    = new WeakMap<ObservableElement, ReturnType<typeof registerDocumentKeyDownEventListener>>();
+const processedKeyDownElements = // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    new WeakMap<ObservableElement, ReturnType<typeof registerDocumentKeyDownEventListener>>();
 
-const keyCodes = {
-    A: 65,
-    C: 67,
-    V: 86,
-    F: 70,
-    F12: 123,
-} as const;
+const keyCodes = {A: 65, C: 67, V: 86, F: 70, F12: 123} as const;
 
 export function registerDocumentKeyDownEventListener<E extends ObservableElement>(
     element: E,
     logger: Logger,
-): {
-    unsubscribe: () => void;
-    eventHandler: (event: KeyboardEvent) => Promise<void>;
-} {
+): {unsubscribe: () => void; eventHandler: (event: KeyboardEvent) => Promise<void>} {
     let subscription = processedKeyDownElements.get(element);
 
     if (subscription) {

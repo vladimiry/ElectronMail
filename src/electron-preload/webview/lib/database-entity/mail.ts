@@ -23,20 +23,11 @@ function buildAddressId({ID}: Pick<RestModel.Message, "ID">, prefix: string, ind
 }
 
 function Address(input: RestModel.MailAddress & RestModel.Entity): DatabaseModel.MailAddress {
-    return {
-        ...buildBaseEntity(input),
-        name: input.Name,
-        address: input.Address,
-    };
+    return {...buildBaseEntity(input), name: input.Name, address: input.Address};
 }
 
 function File(input: RestModel.Attachment): DatabaseModel.File {
-    return {
-        ...buildBaseEntity(input),
-        mimeType: input.MIMEType,
-        name: input.Name,
-        size: Number(input.Size),
-    };
+    return {...buildBaseEntity(input), mimeType: input.MIMEType, name: input.Name, size: Number(input.Size)};
 }
 
 const isConfidential = ((encryptedValues: Array<RestModel.Message["IsEncrypted"]>) => {
@@ -116,10 +107,10 @@ export async function buildMail(
         replyType: (input.IsReplied || input.IsRepliedAll) && input.IsForwarded
             ? DatabaseModel.REPLY_TYPE.REPLY_FORWARD
             : input.IsReplied || input.IsRepliedAll
-                ? DatabaseModel.REPLY_TYPE.REPLY
-                : input.IsForwarded
-                    ? DatabaseModel.REPLY_TYPE.FORWARD
-                    : DatabaseModel.REPLY_TYPE.NONE,
+            ? DatabaseModel.REPLY_TYPE.REPLY
+            : input.IsForwarded
+            ? DatabaseModel.REPLY_TYPE.FORWARD
+            : DatabaseModel.REPLY_TYPE.NONE,
         mimeType: "MIMEType" in input
             ? input.MIMEType
             : MIME_TYPES.AUTOMATIC,

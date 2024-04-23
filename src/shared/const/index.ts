@@ -42,10 +42,10 @@ export const UPDATE_CHECK_FETCH_TIMEOUT = ONE_SECOND_MS * 10;
 export const PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION = {
     // TODO "electron-builder" doesn't pack the resources with "node_modules" folder in the path, so renamed to "node_modules_" for now
     // TODO ".txt" extension used since "electron-builder" somewhere internally disabled packing "*.d.ts" files since v22.11.1
-    system:
-        "./assets/db-search-monaco-editor/node_modules_/typescript/lib/lib.esnext.d.ts.txt",
-    protonMessage:
-        `./assets/db-search-monaco-editor/proton-shared/${PROTON_SHARED_MESSAGE_INTERFACE.projectRelativeFile.replace(".ts", ".d.ts.txt")}`,
+    system: "./assets/db-search-monaco-editor/node_modules_/typescript/lib/lib.esnext.d.ts.txt",
+    protonMessage: `./assets/db-search-monaco-editor/proton-shared/${
+        PROTON_SHARED_MESSAGE_INTERFACE.projectRelativeFile.replace(".ts", ".d.ts.txt")
+    }`,
 } as const;
 
 export const LOCAL_WEBCLIENT_SCHEME_NAME = "webclient";
@@ -56,16 +56,14 @@ export const LOCAL_WEBCLIENT_ORIGIN = `${LOCAL_WEBCLIENT_SCHEME_NAME}://${LOCAL_
 
 export const WEB_CLIENTS_BLANK_HTML_FILE_NAME = "blank.html";
 
-export const LOG_LEVELS: Readonly<LogLevel[]> = Object.keys(
-    ((stub: Record<LogLevel, null>) => stub)({ // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
-        error: null,
-        warn: null,
-        info: null,
-        verbose: null,
-        debug: null,
-        silly: null,
-    }),
-) as Readonly<LogLevel[]>;
+export const LOG_LEVELS: Readonly<LogLevel[]> = Object.keys(((stub: Record<LogLevel, null>) => stub)({ // eslint-disable-line @typescript-eslint/explicit-module-boundary-types, max-len
+    error: null,
+    warn: null,
+    info: null,
+    verbose: null,
+    debug: null,
+    silly: null,
+})) as Readonly<LogLevel[]>;
 
 export const ZOOM_FACTOR_DEFAULT = 1;
 
@@ -98,11 +96,10 @@ export const ZOOM_FACTORS: ReadonlyArray<number> = [
     2,
 ];
 
-export const LAYOUT_MODES = [
-    {value: "top", title: "Top"},
-    {value: "left", title: "Left"},
-    {value: "left-thin", title: "Left (thin)"},
-] as const;
+export const LAYOUT_MODES = [{value: "top", title: "Top"}, {value: "left", title: "Left"}, {
+    value: "left-thin",
+    title: "Left (thin)",
+}] as const;
 
 // TODO electron: get rid of "baseURLForDataURL" workaround, see https://github.com/electron/electron/issues/20700
 export const WEB_PROTOCOL_SCHEME = "web";

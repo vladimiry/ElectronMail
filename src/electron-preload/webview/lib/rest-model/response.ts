@@ -14,7 +14,7 @@ export interface ConversationResponse extends Response {
 export interface ConversationsResponse extends Response {
     Total: number;
     Limit: number;
-    Conversations: Array<Conversation & Context & { Time: number }>;
+    Conversations: Array<Conversation & Context & {Time: number}>;
 }
 
 export interface MessageResponse extends Response {
@@ -28,7 +28,7 @@ export interface MessagesResponse extends Response {
 }
 
 export interface MessagesCountResponse extends Response {
-    Counts: Array<{ LabelID: string, Total: number, Unread: number }>
+    Counts: Array<{LabelID: string; Total: number; Unread: number}>;
 }
 
 export interface ContactResponse extends Response {

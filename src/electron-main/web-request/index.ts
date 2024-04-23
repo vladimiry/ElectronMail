@@ -1,6 +1,9 @@
 import _logger from "electron-log";
 import {
-    OnBeforeRequestListenerDetails, OnBeforeSendHeadersListenerDetails, OnCompletedListenerDetails, OnErrorOccurredListenerDetails,
+    OnBeforeRequestListenerDetails,
+    OnBeforeSendHeadersListenerDetails,
+    OnCompletedListenerDetails,
+    OnErrorOccurredListenerDetails,
     OnHeadersReceivedListenerDetails,
 } from "electron";
 import {pick} from "remeda";
@@ -30,7 +33,7 @@ const requestProxyCache = (() => {
         | OnHeadersReceivedListenerDetails
         | OnErrorOccurredListenerDetails
         | OnCompletedListenerDetails;
-    type MapValue = { redirectAllowedOrigin?: string; corsProxy?: CorsProxy };
+    type MapValue = {redirectAllowedOrigin?: string; corsProxy?: CorsProxy};
     const map = new Map<MapKeyArg["id"], MapValue>();
     return {
         patch({id}: DeepReadonly<MapKeyArg>, valuePatch: Partial<MapValue>): void {
@@ -56,15 +59,14 @@ const isProtonEmbeddedUrl = (() => {
     return (url: string): boolean => {
         return (
             url.startsWith(nonSchemaLikePrefix)
-            &&
-            url.substr(nonSchemaLikePrefix.length, 2) !== "//" // preventing "cid://"-like url schema use
+            && url.substr(nonSchemaLikePrefix.length, 2) !== "//" // preventing "cid://"-like url schema use
         );
     };
 })();
 
 const resolveWebRequestUrl = (
     url: string,
-): (Readonly<Pick<URL, "href" | "scheme" | "hostname" | "origin" | "pathname"> & { primaryDomainName: string }>) | null => {
+): (Readonly<Pick<URL, "href" | "scheme" | "hostname" | "origin" | "pathname"> & {primaryDomainName: string}>) | null => {
     const {scheme, hostname, origin: rawOrigin, pathname} = new URL(url);
     try {
         const origin = parseUrlOriginWithNullishCheck(rawOrigin);
@@ -94,7 +96,7 @@ export function initWebRequestListenersByAccount(
     }: DeepReadonly<AccountConfig>,
 ): void {
     const session = resolveInitializedAccountSession({login, entryUrl: accountEntryUrl});
-    const resolveAllowedOrigins = (url: Exclude<ReturnType<typeof resolveWebRequestUrl>, null>): readonly string [] => {
+    const resolveAllowedOrigins = (url: Exclude<ReturnType<typeof resolveWebRequestUrl>, null>): readonly string[] => {
         return reduceDuplicateItemsFromArray([
             ...[
                 ...STATIC_ALLOWED_ORIGINS,
@@ -106,193 +108,161 @@ export function initWebRequestListenersByAccount(
                     // - so whitelisting all the subdomains of such kind
                     // https://github.com/vladimiry/ElectronMail/issues/508
                     const firstUrlSubdomain = String(url.href.split(".").shift()?.split("://").pop());
-                    const isStorageSubdomain = (
-                        (firstUrlSubdomain === "storage" || firstUrlSubdomain.endsWith("-storage"))
-                        &&
-                        url.primaryDomainName === resolvePrimaryDomainNameFromUrlHostname(
-                            new URL(accountEntryUrl).hostname,
-                        )
-                    );
+                    const isStorageSubdomain = (firstUrlSubdomain === "storage" || firstUrlSubdomain.endsWith("-storage"))
+                        && url.primaryDomainName === resolvePrimaryDomainNameFromUrlHostname(new URL(accountEntryUrl).hostname);
                     return isStorageSubdomain ? [url.origin] : [];
                 })(),
             ].map(parseUrlOriginWithNullishCheck),
         ]);
     };
 
-    session.webRequest.onBeforeRequest(
-        {urls: []},
-        (details, callback) => {
-            const allowRequest = (): void => callback({});
-            const banRequest = (): void => callback({cancel: true});
-            const url = resolveWebRequestUrl(details.url);
+    session.webRequest.onBeforeRequest({urls: []}, (details, callback) => {
+        const allowRequest = (): void => callback({});
+        const banRequest = (): void => callback({cancel: true});
+        const url = resolveWebRequestUrl(details.url);
 
-            if (!url) {
-                banRequest();
-                return;
+        if (!url) {
+            banRequest();
+            return;
+        }
+
+        const allowedOrigins = resolveAllowedOrigins(url);
+
+        if (
+            // feature enabled
+            enableExternalContentProxy
+            // has not yet been proxified (preventing infinity redirect loop)
+            && !requestProxyCache.get(details)?.redirectAllowedOrigin
+            // only image resources
+            && String(details.resourceType).toLowerCase() === "image"
+            // TODO consider proxyfying only images with http/https schemes
+            // WARN: should be called before consequent "parseUrlOriginWithNullishCheck" call
+            // embedded/"cid:"-prefixed urls should not be processed/proxyfied (origin resolving for such urls returns "null")
+            && !isProtonEmbeddedUrl(url.href)
+            // resources served from "allowed origins" should not be proxified as those
+            // are local resources (proton's static resource & API, devtools, etc)
+            && !allowedOrigins.includes(url.origin)
+            // TODO consider proxyfying only images with http/https schemes
+            // local resource
+            && url.scheme !== "chrome-extension"
+        ) {
+            if (!externalContentProxyUrlPattern) {
+                throw new Error(`Invalid "external content proxy URL pattern" value.`);
             }
 
-            const allowedOrigins = resolveAllowedOrigins(url);
+            const redirectURL = externalContentProxyUrlPattern.replace(ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN, url.href);
 
             if (
-                // feature enabled
-                enableExternalContentProxy
-                &&
-                // has not yet been proxified (preventing infinity redirect loop)
-                !requestProxyCache.get(details)?.redirectAllowedOrigin
-                &&
-                // only image resources
-                String(details.resourceType).toLowerCase() === "image"
-                &&
-                // TODO consider proxyfying only images with http/https schemes
-                // WARN: should be called before consequent "parseUrlOriginWithNullishCheck" call
-                // embedded/"cid:"-prefixed urls should not be processed/proxyfied (origin resolving for such urls returns "null")
-                !isProtonEmbeddedUrl(url.href)
-                &&
-                // resources served from "allowed origins" should not be proxified as those
-                // are local resources (proton's static resource & API, devtools, etc)
-                !allowedOrigins.includes(url.origin)
-                &&
-                // TODO consider proxyfying only images with http/https schemes
-                // local resource
-                url.scheme !== "chrome-extension"
+                redirectURL === externalContentProxyUrlPattern
+                || !redirectURL.includes(url.href)
             ) {
-                if (!externalContentProxyUrlPattern) {
-                    throw new Error(`Invalid "external content proxy URL pattern" value.`);
-                }
-
-                const redirectURL = externalContentProxyUrlPattern.replace(ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN, url.href);
-
-                if (
-                    redirectURL === externalContentProxyUrlPattern
-                    ||
-                    !redirectURL.includes(url.href)
-                ) {
-                    throw new Error(`Failed to substitute "${url.href}" in "${externalContentProxyUrlPattern}" pattern.`);
-                }
-
-                requestProxyCache.patch(
-                    details,
-                    {redirectAllowedOrigin: parseUrlOriginWithNullishCheck(redirectURL)},
-                );
-
-                callback({redirectURL});
-                return;
+                throw new Error(`Failed to substitute "${url.href}" in "${externalContentProxyUrlPattern}" pattern.`);
             }
 
-            if (!blockNonEntryUrlBasedRequests) {
-                allowRequest();
-                return;
-            }
+            requestProxyCache.patch(details, {redirectAllowedOrigin: parseUrlOriginWithNullishCheck(redirectURL)});
 
-            if (isProtonEmbeddedUrl(url.href)) {
-                // embedded/"cid:"-prefixed urls get silently blocked (origin resolving for such urls returns "null")
-                banRequest();
-                return;
-            }
+            callback({redirectURL});
+            return;
+        }
 
-            const redirectAllowedOrigin = requestProxyCache.get(details)?.redirectAllowedOrigin;
-            const bannedUrlAccessMsg: null | string = buildUrlOriginsFailedMsgTester([
-                ...allowedOrigins,
-                ...(
-                    redirectAllowedOrigin
-                        ? [redirectAllowedOrigin]
-                        : []
-                ),
-            ])(url.href);
+        if (!blockNonEntryUrlBasedRequests) {
+            allowRequest();
+            return;
+        }
 
-            if (typeof bannedUrlAccessMsg !== "string") {
-                allowRequest();
-                return;
-            }
-
-            setTimeout(() => { // can be asynchronous (speeds up callback resolving)
-                const message = [
-                    `Access to the "${details.resourceType}" resource with "${url.href}" URL has been forbidden. \n\n${bannedUrlAccessMsg}`,
-                    ` \n\nThis error message is related to the disabled by default "Block non 'API entry point'-based network requests" `,
-                    `feature, see https://github.com/vladimiry/ElectronMail/issues/312#issuecomment-709650619 for details.`,
-                ].join("");
-                logger.error(message);
-                IPC_MAIN_API_NOTIFICATION$.next(
-                    IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({message}),
-                );
-            });
-
-            requestProxyCache.remove(details);
-
+        if (isProtonEmbeddedUrl(url.href)) {
+            // embedded/"cid:"-prefixed urls get silently blocked (origin resolving for such urls returns "null")
             banRequest();
-        },
-    );
+            return;
+        }
 
-    session.webRequest.onBeforeSendHeaders(
-        {urls: []},
-        (details, callback) => {
-            const {requestHeaders} = details;
-            const url = resolveWebRequestUrl(details.url);
-            const corsProxy = url && resolveCorsProxy(
-                details,
-                resolveAllowedOrigins(url),
-            );
+        const redirectAllowedOrigin = requestProxyCache.get(details)?.redirectAllowedOrigin;
+        const bannedUrlAccessMsg: null | string = buildUrlOriginsFailedMsgTester([
+            ...allowedOrigins,
+            ...(redirectAllowedOrigin
+                ? [redirectAllowedOrigin]
+                : []),
+        ])(url.href);
 
-            if (corsProxy) {
-                {
-                    const {name: headerName} = getHeader(requestHeaders, HEADERS.request.origin) ?? {name: HEADERS.request.origin};
-                    requestHeaders[headerName] = resolveFakeOrigin(details);
-                    requestProxyCache.patch(details, {corsProxy});
-                }
-            }
+        if (typeof bannedUrlAccessMsg !== "string") {
+            allowRequest();
+            return;
+        }
 
+        setTimeout(() => { // can be asynchronous (speeds up callback resolving)
+            const message = [
+                `Access to the "${details.resourceType}" resource with "${url.href}" URL has been forbidden. \n\n${bannedUrlAccessMsg}`,
+                ` \n\nThis error message is related to the disabled by default "Block non 'API entry point'-based network requests" `,
+                `feature, see https://github.com/vladimiry/ElectronMail/issues/312#issuecomment-709650619 for details.`,
+            ].join("");
+            logger.error(message);
+            IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({message}));
+        });
+
+        requestProxyCache.remove(details);
+
+        banRequest();
+    });
+
+    session.webRequest.onBeforeSendHeaders({urls: []}, (details, callback) => {
+        const {requestHeaders} = details;
+        const url = resolveWebRequestUrl(details.url);
+        const corsProxy = url && resolveCorsProxy(details, resolveAllowedOrigins(url));
+
+        if (corsProxy) {
             {
-                if (customUserAgent) {
-                    for (const headerName of Object.keys(requestHeaders)) {
-                        if (headerName.toLowerCase().startsWith("sec-ch-ua")) {
-                            delete requestHeaders[headerName];
-                        }
+                const {name: headerName} = getHeader(requestHeaders, HEADERS.request.origin) ?? {name: HEADERS.request.origin};
+                requestHeaders[headerName] = resolveFakeOrigin(details);
+                requestProxyCache.patch(details, {corsProxy});
+            }
+        }
+
+        {
+            if (customUserAgent) {
+                for (const headerName of Object.keys(requestHeaders)) {
+                    if (headerName.toLowerCase().startsWith("sec-ch-ua")) {
+                        delete requestHeaders[headerName];
                     }
                 }
-                // the "session.setUserAgent()" makes an effect only once (first call, see the docs)
-                // so we resolve and set the header explicitly for each request
-                const {name: headerName} = getHeader(requestHeaders, HEADERS.request.userAgent) ?? {name: HEADERS.request.userAgent};
-                requestHeaders[headerName] = getUserAgentByAccount({customUserAgent});
             }
+            // the "session.setUserAgent()" makes an effect only once (first call, see the docs)
+            // so we resolve and set the header explicitly for each request
+            const {name: headerName} = getHeader(requestHeaders, HEADERS.request.userAgent) ?? {name: HEADERS.request.userAgent};
+            requestHeaders[headerName] = getUserAgentByAccount({customUserAgent});
+        }
 
-            // the "x-pm-appversion" header gets set to "web-account" automatically after login form moved to a separate page
-            // so for now skipping manual headers setting
-            // protonApiUrlsUtil.patchAuthRequestHeaders(String(url?.pathname), requestHeaders);
-            protonApiUrlsUtil.patchMailApiRequestHeaders(String(url?.pathname), requestHeaders);
+        // the "x-pm-appversion" header gets set to "web-account" automatically after login form moved to a separate page
+        // so for now skipping manual headers setting
+        // protonApiUrlsUtil.patchAuthRequestHeaders(String(url?.pathname), requestHeaders);
+        protonApiUrlsUtil.patchMailApiRequestHeaders(String(url?.pathname), requestHeaders);
 
-            callback({requestHeaders});
-        },
-    );
+        callback({requestHeaders});
+    });
 
-    session.webRequest.onHeadersReceived(
-        (details, callback) => {
-            const {responseHeaders} = details;
-            const corsProxy = requestProxyCache.get(details)?.corsProxy;
+    session.webRequest.onHeadersReceived((details, callback) => {
+        const {responseHeaders} = details;
+        const corsProxy = requestProxyCache.get(details)?.corsProxy;
 
-            requestProxyCache.remove(details);
+        requestProxyCache.remove(details);
 
-            if (!responseHeaders) {
-                callback({});
-                return;
-            }
+        if (!responseHeaders) {
+            callback({});
+            return;
+        }
 
-            if (corsProxy) {
-                patchCorsResponseHeaders(responseHeaders, corsProxy);
-            }
+        if (corsProxy) {
+            patchCorsResponseHeaders(responseHeaders, corsProxy);
+        }
 
-            protonApiUrlsUtil.patchCaptchaResponseHeaders(new URL(details.url).pathname, responseHeaders);
-            patchResponseSetCookieHeaderRecords({url: details.url, responseHeaders});
+        protonApiUrlsUtil.patchCaptchaResponseHeaders(new URL(details.url).pathname, responseHeaders);
+        patchResponseSetCookieHeaderRecords({url: details.url, responseHeaders});
 
-            callback({responseHeaders});
-        },
-    );
+        callback({responseHeaders});
+    });
 
     session.webRequest.onErrorOccurred((details) => {
         requestProxyCache.remove(details);
-        logger.warn({
-            ...pick(details, ["resourceType", "error"]),
-            url: depersonalizeProtonApiUrl(details.url),
-        });
+        logger.warn({...pick(details, ["resourceType", "error"]), url: depersonalizeProtonApiUrl(details.url)});
     });
 
     session.webRequest.onCompleted((details) => {

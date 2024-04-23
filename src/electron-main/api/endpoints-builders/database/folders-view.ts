@@ -4,7 +4,7 @@ import {buildAccountFoldersResolver} from 'src/electron-main/database/util';
 import {CONVERSATION_TYPE, ConversationEntry, FsDbAccount, SYSTEM_FOLDER_IDENTIFIERS, View} from 'src/shared/model/database';
 import {mailDateComparatorDefaultsToDesc, walkConversationNodesTree} from 'src/shared/util';
 
-type splitAndFormatAndFillSummaryFoldersType = (folders: View.Folder[]) => { system: View.Folder[]; custom: View.Folder[] };
+type splitAndFormatAndFillSummaryFoldersType = (folders: View.Folder[]) => {system: View.Folder[]; custom: View.Folder[]};
 
 // TODO move the "formatting" and "filling the summary" actions to individual functions
 export const splitAndFormatAndFillSummaryFolders: splitAndFormatAndFillSummaryFoldersType = (() => {

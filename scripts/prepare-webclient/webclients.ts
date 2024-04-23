@@ -13,34 +13,30 @@ const shouldFailOnBuildEnvVarName = "ELECTRON_MAIL_SHOULD_FAIL_ON_BUILD";
 
 const shouldFailOnBuild = Boolean(process.env[shouldFailOnBuildEnvVarName]);
 
-async function configure(
-    {cwd, envFileName = "./appConfig.json"}: { cwd: string, envFileName?: string },
-): Promise<{ configApiParam: string }> {
+async function configure({cwd, envFileName = "./appConfig.json"}: {cwd: string; envFileName?: string}): Promise<{configApiParam: string}> {
     const configApiParam = `${BINARY_NAME}_API_PARAM`;
     writeFile(
         path.join(cwd, envFileName),
-        JSON.stringify({
-            [configApiParam]: {
-                // https://github.com/ProtonMail/WebClient/issues/166#issuecomment-561060855
-                api: PROTON_API_URL_PLACEHOLDER,
-                secure: "https://secure.protonmail.com",
+        JSON.stringify(
+            {
+                [configApiParam]: {
+                    // https://github.com/ProtonMail/WebClient/issues/166#issuecomment-561060855
+                    api: PROTON_API_URL_PLACEHOLDER,
+                    secure: "https://secure.protonmail.com",
+                },
+                // so "dsn: SENTRY_CONFIG[env].sentry" code line not throwing ("env" variable gets resolved with "dev" value)
+                // https://github.com/ProtonMail/WebClient/blob/aebd13605eec849bab199ffc0e58407a2e0d6537/env/config.js#L146
+                dev: {},
             },
-            // so "dsn: SENTRY_CONFIG[env].sentry" code line not throwing ("env" variable gets resolved with "dev" value)
-            // https://github.com/ProtonMail/WebClient/blob/aebd13605eec849bab199ffc0e58407a2e0d6537/env/config.js#L146
-            dev: {},
-        }, null, 2),
+            null,
+            2,
+        ),
     );
     return {configApiParam};
 }
 
 function resolveWebpackConfigPatchingCode(
-    {
-        webpackConfigVarName,
-        webpackIndexEntryItems,
-    }: {
-        webpackConfigVarName: string
-        webpackIndexEntryItems?: unknown,
-    },
+    {webpackConfigVarName, webpackIndexEntryItems}: {webpackConfigVarName: string; webpackIndexEntryItems?: unknown},
 ): string {
     const disableMangling = Boolean(webpackIndexEntryItems);
     const disableMinimizing = true; // disable compression to workaround "heap out of memory" issue of the "github actions" job
@@ -70,12 +66,15 @@ function resolveWebpackConfigPatchingCode(
             },
         );
 
-        ${disableMangling
-        ? `webpackConfig.output.chunkLoadingGlobal = "webpackJsonp";`
-        : ""}
+        ${
+        disableMangling
+            ? `webpackConfig.output.chunkLoadingGlobal = "webpackJsonp";`
+            : ""
+    }
 
-        ${disableMangling
-        ? `
+        ${
+        disableMangling
+            ? `
             const terserPluginInstance = ${webpackConfigVarName}.optimization.minimizer
                 .find((plugin) => plugin.constructor.name === "TerserPlugin");
             if (!terserPluginInstance) {
@@ -93,14 +92,17 @@ function resolveWebpackConfigPatchingCode(
                 (terserPluginInstance.options.minimizer ?? (terserPluginInstance.options.minimizer = {options: {}})),
             ].forEach((value) => Object.assign(value, minimizerOptions));
         `
-        : (disableMinimizing ? `${webpackConfigVarName}.optimization.minimizer = [];` : ``)}
+            : (disableMinimizing ? `${webpackConfigVarName}.optimization.minimizer = [];` : ``)
+    }
 
-        ${webpackIndexEntryItems
-        ? `{
+        ${
+        webpackIndexEntryItems
+            ? `{
             const items = ${JSON.stringify(webpackIndexEntryItems, null, 2)};
             ${webpackConfigVarName}.entry.index.unshift(...items);
         }`
-        : ""}
+            : ""
+    }
 
         for (const rule of ${webpackConfigVarName}.module.rules) {
             const babelLoaderOptions = (
@@ -146,7 +148,7 @@ function writeFile(file: string, content: Buffer | string): void {
     fs.writeFileSync(file, content);
 }
 
-async function cleanDestAndMoveToIt({src, dest}: { src: string, dest: string }): Promise<void> {
+async function cleanDestAndMoveToIt({src, dest}: {src: string; dest: string}): Promise<void> {
     CONSOLE_LOG(`Moving ${src} to ${dest} (cleaning destination dir before)`);
     assertPathIsInCwd(dest);
     await execShell(["npx", ["--no", "rimraf", dest]]);
@@ -154,16 +156,11 @@ async function cleanDestAndMoveToIt({src, dest}: { src: string, dest: string }):
 }
 
 async function executeBuildFlow(
-    {
-        repoType,
-        repoRelativeDistDir = PROVIDER_REPO_MAP[repoType].repoRelativeDistDir,
-        destDir,
-        destSubFolder,
-    }: {
-        repoType: keyof typeof PROVIDER_REPO_MAP
-        repoRelativeDistDir?: string
-        destDir: string
-        destSubFolder: string
+    {repoType, repoRelativeDistDir = PROVIDER_REPO_MAP[repoType].repoRelativeDistDir, destDir, destSubFolder}: {
+        repoType: keyof typeof PROVIDER_REPO_MAP;
+        repoRelativeDistDir?: string;
+        destDir: string;
+        destSubFolder: string;
     },
 ): Promise<void> {
     const repoDir = path.join(GIT_CLONE_ABSOLUTE_DIR, "./WebClients");
@@ -171,7 +168,7 @@ async function executeBuildFlow(
     const repoDistDir = path.join(appDir, repoRelativeDistDir);
     const {tag} = PROVIDER_REPO_MAP[repoType];
 
-    const state: { buildingSetup: () => Promise<void> } = {
+    const state: {buildingSetup: () => Promise<void>} = {
         async buildingSetup() {
             state.buildingSetup = async () => Promise.resolve(); // one run per "repo type" only needed
 
@@ -179,9 +176,7 @@ async function executeBuildFlow(
             if (fsExtra.pathExistsSync(path.join(repoDir, ".git"))) {
                 await execShell(["git", ["reset", "--hard", "origin/main"], {cwd: repoDir}]);
                 await execShell(["git", ["clean", "-fdx"], {cwd: repoDir}]);
-                if (
-                    !(await execShell(["git", ["tag"], {cwd: repoDir}], {printStdOut: false})).stdout.trim().includes(tag)
-                ) {
+                if (!(await execShell(["git", ["tag"], {cwd: repoDir}], {printStdOut: false})).stdout.trim().includes(tag)) {
                     await execShell(["git", ["fetch", "--force", "--all", "--tags"], {cwd: repoDir}]);
                 }
             } else { // cloning
@@ -200,12 +195,10 @@ async function executeBuildFlow(
                 const scriptCriteria = {key: "postinstall", value: "is-ci || (husky install; yarn run config-app)"} as const;
                 const packageJSONFileLocation = path.join(repoDir, "./package.json");
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                const packageJSON: { scripts: Record<string, string> } = JSON.parse(fs.readFileSync(packageJSONFileLocation).toString());
+                const packageJSON: {scripts: Record<string, string>} = JSON.parse(fs.readFileSync(packageJSONFileLocation).toString());
 
                 if (
-                    Object
-                        .entries(packageJSON.scripts)
-                        .some(([key, value]) => key === scriptCriteria.key && value === scriptCriteria.value)
+                    Object.entries(packageJSON.scripts).some(([key, value]) => key === scriptCriteria.key && value === scriptCriteria.value)
                 ) {
                     CONSOLE_LOG(`Dropping "${scriptCriteria.key}" script from the ${packageJSONFileLocation} file...`);
                     delete packageJSON.scripts[scriptCriteria.key];
@@ -215,10 +208,7 @@ async function executeBuildFlow(
 
             // eslint-disable-next-line import/no-relative-parent-imports
             for (const patchFileName of (await import("../../patches/protonmail/meta.json", {assert: {type: "json"}})).default[repoType]) {
-                await applyPatch({
-                    patchFile: path.join(CWD_ABSOLUTE_DIR, "./patches/protonmail", patchFileName),
-                    cwd: repoDir,
-                });
+                await applyPatch({patchFile: path.join(CWD_ABSOLUTE_DIR, "./patches/protonmail", patchFileName), cwd: repoDir});
             }
 
             if (process.env.CI) { // TODO drop "yarn install" hacks when executing on CI env
@@ -227,18 +217,15 @@ async function executeBuildFlow(
                 //     YN0018: │ sieve.js@https://github.com/ProtonMail/sieve.js.git#commit=a09ab52092164af74278e77612a091e730e9b7e9: The remote archive doesn't match the expected checksum
                 // see https://github.com/yarnpkg/berry/issues/1142 and https://github.com/yarnpkg/berry/issues/1989 for details
                 await execShell(["yarn", ["cache", "clean", "--all"], {cwd: repoDir}]);
-                await execShell([
-                    "yarn", ["install"],
-                    {
-                        cwd: repoDir,
-                        env: {
-                            ...process.env,
-                            PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "1",
-                            YARN_CHECKSUM_BEHAVIOR: "update",
-                            YARN_ENABLE_IMMUTABLE_INSTALLS: "false",
-                        },
+                await execShell(["yarn", ["install"], {
+                    cwd: repoDir,
+                    env: {
+                        ...process.env,
+                        PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "1",
+                        YARN_CHECKSUM_BEHAVIOR: "update",
+                        YARN_ENABLE_IMMUTABLE_INSTALLS: "false",
                     },
-                ]);
+                }]);
             } else {
                 await execShell(["yarn", ["install"], {cwd: repoDir}], {printStdOut: false});
             }
@@ -285,12 +272,7 @@ async function executeBuildFlow(
                         path.join(appDir, "./proton.config.js"),
                         `
                         module.exports = (webpackConfig) => {
-                        ${
-                            resolveWebpackConfigPatchingCode({
-                                webpackConfigVarName: "webpackConfig",
-                                webpackIndexEntryItems,
-                            })
-                        }
+                        ${resolveWebpackConfigPatchingCode({webpackConfigVarName: "webpackConfig", webpackIndexEntryItems})}
                         return webpackConfig;
                         }`,
                     );
@@ -299,51 +281,35 @@ async function executeBuildFlow(
                 assertPathIsInCwd(repoDistDir);
                 await execShell(["npx", ["--no", "rimraf", repoDistDir]]);
 
-                await execShell(
-                    [
-                        "yarn",
-                        [
-                            "workspace",
-                            repoType,
-                            "run",
-                            "proton-pack",
-                            "build",
-                            // SRI disabled by patching as "--no-sri" doesn't make effect
-                            // "--no-sri", // the API URL gets injected dynamically by custom protocol which obviously breaks SRI stuff
-                            `--api=${configApiParam}`,
-                            `--appMode=bundle`, // standalone | sso | bundle
-                            ...(publicPath ? [`--publicPath=${publicPath}`] : []),
-                            // eslint-disable-next-line
-                            // https://github.com/ProtonMail/WebClients/blob/8d7f8a902034405988bd70431c714e9fdbb37a1d/packages/pack/bin/protonPack#L38
-                            // `--appMode=bundle`,
-                        ],
-                        {
-                            cwd: repoDir,
-                            env: {
-                                ...process.env,
-                                ...(publicPath && {PUBLIC_PATH: publicPath}),
-                                NODE_ENV: "production",
-                                // picked "build" task of "applications/<app>/package.json", "package.json" patching tracks the change
-                                TS_NODE_PROJECT: path.join(repoDir, "tsconfig.webpack.json"),
-                            },
-                        },
-                    ],
-                    publicPath ? {printEnvWhitelist: ["PUBLIC_PATH"]} : undefined,
-                );
+                await execShell(["yarn", [
+                    "workspace",
+                    repoType,
+                    "run",
+                    "proton-pack",
+                    "build",
+                    // SRI disabled by patching as "--no-sri" doesn't make effect
+                    // "--no-sri", // the API URL gets injected dynamically by custom protocol which obviously breaks SRI stuff
+                    `--api=${configApiParam}`,
+                    `--appMode=bundle`, // standalone | sso | bundle
+                    ...(publicPath ? [`--publicPath=${publicPath}`] : []),
+                    // eslint-disable-next-line
+                    // https://github.com/ProtonMail/WebClients/blob/8d7f8a902034405988bd70431c714e9fdbb37a1d/packages/pack/bin/protonPack#L38
+                    // `--appMode=bundle`,
+                ], {
+                    cwd: repoDir,
+                    env: {
+                        ...process.env,
+                        ...(publicPath && {PUBLIC_PATH: publicPath}),
+                        NODE_ENV: "production",
+                        // picked "build" task of "applications/<app>/package.json", "package.json" patching tracks the change
+                        TS_NODE_PROJECT: path.join(repoDir, "tsconfig.webpack.json"),
+                    },
+                }], publicPath ? {printEnvWhitelist: ["PUBLIC_PATH"]} : undefined);
 
                 if (repoType === "proton-drive") {
                     // WARN if path changes, search "Service-Worker-Allowed" keyword in "src/electron-main" and make needed adjustments
                     const downloadSW = path.join(repoDistDir, "downloadSW.js");
-                    if (
-                        fastGlob.sync(
-                            downloadSW,
-                            {
-                                deep: 1,
-                                onlyFiles: true,
-                                stats: false,
-                            },
-                        ).length !== 1
-                    ) {
+                    if (fastGlob.sync(downloadSW, {deep: 1, onlyFiles: true, stats: false}).length !== 1) {
                         throw new Error(`Failed to resolve "${downloadSW}" assets file`);
                     }
                 }
@@ -379,12 +345,8 @@ async function executeBuildFlow(
     }
 }
 
-export const buildProtonClients = async ({destDir}: { destDir: string }): Promise<void> => {
+export const buildProtonClients = async ({destDir}: {destDir: string}): Promise<void> => {
     for (const repoType of PROVIDER_APP_NAMES) {
-        await executeBuildFlow({
-            repoType,
-            destDir,
-            destSubFolder: PROVIDER_REPO_MAP[repoType].basePath,
-        });
+        await executeBuildFlow({repoType, destDir, destSubFolder: PROVIDER_REPO_MAP[repoType].basePath});
     }
 };

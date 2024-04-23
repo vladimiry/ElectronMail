@@ -5,14 +5,12 @@ import {PROTON_API_ENTRY_URLS, PROTON_API_SUBDOMAINS, PROTON_APP_MAIL_LOGIN_PATH
 import {PROVIDER_REPO_MAP} from "src/shared/const/proton-apps";
 import {resolvePathnameDirFromUrlHref, resolvePrimaryDomainNameFromUrlHostname} from "src/shared/util/url";
 
-export const resolveProtonApiOrigin = (
-    {accountEntryUrl, subdomain}: { accountEntryUrl: string, subdomain: string },
-): string => {
+export const resolveProtonApiOrigin = ({accountEntryUrl, subdomain}: {accountEntryUrl: string; subdomain: string}): string => {
     const {protocol, hostname} = new URL(accountEntryUrl);
     return `${protocol}//${subdomain}.${resolvePrimaryDomainNameFromUrlHostname(hostname)}`;
 };
 
-export const resolveProtonAppTypeFromUrlHref = (href: string): { requestBasePath: string, type: keyof typeof PROVIDER_REPO_MAP } => {
+export const resolveProtonAppTypeFromUrlHref = (href: string): {requestBasePath: string; type: keyof typeof PROVIDER_REPO_MAP} => {
     const requestBasePath = resolvePathnameDirFromUrlHref(href);
     const protonProjectResultType = {requestBasePath, type: "proton-mail"} as const;
 
@@ -21,9 +19,9 @@ export const resolveProtonAppTypeFromUrlHref = (href: string): { requestBasePath
     }
 
     // TODO use cached value/constant
-    const appsSortedByBasePathLengthDesc = Object
-        .values(mapValues(PROVIDER_REPO_MAP, (value, type) => ({...value, type})))
-        .sort((a, b) => b.basePath.length - a.basePath.length /* longest values first */);
+    const appsSortedByBasePathLengthDesc = Object.values(mapValues(PROVIDER_REPO_MAP, (value, type) => ({...value, type}))).sort((a, b) =>
+        b.basePath.length - a.basePath.length /* longest values first */
+    );
 
     for (const {basePath, type} of appsSortedByBasePathLengthDesc) {
         if (`${requestBasePath}/`.startsWith(`/${basePath}/`)) {
@@ -69,10 +67,7 @@ export const depersonalizeLoggedUrlsInString: depersonalizeLoggedUrlsInStringTyp
     //      https://mail.protonmailrmez3lotccipshtkleegetolb73fuirgj7r4o4vfu7ozyd.onion/
     const protonUrlRe = new RegExp(
         PROTON_API_ENTRY_URLS.reduce((accumulator, accountEntryUrl) => {
-            return [
-                ...accumulator,
-                ...PROTON_API_SUBDOMAINS.map((subdomain) => resolveProtonApiOrigin({accountEntryUrl, subdomain})),
-            ];
+            return [...accumulator, ...PROTON_API_SUBDOMAINS.map((subdomain) => resolveProtonApiOrigin({accountEntryUrl, subdomain}))];
         }, [] as string[]).join("|"),
         "gi",
     );

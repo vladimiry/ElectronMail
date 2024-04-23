@@ -38,14 +38,13 @@ export const getHeader = (
 export function patchResponseHeader(
     headers: Exclude<HeadersReceivedResponse["responseHeaders"], undefined>,
     patch: DeepReadonly<ReturnType<typeof getHeader>>,
-    {replace, extend = true, _default = true}: { replace?: boolean; extend?: boolean; _default?: boolean } = {},
+    {replace, extend = true, _default = true}: {replace?: boolean; extend?: boolean; _default?: boolean} = {},
 ): void {
     if (!patch) {
         return;
     }
 
-    const header: Exclude<ReturnType<typeof getHeader>, null> =
-        getHeader(headers, patch.name) || {name: patch.name, values: []};
+    const header: Exclude<ReturnType<typeof getHeader>, null> = getHeader(headers, patch.name) || {name: patch.name, values: []};
 
     if (_default && !header.values.length) {
         headers[header.name] = [...patch.values];
@@ -55,8 +54,8 @@ export function patchResponseHeader(
     headers[header.name] = replace
         ? [...patch.values]
         : extend
-            ? [...header.values, ...patch.values]
-            : header.values;
+        ? [...header.values, ...patch.values]
+        : header.values;
 }
 
 // TODO consider doing initial preflight/OPTIONS call to https://mail.protonmail.com
@@ -66,83 +65,45 @@ export const patchCorsResponseHeaders: (
     responseHeaders: Exclude<OnHeadersReceivedListenerDetails["responseHeaders"], undefined>,
     corsProxy: CorsProxy,
 ) => void = (responseHeaders, corsProxy) => {
-    patchResponseHeader(
-        responseHeaders,
-        {
-            name: HEADERS.response.accessControlAllowOrigin,
-            values: corsProxy.headers.origin.values,
-        },
-        {replace: true},
-    );
+    patchResponseHeader(responseHeaders, {name: HEADERS.response.accessControlAllowOrigin, values: corsProxy.headers.origin.values}, {
+        replace: true,
+    });
 
-    patchResponseHeader(
-        responseHeaders,
-        {
-            name: HEADERS.response.accessControlAllowMethods,
-            values: [
-                ...(corsProxy.headers.accessControlRequestMethod || {
-                    values: [
-                        "DELETE",
-                        "GET",
-                        "HEAD",
-                        "OPTIONS",
-                        "POST",
-                        "PUT",
-                    ],
-                }).values,
-            ],
-        },
-    );
+    patchResponseHeader(responseHeaders, {
+        name: HEADERS.response.accessControlAllowMethods,
+        values: [...(corsProxy.headers.accessControlRequestMethod || {values: ["DELETE", "GET", "HEAD", "OPTIONS", "POST", "PUT"]}).values],
+    });
 
     // this patching is needed for CORS request to work with Tor entry point via Tor proxy
     // TODO apply "access-control-allow-credentials" headers patch for Tor requests only
     //      see "details.url" value
-    patchResponseHeader(
-        responseHeaders,
-        {
-            name: HEADERS.response.accessControlAllowCredentials,
-            values: ["true"],
-        },
-        {extend: false},
-    );
+    patchResponseHeader(responseHeaders, {name: HEADERS.response.accessControlAllowCredentials, values: ["true"]}, {extend: false});
 
     // this patching is needed for CORS request to work with Tor entry point via Tor proxy
     // TODO apply "access-control-allow-headers" headers patch for Tor requests only
     //      see "details.url" value
-    patchResponseHeader(
-        responseHeaders,
-        {
-            name: HEADERS.response.accessControlAllowHeaders,
-            values: [
-                ...(
-                    corsProxy.headers.accessControlRequestHeaders
-                    ||
-                    // TODO consider dropping setting fallback "access-control-request-headers" values
-                    {
-                        values: [
-                            "authorization",
-                            "cache-control",
-                            "content-type",
-                            "Date",
-                            "x-eo-uid",
-                            "x-pm-apiversion",
-                            "x-pm-appversion",
-                            "x-pm-session",
-                            "x-pm-uid",
-                        ],
-                    }
-                ).values,
-            ],
-        },
-    );
+    patchResponseHeader(responseHeaders, {
+        name: HEADERS.response.accessControlAllowHeaders,
+        values: [
+            ...(corsProxy.headers.accessControlRequestHeaders
+                // TODO consider dropping setting fallback "access-control-request-headers" values
+                || {
+                    values: [
+                        "authorization",
+                        "cache-control",
+                        "content-type",
+                        "Date",
+                        "x-eo-uid",
+                        "x-pm-apiversion",
+                        "x-pm-appversion",
+                        "x-pm-session",
+                        "x-pm-uid",
+                    ],
+                }).values,
+        ],
+    });
 
-    patchResponseHeader(
-        responseHeaders,
-        {
-            name: HEADERS.response.accessControlExposeHeaders,
-            values: ["Date"],
-        },
-    );
+    patchResponseHeader(responseHeaders, {name: HEADERS.response.accessControlExposeHeaders, values: ["Date"]});
 };
 
 export const patchResponseSetCookieHeaderRecords = (
@@ -168,32 +129,14 @@ export const resolveCorsProxy = (
     {requestHeaders, resourceType}: OnBeforeSendHeadersListenerDetails,
     allowedOrigins: readonly string[],
 ): CorsProxy | null => {
-    const originHeader = (
-        (
-            String(resourceType).toLowerCase() === "xhr"
-            ||
-            String(getHeader(requestHeaders, HEADERS.request.contentType)).includes("application/json")
-            ||
-            Boolean(
-                getHeader(requestHeaders, HEADERS.request.accessControlRequestHeaders),
-            )
-            ||
-            Boolean(
-                getHeader(requestHeaders, HEADERS.request.accessControlRequestMethod),
-            )
-        )
-        &&
-        getHeader(requestHeaders, HEADERS.request.origin)
-    );
-    const originValue = (
-        originHeader
-        &&
-        originHeader.values.length
-        &&
-        verifyUrlOriginValue(
-            new URL(originHeader.values[0] as string).origin,
-        )
-    );
+    const originHeader = (String(resourceType).toLowerCase() === "xhr"
+        || String(getHeader(requestHeaders, HEADERS.request.contentType)).includes("application/json")
+        || Boolean(getHeader(requestHeaders, HEADERS.request.accessControlRequestHeaders))
+        || Boolean(getHeader(requestHeaders, HEADERS.request.accessControlRequestMethod)))
+        && getHeader(requestHeaders, HEADERS.request.origin);
+    const originValue = originHeader
+        && originHeader.values.length
+        && verifyUrlOriginValue(new URL(originHeader.values[0] as string).origin);
 
     if (typeof originValue !== "string" || !originValue || !originHeader) {
         return null;

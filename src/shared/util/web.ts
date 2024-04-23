@@ -1,9 +1,11 @@
-export const resolveDomElements = async <E extends Element | null,
+export const resolveDomElements = async <
+    E extends Element | null,
     Q extends Readonly<Record<string, () => E>>,
     K extends keyof Q,
-    R extends { [key in K]: Exclude<ReturnType<Q[key]>, null> }>(
+    R extends { [key in K]: Exclude<ReturnType<Q[key]>, null> },
+>(
     query: Q,
-    {timeLimitMs, scanIntervalMs, iterationsLimit = 0}: { timeLimitMs: number, scanIntervalMs: number, iterationsLimit?: number },
+    {timeLimitMs, scanIntervalMs, iterationsLimit = 0}: {timeLimitMs: number; scanIntervalMs: number; iterationsLimit?: number},
 ): Promise<R> => {
     const scanIntervalMinMs = 300;
     const startTime = Date.now();
@@ -44,9 +46,11 @@ export const resolveDomElements = async <E extends Element | null,
             }
 
             if (Date.now() - startTime > timeLimitMs) {
-                return reject(new Error(
-                    `Failed to resolve some DOM elements from the list [${queryKeys.join(", ")}] within "${timeLimitMs}" milliseconds`,
-                ));
+                return reject(
+                    new Error(
+                        `Failed to resolve some DOM elements from the list [${queryKeys.join(", ")}] within "${timeLimitMs}" milliseconds`,
+                    ),
+                );
             }
 
             setTimeout(scanElements, Math.max(scanIntervalMinMs, scanIntervalMs));

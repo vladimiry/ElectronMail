@@ -10,11 +10,9 @@ export class ConversationEntry extends Entity implements Model.ConversationEntry
     @IsString()
     messageId!: Model.ConversationEntry["messageId"];
 
-    @IsOptional()
-    @IsString()
+    @IsOptional() @IsString()
     previousPk?: Model.ConversationEntry["pk"];
 
-    @IsOptional()
-    @IsString()
+    @IsOptional() @IsString()
     mailPk?: Model.Mail["pk"];
 }

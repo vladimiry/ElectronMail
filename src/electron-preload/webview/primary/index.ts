@@ -48,9 +48,7 @@ const main = async (): Promise<void> => {
 
     try {
         // TODO set up timeout
-        registerApi(
-            await initProviderApi(),
-        );
+        registerApi(await initProviderApi());
     } catch (error) {
         logger.error(error);
         throw error;
@@ -64,12 +62,10 @@ const main = async (): Promise<void> => {
 })().catch((error) => {
     console.error( // eslint-disable-line no-console
         typeof error === "object"
-            ? (
-                new Error(
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                    JSON.stringify({name: String(error.name), message: String(error.message), stack: String(error.stack)}),
-                )
-            )
+            ? (new Error(
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                JSON.stringify({name: String(error.name), message: String(error.message), stack: String(error.stack)}),
+            ))
             : error,
     );
 });

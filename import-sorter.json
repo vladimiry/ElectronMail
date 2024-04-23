@@ -2,6 +2,7 @@
   "root": true,
   "bracketSpacing": false,
   "sortImportsBy": "names",
+  "quoteMark": "double",
   "groupRules": [
     {},
     "^(scripts/|src/|webpack-configs/|webpack-configs/|\\./|\\.\\./)"

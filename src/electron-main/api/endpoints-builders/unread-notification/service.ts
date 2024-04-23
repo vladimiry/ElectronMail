@@ -27,9 +27,7 @@ const resolveAugmentedRawMailsSerialized = (account: DeepReadonly<FsDbAccount>):
         augmentedRawMails.push(augmentRawMailWithFolders(mail, resolveFolderById, true));
     }
 
-    return JSON.stringify(
-        JSON.stringify(augmentedRawMails),
-    );
+    return JSON.stringify(JSON.stringify(augmentedRawMails));
 };
 
 export const resolveUnreadNotificationMessage = async (
@@ -59,10 +57,9 @@ export const resolveUnreadNotificationMessage = async (
     `;
 
     // TODO quickJS: improve performance (execute function on context with preset variables/functions)
-    return (await resolveCachedQuickJSInstance()).evalCode(
-        evalCode,
-        {shouldInterrupt: shouldInterruptAfterDeadline(Date.now() + evalCodeTimeout)},
-    ) as string;
+    return (await resolveCachedQuickJSInstance()).evalCode(evalCode, {
+        shouldInterrupt: shouldInterruptAfterDeadline(Date.now() + evalCodeTimeout),
+    }) as string;
 };
 
 export const executeUnreadNotificationShellCommand = async (
@@ -94,30 +91,24 @@ export const executeUnreadNotificationShellCommand = async (
     `;
 
     // TODO quickJS: improve performance (execute function on context with preset variables/functions)
-    const {command, options} = (await resolveCachedQuickJSInstance()).evalCode(
-        evalCode,
-        {shouldInterrupt: shouldInterruptAfterDeadline(Date.now() + evalCodeTimeout)},
-    ) as { command: string, options?: { cwd?: string, env?: Record<string, string> } };
+    const {command, options} = (await resolveCachedQuickJSInstance()).evalCode(evalCode, {
+        shouldInterrupt: shouldInterruptAfterDeadline(Date.now() + evalCodeTimeout),
+    }) as {command: string; options?: {cwd?: string; env?: Record<string, string>}};
 
     if (!command) {
         logger.verbose(nameof(executeUnreadNotificationShellCommand), `skipping empty "${nameof(command)}" execution`);
         return;
     }
 
-    const execOptions: Parameters<typeof exec>[1] = {
-        cwd: options?.cwd,
-        env: options?.env,
-    };
+    const execOptions: Parameters<typeof exec>[1] = {cwd: options?.cwd, env: options?.env};
 
     try {
         await promisify(exec)(command, execOptions);
     } catch (error) {
         // we don't show/log a possibly sensitive data (like command to execute or its options), so the original error gets suppressed
         throw new Error(
-            "Failed to execute a triggered by an unread desktop notification shell exec command: " +
-            JSON.stringify(
-                pick(Object(error) as unknown as { errno: unknown, code: unknown }, ["errno", "code"]),
-            ),
+            "Failed to execute a triggered by an unread desktop notification shell exec command: "
+                + JSON.stringify(pick(Object(error) as unknown as {errno: unknown; code: unknown}, ["errno", "code"])),
         );
     }
 };

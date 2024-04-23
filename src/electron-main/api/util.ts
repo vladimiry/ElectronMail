@@ -15,25 +15,23 @@ export const resolveCachedQuickJSInstance: () => Promise<QuickJSWASMModule> = ((
 const folderPropsToRawProps = (
     folders: DeepReadonly<Array<View.Folder>>,
     type: Unpacked<typeof LABEL_TYPE._.values>,
-): Array<{ Id: string, Name: string, Unread: number, Size: number }> => {
-    return folders
-        .filter((folder) => folder.type === type)
-        .map(({id, name, unread, size}) => ({Id: id, Name: name, Unread: unread, Size: size}));
+): Array<{Id: string; Name: string; Unread: number; Size: number}> => {
+    return folders.filter((folder) => folder.type === type).map(({id, name, unread, size}) => ({
+        Id: id,
+        Name: name,
+        Unread: unread,
+        Size: size,
+    }));
 };
 
 export const augmentRawMailWithBodyFields = (
     mail: DeepReadonly<Mail>,
     includeBodyTextField: boolean,
-): RestModel.Message & { EncryptedBody: string, Body: string, BodyText?: string } => {
+): RestModel.Message & {EncryptedBody: string; Body: string; BodyText?: string} => {
     const parsedRawMail = parseProtonRestModel(mail);
     const body = readMailBody(mail);
 
-    return {
-        ...parsedRawMail,
-        Body: body,
-        EncryptedBody: parsedRawMail.Body,
-        ...(includeBodyTextField && {BodyText: htmlToText(body)}),
-    };
+    return {...parsedRawMail, Body: body, EncryptedBody: parsedRawMail.Body, ...(includeBodyTextField && {BodyText: htmlToText(body)})};
 };
 
 export const augmentRawMailWithFolders = (
@@ -41,9 +39,9 @@ export const augmentRawMailWithFolders = (
     foldersArg: View.Folder[] | (({id}: Pick<Folder, "id">) => View.Folder | undefined),
     includeBodyTextField: boolean,
 ): ReturnType<typeof augmentRawMailWithBodyFields> & {
-    _BodyDecryptionFailed?: boolean
-    Folders: Array<{ Id: string, Name: string, Unread: number, Size: number }>
-    Labels: Array<{ Id: string, Name: string, Unread: number, Size: number }>
+    _BodyDecryptionFailed?: boolean;
+    Folders: Array<{Id: string; Name: string; Unread: number; Size: number}>;
+    Labels: Array<{Id: string; Name: string; Unread: number; Size: number}>;
 } => {
     const mailFolders: View.Folder[] = typeof foldersArg === "function"
         ? []

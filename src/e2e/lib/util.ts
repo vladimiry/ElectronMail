@@ -1,18 +1,15 @@
-
 // WARN use only function arguments
 //      using any external variables/libraries might break things since serialization takes place (function executed on the "main" process)
 export const mainProcessEvaluationFunctions = {
     resolveBrowserWindow: (
         {BrowserWindow}: typeof import("electron"),
-        options: { resolveFocusedWindow?: boolean },
+        options: {resolveFocusedWindow?: boolean},
     ): import("electron").BrowserWindow => {
         {
             const actual = typeof options.resolveFocusedWindow;
             const expected = "boolean";
             if (actual !== expected) {
-                throw new Error(
-                    `Invalid "${String(options.resolveFocusedWindow)}" property type: ${JSON.stringify({actual, expected})}`,
-                );
+                throw new Error(`Invalid "${String(options.resolveFocusedWindow)}" property type: ${JSON.stringify({actual, expected})}`);
             }
         }
         const window = options.resolveFocusedWindow
@@ -25,11 +22,12 @@ export const mainProcessEvaluationFunctions = {
     },
     async testMainProcessSpecificStuff(
         electron: typeof import("electron"),
-        options: NoExtraProps<{ initial: boolean, resolveBrowserWindowStringified: string }>,
+        options: NoExtraProps<{initial: boolean; resolveBrowserWindowStringified: string}>,
     ): Promise<typeof options> {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const resolveBrowserWindow: typeof mainProcessEvaluationFunctions.resolveBrowserWindow
-            = eval(options.resolveBrowserWindowStringified.toString());
+        const resolveBrowserWindow: typeof mainProcessEvaluationFunctions.resolveBrowserWindow = eval(
+            options.resolveBrowserWindowStringified.toString(),
+        );
         const firstWindow = resolveBrowserWindow(electron, {resolveFocusedWindow: false});
         if (firstWindow.webContents.isDevToolsOpened()) {
             throw new Error("dev tools should be closed");
@@ -53,7 +51,7 @@ export const mainProcessEvaluationFunctions = {
             }
         }
         return options;
-    }
+    },
 } as const;
 
 export const accountCssSelector = (zeroStartedAccountIndex = 0): string => {

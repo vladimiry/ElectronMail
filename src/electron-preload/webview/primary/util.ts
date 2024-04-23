@@ -14,42 +14,24 @@ export const preprocessError: preprocessErrorType = (() => {
     } as const;
     const result: preprocessErrorType = (error) => {
         const onRateLimitedMethodCall = isErrorOnRateLimitedMethodCall(error);
-        const retriable = (
-            !onRateLimitedMethodCall
-            &&
-            !navigator.onLine
-            ||
-            (
-                isProtonApiError(error)
-                &&
-                (
+        const retriable = !onRateLimitedMethodCall
+                && !navigator.onLine
+            || (isProtonApiError(error)
+                && (
                     // network connection error, connection abort, offline, etc
                     [0, -1].includes(error.status)
-                    ||
-                    (
-                        error.status === 500
-                        &&
-                        error.response?.statusText?.toLocaleLowerCase() === strings.statusTextLowerCase["internal server error"]
-                    )
-                    ||
-                    (
+                    || (error.status === 500
+                        && error.response?.statusText?.toLocaleLowerCase() === strings.statusTextLowerCase["internal server error"])
+                    || (
                         // there were periods when the requests to protonmail's API ended up
                         // with "503 / service unavailable" error quite often during the day
                         error.status === 503
-                        ||
-                        error.response?.statusText?.toLocaleLowerCase() === strings.statusTextLowerCase["service unavailable"]
+                        || error.response?.statusText?.toLocaleLowerCase() === strings.statusTextLowerCase["service unavailable"]
                     )
-                    ||
-                    (
-                        error.status === 504
-                        ||
-                        error.response?.statusText?.toLocaleLowerCase() === strings.statusTextLowerCase["gateway time-out"]
-                    )
-                    ||
-                    strings.networkConnectionErrorNames.includes(error.name.toLocaleLowerCase())
-                )
-            )
-        );
+                    || (error.status === 504
+                        || error.response?.statusText?.toLocaleLowerCase() === strings.statusTextLowerCase["gateway time-out"])
+                    || strings.networkConnectionErrorNames.includes(error.name.toLocaleLowerCase())
+                ));
         return {
             // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
             error: sanitizeProtonApiError(error) as unknown as Error,

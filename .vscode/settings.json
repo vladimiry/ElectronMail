@@ -1,0 +1,10 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "dprint.dprint",
+  "files.exclude": {
+    "/app-dev/": true,
+    "/app/": true,
+    "/dist/": true,
+    "/output/": true
+  }
+}

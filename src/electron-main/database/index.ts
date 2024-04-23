@@ -19,16 +19,11 @@ const _logger = curryFunctionMembers(electronLog, __filename);
 
 export class Database {
     static buildEmptyDb(): FsDb {
-        return {
-            version: DATABASE_VERSION,
-            accounts: {},
-        };
+        return {version: DATABASE_VERSION, accounts: {}};
     }
 
     static buildEmptyAccountMetadata(): FsDbAccount["metadata"] {
-        return {
-            latestEventId: "",
-        };
+        return {latestEventId: ""};
     }
 
     static buildEmptyAccount(): FsDbAccount {
@@ -38,12 +33,7 @@ export class Database {
             folders: Object.create(null), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
             contacts: Object.create(null), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
             metadata: Database.buildEmptyAccountMetadata(),
-            deletedPks: {
-                conversationEntries: [],
-                mails: [],
-                folders: [],
-                contacts: [],
-            },
+            deletedPks: {conversationEntries: [], mails: [], folders: [], contacts: []},
         };
     }
 
@@ -77,10 +67,7 @@ export class Database {
                 continue;
             }
 
-            Object.assign(
-                targetAccount[entityType],
-                patch,
-            );
+            Object.assign(targetAccount[entityType], patch);
 
             targetPatched = true;
         }
@@ -119,14 +106,13 @@ export class Database {
     private [DB_INSTANCE_PROP_NAME]: FsDb = Database.buildEmptyDb();
 
     constructor(
-        public readonly options: Readonly<{
-            file: string;
-            encryption: Readonly<{
-                resolveKey: () => Promise<string>;
-                resolvePreset: () => Promise<KeyBasedPreset>;
-            }>;
-            dbCompression: () => Promise<Config["dbCompression2"]>;
-        }>
+        public readonly options: Readonly<
+            {
+                file: string;
+                encryption: Readonly<{resolveKey: () => Promise<string>; resolvePreset: () => Promise<KeyBasedPreset>}>;
+                dbCompression: () => Promise<Config["dbCompression2"]>;
+            }
+        >,
     ) {
         this.serializer = buildSerializer(this.options.file);
         this.logger = curryFunctionMembers(_logger, `[${path.basename(this.options.file)}]`);
@@ -158,7 +144,7 @@ export class Database {
         return account;
     }
 
-    * [Symbol.iterator](): Iterator<{ account: DeepReadonly<FsDbAccount>; pk: DeepReadonly<DbAccountPk> }> {
+    *[Symbol.iterator](): Iterator<{account: DeepReadonly<FsDbAccount>; pk: DeepReadonly<DbAccountPk>}> {
         this.logger.info("iterator()");
 
         const {accounts} = this.dbInstance;
@@ -190,9 +176,7 @@ export class Database {
 
         const duration = hrtimeDuration();
 
-        this.dbInstance = await this.serializer.read(
-            await this.buildEncryptionAdapter(),
-        );
+        this.dbInstance = await this.serializer.read(await this.buildEncryptionAdapter());
 
         this.logStats(nameof(Database.prototype.loadFromFile), duration); // eslint-disable-line @typescript-eslint/unbound-method
     }
@@ -208,11 +192,7 @@ export class Database {
                 dataSaltBase64: generateDataSaltBase64(ONE_KB_BYTES * 100, ONE_KB_BYTES * 200),
             };
 
-            await this.serializer.write(
-                await this.buildEncryptionAdapter(),
-                dataToStore,
-                await this.options.dbCompression(),
-            );
+            await this.serializer.write(await this.buildEncryptionAdapter(), dataToStore, await this.options.dbCompression());
 
             this.logStats(nameof(Database.prototype.saveToFile), duration); // eslint-disable-line @typescript-eslint/unbound-method
         });
@@ -227,7 +207,7 @@ export class Database {
         this.dbInstance = Database.buildEmptyDb();
     }
 
-    stat(): { records: number; conversationEntries: number; mails: number; folders: number; contacts: number } {
+    stat(): {records: number; conversationEntries: number; mails: number; folders: number; contacts: number} {
         this.logger.info(nameof(Database.prototype.stat)); // eslint-disable-line @typescript-eslint/unbound-method
 
         const stat = {records: 0, conversationEntries: 0, mails: 0, folders: 0, contacts: 0};
@@ -247,7 +227,7 @@ export class Database {
     accountStat(
         account: DeepReadonly<FsDbAccount>,
         includingSpam: boolean,
-    ): { conversationEntries: number; mails: number; folders: number; contacts: number; unread: number } {
+    ): {conversationEntries: number; mails: number; folders: number; contacts: number; unread: number} {
         const {resolveFolderById} = buildAccountFoldersResolver(account, includingSpam);
 
         return {
@@ -256,43 +236,32 @@ export class Database {
             mails: Object.keys(account.mails).length,
             folders: Object.keys(account.folders).length,
             contacts: Object.keys(account.contacts).length,
-            unread: Object.values(account.mails).reduce(
-                (accumulator, {mailFolderIds, unread}) => {
-                    return mailFolderIds.some((id) => resolveFolderById({id})?.notify === 1)
-                        ? accumulator + Number(unread)
-                        : accumulator;
-                },
-                0,
-            ),
+            unread: Object.values(account.mails).reduce((accumulator, {mailFolderIds, unread}) => {
+                return mailFolderIds.some((id) => resolveFolderById({id})?.notify === 1)
+                    ? accumulator + Number(unread)
+                    : accumulator;
+            }, 0),
         };
     }
 
-    private logStats(
-        methodName: string,
-        methodDuration: ReturnType<typeof hrtimeDuration>,
-        logLevel: LogLevel = "verbose",
-    ): void {
-        type dataToLogType = { methodTime: number; statTime: number } & Partial<ReturnType<typeof Database.prototype.stat>>;
-        const dataToLog: dataToLogType = (
-            (): dataToLogType => {
-                const methodTime = methodDuration.end(); // first of all
-                const statsDuration = hrtimeDuration(); // before the "stat()" called
-                const stat = logLevel === "debug" || logLevel === "verbose"
-                    ? this.stat()
-                    : undefined;
-                const statTime = statsDuration.end(); // after the "stat()" called
-                return {methodTime, statTime, ...stat};
-            }
-        )();
+    private logStats(methodName: string, methodDuration: ReturnType<typeof hrtimeDuration>, logLevel: LogLevel = "verbose"): void {
+        type dataToLogType = {methodTime: number; statTime: number} & Partial<ReturnType<typeof Database.prototype.stat>>;
+        const dataToLog: dataToLogType = ((): dataToLogType => {
+            const methodTime = methodDuration.end(); // first of all
+            const statsDuration = hrtimeDuration(); // before the "stat()" called
+            const stat = logLevel === "debug" || logLevel === "verbose"
+                ? this.stat()
+                : undefined;
+            const statTime = statsDuration.end(); // after the "stat()" called
+            return {methodTime, statTime, ...stat};
+        })();
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
         this.logger[logLevel](`${methodName}.${nameof(Database.prototype.logStats)}: ${JSON.stringify(dataToLog, null, 2)}`);
     }
 
     private getPks(): Array<DeepReadonly<DbAccountPk>> {
-        return Object
-            .keys(this.dbInstance.accounts)
-            .map((login) => ({login}));
+        return Object.keys(this.dbInstance.accounts).map((login) => ({login}));
     }
 
     private async buildEncryptionAdapter(): Promise<EncryptionAdapter> {

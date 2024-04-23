@@ -23,7 +23,8 @@ import {validateEntity} from "src/electron-main/database/validation";
 
 const _logger = curryFunctionMembers(electronLog, __filename);
 
-type Methods = keyof Pick<IpcMainApiEndpoints,
+type Methods = keyof Pick<
+    IpcMainApiEndpoints,
     | "dbPatch"
     | "dbGetAccountBootstrapOldestRawMailMetadata"
     | "dbGetAccountBootstrapRawMailIds"
@@ -37,7 +38,8 @@ type Methods = keyof Pick<IpcMainApiEndpoints,
     | "dbSearchRootConversationNodes"
     | "dbFullTextSearch"
     | "dbIndexerOn"
-    | "dbIndexerNotification">;
+    | "dbIndexerNotification"
+>;
 
 export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpoints, Methods>> {
     const endpoints: Unpacked<ReturnType<typeof buildEndpoints>> = {
@@ -64,18 +66,14 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                         // removing stale mails form the full text search index
                         // TODO performance optimization: send mails to indexing process if indexing feature activated
                         IPC_MAIN_API_DB_INDEXER_REQUEST$.next(
-                            IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS.Index(
-                                {
-                                    uid: new UUID(4).format(),
-                                    ...narrowIndexActionPayload({
-                                        key: accountKey,
-                                        add: [],
-                                        remove: Array
-                                            .from(new Set(Object.keys(db.getAccount(accountKey)?.mails ?? {})))
-                                            .map((pk) => ({pk})),
-                                    }),
-                                },
-                            ),
+                            IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS.Index({
+                                uid: new UUID(4).format(),
+                                ...narrowIndexActionPayload({
+                                    key: accountKey,
+                                    add: [],
+                                    remove: Array.from(new Set(Object.keys(db.getAccount(accountKey)?.mails ?? {}))).map((pk) => ({pk})),
+                                }),
+                            }),
                         );
                     });
                     db.initEmptyAccount(accountKey);
@@ -109,16 +107,14 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                         // send mails to indexing process
                         // TODO performance optimization: send mails to indexing process if indexing feature activated
                         IPC_MAIN_API_DB_INDEXER_REQUEST$.next(
-                            IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS.Index(
-                                {
-                                    uid: new UUID(4).format(),
-                                    ...narrowIndexActionPayload({
-                                        key: accountKey,
-                                        add: upsert as IndexableMail[], // TODO send data as chunks
-                                        remove,
-                                    }),
-                                },
-                            ),
+                            IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS.Index({
+                                uid: new UUID(4).format(),
+                                ...narrowIndexActionPayload({
+                                    key: accountKey,
+                                    add: upsert as IndexableMail[], // TODO send data as chunks
+                                    remove,
+                                }),
+                            }),
                         );
                     });
                 }
@@ -145,8 +141,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
 
             if (
                 entitiesModified
-                ||
-                sessionMetadataModified
+                || sessionMetadataModified
             ) {
                 await ctx.sessionDb.saveToFile();
             }
@@ -156,9 +151,9 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async dbGetAccountBootstrapOldestRawMailMetadata({login}) {
-            const oldestBootstrappedMail = Object.values(ctx.db.getAccount({login})?.mails || {})
-                .filter(({failedDownload}) => failedDownload?.type === "bootstrap-fetch")
-                .sort(({sentDate: a}, {sentDate: b}) => b - a) // descending order (oldest last)
+            const oldestBootstrappedMail = Object.values(ctx.db.getAccount({login})?.mails || {}).filter(({failedDownload}) =>
+                failedDownload?.type === "bootstrap-fetch"
+            ).sort(({sentDate: a}, {sentDate: b}) => b - a) // descending order (oldest last)
                 .pop();
             return oldestBootstrappedMail
                 ? pick(parseProtonRestModel(oldestBootstrappedMail), ["ID", "Time"])
@@ -167,11 +162,10 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async dbGetAccountBootstrapRawMailIds({login}) {
-            return Object.values(ctx.db.getAccount({login})?.mails || {})
-                .filter(({failedDownload}) => failedDownload?.type === "bootstrap-fetch")
-                .sort(({sentDate: a}, {sentDate: b}) => b - a) // descending order (oldest last)
-                .map(parseProtonRestModel)
-                .map(({ID}) => ({ID}));
+            return Object.values(ctx.db.getAccount({login})?.mails || {}).filter(({failedDownload}) =>
+                failedDownload?.type === "bootstrap-fetch"
+            ).sort(({sentDate: a}, {sentDate: b}) => b - a) // descending order (oldest last)
+                .map(parseProtonRestModel).map(({ID}) => ({ID}));
         },
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
@@ -183,10 +177,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                 await ctx.db.saveToFile();
             }
             await ctx.configStoreQueue.q(async () => {
-                await ctx.configStore.write({
-                    ...await ctx.configStore.readExisting(),
-                    shouldRequestDbMetadataReset: "done",
-                });
+                await ctx.configStore.write({...await ctx.configStore.readExisting(), shouldRequestDbMetadataReset: "done"});
             });
         },
 
@@ -212,9 +203,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             const config = await lastValueFrom(ctx.config$.pipe(first()));
             const {disableSpamNotifications} = config;
 
-            return {
-                folders: prepareFoldersView(account, !disableSpamNotifications),
-            };
+            return {folders: prepareFoldersView(account, !disableSpamNotifications)};
         },
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
@@ -228,15 +217,11 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             }
 
             const {system, custom} = prepareFoldersView(account, true);
-            const folderMapper = ({id, unread, name, type}: DbModel.View.Folder):
-                Pick<DbModel.View.Folder, "id" | "unread" | "name" | "type"> => ({id, unread, name, type});
+            const folderMapper = (
+                {id, unread, name, type}: DbModel.View.Folder,
+            ): Pick<DbModel.View.Folder, "id" | "unread" | "name" | "type"> => ({id, unread, name, type});
 
-            return {
-                folders: {
-                    system: system.map(folderMapper),
-                    custom: custom.map(folderMapper),
-                },
-            };
+            return {folders: {system: system.map(folderMapper), custom: custom.map(folderMapper)}};
         },
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
@@ -260,11 +245,11 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                 // TODO test "dbGetAccountMail" setting "mail.body" through the "sanitizeHtml" call
                 body: !mail.failedDownload
                     ? sanitizeHtml(
-                        Object
-                            .entries(parseProtonRestModel(mail).ParsedHeaders)
-                            .some(([name, value]) => name.toLowerCase() === "content-type" && value === "text/plain")
+                        Object.entries(parseProtonRestModel(mail).ParsedHeaders).some(([name, value]) =>
+                                name.toLowerCase() === "content-type" && value === "text/plain"
+                            )
                             ? readMailBody(mail).replace(/[\n\r]/g, "<br>")
-                            : readMailBody(mail)
+                            : readMailBody(mail),
                     )
                     : "",
             };

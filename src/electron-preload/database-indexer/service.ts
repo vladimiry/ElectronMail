@@ -31,45 +31,34 @@ const lowerCaseFilter = (term: string): string => {
 
 type tokenizerType = (value: string) => string[];
 
-const tokenizer: tokenizerType = (
-    (): tokenizerType => {
-        const tokenizeRe = /[\s-]+/; // whitespace and hyphen
-        const result: tokenizerType = (value) => {
-            return value.trim().split(tokenizeRe);
-        };
-        return result;
-    }
-)();
+const tokenizer: tokenizerType = ((): tokenizerType => {
+    const tokenizeRe = /[\s-]+/; // whitespace and hyphen
+    const result: tokenizerType = (value) => {
+        return value.trim().split(tokenizeRe);
+    };
+    return result;
+})();
 
 type trimNonLetterCharactersFilterType = (value: string) => string;
 
-const trimNonLetterCharactersFilter: trimNonLetterCharactersFilterType = (
-    (): trimNonLetterCharactersFilterType => {
-        // TODO make sure all the possible unicode categories listed here except {L} and {N}
-        const toTrim = "[\\p{M}\\p{Z}\\p{S}\\p{P}\\p{C}]+";
-        const startEndTrimmingRe = new RegExp(`(^${toTrim})|(${toTrim}$)`, "gu");
+const trimNonLetterCharactersFilter: trimNonLetterCharactersFilterType = ((): trimNonLetterCharactersFilterType => {
+    // TODO make sure all the possible unicode categories listed here except {L} and {N}
+    const toTrim = "[\\p{M}\\p{Z}\\p{S}\\p{P}\\p{C}]+";
+    const startEndTrimmingRe = new RegExp(`(^${toTrim})|(${toTrim}$)`, "gu");
 
-        return (value: string) => value.replace(startEndTrimmingRe, "");
-    }
-)();
+    return (value: string) => value.replace(startEndTrimmingRe, "");
+})();
 
-function buildFieldDescription(): DeepReadonly<Record<typeof INDEXABLE_MAIL_FIELDS[number], {
-    accessor: (doc: IndexableMail) => string;
-    boost: number;
-}>> {
+function buildFieldDescription(): DeepReadonly<
+    Record<typeof INDEXABLE_MAIL_FIELDS[number], {accessor: (doc: IndexableMail) => string; boost: number}>
+> {
     const joinListBy = " ";
     const buildMailAddressGetter: (address: MailAddress) => string = (address) => {
-        return [
-            ...(address.name ? [address.name] : []),
-            address.address,
-        ].join(joinListBy);
+        return [...(address.name ? [address.name] : []), address.address].join(joinListBy);
     };
 
     return {
-        subject: {
-            accessor: ({subject}) => subject,
-            boost: 7,
-        },
+        subject: {accessor: ({subject}) => subject, boost: 7},
         body: {
             accessor: ({body, subject, mimeType}) => {
                 if (mimeType === MIME_TYPES.PLAINTEXT) {
@@ -90,38 +79,12 @@ function buildFieldDescription(): DeepReadonly<Record<typeof INDEXABLE_MAIL_FIEL
             },
             boost: 5,
         },
-        sender: {
-            accessor: ({sender}) => buildMailAddressGetter(sender),
-            boost: 1,
-        },
-        toRecipients: {
-            accessor: ({toRecipients}) => toRecipients
-                .map(buildMailAddressGetter)
-                .join(joinListBy),
-            boost: 1,
-        },
-        ccRecipients: {
-            accessor: ({ccRecipients}) => ccRecipients
-                .map(buildMailAddressGetter)
-                .join(joinListBy),
-            boost: 1,
-        },
-        bccRecipients: {
-            accessor: ({bccRecipients}) => bccRecipients
-                .map(buildMailAddressGetter)
-                .join(joinListBy),
-            boost: 1,
-        },
-        attachments: {
-            accessor: ({attachments}) => attachments
-                .map(({name}) => name)
-                .join(joinListBy),
-            boost: 1,
-        },
-        mimeType: {
-            accessor: ({mimeType}) => mimeType,
-            boost: 0,
-        },
+        sender: {accessor: ({sender}) => buildMailAddressGetter(sender), boost: 1},
+        toRecipients: {accessor: ({toRecipients}) => toRecipients.map(buildMailAddressGetter).join(joinListBy), boost: 1},
+        ccRecipients: {accessor: ({ccRecipients}) => ccRecipients.map(buildMailAddressGetter).join(joinListBy), boost: 1},
+        bccRecipients: {accessor: ({bccRecipients}) => bccRecipients.map(buildMailAddressGetter).join(joinListBy), boost: 1},
+        attachments: {accessor: ({attachments}) => attachments.map(({name}) => name).join(joinListBy), boost: 1},
+        mimeType: {accessor: ({mimeType}) => mimeType, boost: 0},
     };
 }
 
@@ -138,48 +101,26 @@ export function createMailsIndex(): MailsIndex {
     };
 
     return {
-        add: (mail) => addDocumentToIndex(
-            index,
-            fieldAccessors,
-            tokenizer,
-            termFilter,
-            mail.pk,
-            mail,
-        ),
+        add: (mail) => addDocumentToIndex(index, fieldAccessors, tokenizer, termFilter, mail.pk, mail),
         remove: (id) => {
             removeDocumentFromIndex(index, new Set<IndexableMailId>(), id);
         },
         search: (q) => {
             return {
-                items: query(
-                    index,
-                    fieldBoostFactors,
-                    1.2,
-                    0.75,
-                    tokenizer,
-                    termFilter,
-                    undefined,
-                    q,
-                ),
+                items: query(index, fieldBoostFactors, 1.2, 0.75, tokenizer, termFilter, undefined, q),
                 expandedTerms: expandTerm(index, q),
             };
         },
     };
 }
 
-export function addToMailsIndex(
-    index: MailsIndex,
-    mails: IndexableMail[],
-): void {
+export function addToMailsIndex(index: MailsIndex, mails: IndexableMail[]): void {
     for (const mail of mails) {
         index.add(mail);
     }
 }
 
-export function removeMailsFromIndex(
-    index: MailsIndex,
-    pks: Array<Pick<IndexableMail, "pk">>,
-): void {
+export function removeMailsFromIndex(index: MailsIndex, pks: Array<Pick<IndexableMail, "pk">>): void {
     for (const {pk} of pks) {
         index.remove(pk);
     }

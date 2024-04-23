@@ -11,8 +11,7 @@ export const PROTON_API_ENTRY_VALUE_PREFIX = "local:::";
 export const PROTON_API_URL_PLACEHOLDER = "___ELECTRON_MAIL_PROTON_API_ENTRY_URL_PLACEHOLDER___";
 
 // WARN the value also used for patching the web clients
-export const PROTON_SUPPRESS_UPSELL_ADS_PLACEHOLDER
-    = "___ELECTRON_MAIL_PROTON_SUPPRESS_UPSELL_ADS_PLACEHOLDER___";
+export const PROTON_SUPPRESS_UPSELL_ADS_PLACEHOLDER = "___ELECTRON_MAIL_PROTON_SUPPRESS_UPSELL_ADS_PLACEHOLDER___";
 
 export const PROTON_API_ENTRY_PRIMARY_VALUE = "https://mail.proton.me";
 
@@ -34,21 +33,13 @@ export const PROTON_API_ENTRY_PROTONMAIL_COM_VALUE = "https://mail.protonmail.co
 // @deprecated since v5.0.0
 export const PROTON_API_ENTRY_PROTONMAIL_CH_VALUE = "https://app.protonmail.ch";
 
-export const PROTON_API_ENTRY_RECORDS: DeepReadonly<EntryUrlItem[]> = [
-    {
-        value: PROTON_API_ENTRY_PRIMARY_VALUE,
-        title: PROTON_API_ENTRY_PRIMARY_DOMAIN_NAME,
-    },
-    {
-        value: PROTON_API_ENTRY_TOR_V4_VALUE,
-        title: "Tor version 3 address",
-    },
-];
+export const PROTON_API_ENTRY_RECORDS: DeepReadonly<EntryUrlItem[]> = [{
+    value: PROTON_API_ENTRY_PRIMARY_VALUE,
+    title: PROTON_API_ENTRY_PRIMARY_DOMAIN_NAME,
+}, {value: PROTON_API_ENTRY_TOR_V4_VALUE, title: "Tor version 3 address"}];
 
 export const PROTON_API_ENTRY_URLS = PROTON_API_ENTRY_RECORDS.map(({value: url}) => url);
 
-export const PROTON_API_SUBDOMAINS = [
-    ...Object.values(PROVIDER_REPO_MAP).map(({apiSubdomain}) => apiSubdomain),
-] as const;
+export const PROTON_API_SUBDOMAINS = [...Object.values(PROVIDER_REPO_MAP).map(({apiSubdomain}) => apiSubdomain)] as const;
 
 export const PROTON_APP_MAIL_LOGIN_PATHNAME = "/login";

@@ -1,0 +1,50 @@
+{
+  "incremental": false,
+  "useTabs": false,
+  "indentWidth": 4,
+  "lineWidth": 140,
+  "typescript": {
+    "newLineKind": "lf",
+    "semiColons": "prefer",
+    "quoteStyle": "alwaysDouble",
+    "arrowFunction.useParentheses": "force",
+    "importDeclaration.forceSingleLine": false,
+    "importDeclaration.sortNamedImports": "maintain",
+    "importDeclaration.spaceSurroundingNamedImports": false,
+    "exportDeclaration.spaceSurroundingNamedExports": false,
+    "module.sortImportDeclarations": "maintain",
+    "spaceSurroundingProperties": false,
+    "spaceAround": false
+  },
+  "prettier": {
+    "newLineKind": "lf",
+    "indentWidth": 2,
+    "yml.tabWidth": 2,
+    "yaml.tabWidth": 2,
+    "yml.singleQuote": true,
+    "yaml.singleQuote": true,
+    "associations": [
+      "**/*.{yaml,yml}"
+    ]
+  },
+  "json": {
+    "indentWidth": 2,
+    "trailingCommas": "never"
+  },
+  "includes": [
+    "**/*.{ts,js,cjs,mjs,json,yaml,yml}"
+  ],
+  "excludes": [
+    "**/.git",
+    "**/node_modules",
+    "**/*-lock.{json,yaml,yml}",
+    "**/app",
+    "**/dist",
+    "**/output"
+  ],
+  "plugins": [
+    "https://plugins.dprint.dev/json-0.19.3.wasm",
+    "https://plugins.dprint.dev/prettier-0.40.0.json@68c668863ec834d4be0f6f5ccaab415df75336a992aceb7eeeb14fdf096a9e9c",
+    "https://plugins.dprint.dev/typescript-0.91.1.wasm"
+  ]
+}

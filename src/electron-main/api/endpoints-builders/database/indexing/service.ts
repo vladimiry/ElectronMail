@@ -17,27 +17,21 @@ import {UnionOf} from "src/shared/util/ngrx";
 const logger = curryFunctionMembers(electronLog, __filename);
 
 type narrowIndexActionPayloadType = (
-    payload: Omit<Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS>, { type: "Index" }>["payload"], "uid">,
+    payload: Omit<Extract<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS>, {type: "Index"}>["payload"], "uid">,
 ) => typeof payload;
 
 export const narrowIndexActionPayload: narrowIndexActionPayloadType = ((): narrowIndexActionPayloadType => {
     type Fn = narrowIndexActionPayloadType;
     type Mails = ReturnType<Fn>["add"];
 
-    const fieldsToIndex = [
-        ((name: keyof Pick<Unpacked<Mails>, "pk">): typeof name => name)("pk"),
-        ...INDEXABLE_MAIL_FIELDS,
-    ];
+    const fieldsToIndex = [((name: keyof Pick<Unpacked<Mails>, "pk">): typeof name => name)("pk"), ...INDEXABLE_MAIL_FIELDS];
 
     const result: Fn = ({key, remove, add}) => {
         return {
             key,
             remove,
             add: add.map((mail) => {
-                return {
-                    ...pick(mail, fieldsToIndex),
-                    [((prop: keyof Pick<typeof mail, "body">) => prop)("body")]: readMailBody(mail),
-                };
+                return {...pick(mail, fieldsToIndex), [((prop: keyof Pick<typeof mail, "body">) => prop)("body")]: readMailBody(mail)};
             }),
         };
     };
@@ -45,11 +39,7 @@ export const narrowIndexActionPayload: narrowIndexActionPayloadType = ((): narro
     return result;
 })();
 
-async function indexMails(
-    mails: Array<DeepReadonly<Mail>>,
-    key: DeepReadonly<DbAccountPk>,
-    timeoutMs: number,
-): Promise<void> {
+async function indexMails(mails: Array<DeepReadonly<Mail>>, key: DeepReadonly<DbAccountPk>, timeoutMs: number): Promise<void> {
     logger.info(nameof(indexMails));
 
     const duration = hrtimeDuration();
@@ -57,14 +47,7 @@ async function indexMails(
 
     setTimeout(() => {
         IPC_MAIN_API_DB_INDEXER_REQUEST$.next(
-            IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS.Index({
-                uid,
-                ...narrowIndexActionPayload({
-                    key,
-                    remove: [],
-                    add: mails,
-                }),
-            }),
+            IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS.Index({uid, ...narrowIndexActionPayload({key, remove: [], add: mails})}),
         );
     });
 

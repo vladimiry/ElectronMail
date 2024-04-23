@@ -12,33 +12,33 @@ const {Promise, Observable} = ActionType;
 
 // TODO drop "{ accountIndex: number}" use
 const PROTON_PRIMARY_IPC_WEBVIEW_API_DEFINITION = {
-    ping: Promise<DeepReadonly<{ accountIndex: number }>, { value: string }>(),
-    buildDbPatch:
-        Observable<DeepReadonly<DbAccountPk & { metadata: Readonly<FsDbAccount["metadata"]> | null } & { accountIndex: number }>,
-            { progress: string }>(),
-    throwErrorOnRateLimitedMethodCall: Promise<DeepReadonly<{ accountIndex: number }>, void>(),
-    selectMailOnline:
-        Promise<DeepReadonly<{
-            mail: Pick<Mail, "id" | "mailFolderIds" | "conversationEntryPk">
-            selectedFolderId: Folder["id"] | null
-        } & { accountIndex: number }>>(),
-    fetchSingleMail:
-        Promise<DeepReadonly<DbAccountPk & { mailPk: Mail["pk"] } & { accountIndex: number }>>(),
-    deleteMessages:
-        Promise<DeepReadonly<{ messageIds: Array<Mail["id"]> } & { accountIndex: number }>>(),
-    makeMailRead:
-        Promise<DeepReadonly<{ messageIds: Array<Mail["id"]> } & { accountIndex: number }>>(),
-    setMailFolder:
-        Promise<DeepReadonly<{ folderId: Folder["id"]; messageIds: Array<Mail["id"]> } & { accountIndex: number }>>(),
-    exportMailAttachments:
-        Promise<DeepReadonly<DbAccountPk & { uuid: string; mailPk: Mail["pk"] } & { accountIndex: number }>>(),
-    notification:
-        Observable<DeepReadonly<LoginFieldContainer & { apiEndpointOriginSS: string, entryApiUrl: string, accountIndex: number }>,
-            ProtonPrimaryNotificationOutput>(),
-    resolveLiveProtonClientSession: ActionType
-        .Promise<DeepReadonly<{ accountIndex: number }>, ProtonClientSession | null>(),
-    resolvedLiveSessionStoragePatch: ActionType
-        .Promise<DeepReadonly<{ accountIndex: number }>, IpcMainServiceScan["ApiImplReturns"]["resolvedSavedSessionStoragePatch"] | null>(),
+    ping: Promise<DeepReadonly<{accountIndex: number}>, {value: string}>(),
+    buildDbPatch: Observable<
+        DeepReadonly<DbAccountPk & {metadata: Readonly<FsDbAccount["metadata"]> | null} & {accountIndex: number}>,
+        {progress: string}
+    >(),
+    throwErrorOnRateLimitedMethodCall: Promise<DeepReadonly<{accountIndex: number}>, void>(),
+    selectMailOnline: Promise<
+        DeepReadonly<
+            {mail: Pick<Mail, "id" | "mailFolderIds" | "conversationEntryPk">; selectedFolderId: Folder["id"] | null} & {
+                accountIndex: number;
+            }
+        >
+    >(),
+    fetchSingleMail: Promise<DeepReadonly<DbAccountPk & {mailPk: Mail["pk"]} & {accountIndex: number}>>(),
+    deleteMessages: Promise<DeepReadonly<{messageIds: Array<Mail["id"]>} & {accountIndex: number}>>(),
+    makeMailRead: Promise<DeepReadonly<{messageIds: Array<Mail["id"]>} & {accountIndex: number}>>(),
+    setMailFolder: Promise<DeepReadonly<{folderId: Folder["id"]; messageIds: Array<Mail["id"]>} & {accountIndex: number}>>(),
+    exportMailAttachments: Promise<DeepReadonly<DbAccountPk & {uuid: string; mailPk: Mail["pk"]} & {accountIndex: number}>>(),
+    notification: Observable<
+        DeepReadonly<LoginFieldContainer & {apiEndpointOriginSS: string; entryApiUrl: string; accountIndex: number}>,
+        ProtonPrimaryNotificationOutput
+    >(),
+    resolveLiveProtonClientSession: ActionType.Promise<DeepReadonly<{accountIndex: number}>, ProtonClientSession | null>(),
+    resolvedLiveSessionStoragePatch: ActionType.Promise<
+        DeepReadonly<{accountIndex: number}>,
+        IpcMainServiceScan["ApiImplReturns"]["resolvedSavedSessionStoragePatch"] | null
+    >(),
 } as const;
 
 const channel = IPC_WEBVIEW_API_CHANNELS_MAP.primary.communication;
@@ -53,5 +53,6 @@ export type ProtonPrimaryApiScan = ScanService<typeof PROTON_PRIMARY_IPC_WEBVIEW
 
 export type ProtonPrimaryApi = ProtonPrimaryApiScan["ApiClient"];
 
-export type ProtonPrimaryNotificationOutput = Partial<Omit<Notifications, "loggedInCalendar">>
-    & Partial<{ batchEntityUpdatesCounter: number }>;
+export type ProtonPrimaryNotificationOutput =
+    & Partial<Omit<Notifications, "loggedInCalendar">>
+    & Partial<{batchEntityUpdatesCounter: number}>;

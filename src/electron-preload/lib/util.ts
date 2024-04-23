@@ -43,25 +43,12 @@ export const applyZoomFactor = (_logger: Logger): void => {
 };
 
 export const isProtonApiError = (error: unknown): error is ProtonApiError => {
-    const result = (
-        typeof error === "object"
-        &&
-        typeof (error as ProtonApiError).name === "string"
-        &&
-        typeof (error as ProtonApiError).message === "string"
-        &&
-        !isNaN(
-            Number(
-                (error as ProtonApiError).status
-            ),
-        )
-        &&
-        (
-            typeof (error as ProtonApiError).response === "object"
-            ||
-            ["aborterror", "timeouterror", "offlineerror"].includes((error as ProtonApiError).name.toLowerCase())
-        )
-    );
+    const result = typeof error === "object"
+        && typeof (error as ProtonApiError).name === "string"
+        && typeof (error as ProtonApiError).message === "string"
+        && !isNaN(Number((error as ProtonApiError).status))
+        && (typeof (error as ProtonApiError).response === "object"
+            || ["aborterror", "timeouterror", "offlineerror"].includes((error as ProtonApiError).name.toLowerCase()));
 
     if (BUILD_ENVIRONMENT === "development" && result) {
         console.log(`${nameof(isProtonApiError)} result:`, {error}, JSON.stringify({result})); // eslint-disable-line no-console
@@ -70,12 +57,17 @@ export const isProtonApiError = (error: unknown): error is ProtonApiError => {
     return result;
 };
 
-type SanitizedProtonApiError = NoExtraProps<Pick<ProtonApiError, "name" | "message" | "status">
-    & { responseUrl?: string; responseStatusText?: string; dataCode?: number; dataError?: string; dataErrorDescription?: string }>;
+type SanitizedProtonApiError = NoExtraProps<
+    Pick<ProtonApiError, "name" | "message" | "status"> & {
+        responseUrl?: string;
+        responseStatusText?: string;
+        dataCode?: number;
+        dataError?: string;
+        dataErrorDescription?: string;
+    }
+>;
 
-export const sanitizeProtonApiError = (
-    error: unknown
-): typeof error extends ProtonApiError ? SanitizedProtonApiError : unknown => {
+export const sanitizeProtonApiError = (error: unknown): typeof error extends ProtonApiError ? SanitizedProtonApiError : unknown => {
     if (isProtonApiError(error)) {
         const result: SanitizedProtonApiError = {
             // omitting possibly sensitive or unserializable data
@@ -102,25 +94,23 @@ export const sanitizeProtonApiError = (
 };
 
 export const resolveIpcMainApi = (
-    {
-        timeoutMs = DEFAULT_API_CALL_TIMEOUT,
-        ...restOptions
-    }: Exclude<Required<Parameters<typeof IPC_MAIN_API.client>[0]>, undefined>["options"],
+    {timeoutMs = DEFAULT_API_CALL_TIMEOUT, ...restOptions}: Exclude<
+        Required<Parameters<typeof IPC_MAIN_API.client>[0]>,
+        undefined
+    >["options"],
 ): ReturnType<typeof IPC_MAIN_API.client> => {
     return IPC_MAIN_API.client({options: {timeoutMs, ...restOptions}});
 };
 
-type resolveCachedConfigType = (logger: Logger) => Promise<Config>
+type resolveCachedConfigType = (logger: Logger) => Promise<Config>;
 
-export const resolveCachedConfig: resolveCachedConfigType = (
-    () => {
-        let value: Config | undefined;
-        const result: resolveCachedConfigType = async (logger) => {
-            if (value) {
-                return value;
-            }
-            return value = await resolveIpcMainApi({logger})("readConfig")();
-        };
-        return result;
-    }
-)();
+export const resolveCachedConfig: resolveCachedConfigType = (() => {
+    let value: Config | undefined;
+    const result: resolveCachedConfigType = async (logger) => {
+        if (value) {
+            return value;
+        }
+        return value = await resolveIpcMainApi({logger})("readConfig")();
+    };
+    return result;
+})();

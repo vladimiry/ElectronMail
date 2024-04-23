@@ -13,10 +13,9 @@ const appendSwitch = (args: readonly [switchName: string, switchValue?: string])
 // WARN needs to be called before app is ready, function is synchronous
 export function bootstrapCommandLine(ctx: Context): void {
     const config = readConfigSync(ctx);
-    const jsFlags: DeepPartial<Config>["jsFlags"]
-        = config?.jsFlags ?? INITIAL_STORES.config().jsFlags;
-    const commandLineSwitches: DeepPartial<Config>["commandLineSwitches"]
-        = config?.commandLineSwitches ?? INITIAL_STORES.config().commandLineSwitches;
+    const jsFlags: DeepPartial<Config>["jsFlags"] = config?.jsFlags ?? INITIAL_STORES.config().jsFlags;
+    const commandLineSwitches: DeepPartial<Config>["commandLineSwitches"] = config?.commandLineSwitches
+        ?? INITIAL_STORES.config().commandLineSwitches;
 
     if (jsFlags.length) {
         app.commandLine.appendSwitch("js-flags", jsFlags.join(" "));
@@ -26,8 +25,8 @@ export function bootstrapCommandLine(ctx: Context): void {
         const args: readonly unknown[] | null = typeof commandLineSwitch === "string"
             ? [commandLineSwitch]
             : Array.isArray(commandLineSwitch)
-                ? commandLineSwitch
-                : null;
+            ? commandLineSwitch
+            : null;
 
         if (!args) {
             throw new Error(`Invalid "commandLineSwitch" value detected`);
@@ -37,12 +36,8 @@ export function bootstrapCommandLine(ctx: Context): void {
 
         if (
             typeof switchNameParamArg !== "string"
-            ||
-            (
-                typeof switchValueArg !== "string"
-                &&
-                typeof switchValueArg !== "undefined"
-            )
+            || (typeof switchValueArg !== "string"
+                && typeof switchValueArg !== "undefined")
         ) {
             throw new Error(`Invalid "commandLineSwitch" name/value detected`);
         }
@@ -50,7 +45,7 @@ export function bootstrapCommandLine(ctx: Context): void {
         appendSwitch(
             typeof switchValueArg === "string"
                 ? [switchNameParamArg, switchValueArg]
-                : [switchNameParamArg]
+                : [switchNameParamArg],
         );
     }
 }

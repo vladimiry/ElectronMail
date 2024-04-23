@@ -13,67 +13,33 @@ const build = (configPatch: Configuration, tsConfigFile: string): Configuration 
     }
 
     return buildBaseConfig(
-        webpackMerge(
-            {
-                target: "web",
-                module: {
-                    rules: [
-                        typescriptLoaderRule({tsConfigFile}),
-                        {
-                            test: hoveredHrefHighlighterSassFile,
-                            use: [
-                                {
-                                    loader: "css-loader",
-                                    options: {
-                                        modules: "icss",
-                                    },
-                                },
-                                ...sassLoaderRuleSetRules,
-                            ],
-                            exclude: [
-                                browserWindowAppPath("/"),
-                            ],
-                        },
-                    ],
-                },
-                externals: {
-                    electron: "require('electron')",
-                },
-                resolve: {
-                    fallback: {
-                        "path": false,
-                        "fs": false,
-                    },
-                },
-                output: {
-                    path: outputRelativePath("electron-preload"),
-                    publicPath: "",
-                    // filename: "[name].cjs",
-                    // chunkFormat: "commonjs",
-                    // chunkLoading: "require",
-                },
-                plugins: [
-                    new webpack.optimize.LimitChunkCountPlugin({maxChunks: 1}),
-                ],
+        webpackMerge({
+            target: "web",
+            module: {
+                rules: [typescriptLoaderRule({tsConfigFile}), {
+                    test: hoveredHrefHighlighterSassFile,
+                    use: [{loader: "css-loader", options: {modules: "icss"}}, ...sassLoaderRuleSetRules],
+                    exclude: [browserWindowAppPath("/")],
+                }],
             },
-            configPatch,
-        ),
-        {
-            tsConfigFile,
-        },
+            externals: {electron: "require('electron')"},
+            resolve: {fallback: {"path": false, "fs": false}},
+            output: {
+                path: outputRelativePath("electron-preload"),
+                publicPath: "",
+                // filename: "[name].cjs",
+                // chunkFormat: "commonjs",
+                // chunkLoading: "require",
+            },
+            plugins: [new webpack.optimize.LimitChunkCountPlugin({maxChunks: 1})],
+        }, configPatch),
+        {tsConfigFile},
     );
 };
 
 export const buildRendererConfig = (subDir: string): Configuration => {
-    return build(
-        {
-            entry: {
-                [ENVIRONMENT_STATE.e2e ? "index-e2e" : "index"]: srcRelativePath(subDir, "index.ts"),
-            },
-            output: {
-                path: outputRelativePath(subDir),
-            },
-        },
-        srcRelativePath(subDir, "tsconfig.json"),
-    );
+    return build({
+        entry: {[ENVIRONMENT_STATE.e2e ? "index-e2e" : "index"]: srcRelativePath(subDir, "index.ts")},
+        output: {path: outputRelativePath(subDir)},
+    }, srcRelativePath(subDir, "tsconfig.json"));
 };

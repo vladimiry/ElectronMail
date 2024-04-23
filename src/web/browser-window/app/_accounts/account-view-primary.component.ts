@@ -1,15 +1,15 @@
-import {Component, Injector} from '@angular/core';
-import {distinctUntilChanged, map, takeUntil, withLatestFrom} from 'rxjs/operators';
-import {firstValueFrom, race, Subject} from 'rxjs';
-import {isDeepEqual} from 'remeda';
-import type {OnInit} from '@angular/core';
+import {Component, Injector} from "@angular/core";
+import {distinctUntilChanged, map, takeUntil, withLatestFrom} from "rxjs/operators";
+import {firstValueFrom, race, Subject} from "rxjs";
+import {isDeepEqual} from "remeda";
+import type {OnInit} from "@angular/core";
 
-import {ACCOUNTS_ACTIONS} from 'src/web/browser-window/app/store/actions';
-import {AccountsService} from './accounts.service';
-import {AccountViewAbstractComponent} from './account-view-abstract-component.directive';
-import {ElectronService} from 'src/web/browser-window/app/_core/electron.service';
-import {IPC_WEBVIEW_API_CHANNELS_MAP} from 'src/shared/api/webview/const';
-import {ONE_SECOND_MS} from 'src/shared/const';
+import {ACCOUNTS_ACTIONS} from "src/web/browser-window/app/store/actions";
+import {AccountsService} from "./accounts.service";
+import {AccountViewAbstractComponent} from "./account-view-abstract-component.directive";
+import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
+import {IPC_WEBVIEW_API_CHANNELS_MAP} from "src/shared/api/webview/const";
+import {ONE_SECOND_MS} from "src/shared/const";
 
 @Component({
     selector: "electron-mail-account-view-primary",

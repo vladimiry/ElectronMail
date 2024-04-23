@@ -22,33 +22,15 @@ export async function initApplicationMenu(endpoints: Promise<IpcMainApiEndpoints
             label: app.name,
             submenu: [
                 aboutItem,
-                {
-                    type: "separator",
-                },
-                {
-                    role: "hide",
-                    accelerator: "Command+H",
-                },
-                {
-                    role: "hideOthers",
-                    accelerator: "Command+Alt+H",
-                },
-                {
-                    label: "Show All",
-                    role: "unhide",
-                },
-                {
-                    type: "separator",
-                },
+                {type: "separator"},
+                {role: "hide", accelerator: "Command+H"},
+                {role: "hideOthers", accelerator: "Command+Alt+H"},
+                {label: "Show All", role: "unhide"},
+                {type: "separator"},
                 quitItem,
             ],
         }]
-        : [{
-            label: "File",
-            submenu: [
-                quitItem,
-            ],
-        }];
+        : [{label: "File", submenu: [quitItem]}];
     const menu = Menu.buildFromTemplate(templateItems);
 
     Menu.setApplicationMenu(menu);

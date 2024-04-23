@@ -23,13 +23,10 @@ export const buildWorkflow = (testContext: TestContext) => {
     const workflow = {
         async saveScreenshot(title?: string): Promise<string | void> {
             {
-                const alive = (
-                    testContext.app.windows().length > 1
-                    &&
-                    await testContext.app.evaluate(
-                        ({BrowserWindow}) => BrowserWindow.getFocusedWindow()?.webContents.isDestroyed() === false,
-                    )
-                );
+                const alive = testContext.app.windows().length > 1
+                    && await testContext.app.evaluate(({BrowserWindow}) =>
+                        BrowserWindow.getFocusedWindow()?.webContents.isDestroyed() === false
+                    );
                 if (!alive) {
                     return;
                 }
@@ -61,21 +58,22 @@ export const buildWorkflow = (testContext: TestContext) => {
         //     }
         // },
 
-        async login(options: { setup: boolean; savePassword: boolean; hiddenWindow?: boolean }): Promise<void> {
+        async login(options: {setup: boolean; savePassword: boolean; hiddenWindow?: boolean}): Promise<void> {
             await asyncDelay(CONF.timeouts.transition);
 
             if (options.setup) {
                 const expected = "/(settings-outlet:settings/settings-setup)";
                 try {
-                    await testContext.firstWindowPage.waitForURL(
-                        `**${expected}`,
-                        {timeout: CONF.timeouts.elementTouched * 2, waitUntil: "networkidle"},
-                    );
+                    await testContext.firstWindowPage.waitForURL(`**${expected}`, {
+                        timeout: CONF.timeouts.elementTouched * 2,
+                        waitUntil: "networkidle",
+                    });
                 } catch (e) {
                     const actual = await workflow.getLocationHash();
                     console.log( // eslint-disable-line no-console
                         nameof.full(workflow.login), // eslint-disable-line @typescript-eslint/unbound-method
-                        options, `"settings-setup" page url`,
+                        options,
+                        `"settings-setup" page url`,
                         {actual, expected},
                     );
                     throw e;
@@ -87,11 +85,9 @@ export const buildWorkflow = (testContext: TestContext) => {
             await testContext.firstWindowPage.fill("[formControlName=password]", ENV.masterPassword, {timeout: CONF.timeouts.element});
 
             if (options.setup) {
-                await testContext.firstWindowPage.fill(
-                    "[formControlName=passwordConfirm]",
-                    ENV.masterPassword,
-                    {timeout: CONF.timeouts.element},
-                );
+                await testContext.firstWindowPage.fill("[formControlName=passwordConfirm]", ENV.masterPassword, {
+                    timeout: CONF.timeouts.element,
+                });
             }
             if (options.savePassword) {
                 await testContext.firstWindowPage.click("#savePasswordCheckbox + label", {timeout: CONF.timeouts.element});
@@ -105,10 +101,10 @@ export const buildWorkflow = (testContext: TestContext) => {
                         ? "/(accounts-outlet:accounts//notifications-outlet:notifications//settings-outlet:settings/account-edit)"
                         : "/(accounts-outlet:accounts//settings-outlet:settings/account-edit)";
                     try {
-                        await testContext.firstWindowPage.waitForURL(
-                            `**${expected}`,
-                            {timeout: CONF.timeouts.encryption * 5, waitUntil: "networkidle"},
-                        );
+                        await testContext.firstWindowPage.waitForURL(`**${expected}`, {
+                            timeout: CONF.timeouts.encryption * 5,
+                            waitUntil: "networkidle",
+                        });
                     } catch (e) {
                         const actual = await workflow.getLocationHash();
                         console.log( // eslint-disable-line no-console
@@ -133,10 +129,10 @@ export const buildWorkflow = (testContext: TestContext) => {
                     ? "/(accounts-outlet:accounts)"
                     : "/(accounts-outlet:accounts//settings-outlet:settings/account-edit//stub-outlet:stub)";
                 try {
-                    await testContext.firstWindowPage.waitForURL(
-                        `**${expected}`,
-                        {timeout: CONF.timeouts.encryption * 5, waitUntil: "networkidle"},
-                    );
+                    await testContext.firstWindowPage.waitForURL(`**${expected}`, {
+                        timeout: CONF.timeouts.encryption * 5,
+                        waitUntil: "networkidle",
+                    });
                 } catch (e) {
                     const actual = await workflow.getLocationHash();
                     console.log( // eslint-disable-line no-console
@@ -157,10 +153,7 @@ export const buildWorkflow = (testContext: TestContext) => {
             }
         },
 
-        async afterLoginUrlTest(
-            workflowPrefix: string,
-            options?: { hiddenWindow?: boolean, expectLoginPage?: boolean },
-        ): Promise<void> {
+        async afterLoginUrlTest(workflowPrefix: string, options?: {hiddenWindow?: boolean; expectLoginPage?: boolean}): Promise<void> {
             const actual = await workflow.getLocationHash(options?.hiddenWindow);
             const expected = options?.expectLoginPage
                 ? ["/(settings-outlet:settings/login)"]
@@ -176,23 +169,16 @@ export const buildWorkflow = (testContext: TestContext) => {
             }
         },
 
-        async loginPageUrlTest(workflowPrefix: string, options?: { hiddenWindow?: boolean }): Promise<void> {
+        async loginPageUrlTest(workflowPrefix: string, options?: {hiddenWindow?: boolean}): Promise<void> {
             const actual = await workflow.getLocationHash(options?.hiddenWindow);
             try {
-                expect(
-                    [
-                        "/(settings-outlet:settings/login)",
-                        "/(settings-outlet:settings/login//stub-outlet:stub)",
-                    ],
-                ).toContainEqual(actual);
+                expect(["/(settings-outlet:settings/login)", "/(settings-outlet:settings/login//stub-outlet:stub)"]).toContainEqual(actual);
             } catch {
                 console.log({workflowPrefix}); // eslint-disable-line no-console
             }
         },
 
-        async addAccount(
-            account: { login?: string; password?: string; twoFactorCode?: string; entryUrlValue?: string },
-        ): Promise<void> {
+        async addAccount(account: {login?: string; password?: string; twoFactorCode?: string; entryUrlValue?: string}): Promise<void> {
             const login = account.login
                 ? account.login
                 : `${ENV.loginPrefix}-${GLOBAL_STATE.loginPrefixCount++}`;
@@ -203,10 +189,9 @@ export const buildWorkflow = (testContext: TestContext) => {
             await testContext.firstWindowPage.click("#goToAccountsSettingsLink");
 
             {
-                const el = await testContext.firstWindowPage.waitForSelector(
-                    "#accountEditFormEntryUrlField .ng-select-container",
-                    {state: "visible"},
-                );
+                const el = await testContext.firstWindowPage.waitForSelector("#accountEditFormEntryUrlField .ng-select-container", {
+                    state: "visible",
+                });
                 await el.dispatchEvent("mousedown");
             }
 
@@ -230,10 +215,10 @@ export const buildWorkflow = (testContext: TestContext) => {
             await testContext.firstWindowPage.click(`.modal-body button[type="submit"]`);
 
             // account got added to the settings modal account list
-            await testContext.firstWindowPage.waitForSelector(
-                `.modal-body .d-inline-block > span[data-login='${login}']`,
-                {timeout: CONF.timeouts.encryption, state: "visible"},
-            );
+            await testContext.firstWindowPage.waitForSelector(`.modal-body .d-inline-block > span[data-login='${login}']`, {
+                timeout: CONF.timeouts.encryption,
+                state: "visible",
+            });
 
             await workflow.closeSettingsModal("addAccount");
 
@@ -243,10 +228,10 @@ export const buildWorkflow = (testContext: TestContext) => {
 
             // make sure webview api got initialized (page loaded and login auto-filled)
             try {
-                await testContext.firstWindowPage.waitForSelector(
-                    `${accountCssSelector(expectedAccountsCount - 1)} > .login-filled-once`,
-                    {timeout: CONF.timeouts.loginFilledOnce, state: "visible"},
-                );
+                await testContext.firstWindowPage.waitForSelector(`${accountCssSelector(expectedAccountsCount - 1)} > .login-filled-once`, {
+                    timeout: CONF.timeouts.loginFilledOnce,
+                    state: "visible",
+                });
             } finally {
                 await workflow.saveScreenshot();
             }
@@ -291,10 +276,7 @@ export const buildWorkflow = (testContext: TestContext) => {
             {
                 const expected = "/(accounts-outlet:accounts)";
                 try {
-                    await testContext.firstWindowPage.waitForURL(
-                        `**${expected}`,
-                        {timeout: CONF.timeouts.elementTouched * 2},
-                    );
+                    await testContext.firstWindowPage.waitForURL(`**${expected}`, {timeout: CONF.timeouts.elementTouched * 2});
                 } catch (e) {
                     const actual = await workflow.getLocationHash();
                     console.log(`${cause} (settings modal closed)`, {actual, expected}); // eslint-disable-line no-console
@@ -303,15 +285,15 @@ export const buildWorkflow = (testContext: TestContext) => {
             }
         },
 
-        async logout(options?: { hiddenWindow?: boolean }): Promise<void> {
+        async logout(options?: {hiddenWindow?: boolean}): Promise<void> {
             await testContext.firstWindowPage.click("electron-mail-accounts .controls .dropdown-toggle");
             await asyncDelay(CONF.timeouts.transition);
             await testContext.firstWindowPage.click("#logoutMenuItem");
             try {
-                await testContext.firstWindowPage.waitForSelector(
-                    "#loginFormPasswordControl",
-                    {state: "visible", timeout: CONF.timeouts.logout},
-                );
+                await testContext.firstWindowPage.waitForSelector("#loginFormPasswordControl", {
+                    state: "visible",
+                    timeout: CONF.timeouts.logout,
+                });
             } catch {
                 await workflow.saveScreenshot();
             }
@@ -351,10 +333,11 @@ export const buildWorkflow = (testContext: TestContext) => {
 
         async getLocationHash(hiddenWindow?: boolean): Promise<string> {
             const url = await testContext.app.evaluate(
-                (electron, options: { resolveFocusedWindow: boolean, resolveBrowserWindowStringified: string }) => {
+                (electron, options: {resolveFocusedWindow: boolean; resolveBrowserWindowStringified: string}) => {
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                    const resolveBrowserWindow: typeof mainProcessEvaluationFunctions.resolveBrowserWindow
-                        = eval(options.resolveBrowserWindowStringified.toString());
+                    const resolveBrowserWindow: typeof mainProcessEvaluationFunctions.resolveBrowserWindow = eval(
+                        options.resolveBrowserWindowStringified.toString(),
+                    );
                     return resolveBrowserWindow(electron, options).webContents.getURL();
                 },
                 {

@@ -16,7 +16,7 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
         const result: ProviderInternals = {
             "./src/app/./containers/calendar/MainContainer": {
                 value$: new BehaviorSubject(
-                    {privateScope: null} as Unpacked<ProviderInternals["./src/app/./containers/calendar/MainContainer"]["value$"]>
+                    {privateScope: null} as Unpacked<ProviderInternals["./src/app/./containers/calendar/MainContainer"]["value$"]>,
                 ),
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
                 _valueShape: null as any,
@@ -27,9 +27,7 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
         webpackJsonpPushUtil.overridePushMethodGlobally({
             resultKeys: Object.keys(result) as ReadonlyArray<keyof typeof result>,
             preChunkItemOverridingHook({resultKey}) {
-                if (
-                    resultKey === "./src/app/./containers/calendar/MainContainer"
-                ) {
+                if (resultKey === "./src/app/./containers/calendar/MainContainer") {
                     // mark lazy-loaded modules as initialized immediately since these modules get
                     // loaded only after the user gets logged in but we need to resolve the promise on initial load
                     webpackJsonpPushUtil.markInternalsRecordAsInitialized(result, resultKey, resolveIfFullyInitialized, logger);
@@ -37,42 +35,36 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
             },
             chunkItemHook({resultKey, webpack_exports, webpack_require}) {
                 if (resultKey === "./src/app/./containers/calendar/MainContainer") {
-                    webpackJsonpPushUtil.handleObservableValue(
-                        result,
-                        {
-                            resultKey,
-                            webpack_exports,
-                            itemName: "default",
-                            itemCallResultTypeValidation: "object", // import("react").ReactNode
-                            itemCallResultHandler: (itemCallResult, notify, markAsInitialized) => {
-                                const {createElement, useEffect}
-                                    = webpack_require<typeof import("react")>("../../node_modules/react/index.js");
-                                const result = [
-                                    createElement(() => {
-                                        useEffect(() => {
-                                            notify({privateScope: {}});
-                                            // TODO consider notifying null on component destroying stage
-                                        });
+                    webpackJsonpPushUtil.handleObservableValue(result, {
+                        resultKey,
+                        webpack_exports,
+                        itemName: "default",
+                        itemCallResultTypeValidation: "object", // import("react").ReactNode
+                        itemCallResultHandler: (itemCallResult, notify, markAsInitialized) => {
+                            const {createElement, useEffect} = webpack_require<typeof import("react")>("../../node_modules/react/index.js");
+                            const result = [
+                                createElement(() => {
+                                    useEffect(() => {
+                                        notify({privateScope: {}});
+                                        // TODO consider notifying null on component destroying stage
+                                    });
 
-                                        return null; // no rendering needed
-                                    }),
-                                    itemCallResult,
-                                ];
+                                    return null; // no rendering needed
+                                }),
+                                itemCallResult,
+                            ];
 
-                                // immediate initialization mark set since this component doesn't get instantiated right on proton
-                                // app start but after the user gets logged-in (we need to resolve the promise on initial load)
-                                markAsInitialized();
+                            // immediate initialization mark set since this component doesn't get instantiated right on proton
+                            // app start but after the user gets logged-in (we need to resolve the promise on initial load)
+                            markAsInitialized();
 
-                                return result;
-                            },
-                            resolveIfFullyInitialized,
+                            return result;
                         },
-                        logger,
-                    );
+                        resolveIfFullyInitialized,
+                    }, logger);
                 }
             },
             logger,
         });
-
     });
 };

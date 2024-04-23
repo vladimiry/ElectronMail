@@ -5,12 +5,15 @@ declare module "fs-write-stream-atomic" {
     class WriteStreamAtomic extends Writable {
         public constructor(
             path: string,
-            options?: NoExtraProps<WritableOptions & WritableStateOptions & {
-                chown?: { uid: number, guid: number }
-                encoding?: BufferEncoding
-                flags?: import("fs").OpenMode
-                mode?: import("fs").Mode
-            }>);
+            options?: NoExtraProps<
+                WritableOptions & WritableStateOptions & {
+                    chown?: {uid: number; guid: number};
+                    encoding?: BufferEncoding;
+                    flags?: import("fs").OpenMode;
+                    mode?: import("fs").Mode;
+                }
+            >,
+        );
     }
 
     export = WriteStreamAtomic;

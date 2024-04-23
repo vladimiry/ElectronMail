@@ -23,17 +23,10 @@ export const registerApi = (providerApi: ProviderApi): void => {
             type LoggedInOutput = Required<Pick<ProtonCalendarNotificationOutput, "loggedInCalendar">>;
             type CalendarNotificationOutput = Required<Pick<ProtonCalendarNotificationOutput, "calendarNotification">>;
 
-            const observables: [
-                Observable<LoggedInOutput>,
-                Observable<CalendarNotificationOutput>,
-            ] = [
-                providerApi._custom_.loggedIn$.pipe(
-                    map((loggedIn) => ({loggedInCalendar: loggedIn})),
-                ),
+            const observables: [Observable<LoggedInOutput>, Observable<CalendarNotificationOutput>] = [
+                providerApi._custom_.loggedIn$.pipe(map((loggedIn) => ({loggedInCalendar: loggedIn}))),
                 new Observable((subscriber) => {
-                    function notification(
-                        ...arg: ConstructorParameters<typeof window.Notification>
-                    ): void {
+                    function notification(...arg: ConstructorParameters<typeof window.Notification>): void {
                         subscriber.next({calendarNotification: arg});
                     }
 
@@ -45,17 +38,13 @@ export const registerApi = (providerApi: ProviderApi): void => {
                 }),
             ];
 
-            return merge(...observables).pipe(
-                tap((notification) => {
-                    logger.verbose(
-                        JSON.stringify(
-                            "calendarNotification" in notification
-                                ? "calendarNotification" // skipping the notification constructor args logging
-                                : {notification},
-                        )
-                    );
-                }),
-            );
+            return merge(...observables).pipe(tap((notification) => {
+                logger.verbose(JSON.stringify(
+                    "calendarNotification" in notification
+                        ? "calendarNotification" // skipping the notification constructor args logging
+                        : {notification},
+                ));
+            }));
         },
     };
 

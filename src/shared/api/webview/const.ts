@@ -6,8 +6,5 @@ const IPC_WEBVIEW_API_CHANNELS = ["primary", "primary-login", "calendar"] as con
 
 export const IPC_WEBVIEW_API_CHANNELS_MAP = mapToObj(
     IPC_WEBVIEW_API_CHANNELS,
-    (value) => [
-        value,
-        {communication: `${PACKAGE_NAME}:webview-api:${value}`, registered: `${value}:registered`},
-    ] as const,
+    (value) => [value, {communication: `${PACKAGE_NAME}:webview-api:${value}`, registered: `${value}:registered`}] as const,
 );

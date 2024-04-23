@@ -1,7 +1,7 @@
 appId: 'github.com/vladimiry/ElectronMail'
 artifactName: ${name}-${version}-${os}-${arch}.${ext}
 productName: 'ElectronMail'
-publish: {provider: github, releaseType: draft, vPrefixedTagName: true}
+publish: { provider: github, releaseType: draft, vPrefixedTagName: true }
 forceCodeSigning: false
 
 # native dependencies compiling gets triggered in ./scripts/prepare-native-deps.ts
@@ -33,14 +33,14 @@ mac:
   category: public.app-category.productivity
   darkModeSupport: true
   target:
-    - {target: dmg}
+    - { target: dmg }
 
 dmg:
   icon: ./app/assets/icons/mac/icon.icns
   iconSize: 128
   contents:
-    - {x: 380, y: 240, type: link, path: /Applications}
-    - {x: 122, y: 240, type: file}
+    - { x: 380, y: 240, type: link, path: /Applications }
+    - { x: 122, y: 240, type: file }
 
 linux:
   icon: ./app/assets/icons/png
@@ -65,7 +65,7 @@ win:
   artifactName: ${name}-${version}-windows-${arch}.${ext}
   icon: ./app/assets/icons/win/icon.ico
   target:
-    - {target: nsis}
+    - { target: nsis }
 
 nsis:
   artifactName: ${name}-${version}-windows-${arch}-nsis-installer.${ext}

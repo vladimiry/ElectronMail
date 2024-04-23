@@ -8,11 +8,11 @@ import {PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION} from "src/shared/const";
 import {PROTON_SHARED_MESSAGE_INTERFACE} from "src/shared/const/proton-apps";
 
 const dtsGenerator: { // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-    default: (arg: NoExtraProps<Omit<DtsGeneratorOptions, "name">>) => ReturnType<typeof dtsGeneratorImport>
+    default: (arg: NoExtraProps<Omit<DtsGeneratorOptions, "name">>) => ReturnType<typeof dtsGeneratorImport>;
 } = dtsGeneratorImport as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 export const generateDtsForMonacoEditor = async (
-    {sharedProtonPackageDir, destDir}: { sharedProtonPackageDir: string, destDir: string },
+    {sharedProtonPackageDir, destDir}: {sharedProtonPackageDir: string; destDir: string},
 ): Promise<void> => {
     const options = {
         system: {
@@ -60,9 +60,7 @@ export const generateDtsForMonacoEditor = async (
                 const match = referenceTagRe.exec(line);
                 const libName = match && match[1];
                 if (libName) {
-                    resultLines.push(
-                        extractContent(path.join(path.dirname(file), `lib.${libName}.d.ts`)),
-                    );
+                    resultLines.push(extractContent(path.join(path.dirname(file), `lib.${libName}.d.ts`)));
                 } else {
                     resultLines.push(line);
                 }

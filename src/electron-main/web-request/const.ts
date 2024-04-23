@@ -22,9 +22,7 @@ export const HEADERS = {
 export const STATIC_ALLOWED_ORIGINS = [
     LOCAL_WEBCLIENT_ORIGIN,
     "chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai", // chromium built-in "PDF viewer" extension
-    ...(
-        BUILD_ENVIRONMENT === "development"
-            ? ["devtools://devtools"]
-            : []
-    ),
+    ...(BUILD_ENVIRONMENT === "development"
+        ? ["devtools://devtools"]
+        : []),
 ] as const;

@@ -4,7 +4,11 @@ import {pick} from "remeda";
 
 import {BaseConfig, Config} from "src/shared/model/options";
 import {
-    DEFAULT_API_CALL_TIMEOUT, DEFAULT_MESSAGES_STORE_PORTION_SIZE, ONE_MINUTE_MS, ONE_SECOND_MS, ZOOM_FACTOR_DEFAULT,
+    DEFAULT_API_CALL_TIMEOUT,
+    DEFAULT_MESSAGES_STORE_PORTION_SIZE,
+    ONE_MINUTE_MS,
+    ONE_SECOND_MS,
+    ZOOM_FACTOR_DEFAULT,
 } from "src/shared/const";
 
 export function initialConfig(): Config {
@@ -14,7 +18,7 @@ export function initialConfig(): Config {
                 type: "sodium.crypto_pwhash",
                 preset: BUILD_ENVIRONMENT === "e2e"
                     ? "mode:interactive|algorithm:default"
-                    : "mode:moderate|algorithm:default"
+                    : "mode:moderate|algorithm:default",
             },
             encryption: {type: "crypto", preset: "algorithm:aes-256-cbc"},
         };
@@ -23,10 +27,7 @@ export function initialConfig(): Config {
             spellcheck: false,
             spellcheckLanguages: [],
             encryptionPreset,
-            window: {
-                bounds: {width: 1024, height: 768},
-                ...(BUILD_START_MAXIMIZED_BY_DEFAULT ? {maximized: true} : {}),
-            },
+            window: {bounds: {width: 1024, height: 768}, ...(BUILD_START_MAXIMIZED_BY_DEFAULT ? {maximized: true} : {})},
             fetching: {
                 rateLimit: {
                     intervalMs: ONE_MINUTE_MS,
@@ -51,9 +52,7 @@ export function initialConfig(): Config {
                 proxyBypassRules: "",
             },
             indexingBootstrapBufferSize: 1000,
-            jsFlags: [
-                "--max-old-space-size=6144",
-            ],
+            jsFlags: ["--max-old-space-size=6144"],
             commandLineSwitches: [],
             localDbMailsListViewMode: "plain",
             zoomFactorDisabled: false,
@@ -92,9 +91,4 @@ export function initialConfig(): Config {
     }
 }
 
-export const pickBaseConfigProperties = (
-    config: Config,
-): NoExtraProps<Required<BaseConfig>> => pick(
-    config,
-    keys<BaseConfig>(),
-);
+export const pickBaseConfigProperties = (config: Config): NoExtraProps<Required<BaseConfig>> => pick(config, keys<BaseConfig>());

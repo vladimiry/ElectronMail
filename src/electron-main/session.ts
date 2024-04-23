@@ -22,7 +22,7 @@ const _logger = curryFunctionMembers(electronLog, __filename);
 
 type createSessionUtilType = {
     readonly create: (partition: string) => Session & Partial<Pick<AccountSessionAppData, "_electron_mail_data_">>;
-    readonly createdBefore: (partition: string) => boolean
+    readonly createdBefore: (partition: string) => boolean;
     readonly fromPartition: (partition: string) => Session & Pick<AccountSessionAppData, "_electron_mail_reset_counter_">;
 };
 
@@ -88,9 +88,7 @@ export const createSessionUtil: createSessionUtilType = (() => {
 export const resolveInitializedAccountSession = (
     {login, entryUrl}: DeepReadonly<Pick<AccountConfig, "login" | "entryUrl">>,
 ): ReturnType<typeof createSessionUtil.fromPartition> => {
-    return createSessionUtil.fromPartition(
-        getWebViewPartitionName({login, entryUrl}),
-    );
+    return createSessionUtil.fromPartition(getWebViewPartitionName({login, entryUrl}));
 };
 
 export const enableNetworkEmulationToAllAccountSessions = (
@@ -113,15 +111,9 @@ export const configureSessionByAccount = async (
     const {proxy} = account;
     const session = resolveInitializedAccountSession({login: account.login, entryUrl});
     const proxyConfig = {
-        ...{
-            pacScript: "",
-            proxyRules: "",
-            proxyBypassRules: "",
-        },
-        ...(proxy && proxy.proxyRules && proxy.proxyRules.trim() && {
-            proxyRules: proxy.proxyRules.trim(),
-            proxyBypassRules: (proxy.proxyBypassRules && proxy.proxyRules.trim()) || "",
-        }),
+        ...{pacScript: "", proxyRules: "", proxyBypassRules: ""},
+        ...(proxy && proxy.proxyRules && proxy.proxyRules.trim()
+            && {proxyRules: proxy.proxyRules.trim(), proxyBypassRules: (proxy.proxyBypassRules && proxy.proxyRules.trim()) || ""}),
     };
 
     session.setUserAgent(getUserAgentByAccount({customUserAgent: account.customUserAgent}));
@@ -129,19 +121,15 @@ export const configureSessionByAccount = async (
 
     await lastValueFrom(
         race(
-            from(
-                session.setProxy(proxyConfig),
-            ),
-            timer(ONE_SECOND_MS * 2).pipe(
-                concatMap(() => throwError(() => new Error("Failed to configure proxy settings"))),
-            ),
+            from(session.setProxy(proxyConfig)),
+            timer(ONE_SECOND_MS * 2).pipe(concatMap(() => throwError(() => new Error("Failed to configure proxy settings")))),
         ),
     );
 };
 
 export const resetSessionStorages = async (
     ctx: DeepReadonly<Context>,
-    {login, apiEndpointOrigin}: DeepReadonly<{ login: string, apiEndpointOrigin: string }>,
+    {login, apiEndpointOrigin}: DeepReadonly<{login: string; apiEndpointOrigin: string}>,
 ): Promise<void> => {
     const session = resolveInitializedAccountSession({login, entryUrl: apiEndpointOrigin});
     const config = await lastValueFrom(ctx.config$.pipe(first()));
@@ -149,19 +137,15 @@ export const resetSessionStorages = async (
 
     // delete session._documentCookieJar_;
 
-    await lastValueFrom(
-        race(
-            from(
-                // TODO e2e / playwright: "session.clearStorageData()" hangs when executed e2e test flow on "win32" system
-                BUILD_ENVIRONMENT === "e2e" && PLATFORM === "win32"
-                    ? Promise.resolve()
-                    : session.clearStorageData()
-            ),
-            timer(timeoutMs).pipe(
-                concatMap(() => throwError(new Error(`Session clearing failed in ${timeoutMs}ms`))),
-            ),
+    await lastValueFrom(race(
+        from(
+            // TODO e2e / playwright: "session.clearStorageData()" hangs when executed e2e test flow on "win32" system
+            BUILD_ENVIRONMENT === "e2e" && PLATFORM === "win32"
+                ? Promise.resolve()
+                : session.clearStorageData(),
         ),
-    );
+        timer(timeoutMs).pipe(concatMap(() => throwError(new Error(`Session clearing failed in ${timeoutMs}ms`)))),
+    ));
 };
 
 export const initAccountSessions = async (
@@ -192,37 +176,38 @@ export const initAccountSessions = async (
         await configureSessionByAccount(account, {entryUrl});
 
         {
-            const causesToSkip: ReadonlyArray<Parameters<Parameters<typeof session.cookies.on>[1]>[2]>
-                = ["expired", "evicted", "expired-overwrite"];
-            const processedCookiesValueStrings: Record<keyof ReturnType<typeof filterProtonSessionApplyingCookies>, string>
-                = {accessTokens: "", refreshTokens: "", sessionIds: ""};
-            session.cookies.on(
-                "changed",
-                (...[, cookie, cause, removed]) => {
-                    if (removed || causesToSkip.includes(cause)) {
-                        return;
+            const causesToSkip: ReadonlyArray<Parameters<Parameters<typeof session.cookies.on>[1]>[2]> = [
+                "expired",
+                "evicted",
+                "expired-overwrite",
+            ];
+            const processedCookiesValueStrings: Record<keyof ReturnType<typeof filterProtonSessionApplyingCookies>, string> = {
+                accessTokens: "",
+                refreshTokens: "",
+                sessionIds: "",
+            };
+            session.cookies.on("changed", (...[, cookie, cause, removed]) => {
+                if (removed || causesToSkip.includes(cause)) {
+                    return;
+                }
+                const cookies = filterProtonSessionApplyingCookies([cookie]);
+                for (const key of keys<typeof cookies>()) {
+                    const cookiesValue = cookies[key];
+                    if (!cookiesValue.length) {
+                        continue;
                     }
-                    const cookies = filterProtonSessionApplyingCookies([cookie]);
-                    for (const key of keys<typeof cookies>()) {
-                        const cookiesValue = cookies[key];
-                        if (!cookiesValue.length) {
-                            continue;
-                        }
-                        const cookiesValueString = JSON.stringify(
-                            cookiesValue.map((value) => omit(value, ["expirationDate"])),
-                        );
-                        if (cookiesValueString === processedCookiesValueStrings[key]) {
-                            continue;
-                        }
-                        processedCookiesValueStrings[key] = cookiesValueString;
-                        logger.verbose("proton session token cookies modified");
-                        IPC_MAIN_API_NOTIFICATION$.next(
-                            IPC_MAIN_API_NOTIFICATION_ACTIONS.ProtonSessionTokenCookiesModified({key: {login: account.login}}),
-                        );
-                        break;
+                    const cookiesValueString = JSON.stringify(cookiesValue.map((value) => omit(value, ["expirationDate"])));
+                    if (cookiesValueString === processedCookiesValueStrings[key]) {
+                        continue;
                     }
-                },
-            );
+                    processedCookiesValueStrings[key] = cookiesValueString;
+                    logger.verbose("proton session token cookies modified");
+                    IPC_MAIN_API_NOTIFICATION$.next(
+                        IPC_MAIN_API_NOTIFICATION_ACTIONS.ProtonSessionTokenCookiesModified({key: {login: account.login}}),
+                    );
+                    break;
+                }
+            });
         }
     }
 };

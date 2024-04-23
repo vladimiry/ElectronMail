@@ -1,9 +1,5 @@
-export function resolveLink(element: Element): { element: Element; link?: boolean; href?: string } {
-    const parentScanState: {
-        element: (Node & ParentNode) | null | Element;
-        link?: boolean;
-        iterationAllowed: number;
-    } = {
+export function resolveLink(element: Element): {element: Element; link?: boolean; href?: string} {
+    const parentScanState: {element: (Node & ParentNode) | null | Element; link?: boolean; iterationAllowed: number} = {
         element,
         iterationAllowed: 3,
     };
@@ -11,8 +7,7 @@ export function resolveLink(element: Element): { element: Element; link?: boolea
     while (parentScanState.element && parentScanState.iterationAllowed) {
         if (
             parentScanState.element.nodeType === Node.ELEMENT_NODE
-            &&
-            ("tagName" in parentScanState.element && parentScanState.element.tagName.toLowerCase() === "a")
+            && ("tagName" in parentScanState.element && parentScanState.element.tagName.toLowerCase() === "a")
         ) {
             parentScanState.link = true;
             break;
@@ -21,10 +16,7 @@ export function resolveLink(element: Element): { element: Element; link?: boolea
         parentScanState.iterationAllowed--;
     }
 
-    const result: ReturnType<typeof resolveLink> = {
-        element: parentScanState.element as Element,
-        link: parentScanState.link,
-    };
+    const result: ReturnType<typeof resolveLink> = {element: parentScanState.element as Element, link: parentScanState.link};
 
     if (!result.link) {
         return result;
@@ -59,21 +51,14 @@ export function isContentEditableDeep(el: Node | Element | null): boolean {
 }
 
 export function isPasswordInput(el: Element): boolean {
-    return (
-        isInput(el)
-        &&
-        String(el.getAttribute("type")).toLowerCase() === "password"
-    );
+    return (isInput(el)
+        && String(el.getAttribute("type")).toLowerCase() === "password");
 }
 
 export function isWritable(el: Element): boolean {
-    const writableInput = (
-        (isInput(el) || isTextarea(el))
-        &&
-        !el.disabled && !el.hasAttribute("disabled")
-        &&
-        !el.readOnly && !el.hasAttribute("readonly")
-    );
+    const writableInput = (isInput(el) || isTextarea(el))
+        && !el.disabled && !el.hasAttribute("disabled")
+        && !el.readOnly && !el.hasAttribute("readonly");
 
     return writableInput || isContentEditableDeep(el);
 }

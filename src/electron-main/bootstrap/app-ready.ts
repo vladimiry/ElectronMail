@@ -16,10 +16,7 @@ import {setUpPowerMonitorNotification} from "src/electron-main/power-monitor";
 export async function appReadyHandler(ctx: Context): Promise<void> {
     const uiContextDeferred: Deferred<UIContext> = new Deferred();
     const uiContextDependentEndpoints = (async () => {
-        const [endpoints] = await Promise.all([
-            ctx.deferredEndpoints.promise,
-            uiContextDeferred.promise,
-        ]);
+        const [endpoints] = await Promise.all([ctx.deferredEndpoints.promise, uiContextDeferred.promise]);
         return endpoints;
     })();
 
@@ -39,16 +36,14 @@ export async function appReadyHandler(ctx: Context): Promise<void> {
 
     {
         ctx.uiContext = uiContextDeferred.promise;
-        uiContextDeferred.resolve(
-            (async () => {
-                const [browserWindow, appMenu, tray] = await Promise.all([
-                    initMainBrowserWindow(ctx),
-                    initApplicationMenu(uiContextDependentEndpoints),
-                    initTray(uiContextDependentEndpoints),
-                ]);
-                return {browserWindow, appMenu, tray};
-            })(),
-        );
+        uiContextDeferred.resolve((async () => {
+            const [browserWindow, appMenu, tray] = await Promise.all([
+                initMainBrowserWindow(ctx),
+                initApplicationMenu(uiContextDependentEndpoints),
+                initTray(uiContextDependentEndpoints),
+            ]);
+            return {browserWindow, appMenu, tray};
+        })());
     }
 
     setUpPowerMonitorNotification();

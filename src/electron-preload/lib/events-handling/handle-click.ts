@@ -7,9 +7,8 @@ import {resolveLink} from "src/electron-preload/lib/events-handling/lib";
 
 type ObservableElement = Pick<HTMLElement, "addEventListener" | "removeEventListener">;
 
-const processedClickElements
-    // eslint-disable-next-line @typescript-eslint/no-use-before-define
-    = new WeakMap<ObservableElement, ReturnType<typeof registerDocumentClickEventListener>>();
+const processedClickElements = // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    new WeakMap<ObservableElement, ReturnType<typeof registerDocumentClickEventListener>>();
 
 export async function callDocumentClickEventListener<E extends Event = MouseEvent>(
     event: E,
@@ -47,10 +46,7 @@ export async function callDocumentClickEventListener<E extends Event = MouseEven
 export function registerDocumentClickEventListener<E extends ObservableElement>(
     element: E,
     logger: Logger,
-): {
-    unsubscribe: () => void;
-    eventHandler: (event: MouseEvent) => Promise<void>;
-} {
+): {unsubscribe: () => void; eventHandler: (event: MouseEvent) => Promise<void>} {
     let subscription = processedClickElements.get(element);
 
     if (subscription) {
@@ -78,5 +74,3 @@ export function registerDocumentClickEventListener<E extends ObservableElement>(
 
     return subscription;
 }
-
-

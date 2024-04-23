@@ -7,7 +7,9 @@ import {curryFunctionMembers} from "src/shared/util";
 import {indexAccount} from "src/electron-main/api/endpoints-builders/database/indexing/service";
 import {IPC_MAIN_API_DB_INDEXER_REQUEST$, IPC_MAIN_API_DB_INDEXER_RESPONSE$, IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/const";
 import {
-    IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS, IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS, IPC_MAIN_API_NOTIFICATION_ACTIONS,
+    IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS,
+    IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS,
+    IPC_MAIN_API_NOTIFICATION_ACTIONS,
 } from "src/shared/api/main-process/actions";
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {ofType} from "src/shared/util/ngrx-of-type";
@@ -27,22 +29,20 @@ export async function buildDbIndexingEndpoints(
 
             IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS.match(action, {
                 Bootstrapped() {
-                    const indexAccounts$ = defer(
-                        async () => {
-                            const [{accounts}, config] = await Promise.all([
-                                ctx.settingsStore.readExisting(),
-                                lastValueFrom(ctx.config$.pipe(first())),
-                            ]);
-                            const logins = accounts.map(({login}) => login);
+                    const indexAccounts$ = defer(async () => {
+                        const [{accounts}, config] = await Promise.all([
+                            ctx.settingsStore.readExisting(),
+                            lastValueFrom(ctx.config$.pipe(first())),
+                        ]);
+                        const logins = accounts.map(({login}) => login);
 
-                            for (const {account, pk} of ctx.db) {
-                                if (logins.includes(pk.login)) {
-                                    // TODO index only "enabled" and "loaded" accounts
-                                    await indexAccount(account, pk, config);
-                                }
+                        for (const {account, pk} of ctx.db) {
+                            if (logins.includes(pk.login)) {
+                                // TODO index only "enabled" and "loaded" accounts
+                                await indexAccount(account, pk, config);
                             }
-                        },
-                    ).pipe(
+                        }
+                    }).pipe(
                         // drop indexing on "logout" action
                         takeUntil(
                             IPC_MAIN_API_NOTIFICATION$.pipe(
@@ -53,24 +53,20 @@ export async function buildDbIndexingEndpoints(
                     );
 
                     setTimeout(async () => {
-						await lastValueFrom(indexAccounts$);
-					});
+                        await lastValueFrom(indexAccounts$);
+                    });
                 },
                 ProgressState(payload) {
                     logger.verbose(nameof(endpoints.dbIndexerOn), `ProgressState.status: ${JSON.stringify(payload.status)}`);
 
                     // propagating status to main channel which streams data to UI process
                     setTimeout(() => {
-                        IPC_MAIN_API_NOTIFICATION$.next(
-                            IPC_MAIN_API_NOTIFICATION_ACTIONS.DbIndexerProgressState(payload),
-                        );
+                        IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.DbIndexerProgressState(payload));
                     });
                 },
                 ErrorMessage({message}) {
                     setTimeout(() => {
-                        IPC_MAIN_API_NOTIFICATION$.next(
-                            IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({message}),
-                        );
+                        IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({message}));
                     });
                 },
                 default() {
@@ -81,9 +77,7 @@ export async function buildDbIndexingEndpoints(
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         dbIndexerNotification() {
-            return IPC_MAIN_API_DB_INDEXER_REQUEST$.asObservable().pipe(
-                startWith(IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS.Bootstrap()),
-            );
+            return IPC_MAIN_API_DB_INDEXER_REQUEST$.asObservable().pipe(startWith(IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS.Bootstrap()));
         },
     };
 

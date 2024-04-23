@@ -11,22 +11,18 @@ class ContactAddress extends Entity implements Model.ContactAddress {
     @IsString()
     customTypeName!: Model.ContactAddress["customTypeName"];
 
-    @IsString()
-    @IsNotEmpty()
+    @IsString() @IsNotEmpty()
     address!: Model.ContactAddress["address"];
 }
 
 class Birthday extends Entity implements Model.Birthday {
-    @IsString()
-    @IsNotEmpty()
+    @IsString() @IsNotEmpty()
     day!: Model.Birthday["day"];
 
-    @IsString()
-    @IsNotEmpty()
+    @IsString() @IsNotEmpty()
     month!: Model.Birthday["month"];
 
-    @IsOptional()
-    @IsString()
+    @IsOptional() @IsString()
     year?: Model.Birthday["year"];
 }
 
@@ -48,8 +44,7 @@ class ContactPhoneNumber extends Entity implements Model.ContactPhoneNumber {
     @IsString()
     customTypeName!: Model.ContactPhoneNumber["customTypeName"];
 
-    @IsString()
-    @IsNotEmpty()
+    @IsString() @IsNotEmpty()
     number!: Model.ContactPhoneNumber["number"];
 }
 
@@ -60,8 +55,7 @@ class ContactSocialId extends Entity implements Model.ContactSocialId {
     @IsString()
     customTypeName!: Model.ContactSocialId["customTypeName"];
 
-    @IsString()
-    @IsNotEmpty()
+    @IsString() @IsNotEmpty()
     socialId!: Model.ContactSocialId["socialId"];
 }
 
@@ -78,39 +72,27 @@ export class Contact extends Entity implements Model.Contact {
     @IsString()
     lastName!: Model.Contact["lastName"];
 
-    @IsOptional()
-    @IsString()
+    @IsOptional() @IsString()
     nickname?: Model.Contact["nickname"];
 
     @IsString()
     role!: Model.Contact["role"];
 
-    @IsOptional()
-    @IsString()
+    @IsOptional() @IsString()
     title?: Model.Contact["title"];
 
-    @ValidateNested()
-    @IsArray()
-    @Type(() => ContactAddress)
+    @ValidateNested() @IsArray() @Type(() => ContactAddress)
     addresses!: ContactAddress[];
 
-    @IsOptional()
-    @ValidateNested()
-    @Type(() => Birthday)
+    @IsOptional() @ValidateNested() @Type(() => Birthday)
     birthday?: Birthday;
 
-    @ValidateNested()
-    @IsArray()
-    @Type(() => ContactMailAddress)
+    @ValidateNested() @IsArray() @Type(() => ContactMailAddress)
     mailAddresses!: ContactMailAddress[];
 
-    @ValidateNested()
-    @IsArray()
-    @Type(() => ContactPhoneNumber)
+    @ValidateNested() @IsArray() @Type(() => ContactPhoneNumber)
     phoneNumbers!: ContactPhoneNumber[];
 
-    @ValidateNested()
-    @IsArray()
-    @Type(() => ContactSocialId)
+    @ValidateNested() @IsArray() @Type(() => ContactSocialId)
     socialIds!: ContactSocialId[];
 }

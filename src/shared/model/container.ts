@@ -20,23 +20,27 @@ export interface NewPasswordFieldContainer {
 
 export interface PasswordChangeContainer extends PasswordFieldContainer, NewPasswordFieldContainer {}
 
-export type AccountConfigCreateUpdatePatch = NoExtraProps<Pick<AccountConfig,
-    | "customNotification"
-    | "customNotificationCode"
-    | "notificationShellExec"
-    | "notificationShellExecCode"
-    | "customCSS"
-    | "credentials"
-    | "database"
-    | "localStoreViewByDefault"
-    | "entryUrl"
-    | "blockNonEntryUrlBasedRequests"
-    | "externalContentProxyUrlPattern"
-    | "enableExternalContentProxy"
-    | "login"
-    | "loginDelaySecondsRange"
-    | "loginDelayUntilSelected"
-    | "persistentSession"
-    | "customUserAgent"
-    | "proxy"
-    | "title">>;
+export type AccountConfigCreateUpdatePatch = NoExtraProps<
+    Pick<
+        AccountConfig,
+        | "customNotification"
+        | "customNotificationCode"
+        | "notificationShellExec"
+        | "notificationShellExecCode"
+        | "customCSS"
+        | "credentials"
+        | "database"
+        | "localStoreViewByDefault"
+        | "entryUrl"
+        | "blockNonEntryUrlBasedRequests"
+        | "externalContentProxyUrlPattern"
+        | "enableExternalContentProxy"
+        | "login"
+        | "loginDelaySecondsRange"
+        | "loginDelayUntilSelected"
+        | "persistentSession"
+        | "customUserAgent"
+        | "proxy"
+        | "title"
+    >
+>;

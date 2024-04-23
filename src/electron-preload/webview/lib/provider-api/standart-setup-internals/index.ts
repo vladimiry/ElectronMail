@@ -11,12 +11,14 @@ export * from "./model";
 
 export const resolveStandardSetupPublicApi = async (
     _logger: Logger,
-): Promise<{
-    readonly httpApi$: Observable<StandardSetupPublicScope["httpApi"]>
-    readonly authentication$: Observable<StandardSetupPublicScope["authentication"]>
-    readonly cache$: Observable<StandardSetupPublicScope["cache"]>
-    readonly history$: Observable<StandardSetupPublicScope["history"]>
-}> => {
+): Promise<
+    {
+        readonly httpApi$: Observable<StandardSetupPublicScope["httpApi"]>;
+        readonly authentication$: Observable<StandardSetupPublicScope["authentication"]>;
+        readonly cache$: Observable<StandardSetupPublicScope["cache"]>;
+        readonly history$: Observable<StandardSetupPublicScope["history"]>;
+    }
+> => {
     const logger = curryFunctionMembers(_logger, nameof(resolveStandardSetupPublicApi));
 
     logger.info("init");
@@ -28,21 +30,9 @@ export const resolveStandardSetupPublicApi = async (
     );
 
     return { // TODO set race-based timeout when members of this object get accessed/resolved
-        httpApi$: scope$.pipe(
-            map(({httpApi}) => httpApi),
-            distinctUntilChanged(),
-        ),
-        authentication$: scope$.pipe(
-            map(({authentication}) => authentication),
-            distinctUntilChanged(),
-        ),
-        cache$: scope$.pipe(
-            map(({cache}) => cache),
-            distinctUntilChanged(),
-        ),
-        history$: scope$.pipe(
-            map(({history}) => history),
-            distinctUntilChanged(),
-        ),
+        httpApi$: scope$.pipe(map(({httpApi}) => httpApi), distinctUntilChanged()),
+        authentication$: scope$.pipe(map(({authentication}) => authentication), distinctUntilChanged()),
+        cache$: scope$.pipe(map(({cache}) => cache), distinctUntilChanged()),
+        history$: scope$.pipe(map(({history}) => history), distinctUntilChanged()),
     } as const;
 };

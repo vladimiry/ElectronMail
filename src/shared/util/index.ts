@@ -23,14 +23,11 @@ export const pickAccountStrict = (accounts: AccountConfig[], criteria: LoginFiel
 
 export const asyncDelay = async <T>(pauseTimeMs: number, resolveAction?: () => Promise<T>): Promise<T | void> => {
     return new Promise<T | void>((resolve) => {
-        setTimeout(
-            () => {
-                return typeof resolveAction === "function"
-                    ? resolve(resolveAction())
-                    : resolve();
-            },
-            pauseTimeMs,
-        );
+        setTimeout(() => {
+            return typeof resolveAction === "function"
+                ? resolve(resolveAction())
+                : resolve();
+        }, pauseTimeMs);
     });
 };
 
@@ -40,8 +37,8 @@ export function curryFunctionMembers<T extends object | ((...a: any[]) => any)>(
     ...args: any[] // eslint-disable-line @typescript-eslint/no-explicit-any
 ): T {
     const dest: T = typeof src === "function" // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-        ? src.bind(undefined) :
-        Object.create(null);
+        ? src.bind(undefined)
+        : Object.create(null);
     for (const key of Object.getOwnPropertyNames(src)) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
         const srcMember = (src as any)[key]; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
@@ -70,9 +67,9 @@ export function isEntityUpdatesPatchNotEmpty({conversationEntries, folders, mail
 
 export function walkConversationNodesTree(
     rootNodes: View.ConversationNode[],
-    fn: (arg: { node: View.ConversationNode; mail?: View.ConversationNode["mail"] }) => void | "break",
+    fn: (arg: {node: View.ConversationNode; mail?: View.ConversationNode["mail"]}) => void | "break",
 ): void {
-    const state: { nodes: View.ConversationNode[] } = {nodes: [...rootNodes]};
+    const state: {nodes: View.ConversationNode[]} = {nodes: [...rootNodes]};
     while (state.nodes.length) {
         const node = state.nodes.pop();
         if (!node) {
@@ -112,26 +109,20 @@ export function mailDateComparatorDefaultsToDesc(o1: View.Mail, o2: View.Mail, o
 export function buildEnumBundle<M extends Record<string, unknown>, K extends keyof M, V extends Extract<M[keyof M], string | number>>(
     nameValueMap: M,
 ) {
-    const {names, values, valueNameMap} = Object
-        .entries(nameValueMap)
-        .reduce((
-            accumulator: {
-                names: K[];
-                values: V[];
-                valueNameMap: { [k in V]: K };
-            },
-            entry,
-        ) => {
+    const {names, values, valueNameMap} = Object.entries(nameValueMap).reduce(
+        (accumulator: {names: K[]; values: V[]; valueNameMap: { [k in V]: K }}, entry) => {
             const [key, value] = entry as unknown as readonly [K, V];
             accumulator.names.push(key);
             accumulator.values.push(value);
             accumulator.valueNameMap[value] = key;
             return accumulator;
-        }, {
+        },
+        {
             values: [],
             names: [],
             valueNameMap: {} as any, // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
-        });
+        },
+    );
 
     const isValidValue = (value: unknown): value is V => {
         return (value as any) in valueNameMap; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -155,11 +146,13 @@ export function buildEnumBundle<M extends Record<string, unknown>, K extends key
 
     interface ParseValue {
         (
-            rawValue: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+            rawValue: any // eslint-disable-line @typescript-eslint/no-explicit-any
+            ,
         ): V;
 
         <S extends boolean>(
-            rawValue: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+            rawValue: any // eslint-disable-line @typescript-eslint/no-explicit-any
+            ,
             strict: S,
         ): S extends true ? V : V | undefined;
     }
@@ -176,17 +169,7 @@ export function buildEnumBundle<M extends Record<string, unknown>, K extends key
     };
 
     // TODO deep freeze the result object
-    return {
-        ...nameValueMap,
-        _: {
-            resolveNameByValue,
-            parseValue,
-            names,
-            values,
-            nameValueMap,
-            isValidValue,
-        },
-    } as const;
+    return {...nameValueMap, _: {resolveNameByValue, parseValue, names, values, nameValueMap, isValidValue}} as const;
 }
 
 export function isDatabaseBootstrapped(
@@ -195,19 +178,11 @@ export function isDatabaseBootstrapped(
     if (!metadata) {
         return false;
     }
-    return (
-        typeof metadata.latestEventId === "string"
-        &&
-        Boolean(
-            metadata.latestEventId.trim(),
-        )
-        &&
-        metadata.fetchStage !== "bootstrap_init"
-        &&
-        metadata.fetchStage !== "bootstrap_messages_metadata"
-        &&
-        metadata.fetchStage !== "bootstrap_messages_content"
-    );
+    return (typeof metadata.latestEventId === "string"
+        && Boolean(metadata.latestEventId.trim())
+        && metadata.fetchStage !== "bootstrap_init"
+        && metadata.fetchStage !== "bootstrap_messages_metadata"
+        && metadata.fetchStage !== "bootstrap_messages_content");
 }
 
 export function getRandomInt(min: number, max: number): number {
@@ -218,29 +193,27 @@ export function getRandomInt(min: number, max: number): number {
 
 type validateLoginDelaySecondsRangeType = (
     loginDelaySecondsRange: string,
-) => { validationError: string } | Required<AccountConfig>["loginDelaySecondsRange"];
+) => {validationError: string} | Required<AccountConfig>["loginDelaySecondsRange"];
 
-export const validateLoginDelaySecondsRange: validateLoginDelaySecondsRangeType = (
-    () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
-        const re = /^(\d+)-(\d+)$/;
-        const result: validateLoginDelaySecondsRangeType = (loginDelaySecondsRange) => {
-            const match = re.exec(loginDelaySecondsRange) || [];
-            const end = Number(match.pop());
-            const start = Number(match.pop());
+export const validateLoginDelaySecondsRange: validateLoginDelaySecondsRangeType = (() => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types, max-len
+    const re = /^(\d+)-(\d+)$/;
+    const result: validateLoginDelaySecondsRangeType = (loginDelaySecondsRange) => {
+        const match = re.exec(loginDelaySecondsRange) || [];
+        const end = Number(match.pop());
+        const start = Number(match.pop());
 
-            if (isNaN(start) || isNaN(end)) {
-                return {validationError: `Invalid data format, "number-number" format is expected.`};
-            }
-            if (start > end) {
-                return {validationError: `"Start" value is bigger than "end" value.`};
-            }
+        if (isNaN(start) || isNaN(end)) {
+            return {validationError: `Invalid data format, "number-number" format is expected.`};
+        }
+        if (start > end) {
+            return {validationError: `"Start" value is bigger than "end" value.`};
+        }
 
-            return {start, end};
-        };
+        return {start, end};
+    };
 
-        return result;
-    }
-)();
+    return result;
+})();
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-constraint
 export function reduceDuplicateItemsFromArray<T extends any>(array: ReadonlyArray<T>): T[] {
@@ -249,7 +222,7 @@ export function reduceDuplicateItemsFromArray<T extends any>(array: ReadonlyArra
 
 export const consumeMemoryRateLimiter = async (
     consume: () => ReturnType<typeof RateLimiterMemory.prototype.consume>,
-): Promise<{ waitTimeMs: number }> => {
+): Promise<{waitTimeMs: number}> => {
     try {
         await consume();
         return {waitTimeMs: 0};
@@ -264,8 +237,8 @@ export const consumeMemoryRateLimiter = async (
 
 export const assertTypeOf = (
     {value, expectedType}: {
-        value: unknown
-        expectedType: "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function"
+        value: unknown;
+        expectedType: "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function";
     },
     errorMessagePrefix: string,
 ): void | never => {
@@ -275,42 +248,26 @@ export const assertTypeOf = (
     }
 };
 
-export const lowerConsoleMessageEventLogLevel = (
-    logLevel: "error" | "warn",
-    message: string,
-): typeof logLevel => {
+export const lowerConsoleMessageEventLogLevel = (logLevel: "error" | "warn", message: string): typeof logLevel => {
     if (String(message).includes("OfflineError: No network connection")) {
         return "warn";
     }
     return logLevel;
 };
 
-export const buildInitialVendorsAppCssLinks = (
-    hrefs: ReadonlyArray<string>,
-    shouldUseDarkColors?: boolean,
-): string => {
-    return hrefs.reduce(
-        (accumulator, value) => {
-            const stylesheet: boolean = (
-                typeof shouldUseDarkColors !== "boolean"
-                ||
-                (value.endsWith("-dark.css") && shouldUseDarkColors)
-                ||
-                (value.endsWith("-light.css") && !shouldUseDarkColors)
-            );
-            return (
-                accumulator
-                +
-                `<link ${stylesheet ? 'rel="stylesheet"' : 'rel="preload" as="style"'} href="${value}"/>`
-            );
-        },
-        "",
-    );
+export const buildInitialVendorsAppCssLinks = (hrefs: ReadonlyArray<string>, shouldUseDarkColors?: boolean): string => {
+    return hrefs.reduce((accumulator, value) => {
+        const stylesheet: boolean = typeof shouldUseDarkColors !== "boolean"
+            || (value.endsWith("-dark.css") && shouldUseDarkColors)
+            || (value.endsWith("-light.css") && !shouldUseDarkColors);
+        return (accumulator
+            + `<link ${stylesheet ? "rel=\"stylesheet\"" : "rel=\"preload\" as=\"style\""} href="${value}"/>`);
+    }, "");
 };
 
 export const getPlainErrorProps = <T extends unknown>( // eslint-disable-line @typescript-eslint/no-unnecessary-type-constraint
     value: T,
-): T | { code?: string, name?: string, message?: string, stack?: string } => {
+): T | {code?: string; name?: string; message?: string; stack?: string} => {
     if (value === null) {
         return {message: `stringified "null"`};
     }
@@ -323,10 +280,12 @@ export const getPlainErrorProps = <T extends unknown>( // eslint-disable-line @t
     // TODO consider also iterating "own string" props
     return {
         ...mapValues(
-            pick(
-                Object(value) as unknown as { code?: unknown, name?: unknown, message?: unknown, stack?: unknown },
-                ["code", "message", "name", "stack"],
-            ),
+            pick(Object(value) as unknown as {code?: unknown; name?: unknown; message?: unknown; stack?: unknown}, [
+                "code",
+                "message",
+                "name",
+                "stack",
+            ]),
             String,
         ),
     };

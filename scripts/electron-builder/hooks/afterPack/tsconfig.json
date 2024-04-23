@@ -5,7 +5,7 @@
     "importHelpers": true,
     "declaration": false,
     "sourceMap": false,
-    "outDir": ".",
+    "outDir": "."
   },
   "include": [
     "../../../../src/@types/**/*",

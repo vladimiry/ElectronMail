@@ -7,10 +7,7 @@ import {curryFunctionMembers} from "src/shared/util";
 
 const logger = curryFunctionMembers(_logger, __filename);
 
-export const applyZoomFactor = async (
-    ctx: DeepReadonly<Context>,
-    webContents: import("electron").WebContents,
-): Promise<boolean> => {
+export const applyZoomFactor = async (ctx: DeepReadonly<Context>, webContents: import("electron").WebContents): Promise<boolean> => {
     const config = await lastValueFrom(ctx.config$.pipe(first()));
     const {zoomFactor, zoomFactorDisabled} = config;
 

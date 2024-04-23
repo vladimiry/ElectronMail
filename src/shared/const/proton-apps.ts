@@ -1,10 +1,4 @@
-export const PROVIDER_APP_NAMES = [
-    "proton-mail",
-    "proton-account",
-    "proton-calendar",
-    "proton-drive",
-    "proton-vpn-settings",
-] as const;
+export const PROVIDER_APP_NAMES = ["proton-mail", "proton-account", "proton-calendar", "proton-drive", "proton-vpn-settings"] as const;
 
 export const PROVIDER_REPO_STANDARD_SETUP_WEBPACK_INDEX_ENTRY_ITEMS = [
     // immediate
@@ -51,7 +45,7 @@ export const PROVIDER_REPO_MAP = {
         apiSubdomain: "account-api",
         repoRelativeDistDir: "./dist",
         tag: "proton-account@5.0.111.0",
-        protonPack: {}
+        protonPack: {},
     },
     [PROVIDER_APP_NAMES[2]]: {
         basePath: "calendar",
@@ -82,7 +76,4 @@ export const PROVIDER_REPO_MAP = {
     },
 } as const;
 
-export const PROTON_SHARED_MESSAGE_INTERFACE = {
-    projectRelativeFile: "./lib/interfaces/mail/Message.ts",
-    url: "",
-} as const;
+export const PROTON_SHARED_MESSAGE_INTERFACE = {projectRelativeFile: "./lib/interfaces/mail/Message.ts", url: ""} as const;

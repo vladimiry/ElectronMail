@@ -51,10 +51,8 @@ export const decryptBuffer = async (
     return compressionType === "gzip"
         ? zlibAsync.gunzip(decryptedBuffer)
         : (compressionType === "zstd")
-            ? Buffer.from(
-                (await resolveZstdWasm()).decompress(decryptedBuffer),
-            )
-            : decryptedBuffer;
+        ? Buffer.from((await resolveZstdWasm()).decompress(decryptedBuffer))
+        : decryptedBuffer;
 };
 
 export const serializeDataMapItem = async (
@@ -65,13 +63,11 @@ export const serializeDataMapItem = async (
     compressionType: Config["dbCompression2"]["type"],
     level: Config["dbCompression2"]["level"],
 ): Promise<Buffer> => {
-    if (typeof level !== "number"
-        ||
-        level < 1
-        ||
-        (compressionType === "gzip" && level > 9)
-        ||
-        (compressionType === "zstd" && level > 22)
+    if (
+        typeof level !== "number"
+        || level < 1
+        || (compressionType === "gzip" && level > 9)
+        || (compressionType === "zstd" && level > 22)
     ) {
         level = CONST.compressionLevelsFallback[compressionType];
         logger.error(`Invalid "${nameof(level)}" value, falling back to the default value: ${level}`);
@@ -85,10 +81,8 @@ export const serializeDataMapItem = async (
             // eslint-disable-next-line max-len
             // https://github.com/OneIdentity/zstd-js/blob/d9de2d24e6b61ae9d3cf86c2838a117555c1e835/src/components/common/zstd-simple/zstd-simple.ts#L23
             : (compressionType === "zstd" && serializedDataBuffer.byteLength > 100)
-                ? Buffer.from(
-                    (await resolveZstdWasm()).compress(serializedDataBuffer, level),
-                )
-                : serializedDataBuffer
+            ? Buffer.from((await resolveZstdWasm()).compress(serializedDataBuffer, level))
+            : serializedDataBuffer,
     );
     const encryptionHeaderBuffer = encryptedData.slice(CONST.zero, encryptedData.indexOf(CONST.headerZeroByteMark));
     const encryptionHeader = JSON.parse(encryptionHeaderBuffer.toString()) as Required<Model.SerializationHeader>["encryption"];
@@ -103,7 +97,7 @@ export const serializeDataMapItem = async (
 export const readSummaryHeader = async (
     file: string,
     headerPosition?: "start" | "end",
-): Promise<{ value: Model.SerializationHeader, payloadOffsetStart: number }> => {
+): Promise<{value: Model.SerializationHeader; payloadOffsetStart: number}> => {
     if (!headerPosition) {
         const startHeader = await readSummaryHeader(file, "start");
         const {serialization} = startHeader.value;
@@ -134,12 +128,10 @@ export const readSummaryHeader = async (
             const concatParts = [
                 buffer,
                 found
-                    ? (
-                        fromEnd
-                            ? fileChunk.slice(index + 1)
-                            : fileChunk.slice(CONST.zero, index)
-                    )
-                    : fileChunk
+                    ? (fromEnd
+                        ? fileChunk.slice(index + 1)
+                        : fileChunk.slice(CONST.zero, index))
+                    : fileChunk,
             ];
             buffer = Buffer.concat( // TODO use "push / unshift" on array (without dereferencing, so "const" variable)
                 concatParts[fromEnd ? "reverse" : "slice"](),
@@ -167,7 +159,7 @@ export const readSummaryHeader = async (
             // so "end => close" gets called on "fs-backwards-stream"-based stream
             // calling "end" seems to be sufficient, so "close" called just in case
             const {end, close} = stream as unknown as {
-                [k in keyof Pick<import("stream").Writable & import("stream").Pipe, "end" | "close">]?: (this: typeof stream) => void
+                [k in keyof Pick<import("stream").Writable & import("stream").Pipe, "end" | "close">]?: (this: typeof stream) => void;
             };
             for (const method of [end, close] as const) {
                 if (typeof method === "function") {
@@ -179,10 +171,12 @@ export const readSummaryHeader = async (
     });
 };
 
-export const buildFileStream = (file: string): {
-    finishPromise: Promise<void>
-    write: (chunk: Buffer) => Promise<void>
-    finish: (serializationHeader: Model.SerializationHeader) => Promise<void>
+export const buildFileStream = (
+    file: string,
+): {
+    finishPromise: Promise<void>;
+    write: (chunk: Buffer) => Promise<void>;
+    finish: (serializationHeader: Model.SerializationHeader) => Promise<void>;
 } => {
     const stream = new WriteStreamAtomic(file, {highWaterMark: CONST.dataWritingBufferSize, encoding: "binary"});
     const streamDeferred = new Deferred<void>();
@@ -210,24 +204,14 @@ export const buildFileStream = (file: string): {
         finishPromise: streamDeferred.promise,
         write,
         async finish(serializationHeader) {
-            await write(
-                Buffer.concat([
-                    CONST.headerZeroByteMark,
-                    Buffer.from(
-                        JSON.stringify(serializationHeader),
-                    ),
-                ]),
-            );
+            await write(Buffer.concat([CONST.headerZeroByteMark, Buffer.from(JSON.stringify(serializationHeader))]));
             await new Promise<void>((resolve) => stream.end(resolve));
         },
     };
 };
 
 export const portionSizeLimit = (mailsPortionSize: Readonly<Config["dbCompression2"]["mailsPortionSize"]>): number => {
-    const clampInRangeLimit = (value: number): number => Math.min(
-        Math.max(value, CONST.mailsPortionSize.min),
-        CONST.mailsPortionSize.max,
-    );
+    const clampInRangeLimit = (value: number): number => Math.min(Math.max(value, CONST.mailsPortionSize.min), CONST.mailsPortionSize.max);
     const min = clampInRangeLimit(mailsPortionSize.min);
     const max = clampInRangeLimit(mailsPortionSize.max);
     return getRandomInt(Math.min(min, max), Math.max(min, max));
@@ -236,7 +220,7 @@ export const portionSizeLimit = (mailsPortionSize: Readonly<Config["dbCompressio
 export const readFileBytes = async (
     buffer: Buffer,
     file: string,
-    {byteCountToRead, fileOffsetStart}: { byteCountToRead: number, fileOffsetStart: number },
+    {byteCountToRead, fileOffsetStart}: {byteCountToRead: number; fileOffsetStart: number},
 ): Promise<Buffer> => {
     const fileHandle = await fsAsync.open(file, "r");
     try {

@@ -6,13 +6,11 @@ import UUID from "pure-uuid";
 
 import {Context} from "src/electron-main/model";
 import {curryFunctionMembers} from "src/shared/util";
-import {
-    DbExportMailAttachmentItem, MAIL_ATTACHMENTS_EXPORT_NOTIFICATION$,
-} from "src/electron-main/api/endpoints-builders/database/export/const";
+import {DbExportMailAttachmentItem, MAIL_ATTACHMENTS_EXPORT_NOTIFICATION$} from "./const";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/const";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main-process";
-import {writeFile} from "src/electron-main/api/endpoints-builders/database/export/service";
+import {writeFile} from "./service";
 
 const logger_ = curryFunctionMembers(electronLog, __filename);
 
@@ -101,13 +99,11 @@ export async function buildDbExportEndpoints(
                                             loadedAttachments.push(...attachments);
                                         }),
                                     ),
-                                    timer(timeoutMs).pipe(
-                                        concatMap(() => throwError(
-                                            new Error(
-                                                `Attachments downloading failed in ${timeoutMs}ms (${JSON.stringify({mailIndex})})`,
-                                            ),
-                                        )),
-                                    ),
+                                    timer(timeoutMs).pipe(concatMap(() =>
+                                        throwError(
+                                            new Error(`Attachments downloading failed in ${timeoutMs}ms (${JSON.stringify({mailIndex})})`),
+                                        )
+                                    )),
                                 ),
                             );
 
@@ -122,13 +118,9 @@ export async function buildDbExportEndpoints(
                         });
                         const fileNotification = {
                             file,
-                            progress: Math.trunc(
-                                Number(
-                                    ((mailIndex + 1) / mailsCount * 100).toFixed(2),
-                                )
-                            ),
+                            progress: Math.trunc(Number(((mailIndex + 1) / mailsCount * 100).toFixed(2))),
                             // TODO live attachments export: display attachments load error on the UI
-                            attachmentsLoadError: loadedAttachments.some(((at) => "serializedError" in at && Boolean(at.serializedError))),
+                            attachmentsLoadError: loadedAttachments.some((at) => "serializedError" in at && Boolean(at.serializedError)),
                         } as const;
 
                         subscriber.next(fileNotification);
@@ -139,25 +131,22 @@ export async function buildDbExportEndpoints(
                     }
                 })();
 
-                promise
-                    .then(() => subscriber.complete())
-                    .catch((error) => subscriber.error(error))
-                    .finally(() => {
-                        const summary = skippedMailAttachments + skippedIndividualAttachments;
+                promise.then(() => subscriber.complete()).catch((error) => subscriber.error(error)).finally(() => {
+                    const summary = skippedMailAttachments + skippedIndividualAttachments;
 
-                        logger.verbose("finally()", JSON.stringify({skippedMailAttachments, skippedIndividualAttachments, summary}));
+                    logger.verbose("finally()", JSON.stringify({skippedMailAttachments, skippedIndividualAttachments, summary}));
 
-                        if (summary) {
-                            const message1 = `${summary} attachments loading requests ended up with error.`;
+                    if (summary) {
+                        const message1 = `${summary} attachments loading requests ended up with error.`;
 
-                            logger.error(message1);
+                        logger.error(message1);
 
-                            // TODO live attachments export: consider presenting per email error messages in the UI
-                            IPC_MAIN_API_NOTIFICATION$.next(
-                                IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({message: message1 + ` See details in the log file.`}),
-                            );
-                        }
-                    });
+                        // TODO live attachments export: consider presenting per email error messages in the UI
+                        IPC_MAIN_API_NOTIFICATION$.next(
+                            IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({message: message1 + ` See details in the log file.`}),
+                        );
+                    }
+                });
             });
         },
     };

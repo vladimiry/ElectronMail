@@ -13,7 +13,7 @@ import {resolveCachedConfig} from "src/electron-preload/lib/util";
 export const attachRateLimiting = async (api: ProviderApi, logger_: Logger): Promise<void> => {
     const logger = curryFunctionMembers(logger_, nameof(attachRateLimiting));
     const callingQueue = new asap(/* 3 TODO allow concurrent API requests */);
-    const state: NoExtraProps<{ callsCount: number }> = {callsCount: 0};
+    const state: NoExtraProps<{callsCount: number}> = {callsCount: 0};
     const consumeRateLimiting = await (async () => {
         const {fetching: {rateLimit: rateLimitConfig}} = await resolveCachedConfig(logger);
         const limiter = new RateLimiterMemory({
@@ -41,7 +41,7 @@ export const attachRateLimiting = async (api: ProviderApi, logger_: Logger): Pro
 
             const logMethodName = `${String(groupName)}.${String(methodName)}`;
             const originalMethod = apiGroupMember.bind(apiGroup) as (...args: unknown[]) => Promise<unknown>;
-            const log = (msg: string, extraProps?: NoExtraProps<{ waitTimeMs: number }>): void => {
+            const log = (msg: string, extraProps?: NoExtraProps<{waitTimeMs: number}>): void => {
                 logger.verbose(`${msg} (method name: ${logMethodName})`, JSON.stringify({...state, ...extraProps}));
             };
             const overriddenMethod: typeof originalMethod = async (...args) => {

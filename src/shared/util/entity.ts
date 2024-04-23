@@ -3,11 +3,9 @@ import lzutf8 from "lzutf8";
 import {Folder, Mail} from "src/shared/model/database";
 import * as RestModel from "src/electron-preload/webview/lib/rest-model";
 
-type lzutf8UtilType = Readonly<{
-    shouldCompress: (value: string) => boolean,
-    compress: (value: string) => string
-    decompress: (value: string) => string
-}>;
+type lzutf8UtilType = Readonly<
+    {shouldCompress: (value: string) => boolean; compress: (value: string) => string; decompress: (value: string) => string}
+>;
 
 export const lzutf8Util: lzutf8UtilType = (() => {
     // TODO make the "min length to compress" value configurable
@@ -32,7 +30,7 @@ export const lzutf8Util: lzutf8UtilType = (() => {
 
 // TODO move "protonmail message rest model" to shared library since being referenced from different places
 export const parseProtonRestModel = <T extends Mail | Folder>(
-    dbEntity: DeepReadonly<T>
+    dbEntity: DeepReadonly<T>,
 ): T extends Mail ? RestModel.Message : RestModel.Label => {
     return JSON.parse( // eslint-disable-line @typescript-eslint/no-unsafe-return
         dbEntity.rawCompression === "lzutf8"
@@ -41,9 +39,7 @@ export const parseProtonRestModel = <T extends Mail | Folder>(
     );
 };
 
-export const readMailBody = <T extends Pick<Mail, "body" | "bodyCompression">>(
-    dbEntity: DeepReadonly<T>,
-): string => {
+export const readMailBody = <T extends Pick<Mail, "body" | "bodyCompression">>(dbEntity: DeepReadonly<T>): string => {
     return dbEntity.bodyCompression === "lzutf8"
         ? lzutf8Util.decompress(dbEntity.body)
         : dbEntity.body;

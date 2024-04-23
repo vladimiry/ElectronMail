@@ -28,10 +28,7 @@ export class HoveredHrefHighlightElement extends HTMLElement {
 
     private readonly releaseApiClientDeferred = new Deferred<void>();
 
-    private readonly beforeUnloadEventHandlingArgs: readonly ["beforeunload", () => void] = [
-        "beforeunload",
-        (): void => this.destroy(),
-    ];
+    private readonly beforeUnloadEventHandlingArgs: readonly ["beforeunload", () => void] = ["beforeunload", (): void => this.destroy()];
 
     constructor() {
         super();
@@ -56,66 +53,60 @@ export class HoveredHrefHighlightElement extends HTMLElement {
         this.logger.info(nameof(HoveredHrefHighlightElement.prototype.connectedCallback));
 
         this.subscription.add(
-            this.resolveNotification()
-                .pipe(
-                    ofType(IPC_MAIN_API_NOTIFICATION_ACTIONS.TargetUrl),
-                    distinctUntilChanged(({payload: {url: prev}}, {payload: {url: curr}}) => curr === prev),
-                )
-                .subscribe(
-                    ({payload: {url, position}}) => {
-                        const {el} = this;
-                        const {style} = el;
-                        const render = (): void => {
-                            el.innerText = url;
-                            el.classList.add(HOVERED_HREF_HIGHLIGHTER_RENDER_VISIBLE_CLASS_NAME);
-                        };
+            this.resolveNotification().pipe(
+                ofType(IPC_MAIN_API_NOTIFICATION_ACTIONS.TargetUrl),
+                distinctUntilChanged(({payload: {url: prev}}, {payload: {url: curr}}) => curr === prev),
+            ).subscribe(({payload: {url, position}}) => {
+                const {el} = this;
+                const {style} = el;
+                const render = (): void => {
+                    el.innerText = url;
+                    el.classList.add(HOVERED_HREF_HIGHLIGHTER_RENDER_VISIBLE_CLASS_NAME);
+                };
 
-                        if (!url) {
-                            el.classList.remove(HOVERED_HREF_HIGHLIGHTER_RENDER_VISIBLE_CLASS_NAME);
-                            return;
-                        }
+                if (!url) {
+                    el.classList.remove(HOVERED_HREF_HIGHLIGHTER_RENDER_VISIBLE_CLASS_NAME);
+                    return;
+                }
 
-                        // by default placing at left side and with full max-width
-                        style.maxWidth = "100%";
-                        style.left = "0";
-                        style.right = "auto";
+                // by default placing at left side and with full max-width
+                style.maxWidth = "100%";
+                style.left = "0";
+                style.right = "auto";
 
-                        if (!position) {
-                            render();
-                            return;
-                        }
+                if (!position) {
+                    render();
+                    return;
+                }
 
-                        // render the hint block as hidden
-                        style.visibility = "hidden";
-                        render();
+                // render the hint block as hidden
+                style.visibility = "hidden";
+                render();
 
-                        const renderedHintSize = {
-                            // TODO subtract width/height of devtools window
-                            //      currenty devloots window should be closed/detached for percent size to be properly calculated
-                            widthPercent: el.offsetWidth / (window.innerWidth / 100),
-                            heightPercent: el.offsetHeight / (window.innerHeight / 100),
-                        } as const;
-                        const shouldPositionTheHint = (
-                            // hint block overlapping the cursor at x-axis
-                            (renderedHintSize.widthPercent + 3) > position.cursorXPercent
-                            &&
-                            // hint block overlapping the cursor at y-axis
-                            (renderedHintSize.heightPercent + 3) > (100 - position.cursorYPercent)
-                        );
+                const renderedHintSize = {
+                    // TODO subtract width/height of devtools window
+                    //      currenty devloots window should be closed/detached for percent size to be properly calculated
+                    widthPercent: el.offsetWidth / (window.innerWidth / 100),
+                    heightPercent: el.offsetHeight / (window.innerHeight / 100),
+                } as const;
+                const shouldPositionTheHint = (
+                    // hint block overlapping the cursor at x-axis
+                    (renderedHintSize.widthPercent + 3) > position.cursorXPercent
+                    // hint block overlapping the cursor at y-axis
+                    && (renderedHintSize.heightPercent + 3) > (100 - position.cursorYPercent)
+                );
 
-                        if (shouldPositionTheHint) {
-                            style.maxWidth = "50%";
-                            const shouldPlaceAtRightSide = position.cursorXPercent < 50;
-                            if (shouldPlaceAtRightSide) {
-                                style.left = "auto";
-                                style.right = "0";
-                            }
-                        }
+                if (shouldPositionTheHint) {
+                    style.maxWidth = "50%";
+                    const shouldPlaceAtRightSide = position.cursorXPercent < 50;
+                    if (shouldPlaceAtRightSide) {
+                        style.left = "auto";
+                        style.right = "0";
+                    }
+                }
 
-                        style.visibility = "visible";
-                    },
-                    this.logger.error.bind(this.logger),
-                ),
+                style.visibility = "visible";
+            }, this.logger.error.bind(this.logger)),
         );
     }
 
@@ -130,28 +121,19 @@ export class HoveredHrefHighlightElement extends HTMLElement {
             return this.notification$;
         }
 
-        return this.notification$ = resolveIpcMainApi({logger: this.logger})(
-            "notification",
-            {
-                finishPromise: this.releaseApiClientDeferred.promise,
-                timeoutMs: ONE_SECOND_MS * 3,
-            },
-        )();
+        return this.notification$ = resolveIpcMainApi({logger: this.logger})("notification", {
+            finishPromise: this.releaseApiClientDeferred.promise,
+            timeoutMs: ONE_SECOND_MS * 3,
+        })();
     }
 }
 
-export function registerHoveredHrefHighlightElement(
-    name = HoveredHrefHighlightElement.tagName,
-): {
-    tagName: string;
-} {
+export function registerHoveredHrefHighlightElement(name = HoveredHrefHighlightElement.tagName): {tagName: string} {
     customElements.define(name, HoveredHrefHighlightElement);
 
     console.log(`"${name}" custom element has been registered`); // eslint-disable-line no-console
 
-    return {
-        tagName: name,
-    };
+    return {tagName: name};
 }
 
 export function attachHoveredHrefHighlightElement(): HoveredHrefHighlightElement {

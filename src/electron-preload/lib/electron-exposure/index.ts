@@ -21,16 +21,7 @@ export function exposeElectronStuffToWindow(): ElectronWindow {
     const prop: keyof ElectronWindow = "__ELECTRON_EXPOSURE__";
     const {[prop]: value} = ELECTRON_WINDOW;
 
-    Object.defineProperty(
-        window,
-        prop,
-        {
-            value,
-            configurable: false,
-            enumerable: false,
-            writable: false,
-        },
-    );
+    Object.defineProperty(window, prop, {value, configurable: false, enumerable: false, writable: false});
 
     return ELECTRON_WINDOW;
 }

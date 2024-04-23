@@ -11,7 +11,7 @@ import {walkConversationNodesTree} from "src/shared/util";
 
 export function searchRootConversationNodes(
     account: DeepReadonly<FsDbAccount>,
-    {mailPks, folderIds}: DeepReadonly<{ mailPks?: Array<Mail["pk"]>; folderIds?: Array<Folder["pk"]> }> = {},
+    {mailPks, folderIds}: DeepReadonly<{mailPks?: Array<Mail["pk"]>; folderIds?: Array<Folder["pk"]>}> = {},
     includingSpam: boolean,
 ): View.RootConversationNode[] {
     // TODO optimize search: implement custom search instead of getting all the mails first and then narrowing the list down
@@ -55,9 +55,12 @@ export function searchRootConversationNodes(
 
 export const secondSearchStep = async (
     ctx: DeepReadonly<Context>,
-    {login, folderIds, hasAttachments, codeFilter, sentDateAfter}:
-        DeepReadonly<Pick<Parameters<IpcMainApiEndpoints["dbFullTextSearch"]>[0],
-            "login" | "folderIds" | "hasAttachments" | "sentDateAfter" | "codeFilter">>,
+    {login, folderIds, hasAttachments, codeFilter, sentDateAfter}: DeepReadonly<
+        Pick<
+            Parameters<IpcMainApiEndpoints["dbFullTextSearch"]>[0],
+            "login" | "folderIds" | "hasAttachments" | "sentDateAfter" | "codeFilter"
+        >
+    >,
     mailScoresByPk: ReadonlyMap<IndexableMailId, number> | null,
 ): Promise<Unpacked<ReturnType<IpcMainApiEndpoints["dbFullTextSearch"]>>["mailsBundleItems"]> => {
     const account = ctx.db.getAccount({login});
@@ -86,11 +89,7 @@ export const secondSearchStep = async (
                 if (!quickJS) {
                     throw new Error(`"${nameof(quickJS)}" has not been initialized`);
                 }
-                const augmentedRawMailSerialized = JSON.stringify(
-                    JSON.stringify(
-                        augmentRawMailWithFolders(mail, folders, false),
-                    ),
-                );
+                const augmentedRawMailSerialized = JSON.stringify(JSON.stringify(augmentRawMailWithFolders(mail, folders, false)));
                 const evalCode = `
                     (() => {
                         let ${QUICK_JS_EVAL_CODE_VARIABLE_NAME} = false;
@@ -105,10 +104,7 @@ export const secondSearchStep = async (
                         return Boolean(${QUICK_JS_EVAL_CODE_VARIABLE_NAME});
                     })()
                 `;
-                return quickJS.evalCode(
-                    evalCode,
-                    {shouldInterrupt: shouldInterruptAfterDeadline(Date.now() + ONE_SECOND_MS)},
-                ) as boolean;
+                return quickJS.evalCode(evalCode, {shouldInterrupt: shouldInterruptAfterDeadline(Date.now() + ONE_SECOND_MS)}) as boolean;
             }
             : () => true,
         bySentDateAfter: (() => {
@@ -120,20 +116,15 @@ export const secondSearchStep = async (
                 : () => true;
         })(),
     } as const;
-    const getScore: (mail: Exclude<View.ConversationNode["mail"], undefined>) => number | undefined | null
-        = mailScoresByPk
+    const getScore: (mail: Exclude<View.ConversationNode["mail"], undefined>) => number | undefined | null = mailScoresByPk
         ? ({pk}) => mailScoresByPk.get(pk)
         : () => null; // no full-text search executing happened, so no score provided
-    const rootConversationNodes = searchRootConversationNodes(
-        account,
-        {
-            mailPks: mailScoresByPk
-                ? [...mailScoresByPk.keys()]
-                : undefined,
-            folderIds,
-        },
-        true,
-    );
+    const rootConversationNodes = searchRootConversationNodes(account, {
+        mailPks: mailScoresByPk
+            ? [...mailScoresByPk.keys()]
+            : undefined,
+        folderIds,
+    }, true);
     const mailsBundleItems: Unpacked<ReturnType<typeof secondSearchStep>> = [];
 
     for (const rootConversationNode of rootConversationNodes) {
@@ -150,19 +141,12 @@ export const secondSearchStep = async (
             const score = getScore(mail);
 
             if (
-                (
-                    score === null // no full-text search executing happened, so accept all mails in this filter
-                    ||
-                    typeof score === "number"
-                )
-                &&
-                mail.folders.find(filters.byFolder)
-                &&
-                filters.byHasAttachment(mail.attachmentsCount)
-                &&
-                filters.bySentDateAfter(mail.sentDate)
-                &&
-                filters.byCode(mail)
+                (score === null // no full-text search executing happened, so accept all mails in this filter
+                    || typeof score === "number")
+                && mail.folders.find(filters.byFolder)
+                && filters.byHasAttachment(mail.attachmentsCount)
+                && filters.bySentDateAfter(mail.sentDate)
+                && filters.byCode(mail)
             ) {
                 matchedScoredNodeMails.push({...mail, score: score ?? undefined});
             }
@@ -172,9 +156,7 @@ export const secondSearchStep = async (
             continue;
         }
 
-        mailsBundleItems.push(
-            ...matchedScoredNodeMails.map((mail) => ({mail, conversationSize: allNodeMailsCount})),
-        );
+        mailsBundleItems.push(...matchedScoredNodeMails.map((mail) => ({mail, conversationSize: allNodeMailsCount})));
     }
 
     return mailsBundleItems;

@@ -4,15 +4,10 @@ import {PACKAGE_NAME} from "src/shared/const";
 
 type Keytar = Pick<typeof import("keytar"), "getPassword" | "setPassword" | "deletePassword">;
 
-const credentialsKeys = [
-    PACKAGE_NAME,
-    `master-password${BUILD_ENVIRONMENT === "e2e" ? "-e2e" : ""}`,
-] as const;
+const credentialsKeys = [PACKAGE_NAME, `master-password${BUILD_ENVIRONMENT === "e2e" ? "-e2e" : ""}`] as const;
 
 // TODO don't expose STATE
-export const STATE: {
-    resolveKeytar: () => Promise<Keytar>;
-} = {
+export const STATE: {resolveKeytar: () => Promise<Keytar>} = {
     resolveKeytar: async (): ReturnType<(typeof STATE)["resolveKeytar"]> => {
         const keytar = pick(await import("keytar"), ["getPassword", "setPassword", "deletePassword"]);
         STATE.resolveKeytar = async (): ReturnType<(typeof STATE)["resolveKeytar"]> => Promise.resolve(keytar);

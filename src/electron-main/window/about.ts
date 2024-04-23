@@ -10,7 +10,12 @@ import {curryFunctionMembers} from "src/shared/util";
 import {DEFAULT_WEB_PREFERENCES} from "./constants";
 import {injectVendorsAppCssIntoHtmlFile, resolveDefaultAppSession, resolveUiContextStrict} from "src/electron-main/util";
 import {
-    PACKAGE_DESCRIPTION, PACKAGE_GITHUB_PROJECT_URL, PACKAGE_LICENSE, PACKAGE_VERSION, PRODUCT_NAME, WEB_PROTOCOL_SCHEME,
+    PACKAGE_DESCRIPTION,
+    PACKAGE_GITHUB_PROJECT_URL,
+    PACKAGE_LICENSE,
+    PACKAGE_VERSION,
+    PRODUCT_NAME,
+    WEB_PROTOCOL_SCHEME,
     ZOOM_FACTOR_DEFAULT,
 } from "src/shared/const";
 import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/const/webpack";
@@ -34,22 +39,14 @@ const resolveContent = async (ctx: Context): Promise<Unpacked<ReturnType<typeof 
                 <p>${PACKAGE_DESCRIPTION}</p>
                 <p>Distributed under ${PACKAGE_LICENSE} license.</p>
             `,
-            {
-                allowedTags: sanitizeHtml.defaults.allowedTags.concat(["h1"]),
-                allowedAttributes: {
-                    a: ["href", "style"],
-                    h1: ["style"],
-                },
-            },
+            {allowedTags: sanitizeHtml.defaults.allowedTags.concat(["h1"]), allowedAttributes: {a: ["href", "style"], h1: ["style"]}},
         ),
         ((): string => {
             const {versions} = process;
-            const props = [
-                {prop: "electron", title: "Electron"},
-                {prop: "chrome", title: "Chromium"},
-                {prop: "node", title: "Node"},
-                {prop: "v8", title: "V8"},
-            ] as const;
+            const props = [{prop: "electron", title: "Electron"}, {prop: "chrome", title: "Chromium"}, {prop: "node", title: "Node"}, {
+                prop: "v8",
+                title: "V8",
+            }] as const;
             return `
                 <ul class="list-versions align-items-left justify-content-center font-weight-light text-muted">
                     ${props.map(({prop, title}) => sanitizeHtml(`<li>${title}: ${versions[prop]}</li>`)).join("")}
@@ -60,10 +57,7 @@ const resolveContent = async (ctx: Context): Promise<Unpacked<ReturnType<typeof 
     const pageLocation = ctx.locations.aboutBrowserWindowPage;
     const injection = await injectVendorsAppCssIntoHtmlFile(pageLocation, ctx.locations);
 
-    injection.html = injection.html.replace(
-        /(.*)#MAIN_PROCESS_INJECTION_POINTCUT#(.*)/i,
-        `$1${htmlInjection}$2`,
-    );
+    injection.html = injection.html.replace(/(.*)#MAIN_PROCESS_INJECTION_POINTCUT#(.*)/i, `$1${htmlInjection}$2`);
 
     if (!injection.html.includes(htmlInjection)) {
         logger.error(nameof(resolveContent), injection.html);
@@ -105,26 +99,23 @@ export async function showAboutBrowserWindow(ctx: Context): Promise<BrowserWindo
         },
     });
 
-    browserWindow
-        .once("ready-to-show", async () => {
-            if (zoomFactor !== ZOOM_FACTOR_DEFAULT) {
-                await applyZoomFactor(ctx, browserWindow.webContents);
-            }
-            browserWindow.show();
-            browserWindow.focus();
-        })
-        .on("closed", () => {
-            delete uiContext?.aboutBrowserWindow;
-        });
+    browserWindow.once("ready-to-show", async () => {
+        if (zoomFactor !== ZOOM_FACTOR_DEFAULT) {
+            await applyZoomFactor(ctx, browserWindow.webContents);
+        }
+        browserWindow.show();
+        browserWindow.focus();
+    }).on("closed", () => {
+        delete uiContext?.aboutBrowserWindow;
+    });
 
     uiContext.aboutBrowserWindow = browserWindow;
 
     const {html} = await resolveContent(ctx);
 
-    await browserWindow.webContents.loadURL(
-        `data:text/html,${html}`,
-        {baseURLForDataURL: `${WEB_PROTOCOL_SCHEME}:/${WEBPACK_WEB_CHUNK_NAMES.about}/`},
-    );
+    await browserWindow.webContents.loadURL(`data:text/html,${html}`, {
+        baseURLForDataURL: `${WEB_PROTOCOL_SCHEME}:/${WEBPACK_WEB_CHUNK_NAMES.about}/`,
+    });
 
     if (BUILD_ENVIRONMENT === "development") {
         browserWindow.webContents.openDevTools();

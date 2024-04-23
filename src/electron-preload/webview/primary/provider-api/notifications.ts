@@ -9,7 +9,7 @@ import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 
 const logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, __filename);
 
-type FETCH_NOTIFICATION$_Type = Observable<NoExtraProps<{ url: string; responseTextPromise: Promise<string> }>>;
+type FETCH_NOTIFICATION$_Type = Observable<NoExtraProps<{url: string; responseTextPromise: Promise<string>}>>;
 
 // WARN: has to be initialized ASAP in page/js-code loading/evaluating life cycle
 // since the app needs to be notified about all the fetch request
@@ -22,7 +22,7 @@ export const FETCH_NOTIFICATION$: FETCH_NOTIFICATION$_Type = (() => {
         const skipNotification = typeof configArg === "object" && FETCH_NOTIFICATION_SKIP_SYMBOL in configArg;
 
         if (skipNotification) {
-            delete (configArg as unknown as { [FETCH_NOTIFICATION_SKIP_SYMBOL]?: unknown })[FETCH_NOTIFICATION_SKIP_SYMBOL];
+            delete (configArg as unknown as {[FETCH_NOTIFICATION_SKIP_SYMBOL]?: unknown})[FETCH_NOTIFICATION_SKIP_SYMBOL];
         }
 
         const originalCallResult = originalFetch.apply(this, args);
@@ -65,13 +65,11 @@ export const FETCH_NOTIFICATION$: FETCH_NOTIFICATION$_Type = (() => {
     return subject.asObservable();
 })();
 
-export const IFRAME_NOTIFICATION$ = new Observable<typeof ProtonRoosterEditorReadyEvent.prototype.detail.iframeDocument>(
-    (subscribe) => {
-        const args = [
-            ProtonRoosterEditorReadyEvent.eventType,
-            ({detail: {iframeDocument}}: Pick<typeof ProtonRoosterEditorReadyEvent.prototype, "detail">) => subscribe.next(iframeDocument),
-        ] as const;
-        window.addEventListener(...args);
-        return () => window.removeEventListener(...args);
-    },
-);
+export const IFRAME_NOTIFICATION$ = new Observable<typeof ProtonRoosterEditorReadyEvent.prototype.detail.iframeDocument>((subscribe) => {
+    const args = [
+        ProtonRoosterEditorReadyEvent.eventType,
+        ({detail: {iframeDocument}}: Pick<typeof ProtonRoosterEditorReadyEvent.prototype, "detail">) => subscribe.next(iframeDocument),
+    ] as const;
+    window.addEventListener(...args);
+    return () => window.removeEventListener(...args);
+});

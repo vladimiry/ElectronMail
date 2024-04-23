@@ -9,45 +9,33 @@ export const htmlToText: (html: string) => string = (() => {
         hr: "",
     });
 
-    turndownService.use([
-        () => turndownService.addRule(
-            "replaceAnchor",
-            {
-                filter: "a",
-                replacement(...[/* content */, node, /* options */]) {
-                    return node.textContent ?? "";
-                },
+    turndownService.use([() =>
+        turndownService.addRule("replaceAnchor", {
+            filter: "a",
+            replacement(...[/* content */, node /* options */]) {
+                return node.textContent ?? "";
             },
-        ),
-        () => turndownService.addRule(
-            "replaceDiv",
-            {
-                filter: "div",
-                replacement(...[content, /* node */, /* options */]) {
-                    return content;
-                },
+        }), () =>
+        turndownService.addRule("replaceDiv", {
+            filter: "div",
+            replacement(...[content /* options */]) {
+                return content;
             },
-        ),
-        () => turndownService.addRule(
-            "replaceBreakLine",
-            {
-                filter: "br",
-                replacement(...[/* content */, node, /* options */]) {
-                    if (node.parentElement?.lastChild === node && node.parentElement.textContent) {
-                        return node.parentElement.nodeName !== "LI" ? "\n" : "";
-                    }
-                    return `${emptyLineRegex.source}\n`;
-                },
+        }), () =>
+        turndownService.addRule("replaceBreakLine", {
+            filter: "br",
+            replacement(...[/* content */, node /* options */]) {
+                if (node.parentElement?.lastChild === node && node.parentElement.textContent) {
+                    return node.parentElement.nodeName !== "LI" ? "\n" : "";
+                }
+                return `${emptyLineRegex.source}\n`;
             },
-        ),
-    ]);
+        })]);
 
     // https://github.com/mixmark-io/turndown#escaping-markdown-characters
     turndownService.escape = (value: string) => value;
 
     return (html: string): string => {
-        return turndownService
-            .turndown(html)
-            .replace(emptyLineRegex, "");
+        return turndownService.turndown(html).replace(emptyLineRegex, "");
     };
 })();

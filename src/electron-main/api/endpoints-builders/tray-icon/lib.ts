@@ -15,9 +15,7 @@ type Bitmap = ReturnType<typeof make>;
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 const pureimageUInt32: Readonly<{
-    getBytesBigEndian(
-        rgba: ReturnType<Bitmap["getPixelRGBA"]>,
-    ): readonly [number, number, number, number]; // rgba
+    getBytesBigEndian(rgba: ReturnType<Bitmap["getPixelRGBA"]>): readonly [number, number, number, number]; // rgba
     fromBytesBigEndian(
         ...args: ReturnType<typeof pureimageUInt32["getBytesBigEndian"]> // eslint-disable-line  @typescript-eslint/no-use-before-define
     ): ReturnType<Bitmap["getPixelRGBA"]>;
@@ -53,14 +51,10 @@ const encodePNGToBuffer: (input: Bitmap) => Promise<Buffer> = async (input) => {
         const stream = new PassThrough();
         const data: number[] = [];
 
-        stream
-            .on("data", (chunk: typeof data) => data.push(...chunk))
-            .on("error", (error) => reject(error))
-            .on("end", () => {
-                encodingPromise // eslint-disable-line @typescript-eslint/no-use-before-define
-                    .then(() => resolve(Buffer.from(data)))
-                    .catch(reject);
-            });
+        stream.on("data", (chunk: typeof data) => data.push(...chunk)).on("error", (error) => reject(error)).on("end", () => {
+            encodingPromise // eslint-disable-line @typescript-eslint/no-use-before-define
+                .then(() => resolve(Buffer.from(data))).catch(reject);
+        });
 
         const encodingPromise = encodePNGToStream(input, stream);
     });
@@ -75,13 +69,14 @@ const cloneBitmap: (input: Pick<Bitmap, "width" | "height" | "data">) => Bitmap 
 };
 
 const bitmapToNativeImage = async (
-    source: Bitmap, config: Pick<BaseConfig, "customTrayIconSize" | "customTrayIconSizeValue">,
+    source: Bitmap,
+    config: Pick<BaseConfig, "customTrayIconSize" | "customTrayIconSizeValue">,
 ): Promise<NativeImage> => {
     const customSize = config.customTrayIconSize
         ? config.customTrayIconSizeValue
         : PLATFORM === "darwin"
-            ? 22 // https://github.com/vladimiry/ElectronMail/issues/199#issuecomment-1072651640
-            : null;
+        ? 22 // https://github.com/vladimiry/ElectronMail/issues/199#issuecomment-1072651640
+        : null;
     return nativeImage.createFromBuffer(
         await encodePNGToBuffer(
             typeof customSize === "number"
@@ -93,35 +88,24 @@ const bitmapToNativeImage = async (
                         colorSpace,
                         ...{width: customSize, height: customSize},
                     } as const;
-                    lanczos(
-                        {
-                            data: new Uint8ClampedArray(source.data),
-                            width: source.width,
-                            height: source.height,
-                            colorSpace,
-                        },
-                        dest,
-                    );
+                    lanczos({data: new Uint8ClampedArray(source.data), width: source.width, height: source.height, colorSpace}, dest);
                     const result = make(dest.width, dest.height, null);
                     result.data = Buffer.from(dest.data);
                     return result;
                 })()
-                : source
+                : source,
         ),
     );
 };
 
 export async function recolor(
-    {source, fromColor, toColor}: Readonly<{ source: Bitmap; fromColor: string; toColor: string }>,
+    {source, fromColor, toColor}: Readonly<{source: Bitmap; fromColor: string; toColor: string}>,
     sizeConfig: Pick<BaseConfig, "customTrayIconSize" | "customTrayIconSizeValue">,
 ): Promise<ImageBundle> {
     const bitmap = cloneBitmap(source);
 
     if (toColor) {
-        const hslColors = {
-            from: toHsl(fromColor),
-            to: toHsl(toColor),
-        } as const;
+        const hslColors = {from: toHsl(fromColor), to: toHsl(toColor)} as const;
 
         if (!hslColors.from || !hslColors.to) {
             throw new Error(`Failed to parse some of the Hex colors: ${JSON.stringify({from: fromColor, toColor})}`);
@@ -135,9 +119,7 @@ export async function recolor(
 
         for (let x = 0; x < bitmap.width; x++) {
             for (let y = 0; y < bitmap.height; y++) {
-                const [red, green, blue, alpha] = pureimageUInt32.getBytesBigEndian(
-                    bitmap.getPixelRGBA(x, y),
-                );
+                const [red, green, blue, alpha] = pureimageUInt32.getBytesBigEndian(bitmap.getPixelRGBA(x, y));
 
                 // skip transparent / semi-transparent pixels
                 if (alpha < 10) {
@@ -160,24 +142,12 @@ export async function recolor(
                     throw new Error(`Failed to form RGB value from HSL color: ${JSON.stringify(newHsl)}`);
                 }
 
-                bitmap.setPixelRGBA(
-                    x,
-                    y,
-                    pureimageUInt32.fromBytesBigEndian(
-                        newRgb.red,
-                        newRgb.green,
-                        newRgb.blue,
-                        alpha,
-                    ),
-                );
+                bitmap.setPixelRGBA(x, y, pureimageUInt32.fromBytesBigEndian(newRgb.red, newRgb.green, newRgb.blue, alpha));
             }
         }
     }
 
-    return {
-        bitmap,
-        native: await bitmapToNativeImage(bitmap, sizeConfig),
-    };
+    return {bitmap, native: await bitmapToNativeImage(bitmap, sizeConfig)};
 }
 
 export async function trayIconBundleFromPath(
@@ -186,10 +156,7 @@ export async function trayIconBundleFromPath(
 ): Promise<ImageBundle> {
     const bitmap = await decodePNGFromStream(createReadStream(trayIconPath));
 
-    return {
-        bitmap,
-        native: await bitmapToNativeImage(bitmap, sizeConfig),
-    };
+    return {bitmap, native: await bitmapToNativeImage(bitmap, sizeConfig)};
 }
 
 export async function loggedOutBundle(
@@ -205,22 +172,16 @@ export async function loggedOutBundle(
     skipSettingTransparentPixels(bitmap);
     bitmap.getContext("2d").drawImage(circle, 0, 0, width, height, 0, 0, width, height);
 
-    return {
-        bitmap,
-        native: await bitmapToNativeImage(bitmap, sizeConfig),
-    };
+    return {bitmap, native: await bitmapToNativeImage(bitmap, sizeConfig)};
 }
 
 export async function unreadNative(
     unread: number | null,
     fontFilePath: string,
     {bitmap: source}: ImageBundle,
-    config: CircleConfig & { textColor: string },
+    config: CircleConfig & {textColor: string},
     sizeConfig: Pick<BaseConfig, "customTrayIconSize" | "customTrayIconSizeValue">,
-): Promise<{
-    icon: NativeImage;
-    overlay: NativeImage;
-}> {
+): Promise<{icon: NativeImage; overlay: NativeImage}> {
     const circle = await (async (): Promise<ReturnType<typeof buildCircle>> => {
         const rad = (source.width * config.scale) / 2;
         const textDrawArea = buildCircle(rad, config.color);
@@ -266,12 +227,7 @@ export async function unreadNative(
 
     skipSettingTransparentPixels(icon);
 
-    icon
-        .getContext("2d")
-        .drawImage(circle, 0, 0, width, height, icon.width - width, icon.height - height, width, height);
+    icon.getContext("2d").drawImage(circle, 0, 0, width, height, icon.width - width, icon.height - height, width, height);
 
-    return {
-        icon: await bitmapToNativeImage(icon, sizeConfig),
-        overlay: await bitmapToNativeImage(circle, sizeConfig),
-    };
+    return {icon: await bitmapToNativeImage(icon, sizeConfig), overlay: await bitmapToNativeImage(circle, sizeConfig)};
 }

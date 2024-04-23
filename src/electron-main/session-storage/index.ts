@@ -26,13 +26,9 @@ export class SessionStorage {
     private readonly saveToFileQueue = new asap();
 
     constructor(
-        public readonly options: Readonly<{
-            file: string;
-            encryption: Readonly<{
-                keyResolver: () => Promise<string>;
-                presetResolver: () => Promise<KeyBasedPreset>;
-            }>;
-        }>,
+        public readonly options: Readonly<
+            {file: string; encryption: Readonly<{keyResolver: () => Promise<string>; presetResolver: () => Promise<KeyBasedPreset>}>}
+        >,
         public readonly fileFs: FsJsonStore.Model.StoreFs = FsJsonStore.Fs.Fs.fs,
     ) {
         this.logger = curryFunctionMembers(_logger, `${__filename}: ${path.basename(this.options.file)}`);
@@ -58,7 +54,7 @@ export class SessionStorage {
     }
 
     async saveSession(
-        {login, apiEndpointOrigin, session}: LoginFieldContainer & ApiEndpointOriginFieldContainer & { session: AccountPersistentSession },
+        {login, apiEndpointOrigin, session}: LoginFieldContainer & ApiEndpointOriginFieldContainer & {session: AccountPersistentSession},
     ): Promise<void> {
         this.logger.info(nameof(SessionStorage.prototype.saveSession)); // eslint-disable-line @typescript-eslint/unbound-method
         (this.entity.instance[login] ??= {})[verifyUrlOriginValue(apiEndpointOrigin)] = session;
@@ -66,16 +62,14 @@ export class SessionStorage {
     }
 
     async saveSessionStoragePatch(
-        {login, apiEndpointOrigin, __cookieStore__}: LoginFieldContainer & ApiEndpointOriginFieldContainer & { __cookieStore__: string },
+        {login, apiEndpointOrigin, __cookieStore__}: LoginFieldContainer & ApiEndpointOriginFieldContainer & {__cookieStore__: string},
     ): Promise<void> {
         this.logger.info(nameof(SessionStorage.prototype.saveSessionStoragePatch)); // eslint-disable-line @typescript-eslint/unbound-method
         (this.entity.sessionStoragePatchInstance[login] ??= {})[verifyUrlOriginValue(apiEndpointOrigin)] = {__cookieStore__};
         await this.saveToFile();
     }
 
-    async clearSession(
-        {login, apiEndpointOrigin}: LoginFieldContainer & ApiEndpointOriginFieldContainer,
-    ): Promise<boolean> {
+    async clearSession({login, apiEndpointOrigin}: LoginFieldContainer & ApiEndpointOriginFieldContainer): Promise<boolean> {
         this.logger.info(nameof(SessionStorage.prototype.clearSession)); // eslint-disable-line @typescript-eslint/unbound-method
         const bundle = this.entity.instance[login];
         if (bundle && (apiEndpointOrigin in bundle)) {
@@ -86,9 +80,7 @@ export class SessionStorage {
         return false;
     }
 
-    async load(
-        actualLogins: ReadonlyArray<AccountConfig["login"]>,
-    ): Promise<void> {
+    async load(actualLogins: ReadonlyArray<AccountConfig["login"]>): Promise<void> {
         this.logger.info(nameof(SessionStorage.prototype.load)); // eslint-disable-line @typescript-eslint/unbound-method
         const store = await this.resolveStore();
         this.entity = await store.read() ?? emptySessionStorageEntity();
@@ -106,9 +98,7 @@ export class SessionStorage {
         return new FsJsonStore.Store<FsDb>({file: this.options.file}).readable();
     }
 
-    private removeNonExistingLogins(
-        actualLogins: ReadonlyArray<AccountConfig["login"]>,
-    ): boolean {
+    private removeNonExistingLogins(actualLogins: ReadonlyArray<AccountConfig["login"]>): boolean {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         this.logger.info(nameof(SessionStorage.prototype.removeNonExistingLogins));
         const loginsToRemove = Object.keys(this.entity.instance).filter((savedLogin) => !actualLogins.includes(savedLogin));
@@ -140,10 +130,6 @@ export class SessionStorage {
             throw new Error(`Invalid encryption key length, expected: ${KEY_BYTES_32}, actual: ${key.length}`);
         }
 
-        return new FsJsonStore.Store({
-            file: this.options.file,
-            fs: this.fileFs,
-            adapter: new EncryptionAdapter({key, preset}),
-        });
+        return new FsJsonStore.Store({file: this.options.file, fs: this.fileFs, adapter: new EncryptionAdapter({key, preset})});
     }
 }

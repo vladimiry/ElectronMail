@@ -18,7 +18,7 @@ export type AccountConfig = NoExtraProps<{
         proxyBypassRules?: string;
     }>;
     loginDelayUntilSelected?: boolean;
-    loginDelaySecondsRange?: NoExtraProps<{ start: number; end: number }>;
+    loginDelaySecondsRange?: NoExtraProps<{start: number; end: number}>;
     persistentSession?: boolean;
     customUserAgent?: string;
     disabled?: boolean;
@@ -32,21 +32,25 @@ export type AccountConfig = NoExtraProps<{
 export type AccountPersistentSession = NoExtraProps<{
     readonly cookies: ElectronCookie[];
     readonly sessionStorage: ProtonClientSession["sessionStorage"];
-    readonly window: { name?: ProtonClientSession["windowName"] };
+    readonly window: {name?: ProtonClientSession["windowName"]};
 }>;
 
-export type AccountPersistentSessionBundle
-    = Record<AccountConfig["entryUrl"] /* mapped by "api endpoint origin" */, AccountPersistentSession | undefined>;
+export type AccountPersistentSessionBundle = Record<
+    AccountConfig["entryUrl"], /* mapped by "api endpoint origin" */
+    AccountPersistentSession | undefined
+>;
 
-export type AccountSessionStoragePatchBundle
-    = Record<AccountConfig["entryUrl"] /* mapped by "api endpoint origin" */, Record<"__cookieStore__", string> | undefined>;
+export type AccountSessionStoragePatchBundle = Record<
+    AccountConfig["entryUrl"], /* mapped by "api endpoint origin" */
+    Record<"__cookieStore__", string> | undefined
+>;
 
 export type Notifications = NoExtraProps<{
-    unread: number
-    loggedIn: boolean
-    loggedInCalendar: boolean
+    unread: number;
+    loggedIn: boolean;
+    loggedInCalendar: boolean;
     pageType: NoExtraProps<{
-        url?: string
-        type: "unknown"
-    }>
+        url?: string;
+        type: "unknown";
+    }>;
 }>;

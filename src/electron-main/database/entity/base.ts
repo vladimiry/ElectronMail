@@ -3,19 +3,15 @@ import {IsIn, IsNotEmpty, IsOptional, IsString} from "class-validator";
 import * as Model from "src/shared/model/database";
 
 export abstract class Entity implements Model.Entity {
-    @IsNotEmpty()
-    @IsString()
+    @IsNotEmpty() @IsString()
     pk!: Model.Entity["pk"];
 
-    @IsNotEmpty()
-    @IsString()
+    @IsNotEmpty() @IsString()
     raw!: Model.Entity["raw"];
 
-    @IsIn(["lzutf8"])
-    @IsOptional()
+    @IsIn(["lzutf8"]) @IsOptional()
     rawCompression!: Model.Mail["rawCompression"];
 
-    @IsNotEmpty()
-    @IsString()
+    @IsNotEmpty() @IsString()
     id!: Model.Entity["id"];
 }

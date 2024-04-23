@@ -11,6 +11,4 @@ export const IPC_MAIN_API_DB_INDEXER_REQUEST$ = new Subject<IpcMainServiceScan["
 
 export const IPC_MAIN_API_DB_INDEXER_RESPONSE$ = new Subject<UnionOf<typeof IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS>>();
 
-export const QUICK_JS_EVAL_CODE_VARIABLE_NAME = `_QUICK_JS_EVAL_${BINARY_NAME}`
-    .replaceAll("-", "_")
-    .toUpperCase();
+export const QUICK_JS_EVAL_CODE_VARIABLE_NAME = `_QUICK_JS_EVAL_${BINARY_NAME}`.replaceAll("-", "_").toUpperCase();

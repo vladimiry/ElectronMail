@@ -4,7 +4,14 @@ import fsAsync from "fs/promises";
 import path from "path";
 
 import {
-    buildFileStream, CONST, decryptBuffer, msgpackr, portionSizeLimit, readFileBytes, readSummaryHeader, serializeDataMapItem,
+    buildFileStream,
+    CONST,
+    decryptBuffer,
+    msgpackr,
+    portionSizeLimit,
+    readFileBytes,
+    readSummaryHeader,
+    serializeDataMapItem,
 } from "./util";
 import {Config} from "src/shared/model/options";
 import {curryFunctionMembers} from "src/shared/util";
@@ -14,13 +21,15 @@ import * as Model from "./model";
 
 const _logger = curryFunctionMembers(electronLog, __filename);
 
-export const buildSerializer: (file: string) => {
-    read: (encryptionAdapter: EncryptionAdapter) => Promise<FsDb>
+export const buildSerializer: (
+    file: string,
+) => {
+    read: (encryptionAdapter: EncryptionAdapter) => Promise<FsDb>;
     write: (
         encryptionAdapter: EncryptionAdapter,
         data: DeepReadonly<FsDb>,
         dbCompression: DeepReadonly<Config["dbCompression2"]>,
-    ) => Promise<void>
+    ) => Promise<void>;
 } = (file) => {
     return {
         read: (() => {
@@ -38,12 +47,7 @@ export const buildSerializer: (file: string) => {
                 }
 
                 if (!serializationDataMap) { // backward compatibility support
-                    const db = msgpackr.unpack(
-                        await decryptBuffer(
-                            await fsAsync.readFile(file),
-                            encryptionAdapter,
-                        ),
-                    ) as FsDb;
+                    const db = msgpackr.unpack(await decryptBuffer(await fsAsync.readFile(file), encryptionAdapter)) as FsDb;
                     logger.verbose("end");
                     return db;
                 }
@@ -62,15 +66,11 @@ export const buildSerializer: (file: string) => {
                     } else if (readFileBytesSharedBuffer.byteLength < byteCountToRead) {
                         readFileBytesSharedBuffer = Buffer.concat([
                             readFileBytesSharedBuffer,
-                            Buffer.alloc(byteCountToRead - readFileBytesSharedBuffer.byteLength)
+                            Buffer.alloc(byteCountToRead - readFileBytesSharedBuffer.byteLength),
                         ]);
                     }
 
-                    const item = await readFileBytes(
-                        readFileBytesSharedBuffer,
-                        file,
-                        {fileOffsetStart, byteCountToRead},
-                    );
+                    const item = await readFileBytes(readFileBytesSharedBuffer, file, {fileOffsetStart, byteCountToRead});
 
                     fileOffsetStart = fileOffsetEnd;
 
@@ -108,8 +108,10 @@ export const buildSerializer: (file: string) => {
             return async (encryptionAdapter, inputDb, compressionOpts) => {
                 logger.verbose("start");
                 type DataMap = NoExtraProps<Required<Model.DataMapSerializationHeaderPart["dataMap"]>>;
-                const dataMap: Pick<DataMap, "compression"> & import("ts-essentials").DeepWritable<Pick<DataMap, "items">> =
-                    {compression: compressionOpts.type, items: []};
+                const dataMap: Pick<DataMap, "compression"> & import("ts-essentials").DeepWritable<Pick<DataMap, "items">> = {
+                    compression: compressionOpts.type,
+                    items: [],
+                };
                 const fileStream = buildFileStream(file);
                 const writeDataMapItem = async (data: DeepReadonly<FsDb> | DeepReadonly<FsDb["accounts"]>): Promise<void> => {
                     const serializedDb = await serializeDataMapItem(
@@ -141,9 +143,9 @@ export const buildSerializer: (file: string) => {
 
                         { // serializing emails split into the portions
                             const mailsPortion: {
-                                bufferDb: FsDb["accounts"],
-                                portionSizeCounter: number,
-                                readonly portionSizeLimit: number
+                                bufferDb: FsDb["accounts"];
+                                portionSizeCounter: number;
+                                readonly portionSizeLimit: number;
                             } = {
                                 bufferDb: {},
                                 portionSizeCounter: CONST.zero,

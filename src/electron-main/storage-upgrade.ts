@@ -21,8 +21,13 @@ import {NumericBoolean} from "src/shared/model/common";
 import {parseProtonRestModel} from "src/shared/util/entity";
 import {pickBaseConfigProperties} from "src/shared/util/config";
 import {
-    PROTON_API_ENTRY_PRIMARY_VALUE, PROTON_API_ENTRY_PROTONMAIL_CH_VALUE, PROTON_API_ENTRY_PROTONMAIL_COM_VALUE,
-    PROTON_API_ENTRY_TOR_V2_VALUE, PROTON_API_ENTRY_TOR_V3_VALUE, PROTON_API_ENTRY_TOR_V4_VALUE, PROTON_API_ENTRY_URLS,
+    PROTON_API_ENTRY_PRIMARY_VALUE,
+    PROTON_API_ENTRY_PROTONMAIL_CH_VALUE,
+    PROTON_API_ENTRY_PROTONMAIL_COM_VALUE,
+    PROTON_API_ENTRY_TOR_V2_VALUE,
+    PROTON_API_ENTRY_TOR_V3_VALUE,
+    PROTON_API_ENTRY_TOR_V4_VALUE,
+    PROTON_API_ENTRY_URLS,
     PROTON_API_ENTRY_VALUE_PREFIX,
 } from "src/shared/const/proton-url";
 
@@ -33,7 +38,7 @@ function isAppVersionLessThan(version: string): boolean {
 }
 
 const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
-    "1.1.0": (config: Config & { appVersion?: string }) => {
+    "1.1.0": (config: Config & {appVersion?: string}) => {
         if (typeof config.appVersion !== "undefined") {
             delete config.appVersion;
         }
@@ -72,7 +77,7 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             config.fetching = {} as any; // eslint-disable-line @typescript-eslint/no-explicit-any
         }
         if (!config.fetching.rateLimit) {
-            const {fetchingRateLimiting} = (config as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+            const {fetchingRateLimiting} = config as any; // eslint-disable-line @typescript-eslint/no-explicit-any
             config.fetching.rateLimit = typeof fetchingRateLimiting === "object"
                 ? fetchingRateLimiting
                 : INITIAL_STORES.config().fetching.rateLimit;
@@ -89,7 +94,7 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             config.disableSpamNotifications = INITIAL_STORES.config().disableSpamNotifications;
         }
     },
-    "2.3.3": (_, config = _ as Config & { timeouts: { fetching?: number; syncing?: number } }) => {
+    "2.3.3": (_, config = _ as Config & {timeouts: {fetching?: number; syncing?: number}}) => {
         const defaultConfig = INITIAL_STORES.config();
 
         if (!Array.isArray(config.jsFlags)) {
@@ -108,10 +113,7 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             config.indexingBootstrapBufferSize = defaultConfig.indexingBootstrapBufferSize;
         }
     },
-    "3.5.0": (
-        _,
-        config = _ as Config & { databaseSaveDelayMs?: number; checkForUpdatesAndNotify?: boolean },
-    ) => {
+    "3.5.0": (_, config = _ as Config & {databaseSaveDelayMs?: number; checkForUpdatesAndNotify?: boolean}) => {
         if (typeof config.databaseSaveDelayMs !== "undefined") {
             delete config.databaseSaveDelayMs;
         }
@@ -122,18 +124,12 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             config.checkUpdateAndNotify = INITIAL_STORES.config().checkUpdateAndNotify;
         }
     },
-    "3.5.1": (
-        _,
-        config = _ as Config & { databaseWriteDelayMs?: number },
-    ) => {
+    "3.5.1": (_, config = _ as Config & {databaseWriteDelayMs?: number}) => {
         if (typeof config.databaseWriteDelayMs !== "undefined") {
             delete config.databaseWriteDelayMs;
         }
     },
-    "3.6.1": (
-        _,
-        config = _ as Config & { clearSession?: boolean; disableGpuProcess?: boolean },
-    ) => {
+    "3.6.1": (_, config = _ as Config & {clearSession?: boolean; disableGpuProcess?: boolean}) => {
         if (typeof config.clearSession !== "undefined") {
             delete config.clearSession;
         }
@@ -163,17 +159,11 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             config.localDbMailsListViewMode = INITIAL_STORES.config().localDbMailsListViewMode;
         }
     },
-    "3.8.1": ({timeouts/*, ...restConfig */}) => {
+    "3.8.1": ({timeouts /*, ...restConfig */}) => {
         // force default "indexingBootstrap" timeout to be the minimum value
-        timeouts.indexingBootstrap = Math.max(
-            INITIAL_STORES.config().timeouts.indexingBootstrap,
-            timeouts.indexingBootstrap,
-        );
+        timeouts.indexingBootstrap = Math.max(INITIAL_STORES.config().timeouts.indexingBootstrap, timeouts.indexingBootstrap);
     },
-    "4.1.0": (
-        _,
-        config = _ as Config & { reflectSelectedAccountTitle?: boolean },
-    ) => {
+    "4.1.0": (_, config = _ as Config & {reflectSelectedAccountTitle?: boolean}) => {
         if (typeof config.reflectSelectedAccountTitle !== "undefined") {
             delete config.reflectSelectedAccountTitle;
         }
@@ -207,8 +197,8 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
 
         function trayIconRelatedUpdate(
             {prevKey, key}:
-                | Readonly<{ prevKey: "startMinimized"; key: keyof Pick<BaseConfig, "startHidden"> }>
-                | Readonly<{ prevKey: "closeToTray"; key: keyof Pick<BaseConfig, "hideOnClose"> }>,
+                | Readonly<{prevKey: "startMinimized"; key: keyof Pick<BaseConfig, "startHidden">}>
+                | Readonly<{prevKey: "closeToTray"; key: keyof Pick<BaseConfig, "hideOnClose">}>,
         ): void {
             if (typeof config[key] === "boolean") {
                 return;
@@ -233,7 +223,7 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
                 return;
             }
 
-            type PrevConfig = Config & { compactLayout?: boolean };
+            type PrevConfig = Config & {compactLayout?: boolean};
             const {compactLayout} = config as PrevConfig;
             delete (config as PrevConfig).compactLayout;
 
@@ -252,10 +242,7 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             }
         }
     },
-    "4.8.0": (
-        _,
-        config = _ as Config & { timeouts: { singleAttachmentLoad?: number } },
-    ) => {
+    "4.8.0": (_, config = _ as Config & {timeouts: {singleAttachmentLoad?: number}}) => {
         {
             delete config.timeouts.singleAttachmentLoad;
             const timeoutsKey: keyof Pick<Config["timeouts"], "attachmentLoadAverage"> = "attachmentLoadAverage";
@@ -270,10 +257,7 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             }
         }
     },
-    "4.9.0": (
-        _,
-        config = _ as Config & { htmlToText?: boolean },
-    ) => {
+    "4.9.0": (_, config = _ as Config & {htmlToText?: boolean}) => {
         if (typeof config.htmlToText !== "undefined") {
             delete config.htmlToText;
         }
@@ -285,12 +269,14 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
         }
     },
     "4.9.3": (config) => {
-        for (const key of [
-            "persistentSessionSavingInterval",
-            "dbSyncingIntervalTrigger",
-            "dbSyncingOnlineTriggerDelay",
-            "dbSyncingFiredTriggerDebounce",
-        ] as const) {
+        for (
+            const key of [
+                "persistentSessionSavingInterval",
+                "dbSyncingIntervalTrigger",
+                "dbSyncingOnlineTriggerDelay",
+                "dbSyncingFiredTriggerDebounce",
+            ] as const
+        ) {
             if (typeof config[key] === "undefined") {
                 config[key] = INITIAL_STORES.config()[key];
             }
@@ -316,18 +302,14 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             }
         }
     },
-    "4.12.4": (
-        _,
-        config = _ as Config & { updateCheck: { proxy?: unknown } },
-    ) => {
+    "4.12.4": (_, config = _ as Config & {updateCheck: {proxy?: unknown}}) => {
         {
             const {updateCheck} = config;
             const {proxy} = updateCheck;
             if (typeof proxy !== "undefined") {
                 if (
                     typeof proxy === "string"
-                    &&
-                    typeof updateCheck.proxyRules !== "string"
+                    && typeof updateCheck.proxyRules !== "string"
                 ) {
                     updateCheck.proxyRules = proxy;
                 }
@@ -344,8 +326,8 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
         {
             const key = "spellcheck";
             if (typeof config[key] !== "boolean") {
-                const {spellCheckLocale} = (config as unknown as { spellCheckLocale: unknown });
-                delete (config as unknown as { spellCheckLocale: unknown }).spellCheckLocale;
+                const {spellCheckLocale} = config as unknown as {spellCheckLocale: unknown};
+                delete (config as unknown as {spellCheckLocale: unknown}).spellCheckLocale;
                 config[key] = typeof spellCheckLocale === "boolean"
                     ? spellCheckLocale
                     : INITIAL_STORES.config()[key];
@@ -372,8 +354,8 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
         }
     },
     "5.1.1": (config) => {
-        delete (config.timeouts as { dbBootstrapping?: unknown }).dbBootstrapping;
-        delete (config.timeouts as { dbSyncing?: unknown }).dbSyncing;
+        delete (config.timeouts as {dbBootstrapping?: unknown}).dbBootstrapping;
+        delete (config.timeouts as {dbSyncing?: unknown}).dbSyncing;
     },
     "5.1.2": (config) => {
         {
@@ -386,18 +368,11 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
     // last updater
     "100.0.0": (config) => {
         // ensuring default base props are set
-        Object.assign(
-            config,
-            {
-                ...pickBaseConfigProperties(INITIAL_STORES.config()),
-                // "stringify => parse" drops "undefined" values
-                ...JSON.parse(
-                    JSON.stringify(
-                        pickBaseConfigProperties(config),
-                    ),
-                ),
-            },
-        );
+        Object.assign(config, {
+            ...pickBaseConfigProperties(INITIAL_STORES.config()),
+            // "stringify => parse" drops "undefined" values
+            ...JSON.parse(JSON.stringify(pickBaseConfigProperties(config))),
+        });
     },
 };
 
@@ -406,16 +381,13 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
 function upgrade<T extends Config | Settings>(entity: T, upgrades: Record<string, (entity: T) => void>): boolean {
     const input = JSON.stringify(entity);
 
-    Object
-        .keys(upgrades)
-        .sort(compareVersions)
-        .forEach((version) => {
-            const upgrader = upgrades[version];
-            if (!upgrader) {
-                throw new Error("Upgrading function resolving failed");
-            }
-            upgrader(entity);
-        });
+    Object.keys(upgrades).sort(compareVersions).forEach((version) => {
+        const upgrader = upgrades[version];
+        if (!upgrader) {
+            throw new Error("Upgrading function resolving failed");
+        }
+        upgrader(entity);
+    });
 
     return JSON.stringify(entity) !== input;
 }
@@ -445,7 +417,7 @@ export const upgradeSettings: upgradeSettingsType = ((): upgradeSettingsType => 
                 });
             },
             // TODO release: test "1.4.2" settings upgrader "dbEncryptionKey" renaming at least
-            "1.4.2": (settings: Settings & { dbEncryptionKey?: string }): void => {
+            "1.4.2": (settings: Settings & {dbEncryptionKey?: string}): void => {
                 // rename "dbEncryptionKey" => "databaseEncryptionKey"
                 if (!settings.databaseEncryptionKey) {
                     settings.databaseEncryptionKey = settings.dbEncryptionKey
@@ -453,7 +425,7 @@ export const upgradeSettings: upgradeSettingsType = ((): upgradeSettingsType => 
                         : INITIAL_STORES.settings().databaseEncryptionKey;
                 }
                 // rename "storeMails" => "database"
-                settings.accounts.forEach((account: AccountConfig & { storeMails?: boolean }) => {
+                settings.accounts.forEach((account: AccountConfig & {storeMails?: boolean}) => {
                     if (typeof account.database !== "undefined" || typeof account.storeMails === "undefined") {
                         return;
                     }
@@ -473,7 +445,7 @@ export const upgradeSettings: upgradeSettingsType = ((): upgradeSettingsType => 
             },
             "4.0.0": (settings): void => {
                 const protonmailAccounts = settings.accounts.filter((account) => {
-                    const {type} = account as unknown as { type?: string };
+                    const {type} = account as unknown as {type?: string};
                     return !type || type === "protonmail";
                 });
                 const totalAccountsCount = settings.accounts.length;
@@ -495,9 +467,7 @@ export const upgradeSettings: upgradeSettingsType = ((): upgradeSettingsType => 
 
                 ctx.settingsStore.fs._impl.copyFileSync(originalFile, backupFile);
 
-                IPC_MAIN_API_NOTIFICATION$.next(
-                    IPC_MAIN_API_NOTIFICATION_ACTIONS.InfoMessage({message}),
-                );
+                IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.InfoMessage({message}));
 
                 logger.debug(message);
 
@@ -513,7 +483,7 @@ export const upgradeSettings: upgradeSettingsType = ((): upgradeSettingsType => 
                 })();
 
                 settings.accounts.forEach((account) => {
-                    delete (account as (typeof account & { type?: "protonmail" | "tutanota" })).type;
+                    delete (account as (typeof account & {type?: "protonmail" | "tutanota"})).type;
                     if (account.entryUrl.startsWith(PROTON_API_ENTRY_VALUE_PREFIX)) {
                         account.entryUrl = account.entryUrl.substr(PROTON_API_ENTRY_VALUE_PREFIX.length);
                     }
@@ -529,7 +499,7 @@ export const upgradeSettings: upgradeSettingsType = ((): upgradeSettingsType => 
             },
             "4.14.0": (settings: Settings): void => {
                 settings.accounts.forEach((account) => {
-                    delete (account as typeof account & { contextMenu?: boolean }).contextMenu;
+                    delete (account as typeof account & {contextMenu?: boolean}).contextMenu;
                 });
             },
             "4.15.0": (settings): void => {
@@ -538,7 +508,7 @@ export const upgradeSettings: upgradeSettingsType = ((): upgradeSettingsType => 
                         account.entryUrl = PROTON_API_ENTRY_TOR_V4_VALUE;
                     }
                     {
-                        delete (account as typeof account & { rotateUserAgent?: unknown }).rotateUserAgent;
+                        delete (account as typeof account & {rotateUserAgent?: unknown}).rotateUserAgent;
                     }
                 }
             },
@@ -607,7 +577,7 @@ export async function upgradeDatabase(db: Database, accounts: Settings["accounts
         const folderHandler = (folder: import("src/shared/model/database").Folder): void => {
             // setting "folder.type" prop from the "folder.raw" value
             if (!LABEL_TYPE._.isValidValue(folder.type)) {
-                (folder as Mutable<Pick<typeof folder, "type">>).type = (folder as { exclusive?: NumericBoolean }).exclusive === 1
+                (folder as Mutable<Pick<typeof folder, "type">>).type = (folder as {exclusive?: NumericBoolean}).exclusive === 1
                     ? LABEL_TYPE.MESSAGE_FOLDER
                     : LABEL_TYPE.MESSAGE_LABEL;
 
@@ -618,9 +588,7 @@ export async function upgradeDatabase(db: Database, accounts: Settings["accounts
         };
 
         for (const {account} of db) {
-            Object
-                .values(account.folders)
-                .forEach(folderHandler);
+            Object.values(account.folders).forEach(folderHandler);
         }
     }
 
@@ -657,11 +625,9 @@ export async function upgradeDatabase(db: Database, accounts: Settings["accounts
         const removePks: DbAccountPk[] = [];
 
         for (const {pk} of db) {
-            const accountWithEnabledLocalStoreExists = accounts.some(({database, login}) => (
-                Boolean(database)
-                &&
-                pk.login === login
-            ));
+            const accountWithEnabledLocalStoreExists = accounts.some(({database, login}) => (Boolean(database)
+                && pk.login === login)
+            );
 
             if (!accountWithEnabledLocalStoreExists) {
                 removePks.push(pk);

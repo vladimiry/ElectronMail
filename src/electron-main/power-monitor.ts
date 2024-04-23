@@ -11,10 +11,7 @@ const logger = curryFunctionMembers(_logger, __filename);
 
 const idleCheckInterval = ONE_SECOND_MS * 10;
 
-const state: {
-    clearIntervalId?: ReturnType<typeof setInterval>;
-    idle?: boolean;
-} = {};
+const state: {clearIntervalId?: ReturnType<typeof setInterval>; idle?: boolean} = {};
 
 export function clearIdleTimeLogOut(): void {
     if (typeof state.clearIntervalId === "undefined") {
@@ -34,37 +31,30 @@ export async function setupIdleTimeLogOut({idleTimeLogOutSec}: Readonly<Pick<Con
 
     delete state.idle;
 
-    state.clearIntervalId = setInterval(
-        async () => {
-            const systemIdleTime = powerMonitor.getSystemIdleTime();
-            const idle = systemIdleTime >= idleTimeLogOutSec;
+    state.clearIntervalId = setInterval(async () => {
+        const systemIdleTime = powerMonitor.getSystemIdleTime();
+        const idle = systemIdleTime >= idleTimeLogOutSec;
 
-            logger.debug(JSON.stringify({systemIdleTime, idleTimeLogOutSec, idle}));
+        logger.debug(JSON.stringify({systemIdleTime, idleTimeLogOutSec, idle}));
 
-            if (!idle) {
-                delete state.idle;
-                return;
-            }
+        if (!idle) {
+            delete state.idle;
+            return;
+        }
 
-            if (state.idle) {
-                return;
-            }
+        if (state.idle) {
+            return;
+        }
 
-            IPC_MAIN_API_NOTIFICATION$.next(
-                IPC_MAIN_API_NOTIFICATION_ACTIONS.LogOut(),
-            );
+        IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.LogOut());
 
-            state.idle = idle;
-        },
-        idleCheckInterval,
-    );
+        state.idle = idle;
+    }, idleCheckInterval);
 }
 
 export function setUpPowerMonitorNotification(): void {
     const notify = (...[{message}]: Parameters<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS.PowerMonitor>): void => {
-        IPC_MAIN_API_NOTIFICATION$.next(
-            IPC_MAIN_API_NOTIFICATION_ACTIONS.PowerMonitor({message}),
-        );
+        IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.PowerMonitor({message}));
     };
     powerMonitor.on("suspend", () => notify({message: "suspend"}));
     powerMonitor.on("resume", () => notify({message: "resume"}));

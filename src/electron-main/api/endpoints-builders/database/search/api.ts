@@ -28,7 +28,6 @@ export async function buildDbSearchEndpoints(
                 throw new Error(`Failed to resolve account by the provided "login"`);
             }
 
-
             const mailPks = "query" in restOptions
                 ? [] // TODO execute the actual search and pick "mailPks" from the search result
                 : restOptions.mailPks;
@@ -51,9 +50,9 @@ export async function buildDbSearchEndpoints(
                         ofType(IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS.SearchResult),
                         filter(({payload}) => payload.uid === fullTextSearchUid),
                         first(),
-                        mergeMap(({payload: {data: {items}}}) => [new Map<IndexableMailId, number>(
-                            items.map(({key, score}) => [key, score] as [IndexableMailId, number]),
-                        )]),
+                        mergeMap((
+                            {payload: {data: {items}}},
+                        ) => [new Map<IndexableMailId, number>(items.map(({key, score}) => [key, score] as [IndexableMailId, number]))]),
                     ),
                     await (async () => {
                         const config = await lastValueFrom(ctx.config$.pipe(first()));
@@ -64,23 +63,17 @@ export async function buildDbSearchEndpoints(
                     })(),
                 )
                 : of(null);
-            const result$ = fullTextSearch$.pipe(
-                switchMap((mailScoresByPk) => {
-                    return from(
-                        (async () => {
-                            return {
-                                mailsBundleItems: await service.secondSearchStep(ctx, searchCriteria, mailScoresByPk),
-                                searched: Boolean(fullTextSearchUid),
-                            };
-                        })(),
-                    );
-                }),
-            );
+            const result$ = fullTextSearch$.pipe(switchMap((mailScoresByPk) => {
+                return from((async () => {
+                    return {
+                        mailsBundleItems: await service.secondSearchStep(ctx, searchCriteria, mailScoresByPk),
+                        searched: Boolean(fullTextSearchUid),
+                    };
+                })());
+            }));
 
             if (fullTextSearchUid) {
-                IPC_MAIN_API_DB_INDEXER_REQUEST$.next(
-                    IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS.Search({query, uid: fullTextSearchUid}),
-                );
+                IPC_MAIN_API_DB_INDEXER_REQUEST$.next(IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS.Search({query, uid: fullTextSearchUid}));
             }
 
             return lastValueFrom(result$);

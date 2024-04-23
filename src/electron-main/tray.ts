@@ -15,9 +15,7 @@ export async function initTray(endpoints: Promise<IpcMainApiEndpoints>): Promise
         label: "Options",
         visible: false,
         async click() {
-            IPC_MAIN_API_NOTIFICATION$.next(
-                IPC_MAIN_API_NOTIFICATION_ACTIONS.OpenOptions(),
-            );
+            IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.OpenOptions());
             await (await endpoints).toggleBrowserWindow({forcedState: true});
         },
     };
@@ -25,21 +23,14 @@ export async function initTray(endpoints: Promise<IpcMainApiEndpoints>): Promise
         label: "Log Out",
         visible: false,
         click() {
-            IPC_MAIN_API_NOTIFICATION$.next(
-                IPC_MAIN_API_NOTIFICATION_ACTIONS.LogOut(),
-            );
+            IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.LogOut());
         },
     };
     const setContextMenu = (): void => {
         tray.setContextMenu(
             Menu.buildFromTemplate([
-                {
-                    label: "Toggle Window",
-                    click: toggleBrowserWindow,
-                },
-                {
-                    type: "separator",
-                },
+                {label: "Toggle Window", click: toggleBrowserWindow},
+                {type: "separator"},
                 {
                     label: "About",
                     async click(): Promise<void> {
@@ -53,9 +44,7 @@ export async function initTray(endpoints: Promise<IpcMainApiEndpoints>): Promise
                         await (await endpoints).openSettingsFolder();
                     },
                 },
-                {
-                    type: "separator",
-                },
+                {type: "separator"},
                 logOutMenuItem,
                 {
                     label: "Quit",

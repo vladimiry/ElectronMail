@@ -2,9 +2,6 @@
 /.idea
 *.iml
 
-# Visual Studio Code IDE
-/.vscode
-
 # node modules stuff
 node_modules
 npm-debug.log
@@ -17,8 +14,6 @@ package-lock.json
 
 /app/
 /app-dev/
-/build/
 /dist/
 /output/
 /scripts/electron-builder/**/*.cjs
-/yarn-audit-issues

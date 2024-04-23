@@ -18,9 +18,8 @@ export function ensureFileHasNoSuidBit(file: string): void {
     const hasSuidBit = Boolean(
         // tslint:disable-next-line:no-bitwise
         stat.mode
-        &
-        // first bit of 12, same as 0b100000000000 binary or 2048 decimal
-        0x800,
+            // first bit of 12, same as 0b100000000000 binary or 2048 decimal
+            & 0x800,
     );
 
     if (hasSuidBit) {
@@ -28,35 +27,19 @@ export function ensureFileHasNoSuidBit(file: string): void {
     }
 }
 
-export async function build(
-    packageType: "appimage" | "snap",
-): Promise<{ packageFile: string }> {
-    await execShell([
-        "npm",
-        [
-            ...`run electron-builder:shortcut -- --publish never --linux ${packageType}`.split(" "),
-        ],
-    ]);
+export async function build(packageType: "appimage" | "snap"): Promise<{packageFile: string}> {
+    await execShell(["npm", [...`run electron-builder:shortcut -- --publish never --linux ${packageType}`.split(" ")]]);
 
     // TODO move "fastGlob" to lib function with inner "sanitizeFastGlobPattern" call
     const [packageFile] = await fastGlob(
-        sanitizeFastGlobPattern(
-            path.join(
-                // TODO resolve "./dist" programmatically from "electron-builder.yml"
-                "./dist",
-                "*." + (
-                    packageType === "appimage"
-                        ? "AppImage"
-                        : packageType
-                ),
-            ),
-        ),
-        {
-            absolute: true,
-            deep: 1,
-            onlyFiles: true,
-            stats: false,
-        },
+        sanitizeFastGlobPattern(path.join(
+            // TODO resolve "./dist" programmatically from "electron-builder.yml"
+            "./dist",
+            "*." + (packageType === "appimage"
+                ? "AppImage"
+                : packageType),
+        )),
+        {absolute: true, deep: 1, onlyFiles: true, stats: false},
     );
 
     if (!packageFile) {
@@ -66,9 +49,7 @@ export async function build(
     return {packageFile};
 }
 
-export function addCommandLineArgs(
-    {shFile, searchValue, replaceWith}: { shFile: string, searchValue: string, replaceWith: string },
-): void {
+export function addCommandLineArgs({shFile, searchValue, replaceWith}: {shFile: string; searchValue: string; replaceWith: string}): void {
     const shFileContent = (() => {
         const content = fs.readFileSync(shFile).toString();
         const patchedContent = content.replaceAll(searchValue, `${replaceWith} --js-flags="--max-old-space-size=12288"`);

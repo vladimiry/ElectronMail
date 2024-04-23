@@ -2,15 +2,13 @@ import {AddInitializedProp, PickObservableValues, WebpackJsonpArrayItem, Webpack
 import {assertTypeOf} from "src/shared/util";
 import {Logger} from "src/shared/model/common";
 
-export const buildFullyInitializedResolver = <T extends Record<string, { initialized?: boolean }>>(
+export const buildFullyInitializedResolver = <T extends Record<string, {initialized?: boolean}>>(
     result: T,
     resolve: (value: typeof result) => void,
     logger: Logger,
 ): () => void => {
     return () => {
-        const unInitializedEntries = Object
-            .entries(result)
-            .filter(([, value]) => !value.initialized);
+        const unInitializedEntries = Object.entries(result).filter(([, value]) => !value.initialized);
 
         if (unInitializedEntries.length) {
             const uninitializedKeys = unInitializedEntries.map(([key]) => key);
@@ -45,30 +43,25 @@ export const markInternalsRecordAsInitialized = <T>(
     resolveIfAllInitialized();
 };
 
-export const plainChunkItemHandler = <T, RI extends { value: Record<string, unknown> }>(
-    {
-        resultKey, // TODO consider dropping "resultKey" arg (used here for logging purposes only)
-        resultItem,
-        markInternalsRecordAsInitialized,
-        webpack_exports,
-        logger,
-    }: {
-        resultKey: keyof AddInitializedProp<T>,
-        resultItem: RI,
-        markInternalsRecordAsInitialized: () => void,
-        webpack_exports: Parameters<import("ts-essentials").ValueOf<WebpackJsonpArrayItem[1]>>[1],
-        logger: Logger
-    }
-): void => {
+export const plainChunkItemHandler = <T, RI extends {value: Record<string, unknown>}>({
+    resultKey, // TODO consider dropping "resultKey" arg (used here for logging purposes only)
+    resultItem,
+    markInternalsRecordAsInitialized,
+    webpack_exports,
+    logger,
+}: {
+    resultKey: keyof AddInitializedProp<T>;
+    resultItem: RI;
+    markInternalsRecordAsInitialized: () => void;
+    webpack_exports: Parameters<import("ts-essentials").ValueOf<WebpackJsonpArrayItem[1]>>[1];
+    logger: Logger;
+}): void => {
     // simple key presence and top-level value type runtime validation
     for (const [key, valueStub] of Object.entries(resultItem.value)) {
         if (!(key in webpack_exports)) {
             throw new Error(`Failed to locate expected "${key}" in the webpack exports object`);
         }
-        assertTypeOf(
-            {value: webpack_exports[key], expectedType: typeof valueStub},
-            "Failed to locate expected value type",
-        );
+        assertTypeOf({value: webpack_exports[key], expectedType: typeof valueStub}, "Failed to locate expected value type");
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
@@ -78,32 +71,23 @@ export const plainChunkItemHandler = <T, RI extends { value: Record<string, unkn
 
     {
         const typeOf = typeof resultItem.value;
-        const details = {
-            resultKey,
-            typeOf,
-            ...(typeOf === "object" && {ownPropertyNames: Object.getOwnPropertyNames(resultItem.value)}),
-        };
+        const details = {resultKey, typeOf, ...(typeOf === "object" && {ownPropertyNames: Object.getOwnPropertyNames(resultItem.value)})};
         logger.verbose(`initialized: ${JSON.stringify(details)}`);
     }
 };
 
 export const overridePushMethodGlobally = <T>(
-    {
-        resultKeys,
-        preChunkItemOverridingHook,
-        chunkItemHook,
-        logger,
-    }: {
-        resultKeys: ReadonlyArray<keyof T>,
-        preChunkItemOverridingHook?: (arg: { resultKey: ReadonlyArray<keyof T>[number] }) => void,
+    {resultKeys, preChunkItemOverridingHook, chunkItemHook, logger}: {
+        resultKeys: ReadonlyArray<keyof T>;
+        preChunkItemOverridingHook?: (arg: {resultKey: ReadonlyArray<keyof T>[number]}) => void;
         chunkItemHook: (
             arg: {
-                resultKey: ReadonlyArray<keyof T>[number],
-                webpack_exports: Parameters<import("ts-essentials").ValueOf<WebpackJsonpArrayItem[1]>>[1],
-                webpack_require: Parameters<import("ts-essentials").ValueOf<WebpackJsonpArrayItem[1]>>[2],
-            }
-        ) => void,
-        logger: Logger,
+                resultKey: ReadonlyArray<keyof T>[number];
+                webpack_exports: Parameters<import("ts-essentials").ValueOf<WebpackJsonpArrayItem[1]>>[1];
+                webpack_require: Parameters<import("ts-essentials").ValueOf<WebpackJsonpArrayItem[1]>>[2];
+            },
+        ) => void;
+        logger: Logger;
     },
 ): void => {
     const resolveOverriddenPush = (
@@ -113,9 +97,8 @@ export const overridePushMethodGlobally = <T>(
             const [/* chunkItemsIdx */, chunkItemsRecord] = firstArg;
 
             for (const resultKey of resultKeys) {
-                const [chunkItemKey, chunkItemValue] = Object
-                    .entries(chunkItemsRecord)
-                    .find(([key]) => key === resultKey) ?? [null, null] as const;
+                const [chunkItemKey, chunkItemValue] = Object.entries(chunkItemsRecord).find(([key]) => key === resultKey)
+                    ?? [null, null] as const;
 
                 if (!chunkItemKey || !chunkItemValue) {
                     continue;
@@ -140,29 +123,24 @@ export const overridePushMethodGlobally = <T>(
         return result;
     };
 
-    (window as WebpackJsonpPropAwareWindow).webpackJsonp = new Proxy(
-        (window as WebpackJsonpPropAwareWindow).webpackJsonp ??= [],
-        {
-            set(webpackJsonp, prop, value) {
-                if (prop !== "push") {
-                    Object.defineProperty(
-                        webpackJsonp,
-                        prop,
-                        {value}, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-                    );
-                    return true;
-                }
-                logger.verbose(`override "webpackJsonp.push"`);
-                webpackJsonp.push = resolveOverriddenPush(value as typeof webpackJsonp.push);
+    (window as WebpackJsonpPropAwareWindow).webpackJsonp = new Proxy((window as WebpackJsonpPropAwareWindow).webpackJsonp ??= [], {
+        set(webpackJsonp, prop, value) {
+            if (prop !== "push") {
+                Object.defineProperty(
+                    webpackJsonp,
+                    prop,
+                    {value}, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+                );
                 return true;
-            },
+            }
+            logger.verbose(`override "webpackJsonp.push"`);
+            webpackJsonp.push = resolveOverriddenPush(value as typeof webpackJsonp.push);
+            return true;
         },
-    );
+    });
 };
 
-export const handleObservableValue = <R,
-    T extends PickObservableValues<R>,
-    K extends Extract<keyof T, string>>(
+export const handleObservableValue = <R, T extends PickObservableValues<R>, K extends Extract<keyof T, string>>(
     result: AddInitializedProp<T>,
     {
         resultKey,
@@ -173,40 +151,34 @@ export const handleObservableValue = <R,
         itemCallResultTypeValidation,
         resolveIfFullyInitialized,
     }: {
-        resultKey: K,
-        webpack_exports: Exclude<Parameters<import("ts-essentials").ValueOf<WebpackJsonpArrayItem[1]>>[1], undefined>
-        itemKey?: string
-        itemName: string
+        resultKey: K;
+        webpack_exports: Exclude<Parameters<import("ts-essentials").ValueOf<WebpackJsonpArrayItem[1]>>[1], undefined>;
+        itemKey?: string;
+        itemName: string;
         itemCallResultHandler?: (
             itemCallResult: ReturnType<T[K]["_valueShape"]>,
             notify: (notification: Unpacked<typeof result[K]["value$"]>) => void,
             markAsInitialized: () => void,
-        ) => void | undefined | import("react").ReactNode[]
-        itemCallResultTypeValidation?: "function" | "object"
-        resolveIfFullyInitialized: () => void
+        ) => void | undefined | import("react").ReactNode[];
+        itemCallResultTypeValidation?: "function" | "object";
+        resolveIfFullyInitialized: () => void;
     },
     logger: Logger,
 ): void => {
     logger.verbose(nameof(handleObservableValue));
 
     const markAsInitialized = (): void => {
-        markInternalsRecordAsInitialized(
-            result,
-            resultKey,
-            resolveIfFullyInitialized,
-            logger,
-        );
+        markInternalsRecordAsInitialized(result, resultKey, resolveIfFullyInitialized, logger);
     };
-    type ReactForwardRef = { $$typeof: string, render: T[K]["_valueShape"] };
-    const resolvedExportsItem: { readonly item: ReactForwardRef["render"], readonly forwardRef?: ReactForwardRef } = (() => {
+    type ReactForwardRef = {$$typeof: string; render: T[K]["_valueShape"]};
+    const resolvedExportsItem: {readonly item: ReactForwardRef["render"]; readonly forwardRef?: ReactForwardRef} = (() => {
         const rawItem = webpack_exports[itemKey] as ReactForwardRef["render"] | ReactForwardRef;
         if (typeof rawItem !== "object") {
             return {item: rawItem};
         }
         if (
             String(rawItem.$$typeof) === "Symbol(react.forward_ref)"
-            &&
-            typeof rawItem.render === "function"
+            && typeof rawItem.render === "function"
         ) {
             return {item: rawItem.render, forwardRef: rawItem};
         }
@@ -228,21 +200,15 @@ export const handleObservableValue = <R,
         const itemCallResult = item(...args);
 
         if (itemCallResultTypeValidation) {
-            assertTypeOf(
-                {value: itemCallResult, expectedType: itemCallResultTypeValidation},
-                "Unexpected exported item call result type",
-            );
+            assertTypeOf({value: itemCallResult, expectedType: itemCallResultTypeValidation}, "Unexpected exported item call result type");
         }
 
-        const itemCallResultCustom = itemCallResultHandler && itemCallResultHandler(
-            itemCallResult as ReturnType<typeof item>,
-            (notification) => {
+        const itemCallResultCustom = itemCallResultHandler
+            && itemCallResultHandler(itemCallResult as ReturnType<typeof item>, (notification) => {
                 result[resultKey].value$.next(
                     notification as any, // eslint-disable-line @typescript-eslint/no-explicit-any
                 );
-            },
-            markAsInitialized,
-        );
+            }, markAsInitialized);
 
         return itemCallResultCustom ?? itemCallResult;
     };

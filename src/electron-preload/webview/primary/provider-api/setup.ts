@@ -35,32 +35,24 @@ export const setupProviderIntegration = (
         registerDocumentClickEventListener(iframeDocument, logger);
     });
 
-    IFRAME_NOTIFICATION$
-        .pipe(
-            mergeMap((iframeDocument) => {
-                const $readyState = iframeDocument.readyState !== "loading"
-                    ? of(iframeDocument).pipe(
-                        tap(() => logger.verbose(`"iframeDocument" resolved: readyState "${iframeDocument.readyState}"`)),
-                    )
-                    : NEVER;
-                return race(
-                    timer(ONE_SECOND_MS).pipe(
-                        tap(() => logger.verbose(`"iframeDocument" resolved: timer`)),
-                    ),
-                    $readyState,
-                    fromEvent(iframeDocument, "DOMFrameContentLoaded").pipe(
-                        tap(({type}) => logger.verbose(`"iframeDocument" resolved: "${type}" event`)),
-                    ),
-                    fromEvent(iframeDocument, "DOMContentLoaded").pipe(
-                        tap(({type}) => logger.verbose(`"iframeDocument" resolved: "${type}" event`)),
-                    ),
-                ).pipe(
-                    first(),
-                    // concatMap(() => [{iframeDocument}]),
-                );
-            }),
-        )
-        .subscribe((/*{iframeDocument}*/) => {
-            applyZoomFactor(logger);
-        });
+    IFRAME_NOTIFICATION$.pipe(mergeMap((iframeDocument) => {
+        const $readyState = iframeDocument.readyState !== "loading"
+            ? of(iframeDocument).pipe(tap(() => logger.verbose(`"iframeDocument" resolved: readyState "${iframeDocument.readyState}"`)))
+            : NEVER;
+        return race(
+            timer(ONE_SECOND_MS).pipe(tap(() => logger.verbose(`"iframeDocument" resolved: timer`))),
+            $readyState,
+            fromEvent(iframeDocument, "DOMFrameContentLoaded").pipe(
+                tap(({type}) => logger.verbose(`"iframeDocument" resolved: "${type}" event`)),
+            ),
+            fromEvent(iframeDocument, "DOMContentLoaded").pipe(
+                tap(({type}) => logger.verbose(`"iframeDocument" resolved: "${type}" event`)),
+            ),
+        ).pipe(
+            first(),
+            // concatMap(() => [{iframeDocument}]),
+        );
+    })).subscribe((/*{iframeDocument}*/) => {
+        applyZoomFactor(logger);
+    });
 };

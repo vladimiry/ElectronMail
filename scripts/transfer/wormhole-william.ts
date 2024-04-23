@@ -10,7 +10,7 @@ const SERVICE_BINARY_DOWNLOAD_URL_PREFIX = `https://github.com/psanford/${SERVIC
 // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 const [, , ACTION_TYPE_ARG, FILE_ARG] = process.argv as [null, null, "upload" | string, string];
 
-async function resolveCommand(): Promise<{ command: string }> {
+async function resolveCommand(): Promise<{command: string}> {
     const binaryBundle = (() => {
         const fileNames = {
             darwin: {postfix: "darwin-amd64", sha256: "048383785da82faa484bf85149989429ecb90f9f756b4d58f5926748649d6532"},
@@ -20,10 +20,7 @@ async function resolveCommand(): Promise<{ command: string }> {
         const platform = os.platform();
         const resolvedItem: typeof fileNames[keyof typeof fileNames] | undefined = fileNames[platform as (keyof typeof fileNames)];
         if (resolvedItem) {
-            return {
-                fileName: `${SERVICE_NAME}-${resolvedItem.postfix}`,
-                sha256: resolvedItem.sha256,
-            } as const;
+            return {fileName: `${SERVICE_NAME}-${resolvedItem.postfix}`, sha256: resolvedItem.sha256} as const;
         }
         throw new Error(`Failed to resolve binary name for ${platform} platform`);
     })();
@@ -35,15 +32,9 @@ async function resolveCommand(): Promise<{ command: string }> {
     );
 }
 
-async function uploadFileArg(): Promise<{ downloadCodePhrase: string }> {
+async function uploadFileArg(): Promise<{downloadCodePhrase: string}> {
     const {command} = await resolveCommand();
-    const {stdout: downloadCodePhrase} = await execShell([
-        command,
-        [
-            "send",
-            FILE_ARG,
-        ],
-    ]);
+    const {stdout: downloadCodePhrase} = await execShell([command, ["send", FILE_ARG]]);
 
     return {downloadCodePhrase};
 }

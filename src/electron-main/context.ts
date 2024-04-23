@@ -11,7 +11,13 @@ import path from "path";
 import {Fs as StoreFs, Model as StoreModel, Store} from "fs-json-store";
 
 import {
-    BINARY_NAME, ONE_KB_BYTES, ONE_MB_BYTES, PACKAGE_NAME, RUNTIME_ENV_USER_DATA_DIR, WEB_PROTOCOL_DIR, WEB_PROTOCOL_SCHEME,
+    BINARY_NAME,
+    ONE_KB_BYTES,
+    ONE_MB_BYTES,
+    PACKAGE_NAME,
+    RUNTIME_ENV_USER_DATA_DIR,
+    WEB_PROTOCOL_DIR,
+    WEB_PROTOCOL_SCHEME,
 } from "src/shared/const";
 import {Config, Settings} from "src/shared/model/options";
 import {configEncryptionPresetValidator, INITIAL_STORES, settingsAccountLoginUniquenessValidator} from "./constants";
@@ -26,7 +32,7 @@ function exists(file: string, storeFs: StoreModel.StoreFs): boolean {
     try {
         storeFs._impl.statSync(file);
     } catch (error) {
-        if ((Object(error) as { code?: unknown }).code === "ENOENT") {
+        if ((Object(error) as {code?: unknown}).code === "ENOENT") {
             return false;
         }
 
@@ -46,14 +52,9 @@ function directoryExists(file: string, storeFs: StoreModel.StoreFs = StoreFs.Fs.
     return Boolean(stat?.isDirectory());
 }
 
-function initLocations(
-    storeFs: StoreModel.StoreFs,
-    paths?: ContextInitOptionsPaths,
-): NoExtraProps<ElectronContextLocations> {
-    const {appDir, userDataDir}: ContextInitOptionsPaths = (
-        paths
-        ??
-        {
+function initLocations(storeFs: StoreModel.StoreFs, paths?: ContextInitOptionsPaths): NoExtraProps<ElectronContextLocations> {
+    const {appDir, userDataDir}: ContextInitOptionsPaths = paths
+        ?? {
             appDir: path.join(
                 __dirname,
                 BUILD_ENVIRONMENT === "development"
@@ -68,17 +69,13 @@ function initLocations(
                         return;
                     }
                     if (!directoryExists(envVarValue, storeFs)) {
-                        throw new Error(
-                            `Make sure that the directory exists before passing the "${envVarName}" environment variable`,
-                        );
+                        throw new Error(`Make sure that the directory exists before passing the "${envVarName}" environment variable`);
                     }
                     return envVarValue;
                 })()
-                ??
-                path.join(app.getPath("appData"), PACKAGE_NAME)
+                    ?? path.join(app.getPath("appData"), PACKAGE_NAME),
             ),
-        }
-    );
+        };
 
     logger.transports.file.resolvePathFn = (/* variables */) => path.join(userDataDir, "log.log");
     logger.transports.file.maxSize = ONE_MB_BYTES * 50;
@@ -100,42 +97,38 @@ function initLocations(
         icon,
         trayIcon: icon,
         trayIconFont: appRelativePath("./assets/fonts/tray-icon/roboto-derivative.ttf"),
-        browserWindowPage: formatFileUrl(
-            appRelativePath(WEB_PROTOCOL_DIR, WEBPACK_WEB_CHUNK_NAMES["browser-window"], "index.html"),
-        ),
+        browserWindowPage: formatFileUrl(appRelativePath(WEB_PROTOCOL_DIR, WEBPACK_WEB_CHUNK_NAMES["browser-window"], "index.html")),
         aboutBrowserWindowPage: appRelativePath(WEB_PROTOCOL_DIR, WEBPACK_WEB_CHUNK_NAMES.about, "index.html"),
-        searchInPageBrowserViewPage:
-            appRelativePath(WEB_PROTOCOL_DIR, WEBPACK_WEB_CHUNK_NAMES["search-in-page-browser-view"], "index.html"),
+        searchInPageBrowserViewPage: appRelativePath(
+            WEB_PROTOCOL_DIR,
+            WEBPACK_WEB_CHUNK_NAMES["search-in-page-browser-view"],
+            "index.html",
+        ),
         preload: {
             aboutBrowserWindow: appRelativePath("./electron-preload/about/index.js"),
             browserWindow: appRelativePath(`./electron-preload/browser-window/index${BUILD_ENVIRONMENT === "e2e" ? "-e2e" : ""}.js`),
             searchInPageBrowserView: appRelativePath("./electron-preload/search-in-page-browser-view/index.js"),
             fullTextSearchBrowserWindow: appRelativePath("./electron-preload/database-indexer/index.js"),
-            primary:
-                formatFileUrl(appRelativePath(`./electron-preload/webview/primary/index${BUILD_ENVIRONMENT === "e2e" ? "-e2e" : ""}.js`)),
-            calendar:
-                formatFileUrl(appRelativePath(`./electron-preload/webview/calendar/index${BUILD_ENVIRONMENT === "e2e" ? "-e2e" : ""}.js`)),
+            primary: formatFileUrl(
+                appRelativePath(`./electron-preload/webview/primary/index${BUILD_ENVIRONMENT === "e2e" ? "-e2e" : ""}.js`),
+            ),
+            calendar: formatFileUrl(
+                appRelativePath(`./electron-preload/webview/calendar/index${BUILD_ENVIRONMENT === "e2e" ? "-e2e" : ""}.js`),
+            ),
         },
         // TODO electron: get rid of "baseURLForDataURL" workaround, see https://github.com/electron/electron/issues/20700
-        vendorsAppCssLinkHrefs: ["shared-vendor-dark", "shared-vendor-light"]
-            .map((value) => `${WEB_PROTOCOL_SCHEME}://browser-window/${value}.css`),
+        vendorsAppCssLinkHrefs: ["shared-vendor-dark", "shared-vendor-light"].map((value) =>
+            `${WEB_PROTOCOL_SCHEME}://browser-window/${value}.css`
+        ),
     };
 }
 
 function isProperLockfileError(value: unknown): value is ProperLockfileError {
-    return (
-        typeof value === "object"
-        &&
-        typeof (value as ProperLockfileError).message === "string"
-        &&
-        (value as ProperLockfileError).code === "ELOCKED"
-        &&
-        typeof (value as ProperLockfileError).file === "string"
-        &&
-        Boolean(
-            (value as ProperLockfileError).file,
-        )
-    );
+    return (typeof value === "object"
+        && typeof (value as ProperLockfileError).message === "string"
+        && (value as ProperLockfileError).code === "ELOCKED"
+        && typeof (value as ProperLockfileError).file === "string"
+        && Boolean((value as ProperLockfileError).file));
 }
 
 function wrapProperLockfileError(error: ProperLockfileError): ProperLockfileError {
@@ -144,24 +137,16 @@ function wrapProperLockfileError(error: ProperLockfileError): ProperLockfileErro
         "Normally, this error indicates that the app was abnormally closed or a power loss has taken place.",
         "Please restart the app to restore its functionality (stale lock files will be removed automatically).",
     ].join(" ");
-    return Object.assign(
-        error,
-        {message: `${error.message} ${extendedMessage}`},
-    );
+    return Object.assign(error, {message: `${error.message} ${extendedMessage}`});
 }
 
-export function initContext(
-    {storeFs = StoreFs.Fs.fs, ...options}: ContextInitOptions = {},
-): NoExtraProps<Context> {
+export function initContext({storeFs = StoreFs.Fs.fs, ...options}: ContextInitOptions = {}): NoExtraProps<Context> {
     const locations = initLocations(storeFs, options.paths);
 
     // the lock path gets resolved explicitly in case "proper-lockfile" module changes the default resolving strategy in the future
     const lockfilePathResolver = (file: string): string => `${file}.lock`;
 
-    const {
-        config$,
-        configStore,
-    } = ((): NoExtraProps<Pick<Context, "config$" | "configStore">> => {
+    const {config$, configStore} = ((): NoExtraProps<Pick<Context, "config$" | "configStore">> => {
         class ConfigStore extends Store<Config> {
             readonly valueChangeSubject$ = new ReplaySubject<Config>(1);
 
@@ -187,7 +172,7 @@ export function initContext(
                         try {
                             callResult = await write(...args);
                         } catch (error) {
-                            if (isProperLockfileError((error))) {
+                            if (isProperLockfileError(error)) {
                                 throw wrapProperLockfileError(error);
                             }
                             throw error;
@@ -211,12 +196,8 @@ export function initContext(
 
         return {
             config$: merge(
-                store.valueChangeSubject$.asObservable().pipe(
-                    take(1),
-                ),
-                store.valueChangeSubject$.asObservable().pipe(
-                    distinctUntilChanged(({_rev: prev}, {_rev: curr}) => curr === prev),
-                ),
+                store.valueChangeSubject$.asObservable().pipe(take(1)),
+                store.valueChangeSubject$.asObservable().pipe(distinctUntilChanged(({_rev: prev}, {_rev: curr}) => curr === prev)),
             ),
             configStore: store,
         };
@@ -259,15 +240,7 @@ export function initContext(
                     return {encryption};
                 },
             } as const;
-            return {
-                sessionStorage: new SessionStorage(
-                    {
-                        file: path.join(locations.userDataDir, "session.bin"),
-                        encryption,
-                    },
-                    storeFs,
-                ),
-            };
+            return {sessionStorage: new SessionStorage({file: path.join(locations.userDataDir, "session.bin"), encryption}, storeFs)};
         })(),
         initialStores: options.initialStores || {config: INITIAL_STORES.config(), settings: INITIAL_STORES.settings()},
         config$,
@@ -283,14 +256,13 @@ export function initContext(
                     _this.write = ((write): typeof _this.write => {
                         const result: typeof _this.write = async (data, ...rest) => {
                             try {
-                                const dataToSave: Omit<typeof data, "dataSaltBase64"> & Required<Pick<typeof data, "dataSaltBase64">>
-                                    = {
+                                const dataToSave: Omit<typeof data, "dataSaltBase64"> & Required<Pick<typeof data, "dataSaltBase64">> = {
                                     ...data,
                                     dataSaltBase64: generateDataSaltBase64(ONE_KB_BYTES * 0.5, ONE_KB_BYTES * 2),
                                 };
                                 return await write(dataToSave, ...rest);
                             } catch (error) {
-                                if (isProperLockfileError((error))) {
+                                if (isProperLockfileError(error)) {
                                     throw wrapProperLockfileError(error);
                                 }
                                 throw error;

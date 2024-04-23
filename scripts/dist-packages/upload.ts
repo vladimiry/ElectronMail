@@ -24,9 +24,7 @@ catchTopLeventAsync(async () => {
             continue;
         }
 
-        CONSOLE_LOG(
-            `Adding ${(fs.statSync(file).size / (1024 * 1024)).toFixed(2)} MB ${file} file to the ${archiveOutputFile} archive`,
-        );
+        CONSOLE_LOG(`Adding ${(fs.statSync(file).size / (1024 * 1024)).toFixed(2)} MB ${file} file to the ${archiveOutputFile} archive`);
 
         archiverInstance.file(file, {name: path.basename(file)});
     }

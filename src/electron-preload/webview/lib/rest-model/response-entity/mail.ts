@@ -23,7 +23,7 @@ export interface MailAddress {
 export interface Conversation extends Entity {
     ExpirationTime: number;
     LabelIDs: string[];
-    Labels: Array<Context & { ID: Label["ID"] }>;
+    Labels: Array<Context & {ID: Label["ID"]}>;
     NumAttachments: number;
     NumMessages: number;
     NumUnread: number;
@@ -34,9 +34,11 @@ export interface Conversation extends Entity {
     Subject: string;
 }
 
-export interface Message<TypeRecord = typeof MAIL_TYPE._.nameValueMap,
+export interface Message<
+    TypeRecord = typeof MAIL_TYPE._.nameValueMap,
     LocationRecord = typeof LOCATION._.nameValueMap,
-    IsEncryptedRecord = typeof ENCRYPTED_STATUS._.nameValueMap> extends Entity, ProtonMailExternalIdProp {
+    IsEncryptedRecord = typeof ENCRYPTED_STATUS._.nameValueMap,
+> extends Entity, ProtonMailExternalIdProp {
     AddressID: Id;
     Attachments: Attachment[];
     BCCList: MailAddress[];
@@ -95,39 +97,43 @@ export interface ContactEmail extends Entity {
     Email: string;
     LabelIDs: string[];
     Order: number;
-    Type: Array<Unpacked<[
-        "acquaintance",
-        "agent",
-        "cell",
-        "child",
-        "co-resident",
-        "co-worker",
-        "colleague",
-        "contact",
-        "crush",
-        "date",
-        "emergency",
-        "fax",
-        "friend",
-        "home",
-        "iana-token",
-        "kin",
-        "me",
-        "met",
-        "muse",
-        "neighbor",
-        "pager",
-        "parent",
-        "sibling",
-        "spouse",
-        "sweetheart",
-        "text",
-        "textphone",
-        "video",
-        "voice",
-        "work",
-        "x-name"
-    ]>>;
+    Type: Array<
+        Unpacked<
+            [
+                "acquaintance",
+                "agent",
+                "cell",
+                "child",
+                "co-resident",
+                "co-worker",
+                "colleague",
+                "contact",
+                "crush",
+                "date",
+                "emergency",
+                "fax",
+                "friend",
+                "home",
+                "iana-token",
+                "kin",
+                "me",
+                "met",
+                "muse",
+                "neighbor",
+                "pager",
+                "parent",
+                "sibling",
+                "spouse",
+                "sweetheart",
+                "text",
+                "textphone",
+                "video",
+                "voice",
+                "work",
+                "x-name",
+            ]
+        >
+    >;
 }
 
 export interface ContactCard<TypeRecord = typeof CONTACT_CARD._.nameValueMap> {

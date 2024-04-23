@@ -11,10 +11,7 @@ export const APP_DIR_PATH = path.join(ROOT_DIR_PATH, "./app");
 
 export const MAIN_SCRIPT_FILE = path.join(APP_DIR_PATH, "./electron-main/index-e2e.cjs");
 
-export const ENV = {
-    masterPassword: `master-password-${randomString(8)}`,
-    loginPrefix: `login-${randomString(8)}`,
-} as const;
+export const ENV = {masterPassword: `master-password-${randomString(8)}`, loginPrefix: `login-${randomString(8)}`} as const;
 
 export const CONF = {
     timeouts: {
@@ -27,6 +24,4 @@ export const CONF = {
     },
 } as const;
 
-export const GLOBAL_STATE = {
-    loginPrefixCount: 0,
-};
+export const GLOBAL_STATE = {loginPrefixCount: 0};

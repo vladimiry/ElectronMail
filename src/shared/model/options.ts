@@ -7,40 +7,27 @@ import {AccountConfig} from "src/shared/model/account";
 import {LogLevel} from "src/shared/model/common";
 
 export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
-    spellcheck: boolean,
-    spellcheckLanguages: string[],
-    encryptionPreset: PasswordBasedPreset
-    window: {
-        maximized?: boolean
-        bounds: { x?: number; y?: number; width: number; height: number }
-    }
-    fetching: {
-        rateLimit: {
-            intervalMs: number
-            maxInInterval: number
-        }
-        messagesStorePortionSize: number
-    }
+    spellcheck: boolean;
+    spellcheckLanguages: string[];
+    encryptionPreset: PasswordBasedPreset;
+    window: {maximized?: boolean; bounds: {x?: number; y?: number; width: number; height: number}};
+    fetching: {rateLimit: {intervalMs: number; maxInInterval: number}; messagesStorePortionSize: number};
     timeouts: {
-        databaseLoading: number
-        webViewApiPing: number
-        webViewBlankDOMLoaded: number
-        domElementsResolving: number
-        defaultApiCall: number
-        indexingBootstrap: number
-        clearSessionStorageData: number
-        attachmentLoadAverage: number
-        fullTextSearch: number
-    }
-    updateCheck: {
-        releasesUrl: string
-        proxyRules: string
-        proxyBypassRules: string
-    }
-    indexingBootstrapBufferSize: number
-    jsFlags: string[]
-    commandLineSwitches: Array<string | [name: string, value?: string]>
-    localDbMailsListViewMode: "plain" | "conversation"
+        databaseLoading: number;
+        webViewApiPing: number;
+        webViewBlankDOMLoaded: number;
+        domElementsResolving: number;
+        defaultApiCall: number;
+        indexingBootstrap: number;
+        clearSessionStorageData: number;
+        attachmentLoadAverage: number;
+        fullTextSearch: number;
+    };
+    updateCheck: {releasesUrl: string; proxyRules: string; proxyBypassRules: string};
+    indexingBootstrapBufferSize: number;
+    jsFlags: string[];
+    commandLineSwitches: Array<string | [name: string, value?: string]>;
+    localDbMailsListViewMode: "plain" | "conversation";
     zoomFactorDisabled: boolean;
     persistentSessionSavingInterval: number;
     dbSyncingIntervalTrigger: number;
@@ -48,35 +35,36 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     dbSyncingFiredTriggerDebounce: number;
     shouldRequestDbMetadataReset: "initial" | "done";
     // TODO consider making compression type/level configurable via interface
-    dbCompression2: { type: "gzip" | "zstd", level: number, mailsPortionSize: { min: number, max: number } };
-    dbMergeBytesFileSizeThreshold: number
+    dbCompression2: {type: "gzip" | "zstd"; level: number; mailsPortionSize: {min: number; max: number}};
+    dbMergeBytesFileSizeThreshold: number;
     // base
-    calendarNotification: boolean
-    checkUpdateAndNotify: boolean
-    customTrayIconColor: string
-    customTrayIconSize: boolean
-    customTrayIconSizeValue: number
-    customUnreadBgColor: string
-    customUnreadTextColor: string
-    disableNotLoggedInTrayIndication: boolean
-    disableSpamNotifications: boolean
-    doNotRenderNotificationBadgeValue: boolean
-    enableHideControlsHotkey: boolean
-    findInPage: boolean
-    fullTextSearch: boolean
-    hideControls: boolean
-    hideOnClose: boolean
-    idleTimeLogOutSec: number
-    layoutMode: (typeof import("src/shared/const").LAYOUT_MODES)[number]["value"]
-    logLevel: LogLevel
-    startHidden: boolean
-    suppressUpsellMessages: boolean
-    themeSource: "system" | "dark" | "light"
-    unreadNotifications: boolean
-    zoomFactor: number
+    calendarNotification: boolean;
+    checkUpdateAndNotify: boolean;
+    customTrayIconColor: string;
+    customTrayIconSize: boolean;
+    customTrayIconSizeValue: number;
+    customUnreadBgColor: string;
+    customUnreadTextColor: string;
+    disableNotLoggedInTrayIndication: boolean;
+    disableSpamNotifications: boolean;
+    doNotRenderNotificationBadgeValue: boolean;
+    enableHideControlsHotkey: boolean;
+    findInPage: boolean;
+    fullTextSearch: boolean;
+    hideControls: boolean;
+    hideOnClose: boolean;
+    idleTimeLogOutSec: number;
+    layoutMode: (typeof import("src/shared/const").LAYOUT_MODES)[number]["value"];
+    logLevel: LogLevel;
+    startHidden: boolean;
+    suppressUpsellMessages: boolean;
+    themeSource: "system" | "dark" | "light";
+    unreadNotifications: boolean;
+    zoomFactor: number;
 }
 
-export type BaseConfig = Pick<Config,
+export type BaseConfig = Pick<
+    Config,
     | "calendarNotification"
     | "checkUpdateAndNotify"
     | "customTrayIconColor"
@@ -100,14 +88,14 @@ export type BaseConfig = Pick<Config,
     | "suppressUpsellMessages"
     | "themeSource"
     | "unreadNotifications"
-    | "zoomFactor">;
+    | "zoomFactor"
+>;
 
-export type Settings = Partial<StoreModel.StoreEntity> & NoExtraProps<{
-    accounts: AccountConfig[]
-    databaseEncryptionKey: string
-    sessionStorageEncryptionKey: string
-    dataSaltBase64?: string
-}>;
+export type Settings =
+    & Partial<StoreModel.StoreEntity>
+    & NoExtraProps<
+        {accounts: AccountConfig[]; databaseEncryptionKey: string; sessionStorageEncryptionKey: string; dataSaltBase64?: string}
+    >;
 
 export const KEY_DERIVATION_PRESETS: Record<string, KeyDerivationPresets> = {
     "node.pbkdf2 (interactive)": {type: "pbkdf2", preset: "mode:interactive|digest:sha256"},

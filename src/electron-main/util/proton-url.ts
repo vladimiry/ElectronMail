@@ -5,8 +5,11 @@ import {URL} from "@cliqz/url-parser";
 import {getHeader} from "src/electron-main/web-request/service";
 import {HEADERS} from "src/electron-main/web-request/const";
 import {
-    PROTON_API_ENTRY_PROTONMAIL_CH_VALUE, PROTON_API_ENTRY_PROTONMAIL_COM_VALUE, PROTON_API_ENTRY_TOR_V2_VALUE,
-    PROTON_API_ENTRY_TOR_V3_VALUE, PROTON_API_ENTRY_URLS,
+    PROTON_API_ENTRY_PROTONMAIL_CH_VALUE,
+    PROTON_API_ENTRY_PROTONMAIL_COM_VALUE,
+    PROTON_API_ENTRY_TOR_V2_VALUE,
+    PROTON_API_ENTRY_TOR_V3_VALUE,
+    PROTON_API_ENTRY_URLS,
 } from "src/shared/const/proton-url";
 import {PROVIDER_REPO_MAP} from "src/shared/const/proton-apps";
 import {resolvePrimaryDomainNameFromUrlHostname} from "src/shared/util/url";
@@ -50,9 +53,7 @@ export const protonApiUrlsUtil = {
 
     // https://github.com/vladimiry/ElectronMail/issues/522#issuecomment-1156989727
     patchAuthRequestHeaders(urlPathname: string, requestHeaders: Record<string, string>): boolean {
-        if (
-            !["/auth/", "/core/v4/auth/"].some((value) => `${urlPathname}/`.startsWith(value))
-        ) {
+        if (!["/auth/", "/core/v4/auth/"].some((value) => `${urlPathname}/`.startsWith(value))) {
             return false;
         }
 
@@ -81,7 +82,8 @@ export const protonApiUrlsUtil = {
 } as const;
 
 export const processProtonCookieRecord = <T extends string | ElectronCookie>(
-    inputCookie: DeepReadonly<T>, {requestUrlPrimaryDomainName}: { requestUrlPrimaryDomainName: string },
+    inputCookie: DeepReadonly<T>,
+    {requestUrlPrimaryDomainName}: {requestUrlPrimaryDomainName: string},
 ): T => {
     const cookie = (() => {
         // starting from @electron v12 (more exactly from the respective @chromium version)
@@ -94,7 +96,9 @@ export const processProtonCookieRecord = <T extends string | ElectronCookie>(
                 _cookie_.setSecure(true);
                 _cookie_.setSameSite(SameSite.None);
                 return {
-                    get _cookie_() { return _cookie_; },
+                    get _cookie_() {
+                        return _cookie_;
+                    },
                     setDomain: (value: string): unknown => _cookie_.setDomain(value),
                     setPath: (value: string): unknown => _cookie_.setPath(value),
                     getResult: () => _cookie_.toString(),
@@ -105,16 +109,21 @@ export const processProtonCookieRecord = <T extends string | ElectronCookie>(
                 cookie.secure = true;
                 cookie.sameSite = "no_restriction";
                 return {
-                    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-                    get _cookie_() { return cookie as ElectronCookie; },
+                    get _cookie_() { // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+                        return cookie as ElectronCookie;
+                    },
                     setDomain: (value: string): unknown => cookie.domain = value,
                     setPath: (value: string): unknown => cookie.path = value,
                     getResult: () => cookie,
                 };
             })();
         return {
-            get domain() { return baseService._cookie_.domain; },
-            get path() { return baseService._cookie_.path; },
+            get domain() {
+                return baseService._cookie_.domain;
+            },
+            get path() {
+                return baseService._cookie_.path;
+            },
             ...baseService,
         } as const;
     })();
@@ -123,9 +132,7 @@ export const processProtonCookieRecord = <T extends string | ElectronCookie>(
         if (
             // only overwriting domain if it's a "known" one (alien/external domain here should be generally impossible)
             protonPrimaryDomainNamesEverUsed.includes(
-                resolvePrimaryDomainNameFromUrlHostname(
-                    cookie.domain.startsWith(".") ? cookie.domain.substring(1) : cookie.domain,
-                ),
+                resolvePrimaryDomainNameFromUrlHostname(cookie.domain.startsWith(".") ? cookie.domain.substring(1) : cookie.domain),
             )
         ) {
             cookie.setDomain(`.${requestUrlPrimaryDomainName}`);

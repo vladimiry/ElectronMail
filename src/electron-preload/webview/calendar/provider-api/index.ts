@@ -15,23 +15,14 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
     logger.info();
 
     return (async (): Promise<ProviderApi> => {
-        const [standardSetupPublicApi, internals] = await Promise.all([
-            resolveStandardSetupPublicApi(logger),
-            resolveProviderInternals(),
-        ]);
-        const internalsPrivateScope$
-            = internals["./src/app/./containers/calendar/MainContainer"].value$.pipe(distinctUntilChanged());
+        const [standardSetupPublicApi, internals] = await Promise.all([resolveStandardSetupPublicApi(logger), resolveProviderInternals()]);
+        const internalsPrivateScope$ = internals["./src/app/./containers/calendar/MainContainer"].value$.pipe(distinctUntilChanged());
         const providerApi: ProviderApi = {
             _custom_: {
-                loggedIn$: combineLatest([
-                    standardSetupPublicApi.authentication$,
-                    internalsPrivateScope$,
-                ]).pipe(
+                loggedIn$: combineLatest([standardSetupPublicApi.authentication$, internalsPrivateScope$]).pipe(
                     map(([authentication, {privateScope}]) => {
                         const isPrivateScopeActive = Boolean(privateScope);
-                        const isAuthenticationSessionActive = Boolean(
-                            authentication.hasSession?.call(authentication),
-                        );
+                        const isAuthenticationSessionActive = Boolean(authentication.hasSession?.call(authentication));
                         logger.verbose(JSON.stringify({isPrivateScopeActive, isAuthenticationSessionActive}));
                         return isPrivateScopeActive && isAuthenticationSessionActive;
                     }),

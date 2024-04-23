@@ -5,8 +5,7 @@ import {Entity} from "./base";
 import * as Model from "src/shared/model/database";
 
 class MailAddress extends Entity implements Model.MailAddress {
-    @IsNotEmpty()
-    @IsString()
+    @IsNotEmpty() @IsString()
     address!: Model.MailAddress["address"];
 
     @IsString()
@@ -14,53 +13,41 @@ class MailAddress extends Entity implements Model.MailAddress {
 }
 
 class File extends Entity implements Model.File {
-    @IsOptional()
-    @IsString()
+    @IsOptional() @IsString()
     mimeType?: Model.File["mimeType"];
 
-    @IsString()
-    @IsNotEmpty()
+    @IsString() @IsNotEmpty()
     name!: Model.File["name"];
 
-    @IsNotEmpty()
-    @IsInt()
+    @IsNotEmpty() @IsInt()
     size!: Model.File["size"];
 }
 
 export class MailFailedDownload implements Model.MailFailedDownload {
-    @IsNotEmpty()
-    @IsString()
+    @IsNotEmpty() @IsString()
     type!: Model.MailFailedDownload["type"];
 
-    @IsNotEmpty()
-    @IsString()
+    @IsNotEmpty() @IsString()
     errorMessage!: Model.MailFailedDownload["errorMessage"];
 
-    @IsNotEmpty()
-    @IsString()
+    @IsNotEmpty() @IsString()
     errorStack!: Model.MailFailedDownload["errorStack"];
 
-    @IsNotEmpty()
-    @IsInt()
+    @IsNotEmpty() @IsInt()
     date!: Model.MailFailedDownload["date"];
 
-    @IsNotEmpty()
-    @IsString()
+    @IsNotEmpty() @IsString()
     appVersion!: Model.MailFailedDownload["appVersion"];
 }
 
 export class Mail extends Entity implements Model.Mail {
-    @IsNotEmpty()
-    @IsString()
+    @IsNotEmpty() @IsString()
     conversationEntryPk!: Model.ConversationEntry["pk"];
 
-    @ArrayUnique()
-    @IsArray()
-    @IsString({each: true})
+    @ArrayUnique() @IsArray() @IsString({each: true})
     mailFolderIds!: Array<Model.Folder["id"]>;
 
-    @IsNotEmpty()
-    @IsInt()
+    @IsNotEmpty() @IsInt()
     sentDate!: Model.Mail["sentDate"];
 
     @IsString()
@@ -69,52 +56,38 @@ export class Mail extends Entity implements Model.Mail {
     @IsString()
     body!: Model.Mail["body"];
 
-    @IsIn(["lzutf8"])
-    @IsOptional()
+    @IsIn(["lzutf8"]) @IsOptional()
     bodyCompression!: Model.Mail["bodyCompression"];
 
-    @IsNotEmpty()
-    @ValidateNested()
-    @Type(() => MailAddress)
+    @IsNotEmpty() @ValidateNested() @Type(() => MailAddress)
     sender!: MailAddress;
 
-    @ValidateNested()
-    @IsArray()
-    @Type(() => MailAddress)
+    @ValidateNested() @IsArray() @Type(() => MailAddress)
     toRecipients!: MailAddress[];
 
-    @ValidateNested()
-    @IsArray()
-    @Type(() => MailAddress)
+    @ValidateNested() @IsArray() @Type(() => MailAddress)
     ccRecipients!: MailAddress[];
 
-    @ValidateNested()
-    @IsArray()
-    @Type(() => MailAddress)
+    @ValidateNested() @IsArray() @Type(() => MailAddress)
     bccRecipients!: MailAddress[];
 
-    @ValidateNested()
-    @IsArray()
-    @Type(() => File)
+    @ValidateNested() @IsArray() @Type(() => File)
     attachments!: File[];
 
-    @IsNotEmpty()
-    @IsBoolean()
+    @IsNotEmpty() @IsBoolean()
     unread!: Model.Mail["unread"];
 
     @IsIn(Model.MAIL_STATE._.values)
     state!: Model.Mail["state"];
 
     // TODO consider making Mail.confidential field optional, not used by protonmail?
-    @IsNotEmpty()
-    @IsBoolean()
+    @IsNotEmpty() @IsBoolean()
     confidential!: Model.Mail["confidential"];
 
     @IsIn(Model.REPLY_TYPE._.values)
     replyType!: Model.Mail["replyType"];
 
-    @ValidateNested()
-    @Type(() => MailFailedDownload)
+    @ValidateNested() @Type(() => MailFailedDownload)
     failedDownload?: MailFailedDownload;
 
     @IsIn(Model.MIME_TYPES._.values)

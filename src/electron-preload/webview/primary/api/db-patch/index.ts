@@ -15,10 +15,9 @@ import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, __filename);
 
-const buildDbPatchEndpoint = (providerApi: ProviderApi): Pick<ProtonPrimaryApi,
-    | "buildDbPatch"
-    | "throwErrorOnRateLimitedMethodCall"
-    | "fetchSingleMail"> => {
+const buildDbPatchEndpoint = (
+    providerApi: ProviderApi,
+): Pick<ProtonPrimaryApi, "buildDbPatch" | "throwErrorOnRateLimitedMethodCall" | "fetchSingleMail"> => {
     const endpoints: ReturnType<typeof buildDbPatchEndpoint> = {
         async throwErrorOnRateLimitedMethodCall(input) {
             curryFunctionMembers(_logger, nameof(endpoints.throwErrorOnRateLimitedMethodCall), input.accountIndex).info();
@@ -35,66 +34,45 @@ const buildDbPatchEndpoint = (providerApi: ProviderApi): Pick<ProtonPrimaryApi,
             const deferFactory = (): Observable<BuildDbPatchMethodReturnType> => {
                 logger.info(nameof(deferFactory));
 
-                return from(
-                    (async () => {
-                        // TODO handle "account.entryUrl" change event
-                        // the account state keeps the "signed-in" state despite of page still being reloaded
-                        // so we need to reset "signed-in" state with "account.entryUrl" value change
-                        await lastValueFrom(
-                            race(
-                                providerApi._custom_.loggedIn$.pipe(
-                                    filter(Boolean), // should be logged in
-                                    first(),
-                                ),
-                                // timeout value of calling "buildDbPatch()" is long
-                                // so we setup a custom one here just to test the logged-in state
-                                timer(ONE_SECOND_MS * 5).pipe(
-                                    concatMap(() => throwError(new Error(`User is supposed to be logged-in`))),
-                                ),
-                            ),
-                        );
-                        return (
-                            isDatabaseBootstrapped(input.metadata)
-                            &&
-                            fetchEvents(providerApi, input.metadata.latestEventId, logger)
-                        );
-                    })(),
-                ).pipe(
-                    mergeMap((fetchedEvents) => {
-                        if (typeof fetchedEvents === "object") {
-                            return from((async () => {
-                                await persistDatabasePatch(
-                                    providerApi,
-                                    {
-                                        patch: await buildDbPatch(providerApi, {events: fetchedEvents.events, parentLogger: logger}),
-                                        metadata: {latestEventId: fetchedEvents.latestEventId, fetchStage: "events"},
-                                        login: input.login,
-                                    },
-                                    logger,
-                                );
-                            })()).pipe(
-                                mergeMap(() => of({progress: `${nameof(persistDatabasePatch)}: completed`})),
-                            );
-                        }
-                        return bootstrapDbPatch(
-                            {
+                return from((async () => {
+                    // TODO handle "account.entryUrl" change event
+                    // the account state keeps the "signed-in" state despite of page still being reloaded
+                    // so we need to reset "signed-in" state with "account.entryUrl" value change
+                    await lastValueFrom(race(
+                        providerApi._custom_.loggedIn$.pipe(
+                            filter(Boolean), // should be logged in
+                            first(),
+                        ),
+                        // timeout value of calling "buildDbPatch()" is long
+                        // so we setup a custom one here just to test the logged-in state
+                        timer(ONE_SECOND_MS * 5).pipe(concatMap(() => throwError(new Error(`User is supposed to be logged-in`)))),
+                    ));
+                    return (isDatabaseBootstrapped(input.metadata)
+                        && fetchEvents(providerApi, input.metadata.latestEventId, logger));
+                })()).pipe(mergeMap((fetchedEvents) => {
+                    if (typeof fetchedEvents === "object") {
+                        return from((async () => {
+                            await persistDatabasePatch(providerApi, {
+                                patch: await buildDbPatch(providerApi, {events: fetchedEvents.events, parentLogger: logger}),
+                                metadata: {latestEventId: fetchedEvents.latestEventId, fetchStage: "events"},
                                 login: input.login,
-                                metadata: fetchedEvents === "refresh"
-                                    ? (input.metadata ? {...input.metadata, fetchStage: undefined} : input.metadata)
-                                    : input.metadata,
-                            },
-                            providerApi,
-                            logger,
-                            async (patch) => {
-                                return persistDatabasePatch(
-                                    providerApi,
-                                    {...patch, login: input.login},
-                                    logger,
-                                );
-                            },
-                        );
-                    }),
-                );
+                            }, logger);
+                        })()).pipe(mergeMap(() => of({progress: `${nameof(persistDatabasePatch)}: completed`})));
+                    }
+                    return bootstrapDbPatch(
+                        {
+                            login: input.login,
+                            metadata: fetchedEvents === "refresh"
+                                ? (input.metadata ? {...input.metadata, fetchStage: undefined} : input.metadata)
+                                : input.metadata,
+                        },
+                        providerApi,
+                        logger,
+                        async (patch) => {
+                            return persistDatabasePatch(providerApi, {...patch, login: input.login}, logger);
+                        },
+                    );
+                }));
             };
 
             return defer(deferFactory).pipe(
@@ -108,31 +86,22 @@ const buildDbPatchEndpoint = (providerApi: ProviderApi): Pick<ProtonPrimaryApi,
             logger.info();
 
             const data: DbPatchBundle = {
-                patch: await buildDbPatch(
-                    providerApi,
-                    {
-                        events: [
-                            {
-                                Messages: [{
-                                    ID: input.mailPk,
-                                    // it can be any action but not "EVENT_ACTION.DELETE"
-                                    // so messages gets reduced as an updated and gets updated in the local database then
-                                    Action: EVENT_ACTION.UPDATE
-                                }],
-                            },
-                        ],
-                        parentLogger: logger,
-                    },
-                ),
+                patch: await buildDbPatch(providerApi, {
+                    events: [{
+                        Messages: [{
+                            ID: input.mailPk,
+                            // it can be any action but not "EVENT_ACTION.DELETE"
+                            // so messages gets reduced as an updated and gets updated in the local database then
+                            Action: EVENT_ACTION.UPDATE,
+                        }],
+                    }],
+                    parentLogger: logger,
+                }),
                 // WARN: don't persist the "latestEventId" value in the case of single mail saving
                 metadata: "skipPatching",
             };
 
-            await persistDatabasePatch(
-                providerApi,
-                {...data, login: input.login},
-                logger,
-            );
+            await persistDatabasePatch(providerApi, {...data, login: input.login}, logger);
         },
     };
 

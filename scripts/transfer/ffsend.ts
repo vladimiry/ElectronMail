@@ -12,7 +12,7 @@ const SERVICE_DOWNLOAD_COUNT = "1"; // only 1 is supported in anonymous mode
 // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 const [, , ACTION_TYPE_ARG, FILE_ARG] = process.argv as [null, null, "upload" | string, string];
 
-async function resolveCommand(): Promise<{ command: string }> {
+async function resolveCommand(): Promise<{command: string}> {
     const binaryBundle = (() => {
         const fileNames = {
             darwin: {postfix: "macos", sha256: "61d28a3f24dc3beb74e8b6d1de28bca760685b81bff907142c51e58f6bc8ff87"},
@@ -22,10 +22,7 @@ async function resolveCommand(): Promise<{ command: string }> {
         const platform = os.platform();
         const resolvedItem: typeof fileNames[keyof typeof fileNames] | undefined = fileNames[platform as (keyof typeof fileNames)];
         if (resolvedItem) {
-            return {
-                fileName: `${SERVICE_NAME}-${SERVICE_VERSION}-${resolvedItem.postfix}`,
-                sha256: resolvedItem.sha256,
-            } as const;
+            return {fileName: `${SERVICE_NAME}-${SERVICE_VERSION}-${resolvedItem.postfix}`, sha256: resolvedItem.sha256} as const;
         }
         throw new Error(`Failed to resolve binary name for ${platform} platform`);
     })();
@@ -37,18 +34,16 @@ async function resolveCommand(): Promise<{ command: string }> {
     );
 }
 
-async function uploadFileArg(): Promise<{ downloadUrl: string }> {
+async function uploadFileArg(): Promise<{downloadUrl: string}> {
     const {command} = await resolveCommand();
-    const {stdout: downloadUrl} = await execShell([
-        command,
-        [
-            "upload",
-            "--no-interact",
-            "--incognito",
-            "--downloads", SERVICE_DOWNLOAD_COUNT,
-            FILE_ARG,
-        ],
-    ]);
+    const {stdout: downloadUrl} = await execShell([command, [
+        "upload",
+        "--no-interact",
+        "--incognito",
+        "--downloads",
+        SERVICE_DOWNLOAD_COUNT,
+        FILE_ARG,
+    ]]);
 
     if (!downloadUrl.startsWith(SERVICE_DOWNLOAD_URL_PREFIX)) {
         throw new Error(`Download url "${downloadUrl}" doesn't start from "${SERVICE_DOWNLOAD_URL_PREFIX}"`);

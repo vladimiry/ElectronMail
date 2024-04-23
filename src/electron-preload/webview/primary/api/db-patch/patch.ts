@@ -9,50 +9,49 @@ import * as RestModel from "src/electron-preload/webview/lib/rest-model";
 
 export const buildDbPatch = async (
     providerApi: ProviderApi,
-    input: {
-        events: Array<Pick<RestModel.Event, "Messages" | "Labels" | "Contacts">>;
-        parentLogger: Logger;
-    },
+    input: {events: Array<Pick<RestModel.Event, "Messages" | "Labels" | "Contacts">>; parentLogger: Logger},
     nullUpsert = false,
 ): Promise<DbPatch> => {
     const logger = curryFunctionMembers(input.parentLogger, nameof(buildDbPatch));
-    const mapping: Record<"mails" | "folders" | "contacts", {
-        remove: Array<{ pk: string }>;
-        // TODO put entire entity update to "upsertIds" array ("gotTrashed" needed only for "message" updates)
-        upsertIds: Array<{ id: RestModel.Id; gotTrashed?: boolean }>;
-    }> & {
-        mails: {
-            updatesArrayPropName: keyof Pick<RestModel.Event, "Messages">;
-            updatesMappedByEntityId: Map<RestModel.Id, Array<Unpacked<Required<RestModel.Event>["Messages"]>>>;
+    const mapping:
+        & Record<"mails" | "folders" | "contacts", {
+            remove: Array<{pk: string}>;
+            // TODO put entire entity update to "upsertIds" array ("gotTrashed" needed only for "message" updates)
+            upsertIds: Array<{id: RestModel.Id; gotTrashed?: boolean}>;
+        }>
+        & {
+            mails: {
+                updatesArrayPropName: keyof Pick<RestModel.Event, "Messages">;
+                updatesMappedByEntityId: Map<RestModel.Id, Array<Unpacked<Required<RestModel.Event>["Messages"]>>>;
+            };
+            folders: {
+                updatesArrayPropName: keyof Pick<RestModel.Event, "Labels">;
+                updatesMappedByEntityId: Map<RestModel.Id, Array<Unpacked<Required<RestModel.Event>["Labels"]>>>;
+            };
+            contacts: {
+                updatesArrayPropName: keyof Pick<RestModel.Event, "Contacts">;
+                updatesMappedByEntityId: Map<RestModel.Id, Array<Unpacked<Required<RestModel.Event>["Contacts"]>>>;
+            };
+        } = {
+            mails: {
+                updatesArrayPropName: "Messages",
+                updatesMappedByEntityId: new Map(), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+                remove: [],
+                upsertIds: [],
+            },
+            folders: {
+                updatesArrayPropName: "Labels",
+                updatesMappedByEntityId: new Map(), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+                remove: [],
+                upsertIds: [],
+            },
+            contacts: {
+                updatesArrayPropName: "Contacts",
+                updatesMappedByEntityId: new Map(), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+                remove: [],
+                upsertIds: [],
+            },
         };
-        folders: {
-            updatesArrayPropName: keyof Pick<RestModel.Event, "Labels">;
-            updatesMappedByEntityId: Map<RestModel.Id, Array<Unpacked<Required<RestModel.Event>["Labels"]>>>;
-        };
-        contacts: {
-            updatesArrayPropName: keyof Pick<RestModel.Event, "Contacts">;
-            updatesMappedByEntityId: Map<RestModel.Id, Array<Unpacked<Required<RestModel.Event>["Contacts"]>>>;
-        };
-    } = {
-        mails: {
-            updatesArrayPropName: "Messages",
-            updatesMappedByEntityId: new Map(),  // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-            remove: [],
-            upsertIds: []
-        },
-        folders: {
-            updatesArrayPropName: "Labels",
-            updatesMappedByEntityId: new Map(), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-            remove: [],
-            upsertIds: [],
-        },
-        contacts: {
-            updatesArrayPropName: "Contacts",
-            updatesMappedByEntityId: new Map(), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-            remove: [],
-            upsertIds: [],
-        },
-    };
     const entityTypes = Object.keys(mapping) as Array<keyof typeof mapping>;
 
     for (const event of input.events) {
@@ -60,21 +59,17 @@ export const buildDbPatch = async (
             const {updatesArrayPropName, updatesMappedByEntityId} = mapping[entityType];
 
             for (const update of (event[updatesArrayPropName] ?? [])) {
-                updatesMappedByEntityId.set(
-                    update.ID,
-                    [
-                        ...(updatesMappedByEntityId.get(update.ID) ?? []),
-                        update,
-                    ],
-                );
+                updatesMappedByEntityId.set(update.ID, [...(updatesMappedByEntityId.get(update.ID) ?? []), update]);
             }
         }
     }
 
-    logger.verbose([
-        `resolved unique entities to process history chain:`,
-        entityTypes.map((key) => `${key}: ${mapping[key].updatesMappedByEntityId.size}`).join("; "),
-    ].join(" "));
+    logger.verbose(
+        [
+            `resolved unique entities to process history chain:`,
+            entityTypes.map((key) => `${key}: ${mapping[key].updatesMappedByEntityId.size}`).join("; "),
+        ].join(" "),
+    );
 
     for (const entityType of entityTypes) {
         const {updatesMappedByEntityId, upsertIds, remove} = mapping[entityType];
@@ -94,9 +89,7 @@ export const buildDbPatch = async (
             } else {
                 upsertIds.push({
                     id: update.ID,
-                    gotTrashed: Boolean(
-                        update.Message?.LabelIDsAdded?.includes(SYSTEM_FOLDER_IDENTIFIERS.Trash),
-                    ),
+                    gotTrashed: Boolean(update.Message?.LabelIDsAdded?.includes(SYSTEM_FOLDER_IDENTIFIERS.Trash)),
                 });
             }
         }
@@ -123,13 +116,10 @@ export const buildDbPatch = async (
             } catch (error) {
                 if (
                     gotTrashed
-                    &&
-                    isProtonApiError(error)
-                    &&
-                    ( // message has already been removed error condition:
+                    && isProtonApiError(error)
+                    && ( // message has already been removed error condition:
                         error.status === 422
-                        &&
-                        error.data?.Code === 15052
+                        && error.data?.Code === 15052
                     )
                 ) { // ignoring the error as permissible
                     // TODO figure how to suppress displaying this error on "proton ui" in the case we initiated it (triggered the fetching)
@@ -137,9 +127,7 @@ export const buildDbPatch = async (
                         // WARN don't log message-specific data as it might include sensitive fields
                         `skip message fetching as it has been already removed from the trash before fetch action started`,
                         // WARN don't log full error as it might include sensitive data
-                        JSON.stringify(
-                            sanitizeProtonApiError(error),
-                        ),
+                        JSON.stringify(sanitizeProtonApiError(error)),
                     );
                 } else {
                     throw error;
@@ -158,9 +146,7 @@ export const buildDbPatch = async (
                     providerApi.label.get(LABEL_TYPE.MESSAGE_FOLDER),
                 ]);
                 const allFoldersFromServer = [...labelsResponse.Labels, ...foldersResponse.Labels];
-                const foldersToPush = allFoldersFromServer
-                    .filter(({ID}) => upsertIds.includes(ID))
-                    .map(Database.buildFolder);
+                const foldersToPush = allFoldersFromServer.filter(({ID}) => upsertIds.includes(ID)).map(Database.buildFolder);
                 patch.folders.upsert.push(...foldersToPush);
             })();
         }
@@ -180,10 +166,11 @@ export const buildDbPatch = async (
         }
     }
 
-    logger.verbose([
-        `upsert/remove:`,
-        entityTypes.map((key) => `${key}: ${patch[key].upsert.length}/${patch[key].remove.length}`).join("; "),
-    ].join(" "));
+    logger.verbose(
+        [`upsert/remove:`, entityTypes.map((key) => `${key}: ${patch[key].upsert.length}/${patch[key].remove.length}`).join("; ")].join(
+            " ",
+        ),
+    );
 
     return patch;
 };

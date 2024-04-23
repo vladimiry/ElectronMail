@@ -1,23 +1,31 @@
-import _logger from 'electron-log';
+import _logger from "electron-log";
 import {
-  app, BrowserWindow, clipboard, Menu, MenuItemConstructorOptions, screen, Session, webContents as electronWebContents, WebPreferences,
-} from 'electron';
-import {first} from 'rxjs/operators';
-import {inspect} from 'util';
-import {isDeepEqual, pick} from 'remeda';
-import {isWebUri} from 'valid-url';
-import {lastValueFrom} from 'rxjs';
+    app,
+    BrowserWindow,
+    clipboard,
+    Menu,
+    MenuItemConstructorOptions,
+    screen,
+    Session,
+    webContents as electronWebContents,
+    WebPreferences,
+} from "electron";
+import {first} from "rxjs/operators";
+import {inspect} from "util";
+import {isDeepEqual, pick} from "remeda";
+import {isWebUri} from "valid-url";
+import {lastValueFrom} from "rxjs";
 
-import {applyZoomFactor} from 'src/electron-main/window/util';
-import {buildUrlOriginsFailedMsgTester} from 'src/shared/util/url';
-import {Context} from './model';
-import {curryFunctionMembers, lowerConsoleMessageEventLogLevel} from 'src/shared/util';
-import {DEFAULT_WEB_PREFERENCES, DEFAULT_WEB_PREFERENCES_KEYS} from 'src/electron-main/window/constants';
-import {depersonalizeLoggedUrlsInString} from 'src/shared/util/proton-url';
-import {IPC_MAIN_API_NOTIFICATION$} from 'src/electron-main/api/const';
-import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from 'src/shared/api/main-process/actions';
-import {LOCAL_WEBCLIENT_ORIGIN} from 'src/shared/const';
-import {PLATFORM} from 'src/electron-main/constants';
+import {applyZoomFactor} from "src/electron-main/window/util";
+import {buildUrlOriginsFailedMsgTester} from "src/shared/util/url";
+import {Context} from "./model";
+import {curryFunctionMembers, lowerConsoleMessageEventLogLevel} from "src/shared/util";
+import {DEFAULT_WEB_PREFERENCES, DEFAULT_WEB_PREFERENCES_KEYS} from "src/electron-main/window/constants";
+import {depersonalizeLoggedUrlsInString} from "src/shared/util/proton-url";
+import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/const";
+import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
+import {LOCAL_WEBCLIENT_ORIGIN} from "src/shared/const";
+import {PLATFORM} from "src/electron-main/constants";
 
 const logger = curryFunctionMembers(_logger, __filename);
 

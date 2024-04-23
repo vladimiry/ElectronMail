@@ -11,10 +11,7 @@ type queryLinkElementsType = (
 ) => HTMLLinkElement[];
 
 const queryLinkElements: queryLinkElementsType = (() => {
-    const shouldUseDarkColorsBasedFileEndings = {
-        "true": "-dark.css",
-        "false": "-light.css",
-    } as const;
+    const shouldUseDarkColorsBasedFileEndings = {"true": "-dark.css", "false": "-light.css"} as const;
     const result: queryLinkElementsType = (shouldUseDarkColors, windowProxy) => {
         return Array.from(
             windowProxy.document.querySelectorAll<HTMLLinkElement>(
@@ -25,10 +22,7 @@ const queryLinkElements: queryLinkElementsType = (() => {
     return result;
 })();
 
-const applyTheming = (
-    shouldUseDarkColors: boolean,
-    windowProxy: Exclude<HTMLIFrameElement["contentWindow"], null>,
-): void => {
+const applyTheming = (shouldUseDarkColors: boolean, windowProxy: Exclude<HTMLIFrameElement["contentWindow"], null>): void => {
     for (const linkElement of queryLinkElements(shouldUseDarkColors, windowProxy)) {
         linkElement.rel = "stylesheet";
     }
@@ -40,10 +34,7 @@ const applyTheming = (
 
 export const registerNativeThemeReaction = (
     {buildIpcMainClient}: ElectronWindow["__ELECTRON_EXPOSURE__"],
-    options?: {
-        windowProxy?: Exclude<HTMLIFrameElement["contentWindow"], null>
-        shouldUseDarkColors?: boolean
-    },
+    options?: {windowProxy?: Exclude<HTMLIFrameElement["contentWindow"], null>; shouldUseDarkColors?: boolean},
 ): Subscription => {
     const subscription: Subscription = new Subscription();
     const windowProxy = options?.windowProxy ?? window;
@@ -52,10 +43,9 @@ export const registerNativeThemeReaction = (
     // TODO make sure cleanup actually gets well performed in all cases (browser window, about window, "search in page" window)
     const finishPromise = new Promise<void>((resolve) => {
         // TODO TS: remove type casting then TS gets support for extracting the arguments/parameters from the overloaded functions
-        const handlers = [
-            ["beforeunload", () => resolve],
-            ["unload", () => resolve],
-        ] as ReadonlyArray<Parameters<typeof window.addEventListener>>;
+        const handlers = [["beforeunload", () => resolve], ["unload", () => resolve]] as ReadonlyArray<
+            Parameters<typeof window.addEventListener>
+        >;
         for (const handler of handlers) {
             window.addEventListener(...handler);
             subscription.add({unsubscribe: () => window.removeEventListener(...handler)});
@@ -63,13 +53,11 @@ export const registerNativeThemeReaction = (
     });
 
     subscription.add(
-        buildIpcMainClient({options: {finishPromise}})("notification")()
-            .pipe(
-                ofType(IPC_MAIN_API_NOTIFICATION_ACTIONS.NativeTheme),
-                map(({payload: {shouldUseDarkColors}}) => shouldUseDarkColors),
-                distinctUntilChanged(),
-            )
-            .subscribe((shouldUseDarkColors) => applyTheming(shouldUseDarkColors, windowProxy)),
+        buildIpcMainClient({options: {finishPromise}})("notification")().pipe(
+            ofType(IPC_MAIN_API_NOTIFICATION_ACTIONS.NativeTheme),
+            map(({payload: {shouldUseDarkColors}}) => shouldUseDarkColors),
+            distinctUntilChanged(),
+        ).subscribe((shouldUseDarkColors) => applyTheming(shouldUseDarkColors, windowProxy)),
     );
 
     if (typeof shouldUseDarkColors === "boolean") {

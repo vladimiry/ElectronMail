@@ -7,14 +7,13 @@ type Impossible<K extends keyof any> = { // eslint-disable-line @typescript-esli
 };
 
 declare global {
-    type Unpacked<T> =
-        T extends Array<infer U1> ? U1 :
-            T extends ReadonlyArray<infer U1> ? U1 :
-                T extends Promise<infer U2> ? U2 :
-                    T extends Observable<infer U3> ? U3 :
-                        T extends Subject<infer U3> ? U3 :
-                            T extends Subscriber<infer U3> ? U3 :
-                                T;
+    type Unpacked<T> = T extends Array<infer U1> ? U1
+        : T extends ReadonlyArray<infer U1> ? U1
+        : T extends Promise<infer U2> ? U2
+        : T extends Observable<infer U3> ? U3
+        : T extends Subject<infer U3> ? U3
+        : T extends Subscriber<infer U3> ? U3
+        : T;
 
     type Mutable<T> = import("ts-essentials").Writable<T>;
 

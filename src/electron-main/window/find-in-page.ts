@@ -51,34 +51,31 @@ export async function syncFindInPageBrowserViewSize(ctx: Context, findInPageBrow
 
 type initFindInPageBrowserViewType = (ctx: Context) => Promise<BrowserView>;
 
-export const initFindInPageBrowserView: initFindInPageBrowserViewType = (
-    (): initFindInPageBrowserViewType => {
-        const resultFn: initFindInPageBrowserViewType = async (ctx): Promise<BrowserView> => {
-            const browserView = new BrowserView({
-                webPreferences: {
-                    ...DEFAULT_WEB_PREFERENCES,
-                    session: resolveDefaultAppSession(),
-                    preload: ctx.locations.preload.searchInPageBrowserView,
-                },
-            });
+export const initFindInPageBrowserView: initFindInPageBrowserViewType = ((): initFindInPageBrowserViewType => {
+    const resultFn: initFindInPageBrowserViewType = async (ctx): Promise<BrowserView> => {
+        const browserView = new BrowserView({
+            webPreferences: {
+                ...DEFAULT_WEB_PREFERENCES,
+                session: resolveDefaultAppSession(),
+                preload: ctx.locations.preload.searchInPageBrowserView,
+            },
+        });
 
-            // WARN: "setBrowserView" needs to be called before "setBounds" call
-            // otherwise BrowserView is invisible on macOS as "setBounds" call takes no effect
-            (await resolveUiContextStrict(ctx)).browserWindow.setBrowserView(browserView);
+        // WARN: "setBrowserView" needs to be called before "setBounds" call
+        // otherwise BrowserView is invisible on macOS as "setBounds" call takes no effect
+        (await resolveUiContextStrict(ctx)).browserWindow.setBrowserView(browserView);
 
-            browserView.setAutoResize({width: false, height: false, horizontal: false, vertical: false});
+        browserView.setAutoResize({width: false, height: false, horizontal: false, vertical: false});
 
-            const {html} = await resolveContent(ctx);
+        const {html} = await resolveContent(ctx);
 
-            await browserView.webContents.loadURL(
-                `data:text/html,${html}`,
-                {baseURLForDataURL: `${WEB_PROTOCOL_SCHEME}:/${WEBPACK_WEB_CHUNK_NAMES["search-in-page-browser-view"]}/`},
-            );
+        await browserView.webContents.loadURL(`data:text/html,${html}`, {
+            baseURLForDataURL: `${WEB_PROTOCOL_SCHEME}:/${WEBPACK_WEB_CHUNK_NAMES["search-in-page-browser-view"]}/`,
+        });
 
-            await syncFindInPageBrowserViewSize(ctx, browserView);
+        await syncFindInPageBrowserViewSize(ctx, browserView);
 
-            return browserView;
-        };
-        return resultFn;
-    }
-)();
+        return browserView;
+    };
+    return resultFn;
+})();

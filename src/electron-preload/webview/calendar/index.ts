@@ -22,11 +22,10 @@ setupProtonOpenNewTabEventHandler(logger);
 // TODO throw error if "not calendar or blank.html" page loaded
 if (protonAppPageStatus.shouldInitProviderApi) {
     // TODO set up timeout
-    initProviderApi()
-        .then(registerApi)
-        .then(() => ipcRenderer.sendToHost(IPC_WEBVIEW_API_CHANNELS_MAP.calendar.registered))
-        .catch((error) => {
+    initProviderApi().then(registerApi).then(() => ipcRenderer.sendToHost(IPC_WEBVIEW_API_CHANNELS_MAP.calendar.registered)).catch(
+        (error) => {
             logger.error(error);
             throw error;
-        });
+        },
+    );
 }

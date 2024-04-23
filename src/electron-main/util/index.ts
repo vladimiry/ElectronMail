@@ -34,7 +34,7 @@ export function formatFileUrl(pathname: string): string {
 export async function injectVendorsAppCssIntoHtmlFile(
     pageLocation: string,
     {vendorsAppCssLinkHrefs}: Context["locations"],
-): Promise<{ html: string; baseURLForDataURL: string }> {
+): Promise<{html: string; baseURLForDataURL: string}> {
     const pageContent = fs.readFileSync(pageLocation).toString();
     const baseURLForDataURL = formatFileUrl(`${path.dirname(pageLocation)}${path.sep}`);
     const htmlInjection = buildInitialVendorsAppCssLinks(vendorsAppCssLinkHrefs, nativeTheme.shouldUseDarkColors);
@@ -48,17 +48,14 @@ export async function injectVendorsAppCssIntoHtmlFile(
     return {html, baseURLForDataURL};
 }
 
-export async function buildSettingsAdapter(
-    {configStore}: Context,
-    password: string,
-): Promise<StoreModel.StoreAdapter> {
-    return new EncryptionAdapter(
-        {password, preset: (await configStore.readExisting()).encryptionPreset},
-        {keyDerivationCache: true, keyDerivationCacheLimit: 3},
-    );
+export async function buildSettingsAdapter({configStore}: Context, password: string): Promise<StoreModel.StoreAdapter> {
+    return new EncryptionAdapter({password, preset: (await configStore.readExisting()).encryptionPreset}, {
+        keyDerivationCache: true,
+        keyDerivationCacheLimit: 3,
+    });
 }
 
-export function hrtimeDuration(): { end: () => number } {
+export function hrtimeDuration(): {end: () => number} {
     const start = process.hrtime();
 
     return {
@@ -79,7 +76,7 @@ export function readConfigSync({configStore}: DeepReadonly<Context>): import("ts
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         configFile = configStore.fs._impl.readFileSync(configStore.file); // eslint-disable-line @typescript-eslint/no-unsafe-call
     } catch (error) {
-        if ((Object(error) as { code?: unknown }).code !== "ENOENT") {
+        if ((Object(error) as {code?: unknown}).code !== "ENOENT") {
             throw error;
         }
     }
@@ -89,11 +86,9 @@ export function readConfigSync({configStore}: DeepReadonly<Context>): import("ts
         : null;
 }
 
-export const filterProtonSessionApplyingCookies = <T extends { name: string }>(items: readonly T[]): {
-    readonly accessTokens: typeof items
-    readonly refreshTokens: typeof items
-    readonly sessionIds: typeof items
-} => {
+export const filterProtonSessionApplyingCookies = <T extends {name: string}>(
+    items: readonly T[],
+): {readonly accessTokens: typeof items; readonly refreshTokens: typeof items; readonly sessionIds: typeof items} => {
     return {
         accessTokens: items.filter(({name}) => name.toUpperCase().startsWith("AUTH-")),
         refreshTokens: items.filter(({name}) => name.toUpperCase().startsWith("REFRESH-")),
@@ -117,12 +112,7 @@ export const resolveUiContextStrict = async (ctx: Context): Promise<Exclude<Cont
 export const getPurifiedUserAgent = (userAgent: string): string => {
     const appNameRe = new RegExp(`${PACKAGE_NAME}[\\/\\S]+`, "i");
     const electronRe = new RegExp("electron", "i");
-    return userAgent
-        .split(appNameRe)
-        .join("")
-        .split(/\s+/)
-        .filter((chunk) => !electronRe.exec(chunk))
-        .join(" ");
+    return userAgent.split(appNameRe).join("").split(/\s+/).filter((chunk) => !electronRe.exec(chunk)).join(" ");
 };
 
 export const getUserAgentByAccount = ({customUserAgent}: Pick<AccountConfig, "customUserAgent">): string => {

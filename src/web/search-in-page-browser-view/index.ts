@@ -13,14 +13,5 @@ document.addEventListener("DOMContentLoaded", () => {
     const findNext = root.querySelector(".input-group-append button:nth-of-type(2)") as HTMLButtonElement;
     const close = root.querySelector(".input-group-append button:nth-of-type(3)") as HTMLButtonElement;
 
-    new SearchInPageWidget({
-        els: {
-            root,
-            input,
-            status,
-            findPrev,
-            findNext,
-            close,
-        },
-    }).open();
+    new SearchInPageWidget({els: {root, input, status, findPrev, findNext, close}}).open();
 });

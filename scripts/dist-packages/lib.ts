@@ -12,15 +12,10 @@ export async function listInstallationPackageFiles(dir: string): Promise<string[
         return result;
     }
 
-    return fastGlob(
-        sanitizeFastGlobPattern(
-            path.join(dir, `./${PACKAGE_NAME}*.*`),
-        ),
-        {
-            absolute: true,
-            deep: 1,
-            onlyFiles: true,
-            stats: false,
-        },
-    );
+    return fastGlob(sanitizeFastGlobPattern(path.join(dir, `./${PACKAGE_NAME}*.*`)), {
+        absolute: true,
+        deep: 1,
+        onlyFiles: true,
+        stats: false,
+    });
 }

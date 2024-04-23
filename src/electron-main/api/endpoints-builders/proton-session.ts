@@ -11,14 +11,18 @@ import {resolvePrimaryDomainNameFromUrlHostname} from "src/shared/util/url";
 
 export const buildEndpoints = async (
     ctx: Context,
-): Promise<Pick<IpcMainApiEndpoints,
-    | "resolveSavedProtonClientSession"
-    | "saveProtonSession"
-    | "resetSavedProtonSession"
-    | "applySavedProtonBackendSession"
-    | "saveSessionStoragePatch"
-    | "resolvedSavedSessionStoragePatch"
-    | "resetProtonBackendSession">> => {
+): Promise<
+    Pick<
+        IpcMainApiEndpoints,
+        | "resolveSavedProtonClientSession"
+        | "saveProtonSession"
+        | "resetSavedProtonSession"
+        | "applySavedProtonBackendSession"
+        | "saveSessionStoragePatch"
+        | "resolvedSavedSessionStoragePatch"
+        | "resetProtonBackendSession"
+    >
+> => {
     const endpoints: Unpacked<ReturnType<typeof buildEndpoints>> = {
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async resolveSavedProtonClientSession({login, apiEndpointOrigin}) {
@@ -134,11 +138,9 @@ export const buildEndpoints = async (
 
                 session._electron_mail_reset_counter_ ??= 0;
                 session._electron_mail_reset_counter_++;
-
                 if (
                     session._electron_mail_reset_counter_ < 2
-                    ||
-                    !(await session.cookies.get({})).length
+                    || !(await session.cookies.get({})).length
                 ) {
                     // skipping the "session reset" for the first call since the session is still fresh/pure
                     // https://github.com/vladimiry/ElectronMail/issues/447

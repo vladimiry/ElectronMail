@@ -1,9 +1,6 @@
 import {PACKAGE_NAME} from "src/shared/const";
 
-type Code =
-    | "NotFoundAccount"
-    | "InvalidArgument"
-    | "NoNetworkConnection";
+type Code = "NotFoundAccount" | "InvalidArgument" | "NoNetworkConnection";
 
 const statusCodesMap: Record<Code, string> = {
     NotFoundAccount: `${PACKAGE_NAME}:NotFoundAccount`,

@@ -1,6 +1,9 @@
 {
-  "*.ts": [
-    "format-imports",
-    "pnpm run lint:ts:base:eslint --fix"
+  "**/*.{js,ts}": [
+    "pnpm run lint:ts:base:eslint --fix",
+    "format-imports"
+  ],
+  "**/*.{js,ts,json,yaml,yml}": [
+    "dprint fmt"
   ]
 }

@@ -21,8 +21,7 @@ const attachLoggingBeforeCall = (api: ProviderApi, logger: Logger): void => {
             const groupMember = group[groupMemberProp];
             if (
                 typeof groupMember !== "function"
-                ||
-                !Object.getOwnPropertyDescriptor(group, groupMemberProp)?.writable
+                || !Object.getOwnPropertyDescriptor(group, groupMemberProp)?.writable
             ) {
                 continue;
             }
@@ -40,38 +39,26 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
     logger.info();
 
     return (async (): Promise<ProviderApi> => {
-        const [standardSetupPublicApi, internals] = await Promise.all([
-            resolveStandardSetupPublicApi(logger),
-            resolveProviderInternals(),
-        ]);
+        const [standardSetupPublicApi, internals] = await Promise.all([resolveStandardSetupPublicApi(logger), resolveProviderInternals()]);
         const internalsPrivateScope$ = internals["./src/app/containers/PageContainer.tsx"].value$.pipe(distinctUntilChanged());
         const resolvePrivateApi = async () => { // eslint-disable-line @typescript-eslint/explicit-function-return-type
-            return lastValueFrom(
-                internalsPrivateScope$.pipe(
-                    first(),
-                    map((value) => {
-                        if (!value.privateScope) {
-                            throw new Error(
-                                `Failed to resolve "private scope". This is an indication that the app logic is not perfect yet.`,
-                            );
-                        }
-                        return value.privateScope;
-                    }),
-                ),
-            );
+            return lastValueFrom(internalsPrivateScope$.pipe(
+                first(),
+                map((value) => {
+                    if (!value.privateScope) {
+                        throw new Error(`Failed to resolve "private scope". This is an indication that the app logic is not perfect yet.`);
+                    }
+                    return value.privateScope;
+                }),
+            ));
         };
         const resolveHttpApi = async (): Promise<HttpApi> => lastValueFrom(standardSetupPublicApi.httpApi$.pipe(first()));
         const providerApi: ProviderApi = {
             _custom_: {
-                loggedIn$: combineLatest([
-                    standardSetupPublicApi.authentication$,
-                    internalsPrivateScope$,
-                ]).pipe(
+                loggedIn$: combineLatest([standardSetupPublicApi.authentication$, internalsPrivateScope$]).pipe(
                     map(([authentication, {privateScope}]) => {
                         const isPrivateScopeActive = Boolean(privateScope);
-                        const isAuthenticationSessionActive = Boolean(
-                            authentication.hasSession?.call(authentication),
-                        );
+                        const isAuthenticationSessionActive = Boolean(authentication.hasSession?.call(authentication));
                         logger.verbose(JSON.stringify({isPrivateScopeActive, isAuthenticationSessionActive}));
                         return isPrivateScopeActive && isAuthenticationSessionActive;
                     }),
@@ -79,7 +66,7 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                 ),
                 async getMailSettingsModel() {
                     const privateApi = await resolvePrivateApi();
-                    const [mailSettings/*, loadingMailSettings */] = privateApi.mailSettings;
+                    const [mailSettings /*, loadingMailSettings */] = privateApi.mailSettings;
                     return mailSettings;
                 },
                 buildEventsApiUrlTester(/*{entryApiUrl}*/) {
@@ -110,21 +97,15 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
             },
             label: {
                 async get(type) {
-                    return (await resolveHttpApi())(
-                        internals["../../packages/shared/lib/api/labels.ts"].value.get(type),
-                    );
+                    return (await resolveHttpApi())(internals["../../packages/shared/lib/api/labels.ts"].value.get(type));
                 },
             },
             message: {
                 async queryMessageCount() {
-                    return (await resolveHttpApi())(
-                        internals["../../packages/shared/lib/api/messages.ts"].value.queryMessageCount(),
-                    );
+                    return (await resolveHttpApi())(internals["../../packages/shared/lib/api/messages.ts"].value.queryMessageCount());
                 },
                 async getMessage(id) {
-                    return (await resolveHttpApi())(
-                        internals["../../packages/shared/lib/api/messages.ts"].value.getMessage(id),
-                    );
+                    return (await resolveHttpApi())(internals["../../packages/shared/lib/api/messages.ts"].value.getMessage(id));
                 },
                 async queryMessageMetadata(params) {
                     return (await resolveHttpApi())(
@@ -158,14 +139,10 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
             },
             contact: {
                 async queryContacts() {
-                    return (await resolveHttpApi())(
-                        internals["../../packages/shared/lib/api/contacts.ts"].value.queryContacts(),
-                    );
+                    return (await resolveHttpApi())(internals["../../packages/shared/lib/api/contacts.ts"].value.queryContacts());
                 },
                 async getContact(id) {
-                    return (await resolveHttpApi())(
-                        internals["../../packages/shared/lib/api/contacts.ts"].value.getContact(id),
-                    );
+                    return (await resolveHttpApi())(internals["../../packages/shared/lib/api/contacts.ts"].value.getContact(id));
                 },
             },
             events: {
@@ -175,14 +152,10 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                     // so the api calls explicitly triggered by the app should not be listened to prevent infinity looping code issue
                     const additionParams = {[FETCH_NOTIFICATION_SKIP_SYMBOL]: FETCH_NOTIFICATION_SKIP_SYMBOL};
 
-                    return (await resolveHttpApi())(
-                        {...originalParams, ...additionParams},
-                    );
+                    return (await resolveHttpApi())({...originalParams, ...additionParams});
                 },
                 async getLatestID() {
-                    return (await resolveHttpApi())(
-                        internals["../../packages/shared/lib/api/events.ts"].value.getLatestID(),
-                    );
+                    return (await resolveHttpApi())(internals["../../packages/shared/lib/api/events.ts"].value.getLatestID());
                 },
             },
             attachmentLoader: {
@@ -191,25 +164,24 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                         const result = {verifyingKeys: verificationPreferences.verifyingKeys} as const;
                         // this proxy helps early detecting unexpected/not-yet-reviewed protonmail's "getDecryptedAttachment" behaviour
                         // if/likely-when the behaviour gets changed by protonmail
-                        return new Proxy(
-                            result,
-                            {
-                                get(target, prop) {
-                                    if (!(prop in result)) {
-                                        throw new Error([
+                        return new Proxy(result, {
+                            get(target, prop) {
+                                if (!(prop in result)) {
+                                    throw new Error(
+                                        [
                                             "Unexpected email message prop accessing detected",
                                             `during the attachment download (${JSON.stringify({prop})})`,
-                                        ].join(" "));
-                                    }
-                                    return target[prop as keyof typeof target];
-                                },
-                                set(...[/* target */, prop]) {
-                                    throw new Error(
-                                        `Email message modifying during the attachment download detected (${JSON.stringify({prop})})`,
+                                        ].join(" "),
                                     );
                                 }
+                                return target[prop as keyof typeof target];
                             },
-                        );
+                            set(...[/* target */, prop]) {
+                                throw new Error(
+                                    `Email message modifying during the attachment download detected (${JSON.stringify({prop})})`,
+                                );
+                            },
+                        });
                     };
                     const result: ProviderApi["attachmentLoader"]["getDecryptedAttachment"] = async (attachment, message) => {
                         const privateApi = await resolvePrivateApi();
@@ -220,12 +192,7 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                             privateApi.getVerificationPreferences({email: message.Sender.Address, lifetime: 0, contactEmailsMap}),
                         ]);
                         const verification = buildVerification(verificationPreferences);
-                        const {data} = await privateApi.getDecryptedAttachment(
-                            attachment,
-                            verification,
-                            messageKeys,
-                            protonApi,
-                        );
+                        const {data} = await privateApi.getDecryptedAttachment(attachment, verification, messageKeys, protonApi);
 
                         // the custom error also has the "data" prop, so this test won't suppress/override the custom error
                         // so this test should help detecting at early stage the protonmail's code change

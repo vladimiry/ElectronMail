@@ -1,22 +1,20 @@
 import {ProtonClientSession} from "src/shared/model/proton";
 
-function pickSessionStorageItems(
-    keys: string[] | undefined = (() => { // collection all keys if not specified
-        const allKeys = [];
+function pickSessionStorageItems(keys: string[] | undefined = (() => { // collection all keys if not specified
+    const allKeys = [];
 
-        for (let i = 0, len = window.sessionStorage.length; i < len; i++) {
-            const key = window.sessionStorage.key(i);
+    for (let i = 0, len = window.sessionStorage.length; i < len; i++) {
+        const key = window.sessionStorage.key(i);
 
-            if (!key) {
-                continue;
-            }
-
-            allKeys.push(key);
+        if (!key) {
+            continue;
         }
 
-        return allKeys;
-    })(),
-): Readonly<Record<string, any /* TODO TS: replace "any" with "JSONValue" */>> { // eslint-disable-line @typescript-eslint/no-explicit-any
+        allKeys.push(key);
+    }
+
+    return allKeys;
+})()): Readonly<Record<string, any /* TODO TS: replace "any" with "JSONValue" */>> { // eslint-disable-line @typescript-eslint/no-explicit-any, max-len
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
     const result: Record<string, any> = Object.create(null);
 
@@ -29,10 +27,7 @@ function pickSessionStorageItems(
 
 export function dumpProtonSharedSession(): ProtonClientSession | null {
     const restore = (() => {
-        const backup = {
-            windowName: window.name,
-            sessionStorage: pickSessionStorageItems(),
-        } as const;
+        const backup = {windowName: window.name, sessionStorage: pickSessionStorageItems()} as const;
         return () => {
             window.name = backup.windowName;
             window.sessionStorage.clear();
@@ -54,8 +49,5 @@ export function dumpProtonSharedSession(): ProtonClientSession | null {
 
     restore();
 
-    return {
-        windowName,
-        sessionStorage,
-    };
+    return {windowName, sessionStorage};
 }

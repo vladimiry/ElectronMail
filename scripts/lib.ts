@@ -30,7 +30,7 @@ if (typeof fetch !== "function") {
 }
 
 export const makeConsoleTextYellow = (value: string): string => {
-    return /*reset:*/"\x1b[0m" + /*yellow:*/"\x1b[33m" + value + /*reset:*/"\x1b[0m";
+    return /*reset:*/ "\x1b[0m" + /*yellow:*/ "\x1b[33m" + value + /*reset:*/ "\x1b[0m";
 };
 
 export const CONSOLE_LOG: typeof console.log = (...args) => {
@@ -41,22 +41,9 @@ export const CONSOLE_LOG: typeof console.log = (...args) => {
 };
 
 export function resolveGitOutputBackupDir(
-    {
-        repoType,
-        tag = PROVIDER_REPO_MAP[repoType].tag,
-        suffix,
-    }: {
-        repoType: keyof typeof PROVIDER_REPO_MAP,
-        tag?: string,
-        suffix?: string,
-    },
+    {repoType, tag = PROVIDER_REPO_MAP[repoType].tag, suffix}: {repoType: keyof typeof PROVIDER_REPO_MAP; tag?: string; suffix?: string},
 ): string {
-    return path.join(
-        GIT_CLONE_ABSOLUTE_DIR,
-        "./backup",
-        repoType,
-        `./${tag}${suffix ? ("-" + suffix) : ""}`,
-    );
+    return path.join(GIT_CLONE_ABSOLUTE_DIR, "./backup", repoType, `./${tag}${suffix ? ("-" + suffix) : ""}`);
 }
 
 export function formatStreamChunk( // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
@@ -70,18 +57,12 @@ export function formatStreamChunk( // eslint-disable-line @typescript-eslint/exp
 
 export async function execShell(
     [command, args, options]: Parameters<typeof spawnAsync>,
-    {
-        printStdOut = true,
-        printStdErr = true,
-        printEnvWhitelist = [],
-        doNotRethrow = false,
-        doNotDropNodeOptionsRelatedEnvVars = false,
-    }: {
+    {printStdOut = true, printStdErr = true, printEnvWhitelist = [], doNotRethrow = false, doNotDropNodeOptionsRelatedEnvVars = false}: {
         printStdOut?: boolean;
         printStdErr?: boolean;
         printEnvWhitelist?: readonly string[];
-        doNotRethrow?: boolean
-        doNotDropNodeOptionsRelatedEnvVars?: boolean
+        doNotRethrow?: boolean;
+        doNotDropNodeOptionsRelatedEnvVars?: boolean;
     } = {},
 ): Promise<Unpacked<ReturnType<typeof spawnAsync>>> {
     {
@@ -96,26 +77,20 @@ export async function execShell(
         const optionsPart = stringifiedOptions !== "{}"
             ? ` (options: ${stringifiedOptions})`
             : "";
-        CONSOLE_LOG(
-            `Executing Shell command${optionsPart}: ${makeConsoleTextYellow([command, ...(args ?? [])].join(" "))}`,
-        );
+        CONSOLE_LOG(`Executing Shell command${optionsPart}: ${makeConsoleTextYellow([command, ...(args ?? [])].join(" "))}`);
     }
 
-    const spawnPromise = spawnAsync(
-        command,
-        args,
-        {
-            ...options,
-            env: {
-                ...process.env,
-                ...options?.env,
-                ...(!doNotDropNodeOptionsRelatedEnvVars && { // disable node options inheritance form the parent/own process
-                    NODE_OPTIONS: "",
-                    npm_config_node_options: "",
-                }),
-            },
+    const spawnPromise = spawnAsync(command, args, {
+        ...options,
+        env: {
+            ...process.env,
+            ...options?.env,
+            ...(!doNotDropNodeOptionsRelatedEnvVars && { // disable node options inheritance form the parent/own process
+                NODE_OPTIONS: "",
+                npm_config_node_options: "",
+            }),
         },
-    );
+    });
     const {stdout, stderr} = spawnPromise.child;
     const print = (std: import("stream").Readable): void => {
         byline(std).on("data", (chunk) => {
@@ -160,51 +135,32 @@ export async function fetchUrl(...[url, options]: Parameters<typeof fetch>): Ret
     return response;
 }
 
-export async function resolveGitCommitInfo(
-    {dir}: { dir: string },
-): Promise<{ shortCommit: string, commit: string }> {
-    return (
-        await Promise.all(
-            (
-                [
-                    {prop: "shortCommit", gitArgs: ["rev-parse", "--short", "HEAD"]},
-                    {prop: "commit", gitArgs: ["rev-parse", "HEAD"]},
-                ] as const
-            ).map(
-                async ({gitArgs, prop}) => execShell(["git", gitArgs, {cwd: dir}])
-                    .then(({stdout}) => ({value: stdout.replace(/(\r\n|\n|\r)/gm, ""), gitArgs, prop})),
-            ),
-        )
-    ).reduce(
-        (accumulator: NoExtraProps<Record<typeof prop, string>>, {value, gitArgs, prop}) => {
-            if (!value) {
-                throw new Error(`"${JSON.stringify(gitArgs)}" git command returned empty value: ${value}`);
-            }
-            return {...accumulator, [prop]: value};
-        },
-        {shortCommit: "", commit: ""},
-    );
+export async function resolveGitCommitInfo({dir}: {dir: string}): Promise<{shortCommit: string; commit: string}> {
+    return (await Promise.all(
+        ([{prop: "shortCommit", gitArgs: ["rev-parse", "--short", "HEAD"]}, {prop: "commit", gitArgs: ["rev-parse", "HEAD"]}] as const).map(
+            async ({gitArgs, prop}) =>
+                execShell(["git", gitArgs, {cwd: dir}]).then(({stdout}) => ({value: stdout.replace(/(\r\n|\n|\r)/gm, ""), gitArgs, prop})),
+        ),
+    )).reduce((accumulator: NoExtraProps<Record<typeof prop, string>>, {value, gitArgs, prop}) => {
+        if (!value) {
+            throw new Error(`"${JSON.stringify(gitArgs)}" git command returned empty value: ${value}`);
+        }
+        return {...accumulator, [prop]: value};
+    }, {shortCommit: "", commit: ""});
 }
 
-export const calculateHash = async (
-    filePath: string,
-    algorithm = "sha256",
-): Promise<{ hash: string; type: typeof algorithm }> => {
+export const calculateHash = async (filePath: string, algorithm = "sha256"): Promise<{hash: string; type: typeof algorithm}> => {
     return new Promise((resolve, reject) => {
         const hash = createHash(algorithm);
 
-        fs.createReadStream(filePath)
-            .on("data", (data) => hash.update(data))
-            .on("end", () => resolve({hash: hash.digest("hex"), type: algorithm}))
-            .on("error", reject);
+        fs.createReadStream(filePath).on("data", (data) => hash.update(data)).on(
+            "end",
+            () => resolve({hash: hash.digest("hex"), type: algorithm}),
+        ).on("error", reject);
     });
 };
 
-export const resolveExecutable = async (
-    url: string,
-    sha256: string,
-    subdirectory: string,
-): Promise<{ command: string }> => {
+export const resolveExecutable = async (url: string, sha256: string, subdirectory: string): Promise<{command: string}> => {
     const destFile = path.join(
         OUTPUT_ABSOLUTE_DIR,
         "./executables",
@@ -215,10 +171,9 @@ export const resolveExecutable = async (
                 throw new Error(`Failed to parse executable file name from the "${url}"`);
             }
             return fileName;
-
         })(),
     );
-    const calculateHashes = async (): Promise<{ actual: string, expected: string, equal: boolean }> => {
+    const calculateHashes = async (): Promise<{actual: string; expected: string; equal: boolean}> => {
         const actual = (await calculateHash(destFile)).hash;
         const expected = sha256;
         const result = {actual, expected, equal: actual === expected} as const;
@@ -228,8 +183,7 @@ export const resolveExecutable = async (
 
     if (
         !await fsExtra.pathExists(destFile)
-        ||
-        !(await calculateHashes()).equal
+        || !(await calculateHashes()).equal
     ) {
         const response = await fetchUrl(url);
         fsExtra.ensureDirSync(path.dirname(destFile));
@@ -259,15 +213,6 @@ export const catchTopLeventAsync = (asyncFn: () => Promise<unknown>): void => {
     });
 };
 
-export const applyPatch = async ({patchFile, cwd}: { patchFile: string; cwd: string }): Promise<void> => {
-    await execShell([
-        "git",
-        [
-            "apply",
-            "--ignore-whitespace",
-            "--reject",
-            patchFile,
-        ],
-        {cwd},
-    ]);
+export const applyPatch = async ({patchFile, cwd}: {patchFile: string; cwd: string}): Promise<void> => {
+    await execShell(["git", ["apply", "--ignore-whitespace", "--reject", patchFile], {cwd}]);
 };

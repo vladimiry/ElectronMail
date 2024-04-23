@@ -9,11 +9,7 @@ import {initFindInPageBrowserView} from "src/electron-main/window/find-in-page";
 import {IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main-process";
 import {resolveUiContextStrict} from "src/electron-main/util";
 
-type ApiMethods = keyof Pick<IpcMainApiEndpoints,
-    | "findInPageDisplay"
-    | "findInPage"
-    | "findInPageStop"
-    | "findInPageNotification">;
+type ApiMethods = keyof Pick<IpcMainApiEndpoints, "findInPageDisplay" | "findInPage" | "findInPageStop" | "findInPageNotification">;
 
 type Notification = IpcMainServiceScan["ApiImplReturns"]["findInPageNotification"];
 
@@ -63,13 +59,10 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                 const {findInPageBrowserView: existingView} = uiContext;
                 if (
                     !existingView
-                    ||
-                    existingView.webContents.isDestroyed()
+                    || existingView.webContents.isDestroyed()
                 ) {
                     logger.verbose(`building new "${nameof.full(uiContext.findInPageBrowserView)}" instance`);
-                    setTimeout(
-                        async () => (uiContext.findInPageBrowserView = await initFindInPageBrowserView(ctx)).webContents.focus(),
-                    );
+                    setTimeout(async () => (uiContext.findInPageBrowserView = await initFindInPageBrowserView(ctx)).webContents.focus());
                 } else {
                     logger.verbose(`focusing existing "${nameof.full(uiContext.findInPageBrowserView)}" instance`);
                     existingView.webContents.focus();
@@ -130,9 +123,7 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async findInPageStop() {
-            ElectronWebContents
-                .getAllWebContents()
-                .forEach((webContents) => webContents.stopFindInPage("clearSelection"));
+            ElectronWebContents.getAllWebContents().forEach((webContents) => webContents.stopFindInPage("clearSelection"));
         },
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types

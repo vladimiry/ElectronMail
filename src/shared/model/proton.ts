@@ -5,10 +5,6 @@ export type ProtonClientSession = NoExtraProps<{
     readonly sessionStorage: Readonly<Record<string, any>>; // eslint-disable-line @typescript-eslint/no-explicit-any
 }>;
 
-export type ProtonMailExternalIdProp = NoExtraProps<{
-    ExternalID: string;
-}>;
+export type ProtonMailExternalIdProp = NoExtraProps<{ExternalID: string}>;
 
-export type ProtonAttachmentHeadersProp = NoExtraProps<{
-    Headers: Record<string, string>;
-}>;
+export type ProtonAttachmentHeadersProp = NoExtraProps<{Headers: Record<string, string>}>;

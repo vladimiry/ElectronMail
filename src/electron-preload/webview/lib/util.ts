@@ -22,11 +22,7 @@ export async function submitTotpToken(
     button: HTMLElement,
     resolveToken: () => Promise<string>,
     _logger: Logger,
-    {
-        submitTimeoutMs = ONE_SECOND_MS * 8,
-        newTokenDelayMs = ONE_SECOND_MS * 2,
-        submittingDetection,
-    }: {
+    {submitTimeoutMs = ONE_SECOND_MS * 8, newTokenDelayMs = ONE_SECOND_MS * 2, submittingDetection}: {
         submitTimeoutMs?: number;
         newTokenDelayMs?: number;
         submittingDetection?: () => Promise<boolean>;
@@ -45,13 +41,10 @@ export async function submitTotpToken(
     const submit: () => Promise<void> = async () => {
         logger.verbose("submit - start");
 
-        const submitted: () => Promise<boolean> = (
-            submittingDetection
-            ||
-            ((urlBeforeSubmit = getLocationHref()) => {
+        const submitted: () => Promise<boolean> = submittingDetection
+            || ((urlBeforeSubmit = getLocationHref()) => {
                 return async () => getLocationHref() !== urlBeforeSubmit;
-            })()
-        );
+            })();
 
         fillInputValue(input, await resolveToken());
         logger.verbose("input filled");
@@ -63,9 +56,7 @@ export async function submitTotpToken(
 
         // TODO consider using unified submitting detection
         //      like for example testing that input/button elements no longer attached to DOM or visible
-        if (
-            !(await submitted())
-        ) {
+        if (!(await submitted())) {
             throw new Error(errorMessage);
         }
 
@@ -75,7 +66,7 @@ export async function submitTotpToken(
     try {
         await submit();
     } catch (error) {
-        const {message} = (Object(error) as { message?: unknown });
+        const {message} = Object(error) as {message?: unknown};
 
         if (message !== errorMessage) {
             throw error;
@@ -89,18 +80,18 @@ export async function submitTotpToken(
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
 export function buildDbPatchRetryPipeline<T>(
-    preprocessError: (rawError: unknown) => { error: Error; retriable: boolean; skippable: boolean },
+    preprocessError: (rawError: unknown) => {error: Error; retriable: boolean; skippable: boolean},
     metadata: DeepReadonly<FsDbAccount["metadata"]> | null,
     logger: Logger,
-    {retriesDelay = ONE_SECOND_MS * 5, retriesLimit = 3}: { retriesDelay?: number; retriesLimit?: number } = {},
+    {retriesDelay = ONE_SECOND_MS * 5, retriesLimit = 3}: {retriesDelay?: number; retriesLimit?: number} = {},
 ) {
     const errorResult = (error: Error): ReturnType<typeof throwError> => {
         logger.error(nameof(buildDbPatchRetryPipeline), error);
         return throwError(error);
     };
 
-    return retryWhen<T>((errors) => errors.pipe(
-        concatMap((rawError, retryIndex) => {
+    return retryWhen<T>((errors) =>
+        errors.pipe(concatMap((rawError, retryIndex) => {
             const {error, retriable, skippable} = preprocessError(rawError);
 
             if (!isDatabaseBootstrapped(metadata)) {
@@ -119,14 +110,12 @@ export function buildDbPatchRetryPipeline<T>(
 
             if (retriable) {
                 logger.warn(nameof(buildDbPatchRetryPipeline), `Retrying call (attempt: "${retryIndex}")`);
-                return of(error).pipe(
-                    delay(retriesDelay),
-                );
+                return of(error).pipe(delay(retriesDelay));
             }
 
             return errorResult(error);
-        }),
-    ));
+        }))
+    );
 }
 
 export async function persistDatabasePatch(
@@ -134,11 +123,14 @@ export async function persistDatabasePatch(
     data: Parameters<IpcMainApiEndpoints["dbPatch"]>[0],
     logger: Logger,
 ): Promise<void> {
-    logger.info(`${nameof(persistDatabasePatch)}() start`, JSON.stringify({
-        metadata: typeof data.metadata === "string"
-            ? data.metadata
-            : omit(data.metadata, ["latestEventId"]),
-    }));
+    logger.info(
+        `${nameof(persistDatabasePatch)}() start`,
+        JSON.stringify({
+            metadata: typeof data.metadata === "string"
+                ? data.metadata
+                : omit(data.metadata, ["latestEventId"]),
+        }),
+    );
 
     if (providerApi._throwErrorOnRateLimitedMethodCall) {
         delete providerApi._throwErrorOnRateLimitedMethodCall;
@@ -168,13 +160,10 @@ export const fetchEvents = async (
     providerApi: ProviderApi,
     latestEventId: RestModel.Event["EventID"],
     _logger: Logger,
-): Promise<{ latestEventId: RestModel.Event["EventID"]; events: RestModel.Event[] } | "refresh"> => {
+): Promise<{latestEventId: RestModel.Event["EventID"]; events: RestModel.Event[]} | "refresh"> => {
     const logger = curryFunctionMembers(_logger, nameof(fetchEvents));
     const events: RestModel.Event[] = [];
-    const iterationState: NoExtraProps<{
-        latestEventId: RestModel.Event["EventID"];
-        sameNextIdCounter: number;
-    }> = {
+    const iterationState: NoExtraProps<{latestEventId: RestModel.Event["EventID"]; sameNextIdCounter: number}> = {
         latestEventId,
         sameNextIdCounter: 0,
     };
@@ -206,24 +195,19 @@ export const fetchEvents = async (
         // it's ok to break the iteration since we start from "latestEventId" next time syncing process gets triggered
         // another error handling approach is to iterate until "response.More" !== 1 but let's prefer "early break" for now
         if (iterationState.sameNextIdCounter > 2) {
-            logger.error(
-                `Events API indicates that there is a next event in the queue but responded with the same "next event id".`,
-            );
+            logger.error(`Events API indicates that there is a next event in the queue but responded with the same "next event id".`);
             break;
         }
     } while (true); // eslint-disable-line no-constant-condition
 
     logger.info(`fetched ${events.length} missed events`);
 
-    return {
-        latestEventId: iterationState.latestEventId,
-        events,
-    };
+    return {latestEventId: iterationState.latestEventId, events};
 };
 
 type documentCookiesForCustomSchemeType = {
-    readonly enable: (logger: Logger) => void
-    readonly setNotification$: Observable<{ url: string, cookieString: string }>
+    readonly enable: (logger: Logger) => void;
+    readonly setNotification$: Observable<{url: string; cookieString: string}>;
 };
 
 // TODO electron: drop custom "document.cookies" logic required for pages loaded via custom scheme/protocol
@@ -231,16 +215,14 @@ type documentCookiesForCustomSchemeType = {
 //      https://github.com/ProtonMail/react-components/commit/0558e441583029f644d1a17b68743436a29d5db2#commitcomment-52005249
 export const documentCookiesForCustomScheme: documentCookiesForCustomSchemeType = (() => {
     // we don't need all the values but just to be able to send a signal, so "buffer = 1" should be enough
-    const setNotificationSubject$ = new ReplaySubject<{ url: string, cookieString: string }>(1);
+    const setNotificationSubject$ = new ReplaySubject<{url: string; cookieString: string}>(1);
     const result: documentCookiesForCustomSchemeType = {
         setNotification$: setNotificationSubject$.asObservable(),
         enable(logger) {
             logger.verbose(nameof(documentCookiesForCustomScheme), nameof(result.enable));
             const {document} = window;
             const getUrl = (): string => LOCAL_WEBCLIENT_ORIGIN;
-            const cookieJar = new CookieJar(
-                new WebStorageCookieStore(window.sessionStorage),
-            );
+            const cookieJar = new CookieJar(new WebStorageCookieStore(window.sessionStorage));
 
             Object.defineProperty(document, "cookie", {
                 enumerable: true,
@@ -248,9 +230,7 @@ export const documentCookiesForCustomScheme: documentCookiesForCustomSchemeType 
                 get(): typeof document.cookie {
                     const url = getUrl();
                     const cookies = cookieJar.getCookiesSync(url);
-                    return cookies
-                        .map((cookie) => cookie.cookieString())
-                        .join("; ");
+                    return cookies.map((cookie) => cookie.cookieString()).join("; ");
                 },
                 set(cookieString: typeof document.cookie) {
                     const url = getUrl();
@@ -264,7 +244,7 @@ export const documentCookiesForCustomScheme: documentCookiesForCustomSchemeType 
 })();
 
 export const isErrorOnRateLimitedMethodCall = (error: unknown): boolean => {
-    return (Object(error) as { message?: string }).message === RATE_LIMITED_METHOD_CALL_MESSAGE;
+    return (Object(error) as {message?: string}).message === RATE_LIMITED_METHOD_CALL_MESSAGE;
 };
 
 export const attachUnhandledErrorHandler = (logger: Logger): void => {
@@ -276,11 +256,10 @@ export const attachUnhandledErrorHandler = (logger: Logger): void => {
             return;
         }
         // TODO figure the "ResizeObserver loop limit exceeded" error cause (raised by proton)
-        const logLevel = (
-            String(filename).startsWith(`${LOCAL_WEBCLIENT_ORIGIN}/`)
-            &&
-            String(message).startsWith("ResizeObserver loop")
-        ) ? "warn" : "error";
+        const logLevel = (String(filename).startsWith(`${LOCAL_WEBCLIENT_ORIGIN}/`)
+                && String(message).startsWith("ResizeObserver loop"))
+            ? "warn"
+            : "error";
         logger[logLevel](
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             {message, filename: depersonalizeProtonApiUrl(filename), lineno, colno, error: getPlainErrorProps(error)},

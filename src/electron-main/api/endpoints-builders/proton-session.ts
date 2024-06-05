@@ -1,13 +1,16 @@
+import _logger from "electron-log";
+import {keys} from "ts-transformer-keys";
 import {URL} from "@cliqz/url-parser";
 
 import {Context} from "src/electron-main/model";
+import {curryFunctionMembers} from "src/shared/util";
 import {filterProtonSessionApplyingCookies} from "src/electron-main/util";
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {processProtonCookieRecord} from "src/electron-main/util/proton-url";
 import {resetSessionStorages, resolveInitializedAccountSession} from "src/electron-main/session";
 import {resolvePrimaryDomainNameFromUrlHostname} from "src/shared/util/url";
 
-// TODO enable minimal logging
+const logger = curryFunctionMembers(_logger, __filename);
 
 export const buildEndpoints = async (
     ctx: Context,
@@ -38,10 +41,7 @@ export const buildEndpoints = async (
                 return null;
             }
 
-            return {
-                sessionStorage: savedSession.sessionStorage,
-                windowName,
-            };
+            return {sessionStorage: savedSession.sessionStorage, windowName};
         },
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
@@ -54,19 +54,16 @@ export const buildEndpoints = async (
             const dataToSave = {
                 login,
                 apiEndpointOrigin,
-                session: {
-                    cookies,
-                    sessionStorage: clientSession.sessionStorage,
-                    window: {name: clientSession.windowName},
-                },
+                session: {cookies, sessionStorage: clientSession.sessionStorage, window: {name: clientSession.windowName}},
             } as const;
             const {accessTokens, refreshTokens} = filterProtonSessionApplyingCookies(dataToSave.session.cookies);
 
             if (accessTokens.length > 1 || refreshTokens.length > 1) {
-                throw new Error([
+                const message = [
                     `The app refuses to save more than one "proton-session" cookies records set `,
                     `(${nameof(accessTokens)} count: ${accessTokens.length}, ${nameof(refreshTokens)} count: ${refreshTokens.length}).`,
-                ].join(""));
+                ].join("");
+                logger.error(nameof.full(endpoints.saveProtonSession), message);
             }
 
             await ctx.sessionStorage.saveSession(dataToSave);
@@ -89,33 +86,16 @@ export const buildEndpoints = async (
             }
 
             const session = resolveInitializedAccountSession({login, entryUrl: apiEndpointOrigin});
-            const cookies = (() => {
-                const values = filterProtonSessionApplyingCookies(savedSession.cookies);
-                return {
-                    accessToken: [...values.accessTokens].pop(),
-                    refreshToken: [...values.refreshTokens].pop(),
-                    sessionId: [...values.sessionIds].pop(),
-                } as const;
-            })();
+            const cookies = filterProtonSessionApplyingCookies(savedSession.cookies);
 
-            if (!cookies.accessToken || !cookies.refreshToken) {
+            if (!cookies.accessTokens.length || !cookies.refreshTokens.length) {
                 return false;
             }
 
-            await session.cookies.set({
-                ...cookies.accessToken,
-                url: `${apiEndpointOrigin}/${cookies.accessToken.path ?? ""}`,
-            });
-            await session.cookies.set({
-                ...cookies.refreshToken,
-                url: `${apiEndpointOrigin}/${cookies.refreshToken.path ?? ""}`,
-            });
-
-            if (cookies.sessionId) {
-                await session.cookies.set({
-                    ...cookies.sessionId,
-                    url: `${apiEndpointOrigin}/${cookies.sessionId.path ?? ""}`,
-                });
+            for (const cookieKey of keys<typeof cookies>()) {
+                for (const cookie of cookies[cookieKey]) {
+                    await session.cookies.set({...cookie, url: `${apiEndpointOrigin}/${cookie.path ?? ""}`});
+                }
             }
 
             return true;
@@ -138,6 +118,7 @@ export const buildEndpoints = async (
 
                 session._electron_mail_reset_counter_ ??= 0;
                 session._electron_mail_reset_counter_++;
+
                 if (
                     session._electron_mail_reset_counter_ < 2
                     || !(await session.cookies.get({})).length

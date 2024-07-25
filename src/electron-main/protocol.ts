@@ -28,9 +28,6 @@ const logger = curryFunctionMembers(_logger, __filename);
 
 const fsAsync = {stat: promisify(fs.stat), readFile: promisify(fs.readFile)} as const;
 
-const nonEmptyBasePathsSortedByLengthDesc: readonly string[] = Object.values(PROVIDER_REPO_MAP).filter(Boolean /* keep non-empty values */)
-    .map(({basePath}) => basePath).sort((a, b) => b.length - a.length);
-
 export const registerStandardSchemes = (): void => {
     // WARN: "protocol.registerStandardSchemes" needs to be called once, see https://github.com/electron/electron/issues/15943
     protocol.registerSchemesAsPrivileged([{
@@ -56,12 +53,22 @@ export function registerWebFolderFileProtocol(ctx: Context, session: Session): v
     }
 }
 
+const resolveResourcePathname: (requestPathname: string) => string | undefined = (() => {
+    const nonEmptyBasePathsSortedByLengthDesc: readonly string[] = Object
+        .values(PROVIDER_REPO_MAP)
+        .filter(Boolean /* keeping non-empty values */)
+        .map(({basePath}) => basePath).sort((a, b) => b.length - a.length);
+    return (template: string): string | undefined => {
+        return nonEmptyBasePathsSortedByLengthDesc.find((item) => `${template}/`.startsWith(`/${item}/`));
+    };
+})();
+
 async function resolveFileSystemResourceLocation(directory: string, requestUrl: URL): Promise<string | null> {
     const requestPathname = requestUrl.pathname === PROTON_APP_MAIL_LOGIN_PATHNAME
         ? "login.html"
         : requestUrl.pathname;
-    const resourcePathname: string | undefined = requestPathname !== "/" && !path.extname(requestPathname)
-        ? nonEmptyBasePathsSortedByLengthDesc.find((value) => `${requestPathname}/`.startsWith(`/${value}/`))
+    const resourcePathname = requestPathname !== "/" && !path.extname(requestPathname)
+        ? resolveResourcePathname(requestPathname)
         : requestPathname;
     if (typeof resourcePathname !== "string") {
         throw new Error(`Failed to resolve file system resource directory from the "${requestUrl.href}" request`);

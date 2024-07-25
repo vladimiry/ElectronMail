@@ -1,15 +1,15 @@
 diff --git a/applications/account/package.json b/applications/account/package.json
-index 4ec5d0b741..93c94c449f 100644
+index e6b14ce6c5..efc2dbebdf 100644
 --- a/applications/account/package.json
 +++ b/applications/account/package.json
 @@ -6,7 +6,6 @@
      "author": "",
      "main": "index.js",
      "scripts": {
--        "build": "cross-env NODE_ENV=production WEBPACK_PARALLELISM=2 TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --appMode=sso",
+-        "build:web": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --webpackOnCaffeine --appMode=sso",
          "check-types": "tsc",
+         "i18n:extract:web": "proton-i18n extract",
          "i18n:upgrade": "proton-i18n extract --verbose && proton-i18n crowdin --verbose",
-         "i18n:validate": "proton-i18n validate lint-functions",
 
 diff --git a/applications/account/webpack.config.ts b/applications/account/webpack.config.ts
 index 54f99267f9..68f5892f11 100644
@@ -44,15 +44,73 @@ index 54f99267f9..68f5892f11 100644
      }
 
 diff --git a/applications/account/src/app/content/MainContainer.tsx b/applications/account/src/app/content/MainContainer.tsx
-index 5a578b4b7d..80150502c4 100644
+index d43566ed37..73c82a0043 100644
 --- a/applications/account/src/app/content/MainContainer.tsx
 +++ b/applications/account/src/app/content/MainContainer.tsx
-@@ -133,7 +133,7 @@ const MainContainer = () => {
+@@ -39,7 +39,7 @@ import useAssistantFeatureEnabled from '@proton/components/hooks/assistant/useAs
+ import { getPublicUserProtonAddressApps, getSSOVPNOnlyAccountApps } from '@proton/shared/lib/apps/apps';
+ import { getAppFromPathnameSafe, getSlugFromApp } from '@proton/shared/lib/apps/slugHelper';
+ import { getToApp } from '@proton/shared/lib/authentication/apps';
+-import { stripLocalBasenameFromPathname } from '@proton/shared/lib/authentication/pathnameHelper';
++import { stripLocalBasenameFromPathname, getBasename } from '@proton/shared/lib/authentication/pathnameHelper';
+ import { APPS, SETUP_ADDRESS_PATH, VPN_TV_PATHS } from '@proton/shared/lib/constants';
+ import { stripLeadingAndTrailingSlash } from '@proton/shared/lib/helpers/string';
+ import { getHasPassB2BPlan, hasAIAssistant, hasAllProductsB2CPlan } from '@proton/shared/lib/helpers/subscription';
+@@ -144,21 +144,6 @@ const MainContainer = () => {
      const [isSessionRecoveryAvailable, loadingIsSessionRecoveryAvailable] = useIsSessionRecoveryAvailable();
-     const recoveryNotification = useRecoveryNotification(false);
+     const recoveryNotification = useRecoveryNotification(false, false, canDisplayNewSentinelSettings);
 
 -    const appFromPathname = getAppFromPathnameSafe(location.pathname);
-+    const appFromPathname = getAppFromPathnameSafe(window.location.pathname);
-     const app = appFromPathname || getToApp(undefined, user);
-     const appSlug = getSlugFromApp(app);
+-    const app = appFromPathname || getToApp(undefined, user);
+-    const appSlug = getSlugFromApp(app);
+-
+-    // We hide the assistant upsell for users on Mail and Calendar app without the assistant when the kill switch is enabled
+-    const hasAssistant = hasAIAssistant(subscription);
+-    const { killSwitch: assistantUpsellKillSwitch } = useAssistantFeatureEnabled();
+-    const hasAllProducts = hasAllProductsB2CPlan(subscription);
+-    const isInAllowedApps =
+-        hasAllProducts || appFromPathname === APPS.PROTONMAIL || appFromPathname === APPS.PROTONCALENDAR;
+-    const assistantKillSwitch = isInAllowedApps ? !hasAssistant && assistantUpsellKillSwitch : true;
+-
+-    const organizationTheme = useOrganizationTheme();
+-    const [memberships] = useGroupMemberships();
+-
+     const routes = getRoutes({
+         app,
+         user,
+@@ -178,6 +163,26 @@ const MainContainer = () => {
+         memberships,
+     });
 
++    const _EM_defaultAccountRedirect = getDefaultRedirect(routes.account);
++    const appFromPathname = getAppFromPathnameSafe(location.pathname) ?? (
++        location.pathname.endsWith(_EM_defaultAccountRedirect)
++            ? getAppFromPathnameSafe(`${getBasename()}${location.pathname.substring(0, location.pathname.length - _EM_defaultAccountRedirect.length)}`)
++            : undefined
++    )
++    const app = appFromPathname || getToApp(undefined, user);
++    const appSlug = getSlugFromApp(app);
++
++    // We hide the assistant upsell for users on Mail and Calendar app without the assistant when the kill switch is enabled
++    const hasAssistant = hasAIAssistant(subscription);
++    const { killSwitch: assistantUpsellKillSwitch } = useAssistantFeatureEnabled();
++    const hasAllProducts = hasAllProductsB2CPlan(subscription);
++    const isInAllowedApps =
++        hasAllProducts || appFromPathname === APPS.PROTONMAIL || appFromPathname === APPS.PROTONCALENDAR;
++    const assistantKillSwitch = isInAllowedApps ? !hasAssistant && assistantUpsellKillSwitch : true;
++
++    const organizationTheme = useOrganizationTheme();
++    const [memberships] = useGroupMemberships();
++
+     useEffect(() => {
+         setExpand(false);
+     }, [location.pathname, location.hash]);
+@@ -279,7 +284,7 @@ const MainContainer = () => {
+             if (app === APPS.PROTONPASS) {
+                 return getDefaultPassRedirect(user, routes.account, routes.pass);
+             }
+-            return getDefaultRedirect(routes.account);
++            return _EM_defaultAccountRedirect;
+         })();
+
+         return <Redirect to={`/${appSlug}${path}`} />;

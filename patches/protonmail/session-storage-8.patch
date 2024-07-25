@@ -121,13 +121,13 @@ index f24616faf9..6c05699766 100644
 +/* </electron-mail-mark> */
 
 diff --git a/packages/shared/lib/authentication/createAuthenticationStore.ts b/packages/shared/lib/authentication/createAuthenticationStore.ts
-index bad11a8fcc..2458eedf23 100644
+index b5cbba6cf7..21c710ab33 100644
 --- a/packages/shared/lib/authentication/createAuthenticationStore.ts
 +++ b/packages/shared/lib/authentication/createAuthenticationStore.ts
-@@ -46,8 +46,8 @@ const defaultAuthData = {
+@@ -48,8 +48,8 @@ const defaultAuthData = {
      basename: undefined,
  };
-
+ 
 -const getInitialState = (mode: 'sso' | 'standalone', oldUID?: string, oldLocalID?: number): AuthData => {
 -    if (mode === 'standalone') {
 +const getInitialState = (mode: 'sso' | 'standalone' | 'bundle', oldUID?: string, oldLocalID?: number): AuthData => {
@@ -135,3 +135,12 @@ index bad11a8fcc..2458eedf23 100644
          return {
              UID: oldUID,
              localID: undefined,
+@@ -215,7 +215,7 @@ const createAuthenticationStore = ({ mode = appMode, initialAuth, store: { set,
+             return basename;
+         },
+         get ready(): boolean {
+-            return Boolean(initialAuthData.UID && initialUID && getClientKey());
++            return Boolean(initialAuthData.UID && initialUID);
+         },
+     };
+ };

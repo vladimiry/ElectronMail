@@ -295,6 +295,7 @@ async function executeBuildFlow(
                     // eslint-disable-next-line
                     // https://github.com/ProtonMail/WebClients/blob/8d7f8a902034405988bd70431c714e9fdbb37a1d/packages/pack/bin/protonPack#L38
                     // `--appMode=bundle`,
+                    ...(repoType === "proton-account" || repoType === "proton-vpn-settings" ? ["--webpackOnCaffeine"] : []),
                 ], {
                     cwd: repoDir,
                     env: {

@@ -1,15 +1,15 @@
 diff --git a/applications/drive/package.json b/applications/drive/package.json
-index 1ff78a9928..d232854a68 100644
+index f082f72e36..63c181b0d9 100644
 --- a/applications/drive/package.json
 +++ b/applications/drive/package.json
-@@ -5,7 +5,6 @@
-     "author": "",
+@@ -7,7 +7,6 @@
      "main": "index.ts",
      "scripts": {
--        "build": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --appMode=sso",
+         "analyze": "yarn build:web --analyze",
+-        "build:web": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --appMode=sso",
          "check-types": "tsc",
-         "i18n:getlatest": "proton-i18n upgrade",
-         "i18n:upgrade": "proton-i18n extract --verbose && proton-i18n crowdin -u --verbose",
+         "i18n:extract:local": "yarn workspace @proton/i18n build && yarn build:web && proton-i18n extract",
+         "i18n:extract:web": "proton-i18n extract",
 
 diff --git a/applications/drive/webpack.config.ts b/applications/drive/webpack.config.ts
 index afccc2a4b1..8682856d3a 100644
@@ -106,14 +106,18 @@ index 7483da5f4f..62d7bb7733 100644
   * Opens download stream into service worker. Use abort signal when pipeTo can't close the download stream.
 
 diff --git a/applications/drive/src/app/store/_shares/shareUrl.ts b/applications/drive/src/app/store/_shares/shareUrl.ts
-index 76b907e2a1..a267a2d50c 100644
+index 1b76b8ea81..748ede869b 100644
 --- a/applications/drive/src/app/store/_shares/shareUrl.ts
 +++ b/applications/drive/src/app/store/_shares/shareUrl.ts
-@@ -36,6 +36,6 @@ export const getSharedLink = (sharedURL?: {
-
-     const [generatedPassword] = splitGeneratedAndCustomPassword(sharedURL.password, sharedURL);
-
--    const url = sharedURL.publicUrl ? sharedURL.publicUrl : `${window.location.origin}/urls/${sharedURL.token}`;
-+    const url = sharedURL.publicUrl ? sharedURL.publicUrl : `https://drive.protonmail.com/urls/${sharedURL.token}`;
-     return `${url}${generatedPassword !== '' ? `#${generatedPassword}` : ''}`;
+@@ -43,5 +43,9 @@ export const getSharedLink = (sharedURL?: {
+     const url = sharedURL.publicUrl
+         ? replaceLocalURL(sharedURL.publicUrl)
+         : getAppHref(`/urls/${sharedURL.token}`, APPS.PROTONDRIVE);
+-    return `${url}${generatedPassword !== '' ? `#${generatedPassword}` : ''}`;
++    const resultUrl = `${url}${generatedPassword !== '' ? `#${generatedPassword}` : ''}`;
++    return new URL(
++        new URL(resultUrl).href.substring(new URL(resultUrl).origin.length),
++        "https://drive.proton.me",
++    ).toString();
  };
+--

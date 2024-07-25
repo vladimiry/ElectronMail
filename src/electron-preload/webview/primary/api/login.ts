@@ -18,7 +18,7 @@ export function registerApi(): void {
 
             const elements = await resolveDomElements({
                 username: () => document.querySelector<HTMLInputElement>("form[name=loginForm] #username"),
-            }, {timeLimitMs: ONE_SECOND_MS * 5, scanIntervalMs: ONE_SECOND_MS / 4});
+            }, {timeLimitMs: ONE_SECOND_MS * 10, scanIntervalMs: ONE_SECOND_MS / 4});
             logger.verbose(`elements resolved`);
 
             fillInputValue(elements.username, login);

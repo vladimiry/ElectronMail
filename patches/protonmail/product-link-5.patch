@@ -1,0 +1,22 @@
+diff --git a/packages/components/containers/app/ProductLink.tsx b/packages/components/containers/app/ProductLink.tsx
+index 3a5addc90e..5caa792f98 100644
+--- a/packages/components/containers/app/ProductLink.tsx
++++ b/packages/components/containers/app/ProductLink.tsx
+@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
+ import { isProtonUserFromCookie } from '@proton/components/helpers/protonUserCookie';
+ import { getAppName } from '@proton/shared/lib/apps/helper';
+ import type { APP_NAMES } from '@proton/shared/lib/constants';
+-import { APPS, SETUP_ADDRESS_PATH } from '@proton/shared/lib/constants';
++import { APPS, SETUP_ADDRESS_PATH, ELECTRON_MAIL_APPS } from '@proton/shared/lib/constants';
+ import { getAppStaticUrl } from '@proton/shared/lib/helpers/url';
+ import type { UserModel } from '@proton/shared/lib/interfaces';
+ import { getRequiresAddressSetup } from '@proton/shared/lib/keys';
+@@ -63,7 +63,7 @@ const ProductLink = ({
+     const isProtonUser = isProtonUserFromCookie();
+     // If a user is passed here, it means the user is signed in (e.g. not viewing a public link)
+     // and as such we should not show the static product links
+-    if (!user && !isProtonUser) {
++    if (!ELECTRON_MAIL_APPS.includes(appToLinkTo as typeof ELECTRON_MAIL_APPS[number])) {
+         return (
+             <a
+                 href={getAppStaticUrl(appToLinkTo)}

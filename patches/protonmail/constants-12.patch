@@ -1,8 +1,23 @@
 diff --git a/packages/shared/lib/constants.ts b/packages/shared/lib/constants.ts
-index 46e89948c9..1731d37719 100644
+index 3f4227b0c4..256f3ccf4e 100644
 --- a/packages/shared/lib/constants.ts
 +++ b/packages/shared/lib/constants.ts
-@@ -81,7 +81,7 @@ interface AppConfiguration {
+@@ -77,6 +77,14 @@ export const APPS = {
+     PROTONDOCSEDITOR: 'proton-docs-editor',
+ } as const;
+
++export const ELECTRON_MAIL_APPS = [
++    APPS.PROTONACCOUNT,
++    APPS.PROTONCALENDAR,
++    APPS.PROTONDRIVE,
++    APPS.PROTONMAIL,
++    APPS.PROTONVPN_SETTINGS,
++] as const;
++
+ interface AppConfiguration {
+     publicPath: string;
+     subdomain: string;
+@@ -92,7 +100,7 @@ interface AppConfiguration {
 
  export const APPS_CONFIGURATION: { [key in APP_NAMES]: AppConfiguration } = {
      [APPS.PROTONACCOUNT]: {
@@ -11,7 +26,7 @@ index 46e89948c9..1731d37719 100644
          subdomain: 'account',
          name: 'Proton Account',
          bareName: 'Account',
-@@ -179,8 +179,8 @@ export const APPS_CONFIGURATION: { [key in APP_NAMES]: AppConfiguration } = {
+@@ -194,13 +202,13 @@ export const APPS_CONFIGURATION: { [key in APP_NAMES]: AppConfiguration } = {
          settingsSlug: '',
      },
      [APPS.PROTONVPN_SETTINGS]: {
@@ -22,3 +37,9 @@ index 46e89948c9..1731d37719 100644
          name: VPN_APP_NAME,
          bareName: VPN_SHORT_APP_NAME,
          clientID: 'web-vpn-settings',
+         icon: 'brand-proton-vpn',
+-        settingsSlug: 'vpn',
++        settingsSlug: 'account/vpn',
+     },
+     [APPS.PROTONADMIN]: {
+         publicPath: '',

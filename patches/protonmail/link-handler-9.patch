@@ -1,27 +1,28 @@
 diff --git a/packages/components/hooks/useLinkHandler.tsx b/packages/components/hooks/useLinkHandler.tsx
-index e5ee651c66..c9bf768d52 100644
+index 8fce50519e..f57dcb152b 100644
 --- a/packages/components/hooks/useLinkHandler.tsx
 +++ b/packages/components/hooks/useLinkHandler.tsx
-@@ -2,6 +2,7 @@ import { ReactNode, RefObject, useEffect, useState } from 'react';
-
- import { c } from 'ttag';
+@@ -14,6 +14,8 @@ import LinkConfirmationModal from '../components/notifications/LinkConfirmationM
+ import { getHostname, isExternal, isSubDomain, punycodeUrl } from '../helpers/url';
+ import { useHandler, useNotifications } from './index';
 
 +import { openNewTab } from '@proton/shared/lib/helpers/browser';
- import { PROTON_DOMAINS } from '@proton/shared/lib/constants';
- import { getSecondLevelDomain } from '@proton/shared/lib/helpers/url';
- import { MailSettings } from '@proton/shared/lib/interfaces';
-@@ -129,6 +130,10 @@ export const useLinkHandler: UseLinkHandler = (
++
+ // Reference : Angular/src/app/utils/directives/linkHandler.js
+
+ interface UseLinkHandlerOptions {
+@@ -130,6 +132,10 @@ export const useLinkHandler: UseLinkHandler = (
              return;
          }
 
 +        event.preventDefault();
 +        event.stopPropagation(); // Required for Safari
-+        const encodedLink = punycodeUrl(src.encoded || src.raw);
++        const link = punycodeUrl(src.encoded || src.raw);
 +
          if (
              (askForConfirmation || isPhishingAttempt) &&
              isExternal(src.raw, window.location.hostname) &&
-@@ -136,12 +141,10 @@ export const useLinkHandler: UseLinkHandler = (
+@@ -137,12 +143,10 @@ export const useLinkHandler: UseLinkHandler = (
                  .filter(isTruthy) // currentDomain can be null
                  .some((domain) => isSubDomain(hostname, domain))
          ) {
@@ -29,11 +30,10 @@ index e5ee651c66..c9bf768d52 100644
 -            event.stopPropagation(); // Required for Safari
 -
 -            const link = punycodeUrl(src.encoded || src.raw);
--            setLink(link);
-+            setLink(encodedLink);
+             setLink(link);
              setLinkConfirmationModalOpen(true);
 +        } else {
-+            openNewTab(encodedLink);
++            openNewTab(link);
          }
      });
 

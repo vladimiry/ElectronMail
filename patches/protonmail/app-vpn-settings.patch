@@ -1,60 +1,55 @@
 diff --git a/applications/vpn-settings/package.json b/applications/vpn-settings/package.json
-index 2232dbdee5..b12e610cf8 100644
+index 597d3dc8b8..4dd04ce581 100644
 --- a/applications/vpn-settings/package.json
 +++ b/applications/vpn-settings/package.json
 @@ -6,7 +6,6 @@
      "author": "",
      "main": "index.js",
      "scripts": {
--        "build": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --appMode=standalone --logical",
+-        "build:web": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --webpackOnCaffeine --appMode=standalone --logical",
          "check-types": "tsc",
+         "i18n:extract:web": "proton-i18n extract",
          "i18n:upgrade": "proton-i18n extract --verbose && proton-i18n crowdin --verbose",
-         "i18n:validate": "proton-i18n validate lint-functions",
 
-diff --git a/packages/pack/webpack/css.loader.js b/packages/pack/webpack/css.loader.js
-index 072d323cd4..4aed56dd87 100644
---- a/packages/pack/webpack/css.loader.js
-+++ b/packages/pack/webpack/css.loader.js
-@@ -10,17 +10,22 @@ const handleUrlResolve = (url) => {
-     return true;
- };
+diff --git a/applications/vpn-settings/src/app/MainContainer.tsx b/applications/vpn-settings/src/app/MainContainer.tsx
+index 839082af37..1df204206f 100644
+--- a/applications/vpn-settings/src/app/MainContainer.tsx
++++ b/applications/vpn-settings/src/app/MainContainer.tsx
+@@ -54,6 +54,7 @@ import {
+     useToggle,
+     useUser,
+     useUserSettings,
++    AppsDropdown,
+ } from '@proton/components';
+ import { CancellationReminderSection } from '@proton/components/containers';
+ import TwoFactorSection from '@proton/components/containers/account/TwoFactorSection';
+@@ -177,7 +178,7 @@ const MainContainer: FunctionComponent = () => {
+     const sidebar = (
+         <Sidebar
+             app={APPS.PROTONVPN_SETTINGS}
+-            appsDropdown={null}
++            appsDropdown={<AppsDropdown app={app} />}
+             logo={logo}
+             expanded={expanded}
+             onToggleExpand={onToggleExpand}
 
-+// required by "resolve-url-loader", but get disabled by "disabling minimizing", so getting it back for styles
-+const sourceMap = true;
-+
- module.exports = ({ browserslist, logical }) => {
-     const sassLoaders = [
-         {
-             loader: require.resolve('css-loader'),
-             options: {
-+                sourceMap,
-                 url: { filter: handleUrlResolve },
-             },
-         },
-         {
-             loader: require.resolve('postcss-loader'),
-             options: {
-+                sourceMap,
-                 postcssOptions: {
-                     plugins: [
-                         require('autoprefixer')({
-@@ -35,9 +40,11 @@ module.exports = ({ browserslist, logical }) => {
-         },
-         {
-             loader: require.resolve('resolve-url-loader'),
-+            options: {sourceMap},
-         },
-         {
-             loader: require.resolve('sass-loader'),
-+            options: {sourceMap},
-         },
-     ].filter(Boolean);
-
-@@ -54,6 +61,7 @@ module.exports = ({ browserslist, logical }) => {
-                 {
-                     loader: require.resolve('css-loader'),
-                     options: {
-+                        sourceMap,
-                         importLoaders: 1,
-                         url: { filter: handleUrlResolve },
-                     },
+diff --git a/packages/components/components/link/AppLink.tsx b/packages/components/components/link/AppLink.tsx
+index 67b2981641..329468a6f3 100644
+--- a/packages/components/components/link/AppLink.tsx
++++ b/packages/components/components/link/AppLink.tsx
+@@ -44,15 +44,6 @@ const AppLink = ({ to, toApp, reloadDocument, children, ...rest }: AppLinkProps,
+                 </a>
+             );
+         }
+-        if (APP_NAME === APPS.PROTONVPN_SETTINGS) {
+-            const href = getAppHref(to, targetApp);
+-            return (
+-                // internal link, trusted
+-                <a ref={ref} target="_blank" {...rest} href={href}>
+-                    {children}
+-                </a>
+-            );
+-        }
+         if (authentication.mode === 'standalone') {
+             return (
+                 <Tooltip title="Disabled in standalone mode">

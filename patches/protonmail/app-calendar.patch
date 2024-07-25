@@ -1,15 +1,15 @@
 diff --git a/applications/calendar/package.json b/applications/calendar/package.json
-index 6d44ef4129..8ff11b06cf 100644
+index a20adb2e61..3809a620f3 100644
 --- a/applications/calendar/package.json
 +++ b/applications/calendar/package.json
 @@ -6,7 +6,6 @@
      "author": "",
      "main": "index.js",
      "scripts": {
--        "build": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --appMode=sso",
+-        "build:web": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --appMode=sso",
          "check-types": "tsc",
+         "i18n:extract:web": "proton-i18n extract",
          "i18n:upgrade": "proton-i18n extract --verbose && proton-i18n crowdin --verbose",
-         "i18n:validate": "proton-i18n validate lint-functions",
 
 diff --git a/applications/calendar/webpack.config.ts b/applications/calendar/webpack.config.ts
 index 729c7fc564..8c21b9143e 100644

@@ -1,10 +1,10 @@
 diff --git a/packages/shared/lib/helpers/sentry.ts b/packages/shared/lib/helpers/sentry.ts
-index ede995ae65..6784cc0e26 100644
+index d56a7bf7a0..7cadf90d72 100644
 --- a/packages/shared/lib/helpers/sentry.ts
 +++ b/packages/shared/lib/helpers/sentry.ts
-@@ -1,19 +1,12 @@
+@@ -1,21 +1,14 @@
+ import type { BrowserOptions } from '@sentry/browser';
  import {
-     BrowserOptions,
 -    Integrations as SentryIntegrations,
      captureException,
 -    configureScope,
@@ -12,17 +12,19 @@ index ede995ae65..6784cc0e26 100644
 -    makeFetchTransport,
      captureMessage as sentryCaptureMessage,
  } from '@sentry/browser';
--import { BrowserTransportOptions } from '@sentry/browser/types/transports/types';
+-import type { BrowserTransportOptions } from '@sentry/browser/types/transports/types';
+
+ import { Availability, AvailabilityTypes } from '@proton/utils/availability';
 
  import { VPN_HOSTNAME } from '../constants';
 -import { ApiError } from '../fetch/ApiError';
  import { getUIDHeaders } from '../fetch/headers';
- import { ProtonConfig } from '../interfaces';
+ import type { ProtonConfig } from '../interfaces';
 -import { isElectronApp } from './desktop';
 
  type SentryContext = {
      authHeaders: { [key: string]: string };
-@@ -70,21 +63,6 @@ export const getContentTypeHeaders = (input: FirstFetchParameter): HeadersInit =
+@@ -72,21 +65,6 @@ export const getContentTypeHeaders = (input: FirstFetchParameter): HeadersInit =
      return {};
  };
 
@@ -44,7 +46,7 @@ index ede995ae65..6784cc0e26 100644
  const isLocalhost = (host: string) => host.startsWith('localhost');
  export const isProduction = (host: string) => host.endsWith('.proton.me') || host === VPN_HOSTNAME;
 
-@@ -174,94 +152,11 @@ function main({
+@@ -180,82 +158,7 @@ function main({
      ignore = ({ host }) => isLocalhost(host),
      denyUrls = getDefaultDenyUrls(),
      ignoreErrors = getDefaultIgnoreErrors(),
@@ -96,8 +98,7 @@ index ede995ae65..6784cc0e26 100644
 -            if (!context.enabled) {
 -                return null;
 -            }
-+}: SentryOptions) {}
-
+-
 -            // Remove the hash from the request URL and navigation breadcrumbs to avoid
 -            // leaking the search parameters of encrypted searches
 -            if (event.request && event.request.url) {
@@ -112,8 +113,7 @@ index ede995ae65..6784cc0e26 100644
 -                    return breadcrumb;
 -                });
 -            }
-+export const traceError = (...args: Parameters<typeof captureException>) => console.error(...args);
-
+-
 -            return event;
 -        },
 -        // Some ignoreErrors and denyUrls are taken from this gist: https://gist.github.com/Chocksy/e9b2cdd4afc2aadc7989762c4b8b495a
@@ -126,23 +126,11 @@ index ede995ae65..6784cc0e26 100644
 -        scope.setTag('appVersion', APP_VERSION);
 -    });
 -}
--
--export const traceError = (...args: Parameters<typeof captureException>) => {
--    if (!isLocalhost(window.location.host)) {
--        captureException(...args);
--    }
--};
--
--export const captureMessage = (...args: Parameters<typeof sentryCaptureMessage>) => {
--    if (!isLocalhost(window.location.host)) {
--        sentryCaptureMessage(...args);
--    }
--};
-+export const captureMessage = (...args: Parameters<typeof sentryCaptureMessage>) => console.log(...args);
++}: SentryOptions) {}
 
- type MailInitiative = 'drawer-security-center' | 'composer';
- export type SentryInitiative = MailInitiative;
-@@ -272,15 +167,7 @@ type CaptureExceptionArgs = Parameters<typeof captureException>;
+ export const traceError = (...args: Parameters<typeof captureException>) => {
+     if (!isLocalhost(window.location.host)) {
+@@ -279,15 +182,7 @@ type CaptureExceptionArgs = Parameters<typeof captureException>;
   * @param initiative
   * @param error
   */
@@ -159,7 +147,7 @@ index ede995ae65..6784cc0e26 100644
 
  /**
   * Capture message with an additional initiative tag
-@@ -290,12 +177,6 @@ export const traceInitiativeError = (initiative: MailInitiative, error: CaptureE
+@@ -297,12 +192,6 @@ export const traceInitiativeError = (initiative: MailInitiative, error: CaptureE
  export const captureInitiativeMessage: (initiative: SentryInitiative, message: string) => void = (
      initiative,
      message

@@ -1,18 +1,18 @@
 diff --git a/applications/mail/package.json b/applications/mail/package.json
-index 8087743d3a..ce4cf05ff1 100644
+index 484bddd761..cbe893e90c 100644
 --- a/applications/mail/package.json
 +++ b/applications/mail/package.json
 @@ -6,7 +6,6 @@
      "author": "",
      "main": "index.js",
      "scripts": {
--        "build": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --appMode=sso",
+-        "build:web": "cross-env NODE_ENV=production WEBPACK_PARALLELISM=2 TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --appMode=sso",
          "check-types": "tsc",
+         "i18n:extract:web": "proton-i18n extract",
          "i18n:getlatest": "proton-i18n upgrade",
-         "i18n:upgrade": "proton-i18n extract --verbose && proton-i18n crowdin -u --verbose",
 
 diff --git a/applications/mail/webpack.config.ts b/applications/mail/webpack.config.ts
-index 4715626d02..31fd093099 100644
+index 72f0b86274..22c087d99c 100644
 --- a/applications/mail/webpack.config.ts
 +++ b/applications/mail/webpack.config.ts
 @@ -5,7 +5,7 @@ import { Configuration, ProvidePlugin } from 'webpack';
@@ -24,7 +24,7 @@ index 4715626d02..31fd093099 100644
 
  const result = (env: any): Configuration => {
      setAutoFreeze(false);
-@@ -40,14 +40,6 @@ const result = (env: any): Configuration => {
+@@ -41,14 +41,6 @@ const result = (env: any): Configuration => {
          );
          // }
 
@@ -39,8 +39,7 @@ index 4715626d02..31fd093099 100644
          const htmlPlugin = config.plugins.find((plugin): plugin is HtmlWebpackPlugin => {
              return plugin instanceof HtmlWebpackPlugin;
          });
-@@ -56,8 +48,8 @@ const result = (env: any): Configuration => {
-         }
+@@ -58,7 +50,7 @@ const result = (env: any): Configuration => {
          const htmlIndex = config.plugins.indexOf(htmlPlugin);
 
 -        if (env.appMode === 'standalone') {
@@ -50,7 +49,7 @@ index 4715626d02..31fd093099 100644
          }
 
          // We keep the order because the other plugins have an impact
-@@ -74,19 +66,6 @@ const result = (env: any): Configuration => {
+@@ -75,19 +67,6 @@ const result = (env: any): Configuration => {
                  inject: 'body',
              })
          );
@@ -67,8 +66,9 @@ index 4715626d02..31fd093099 100644
 -                inject: 'body',
 -            })
 -        );
+
+         config.experiments = { asyncWebAssembly: true };
      });
- };
 
 diff --git a/packages/shared/lib/api/auth.ts b/packages/shared/lib/api/auth.ts
 index efbf28b89f..432f24b303 100644
@@ -209,21 +209,18 @@ index 328d40aeac..24bf9b7de0 100644
  export interface AbstractMessageImage {
 
 diff --git a/packages/components/hooks/useGetVerificationPreferences.ts b/packages/components/hooks/useGetVerificationPreferences.ts
-index 5b4d93ee06..e311e43009 100644
+index 8698fb0667..dc8a639795 100644
 --- a/packages/components/hooks/useGetVerificationPreferences.ts
 +++ b/packages/components/hooks/useGetVerificationPreferences.ts
-@@ -37,8 +37,9 @@ const useGetVerificationPreferences = () => {
+@@ -38,6 +38,7 @@ const useGetVerificationPreferences = () => {
      const getPublicKeysForInbox = useGetPublicKeysForInbox();
      const getMailSettings = useGetMailSettings();
 
 +    /* <electron-mail-mark> 1) track signature/args: email, lifetime, contactEmailsMap 2) "verifyingKeys" gets returned */
      const getVerificationPreferences = useCallback<GetVerificationPreferences>(
--        async ({ email, lifetime, contactEmailsMap }) => {
-+        async ({ email, lifetime, contactEmailsMap }) => { // track signature/args: email, lifetime, contactEmailsMap
+         async ({ email, lifetime, contactEmailsMap }) => {
              const addresses = await getAddresses();
-             const canonicalEmail = canonicalizeInternalEmail(email);
-             const selfAddress = addresses.find(({ Email }) => canonicalizeInternalEmail(Email) === canonicalEmail);
-@@ -59,7 +60,7 @@ const useGetVerificationPreferences = () => {
+@@ -70,7 +71,7 @@ const useGetVerificationPreferences = () => {
                  const verifyingKeys = getVerifyingKeys(activePublicKeys, compromisedFingerprints);
                  return {
                      isOwnAddress: true,
@@ -232,7 +229,7 @@ index 5b4d93ee06..e311e43009 100644
                      apiKeys: activePublicKeys,
                      pinnedKeys: [],
                      compromisedFingerprints,
-@@ -103,7 +104,7 @@ const useGetVerificationPreferences = () => {
+@@ -114,7 +115,7 @@ const useGetVerificationPreferences = () => {
              }
              return {
                  isOwnAddress: false,
@@ -241,7 +238,7 @@ index 5b4d93ee06..e311e43009 100644
                  pinnedKeys,
                  apiKeys: apiPublicKeys,
                  ktVerificationResult,
-@@ -115,6 +116,7 @@ const useGetVerificationPreferences = () => {
+@@ -126,6 +127,7 @@ const useGetVerificationPreferences = () => {
          },
          [api, getAddressKeys, getAddresses, getPublicKeysForInbox, getMailSettings]
      );
@@ -251,10 +248,10 @@ index 5b4d93ee06..e311e43009 100644
          ({ email, lifetime = DEFAULT_LIFETIME, contactEmailsMap }) => {
 
 diff --git a/applications/mail/src/app/helpers/message/messageDecrypt.ts b/applications/mail/src/app/helpers/message/messageDecrypt.ts
-index acfa71607..216229b0f 100644
+index 3c994a7fa3..87803c24fa 100644
 --- a/applications/mail/src/app/helpers/message/messageDecrypt.ts
 +++ b/applications/mail/src/app/helpers/message/messageDecrypt.ts
-@@ -26,6 +26,7 @@ const binaryToString = (data: Uint8Array) =>
+@@ -25,6 +25,7 @@ const binaryToString = (data: Uint8Array) =>
          // nbsp can be contained in message body and "crash" DOMPurify
          .replace(/\u00A0/g, ' ');
 
@@ -262,7 +259,7 @@ index acfa71607..216229b0f 100644
  export interface DecryptMessageResult {
      decryptedBody: string;
      decryptedRawContent: Uint8Array;
-@@ -35,6 +36,7 @@ export interface DecryptMessageResult {
+@@ -34,6 +35,7 @@ export interface DecryptMessageResult {
      errors?: MessageErrors;
      mimetype?: MIME_TYPES;
  }
@@ -270,7 +267,7 @@ index acfa71607..216229b0f 100644
 
  const decryptMimeMessage = async (
      message: Message,
-@@ -150,6 +152,7 @@ const decryptLegacyMessage = async (
+@@ -92,6 +94,7 @@ const decryptMimeMessage = async (
   * Willingly not dealing with public keys and signature verification
   * It will be done separately when public keys will be ready
   */
@@ -278,9 +275,9 @@ index acfa71607..216229b0f 100644
  export const decryptMessage = async (
      message: Message,
      privateKeys: PrivateKeyReference[],
-@@ -162,6 +165,7 @@ export const decryptMessage = async (
+@@ -132,6 +135,7 @@ export const decryptMessage = async (
+         };
      }
-     return decryptLegacyMessage(message, privateKeys, password);
  };
 +/* </electron-mail-mark> */
 
@@ -324,11 +321,11 @@ index e2baface5..8b4317d5a 100644
  export default useApi;
 
 diff --git a/packages/components/hooks/useAuthentication.ts b/packages/components/hooks/useAuthentication.ts
-index 2bab0ad85..51fc1fd18 100644
+index 62cc8ee6bf..533ea5d5a1 100644
 --- a/packages/components/hooks/useAuthentication.ts
 +++ b/packages/components/hooks/useAuthentication.ts
 @@ -3,9 +3,9 @@ import { useContext } from 'react';
- import { PrivateAuthenticationStore } from '../containers/app/interface';
+ import type { PrivateAuthenticationStore } from '../containers/app/interface';
  import AuthenticationContext from '../containers/authentication/authenticationContext';
 
 -const useAuthentication = () => {
@@ -414,19 +411,19 @@ index 2aaa779d3..487f54ff3 100644
  };
 
 diff --git a/applications/mail/src/app/components/drawer/MailQuickSettings.tsx b/applications/mail/src/app/components/drawer/MailQuickSettings.tsx
-index c0a72173cb..5baba25085 100644
+index c7fa985bb1..c7b33cf2f9 100644
 --- a/applications/mail/src/app/components/drawer/MailQuickSettings.tsx
 +++ b/applications/mail/src/app/components/drawer/MailQuickSettings.tsx
-@@ -31,7 +31,6 @@ import { useGetStartedChecklist } from 'proton-mail/containers/onboardingCheckli
+@@ -40,7 +40,6 @@ import { useGetStartedChecklist } from 'proton-mail/containers/onboardingCheckli
+ import useMailModel from 'proton-mail/hooks/useMailModel';
 
- import { useEncryptedSearchContext } from '../../containers/EncryptedSearchProvider';
  import ClearBrowserDataModal from '../header/ClearBrowserDataModal';
 -import MailDefaultHandlerModal from '../header/MailDefaultHandlerModal';
 
- interface QuickSettingsSelectOption {
-     value: any;
-@@ -328,7 +327,6 @@ const MailQuickSettings = () => {
-                 )}
+ const { OFF, UNSET, SERVER_ONLY } = AI_ASSISTANT_ACCESS;
+
+@@ -378,7 +377,6 @@ const MailQuickSettings = () => {
+                 </Tooltip>
              </QuickSettingsButtonSection>
 
 -            <MailDefaultHandlerModal {...mailDefaultHandlerProps} />
@@ -436,14 +433,15 @@ index c0a72173cb..5baba25085 100644
 
 diff --git a/applications/mail/src/app/components/header/MailDefaultHandlerModal.tsx b/applications/mail/src/app/components/header/MailDefaultHandlerModal.tsx
 deleted file mode 100644
-index 0d29745777..0000000000
+index 0314390d7b..0000000000
 --- a/applications/mail/src/app/components/header/MailDefaultHandlerModal.tsx
 +++ /dev/null
-@@ -1,41 +0,0 @@
+@@ -1,42 +0,0 @@
 -import { c } from 'ttag';
 -
 -import { Button, Href } from '@proton/atoms';
--import { ModalProps, Prompt } from '@proton/components';
+-import type { ModalProps } from '@proton/components';
+-import { Prompt } from '@proton/components';
 -import { MAIL_APP_NAME } from '@proton/shared/lib/constants';
 -import { getKnowledgeBaseUrl } from '@proton/shared/lib/helpers/url';
 -
@@ -483,13 +481,13 @@ index 0d29745777..0000000000
 -export default MailDefaultHandlerModal;
 
 diff --git a/applications/mail/src/app/components/header/search/MailSearch.tsx b/applications/mail/src/app/components/header/search/MailSearch.tsx
-index 73a363c143..c2a5ef9208 100644
+index c980e13679..a079cbd7b9 100644
 --- a/applications/mail/src/app/components/header/search/MailSearch.tsx
 +++ b/applications/mail/src/app/components/header/search/MailSearch.tsx
-@@ -4,21 +4,17 @@ import { Location } from 'history';
+@@ -4,21 +4,17 @@ import type { Location } from 'history';
 
+ import type { Breakpoints } from '@proton/components';
  import {
-     Breakpoints,
 -    FeatureCode,
      TopNavbarListItemSearchButton,
      generateUID,
@@ -555,16 +553,15 @@ index 92034469a9..a49c3d54bb 100644
      const [mailSettings] = useMailSettings();
 
 diff --git a/packages/shared/lib/interfaces/MailSettings.ts b/packages/shared/lib/interfaces/MailSettings.ts
-index 083e514552..8fa361ab75 100644
+index d7d70c1d0c..565a2601aa 100644
 --- a/packages/shared/lib/interfaces/MailSettings.ts
 +++ b/packages/shared/lib/interfaces/MailSettings.ts
-@@ -49,7 +49,7 @@ export interface MailSettings {
+@@ -50,7 +50,7 @@ export interface MailSettings {
      ComposerMode: COMPOSER_MODE;
      MessageButtons: MESSAGE_BUTTONS;
      ShowMoved: number;
 -    ViewMode: VIEW_MODE;
 +    ViewMode: VIEW_MODE; // track "ViewMode" prop
      ViewLayout: VIEW_LAYOUT;
-     SwipeLeft: number;
-     SwipeRight: number;
-
+     SwipeLeft: SWIPE_ACTION; // default 3
+     SwipeRight: SWIPE_ACTION; // default 0

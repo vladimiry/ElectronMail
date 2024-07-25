@@ -1,29 +1,38 @@
 diff --git a/packages/pack/webpack.config.ts b/packages/pack/webpack.config.ts
-index a78945215f..b9b6605555 100644
+index 63246f6565..ad7f8f4c1b 100644
 --- a/packages/pack/webpack.config.ts
 +++ b/packages/pack/webpack.config.ts
-@@ -3,6 +3,7 @@ import { Configuration } from 'webpack';
- import 'webpack-dev-server';
- // @ts-ignore
+@@ -5,6 +5,7 @@ import 'webpack-dev-server';
  import { parseResource } from 'webpack/lib/util/identifier';
-+import fs from 'fs';
 
  import { getEntries } from './webpack/entries';
++import fs from 'fs';
 
-@@ -25,10 +26,8 @@ const getConfig = (env: any): Configuration => {
-         api: env.api,
+ const getCssLoaders = require('./webpack/css.loader');
+ const getAssetsLoaders = require('./webpack/assets.loader');
+@@ -21,9 +22,7 @@ const getConfig = (env: any): Configuration => {
+
+     const { getJsLoaders } = require(env.webpackOnCaffeine ? './webpack/js.loader.swc' : './webpack/js.loader');
+
+-    const defaultBrowsersList = isProduction
+-        ? `> 0.5%, not IE 11, Firefox ESR, Safari 14, iOS 14, Chrome 80`
+-        : 'last 1 chrome version, last 1 firefox version, last 1 safari version';
++    const defaultBrowsersList = 'Chrome >= 126';
+
+     const options = {
+         isProduction,
+@@ -33,8 +32,8 @@ const getConfig = (env: any): Configuration => {
          appMode: env.appMode || 'standalone',
+         webpackOnCaffeine: env.webpackOnCaffeine,
          featureFlags: env.featureFlags || '',
 -        writeSRI: env.writeSri !== 'false',
--        browserslist: isProduction
--            ? `> 0.5%, not IE 11, Firefox ESR, Safari 11`
--            : 'last 1 chrome version, last 1 firefox version, last 1 safari version',
+-        browserslist: env.browserslist ?? defaultBrowsersList,
 +        writeSRI: false,
-+        browserslist: 'Chrome >= 118',
++        browserslist: defaultBrowsersList,
          buildData: {
              version: env.version,
              commit: env.commit,
-@@ -46,8 +45,21 @@ const getConfig = (env: any): Configuration => {
+@@ -53,8 +52,21 @@ const getConfig = (env: any): Configuration => {
 
      const version = options.buildData.version;
 
@@ -43,7 +52,7 @@ index a78945215f..b9b6605555 100644
 +        }
 +        return (value: Configuration) => value;
 +    })()({
-+        target: [`browserslist:${options.browserslist}`, 'es5' /* prevent ES modules target, as those can't be easily monkey-patched */],
++        target: [`browserslist:${defaultBrowsersList}`, "es5"],
          mode: isProduction ? 'production' : 'development',
          bail: isProduction,
          devtool: isProduction ? 'source-map' : 'cheap-module-source-map',

@@ -4,7 +4,6 @@ import {Observable, Subscription} from "rxjs";
 
 import {buildLoggerBundle, resolveIpcMainApi} from "src/electron-preload/lib/util";
 import css from "src/electron-preload/lib/hovered-href-highlighter/index.scss";
-import {HOVERED_HREF_HIGHLIGHTER_RENDER_VISIBLE_CLASS_NAME} from "./const";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {IpcMainServiceScan} from "src/shared/api/main-process";
 import {ofType} from "src/shared/util/ngrx-of-type";
@@ -61,11 +60,11 @@ export class HoveredHrefHighlightElement extends HTMLElement {
                 const {style} = el;
                 const render = (): void => {
                     el.innerText = url;
-                    el.classList.add(HOVERED_HREF_HIGHLIGHTER_RENDER_VISIBLE_CLASS_NAME);
+                    el.classList.add("visible");
                 };
 
                 if (!url) {
-                    el.classList.remove(HOVERED_HREF_HIGHLIGHTER_RENDER_VISIBLE_CLASS_NAME);
+                    el.classList.remove("visible");
                     return;
                 }
 

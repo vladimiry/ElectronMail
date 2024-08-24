@@ -1,25 +1,16 @@
-import {Configuration, type LoaderContext, RuleSetRule} from "webpack";
+import {Configuration, RuleSetRule} from "webpack";
 import {doNothing} from "remeda";
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
-import path from "path";
 import {merge as webpackMerge} from "webpack-merge";
 
 import {buildBaseConfig, ENVIRONMENT, ENVIRONMENT_STATE, outputRelativePath, srcRelativePath, typescriptLoaderRule} from "../lib";
 import {BuildEnvVars} from "webpack-configs/model";
-import {HOVERED_HREF_HIGHLIGHTER_RENDER_VISIBLE_CLASS_NAME} from "src/electron-preload/lib/hovered-href-highlighter/const";
 import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/const/webpack";
 
 export const sassLoaderRuleSetRules: RuleSetRule[] = [{
     loader: "sass-loader",
     options: {
-        additionalData: (content: string, loaderContext: LoaderContext<string>) => {
-            const {resourcePath, rootContext} = loaderContext;
-            const relativePath = path.relative(rootContext, resourcePath);
-            return relativePath.endsWith("src/electron-preload/lib/hovered-href-highlighter/index.scss")
-                ? `$hovered-href-highlighter-render-visible-class:${HOVERED_HREF_HIGHLIGHTER_RENDER_VISIBLE_CLASS_NAME};${content}`
-                : content;
-        },
         warnRuleAsWarning: true,
         // TODO sass: drop logging suppressing
         sassOptions: (/* loaderContext */) => {

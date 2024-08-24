@@ -13,7 +13,7 @@ jobs:
     steps:
       # <common> TODO use YAML anchors feature when it gets supported
       - { uses: actions/checkout@v4 }
-      - { uses: pnpm/action-setup@v3, with: { version: 'latest' } }
+      - { uses: pnpm/action-setup@v4, with: { version: 'latest' } }
       - { name: pnpm patch, if: runner.os == 'Windows', run: ./scripts/ci/github/patch-pnpm.ps1 }
       - { uses: actions/setup-node@v4, with: { node-version: '${{ env.ELECTRON_MAIL_NODE_VERSION }}', cache: 'pnpm' } }
       - { name: system setup, if: runner.os == 'Linux', run: ./scripts/ci/github/system-setup-linux.sh }
@@ -23,7 +23,7 @@ jobs:
       - { name: install node modules, run: 'pnpm install --frozen-lockfile --reporter=append-only' }
       # </common>
       - name: cache artifact
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: |
             ./output/git/backup
@@ -39,12 +39,12 @@ jobs:
           with: { name: proton-clients-artifact, path: ./proton-clients-artifact.tar, if-no-files-found: error },
         }
   build-app:
-    strategy: { matrix: { os: [ubuntu-20.04, windows-2019, macos-11] }, fail-fast: false }
+    strategy: { matrix: { os: [ubuntu-20.04, windows-2019, macos-12] }, fail-fast: false }
     runs-on: ${{ matrix.os }}
     steps:
       # <common> TODO use YAML anchors feature when it gets supported
       - { uses: actions/checkout@v4 }
-      - { uses: pnpm/action-setup@v3, with: { version: 'latest' } }
+      - { uses: pnpm/action-setup@v4, with: { version: 'latest' } }
       - { name: pnpm patch, if: runner.os == 'Windows', run: ./scripts/ci/github/patch-pnpm.ps1 }
       - { uses: actions/setup-node@v4, with: { node-version: '${{ env.ELECTRON_MAIL_NODE_VERSION }}', cache: 'pnpm' } }
       - { name: system setup, if: runner.os == 'Linux', run: ./scripts/ci/github/system-setup-linux.sh }
@@ -63,12 +63,12 @@ jobs:
   package-app:
     if: github.event_name == 'push'
     needs: [build-proton-clients, build-app]
-    strategy: { matrix: { os: [ubuntu-20.04, windows-2019, macos-11, macos-latest] }, fail-fast: false }
+    strategy: { matrix: { os: [ubuntu-20.04, windows-2019, macos-12, macos-latest] }, fail-fast: false }
     runs-on: ${{ matrix.os }}
     steps:
       # <common> TODO use YAML anchors feature when it gets supported
       - { uses: actions/checkout@v4 }
-      - { uses: pnpm/action-setup@v3, with: { version: 'latest' } }
+      - { uses: pnpm/action-setup@v4, with: { version: 'latest' } }
       - { name: pnpm patch, if: runner.os == 'Windows', run: ./scripts/ci/github/patch-pnpm.ps1 }
       - { uses: actions/setup-node@v4, with: { node-version: '${{ env.ELECTRON_MAIL_NODE_VERSION }}', cache: 'pnpm' } }
       - { name: system setup, if: runner.os == 'Linux', run: ./scripts/ci/github/system-setup-linux.sh }
@@ -77,16 +77,16 @@ jobs:
       - { name: envinfo, run: npx envinfo }
       - { name: install node modules, run: 'pnpm install --frozen-lockfile --reporter=append-only' }
       # </common>
-      - { name: download proton clients artifact, uses: actions/download-artifact@v2, with: { name: proton-clients-artifact } }
+      - { name: download proton clients artifact, uses: actions/download-artifact@v4, with: { name: proton-clients-artifact } }
       - { name: unpack proton clients artifact, shell: bash, run: tar -xvf ./proton-clients-artifact.tar }
-      - { name: download app artifact, uses: actions/download-artifact@v2, with: { name: 'app-artifact-${{ runner.os }}', path: ./app } }
+      - { name: download app artifact, uses: actions/download-artifact@v4, with: { name: 'app-artifact-${{ runner.os }}', path: ./app } }
       - { name: assets, run: 'yarn assets', env: { ELECTRON_MAIL_SHOULD_FAIL_ON_BUILD: 'true' } }
       - { name: print ./app files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./app }
       - { name: build, if: runner.os == 'Windows', run: ./scripts/ci/github/package-app.ps1 }
       - { name: build, if: runner.os == 'Linux', run: ./scripts/ci/github/package-app-linux.sh }
       - {
           name: build,
-          if: matrix.os == 'macos-11',
+          if: matrix.os == 'macos-12',
           run: ./scripts/ci/github/package-app-osx.sh,
           env: { MACOSX_DEPLOYMENT_TARGET: '10.10' },
         }

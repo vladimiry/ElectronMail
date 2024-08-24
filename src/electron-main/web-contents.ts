@@ -143,7 +143,13 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
                 && ["Content Security Policy", "CSP"].some((pattern) => message.includes(pattern));
             if ((isWarn || isError) && !isFullTextSearchInstanceError) {
                 logger[lowerConsoleMessageEventLogLevel(isWarn ? "warn" : "error", message)](
-                    JSON.stringify({type: "console-message", level, message: depersonalizeLoggedUrlsInString(message), line, sourceId}),
+                    JSON.stringify({
+                        type: "console-message",
+                        level,
+                        message: depersonalizeLoggedUrlsInString(message),
+                        line,
+                        sourceId: depersonalizeLoggedUrlsInString(sourceId),
+                    }),
                 );
             }
         });

@@ -237,7 +237,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
                             level,
                             message: depersonalizeLoggedUrlsInString(message),
                             line,
-                            sourceId
+                            sourceId: depersonalizeLoggedUrlsInString(sourceId),
                         })],
                     );
                 }

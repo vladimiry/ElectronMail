@@ -1,6 +1,6 @@
 @use "src/web/browser-window/lib" as lib;
 
-@use "node_modules/ngx-bootstrap/datepicker/bs-datepicker" with (
+@use "../../../../node_modules/ngx-bootstrap/datepicker/bs-datepicker.scss" with (
     $theme-gray: theme-color("primary"),
     $theme-green: theme-color("primary"),
     $main-bg: $app-theming-datepicker-color-bg,
@@ -9,7 +9,7 @@
 );
 
 @import "src/web/variables";
-@import "node_modules/@ng-select/ng-select/scss/default.theme.scss";
+@import "../../../../node_modules/@ng-select/ng-select/scss/default.theme.scss";
 @import "font-awesome/css/font-awesome.css";
 
 // "bootstrap"
@@ -139,5 +139,3 @@ accordion-group {
         display: none !important;
     }
 }
-
-

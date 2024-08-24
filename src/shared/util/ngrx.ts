@@ -82,8 +82,8 @@ export const propsRecordToActionsRecord = <P extends PropsRecord>(value: P, {pre
                     ? [value.payload]
                     : []
             );
-            return matcher(
-                // @ts-expect-error // TODO get rid of "ts-expect-error" thing
+            // @ts-expect-error eslint-disable-line @typescript-eslint/ban-ts-comment
+            return matcher( // eslint-disable-line @typescript-eslint/no-unsafe-return
                 ...args, // eslint-disable-line @typescript-eslint/no-unsafe-argument
             );
         },

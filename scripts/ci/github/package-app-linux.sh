@@ -4,8 +4,9 @@ set -ev
 
 echo "::group::tweak the system"
 sudo apt-get update
-# purpose: native modules compiling
-sudo apt-get install --yes --no-install-recommends libtool automake g++-7
+# <purpose: native modules compiling>
+sudo apt-get install --yes --no-install-recommends libtool automake gcc-10 g++-10
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 100 --slave /usr/bin/g++ g++ /usr/bin/g++-10 --slave /usr/bin/gcov gcov /usr/bin/gcov-10
 # purpose: compiling "desktop-idle" native module (issue: No package 'xscrnsaver' found)
 sudo apt-get install --yes --no-install-recommends libxss-dev
 # purpose: tweaking snap package ("unsquashfs" binary)
@@ -14,9 +15,9 @@ sudo apt-get install --yes --no-install-recommends snapcraft squashfs-tools
 sudo apt-get install --yes --no-install-recommends libsecret-1-dev
 # purpose: pacman build fails also due missing "bsdtar", see https://github.com/jordansissel/fpm/issues/1453#issuecomment-356138549
 sudo apt-get install --yes --no-install-recommends libarchive-tools
-# purpose: native modules compiling
-export CC=gcc-7
-export CXX=g++-7
+# </purpose: native modules compiling>
+export CC=gcc-10
+export CXX=g++-10
 echo "::endgroup::"
 
 # assuming that "ubuntu-20.04" image comes with glibc v2.31, see https://github.com/vladimiry/ElectronMail/issues/389#issuecomment-812071591

@@ -94,7 +94,6 @@ async function keepBrowserWindowState(ctx: Context, browserWindow: Electron.Brow
 
 export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow> {
     const state: {forceClose: boolean} = {forceClose: false};
-    const appBeforeQuitEventArgs: ["before-quit", (event: Electron.Event) => void] = ["before-quit", (): true => state.forceClose = true];
     const browserWindow = new BrowserWindow({
         webPreferences: {
             ...DEFAULT_WEB_PREFERENCES,
@@ -108,8 +107,14 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
         autoHideMenuBar: true,
     });
 
-    app.removeListener(...appBeforeQuitEventArgs);
-    app.on(...appBeforeQuitEventArgs);
+    {
+        const appBeforeQuitEventArgs: ["before-quit", (event: Electron.Event) => void] = [
+            "before-quit",
+            (): true => state.forceClose = true,
+        ];
+        app.removeListener(...appBeforeQuitEventArgs);
+        app.on(...appBeforeQuitEventArgs);
+    }
 
     browserWindow.once("ready-to-show", async () => {
         const boundsToRestore = await resolveBoundsToRestore(ctx, browserWindow.getBounds());
@@ -158,14 +163,14 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
 
     await browserWindow.loadURL(ctx.locations.browserWindowPage);
 
-    const {webContents} = browserWindow;
-
-    webContents.on("did-navigate-in-page", () => {
-        webContents.clearHistory();
-    });
-
-    if (BUILD_ENVIRONMENT === "development") {
-        webContents.openDevTools(/* {mode: "detach"} */);
+    {
+        const {webContents} = browserWindow;
+        webContents.on("did-navigate-in-page", () => {
+            webContents.navigationHistory.clear();
+        });
+        if (BUILD_ENVIRONMENT === "development") {
+            webContents.openDevTools(/* {mode: "detach"} */);
+        }
     }
 
     return browserWindow;

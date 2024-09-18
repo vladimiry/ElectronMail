@@ -48,6 +48,7 @@ linux:
   packageCategory: Office
   desktop:
     StartupWMClass: electron-mail
+    GenericName: Unofficial ProtonMail Desktop App
   executableArgs:
     - '--js-flags="--max-old-space-size=12288"'
 

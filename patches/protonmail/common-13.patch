@@ -319,22 +319,21 @@ index c72145327e..bd29c31242 100644
  export default useLoad;
 
 diff --git a/packages/components/containers/app/AppsDropdown.tsx b/packages/components/containers/app/AppsDropdown.tsx
-index e38f8f6dd5..00c29acae7 100644
+index 4e63aa0741..1bba76c312 100644
 --- a/packages/components/containers/app/AppsDropdown.tsx
 +++ b/packages/components/containers/app/AppsDropdown.tsx
-@@ -74,8 +74,7 @@ const AppsDropdown = forwardRef<HTMLButtonElement, AppsDropdownProps>(
-                                         className="text-center text-no-decoration outline-none--at-all apps-dropdown-link flex flex-column items-center"
+@@ -69,7 +69,7 @@ const AppsDropdown = forwardRef<HTMLButtonElement, AppsDropdownProps>(
                                          current={current}
                                          reloadDocument={reloadDocument}
--                                        // The same app opens in the same window, other apps in new windows
+                                         // The same app opens in the same window, other apps in new windows
 -                                        target={APP_NAME === appToLinkTo ? '_self' : '_blank'}
 +                                        target='_self'
                                      >
-                                         <div
-                                             className="apps-dropdown-logo-wrapper flex items-center justify-center rounded-lg border border-weak w-custom h-custom mx-auto"
+                                         <ProductIcon appToLinkTo={appToLinkTo} current={current} />
+                                     </ProductLink>
 
 diff --git a/packages/shared/lib/apps/apps.ts b/packages/shared/lib/apps/apps.ts
-index 26ab6c0e7c..9347a83643 100644
+index 7dd1e47da8..5a30e5ba1a 100644
 --- a/packages/shared/lib/apps/apps.ts
 +++ b/packages/shared/lib/apps/apps.ts
 @@ -1,5 +1,5 @@
@@ -344,9 +343,9 @@ index 26ab6c0e7c..9347a83643 100644
  import { isElectronApp } from '../helpers/desktop';
  import type { User } from '../interfaces';
  import { getIsPublicUserWithoutProtonAddress, getIsSSOVPNOnlyAccount } from '../keys';
-@@ -35,5 +35,5 @@ export const getAvailableApps = (options: { canAccessWallet: boolean; user?: Use
-         apps.push(APPS.PROTONWALLET);
-     }
+@@ -41,5 +41,5 @@ export const getAvailableApps = (options: { user?: User; context: AppContext })
+         APPS.PROTONWALLET,
+     ];
 
 -    return apps;
 +    return apps.filter((value) => ELECTRON_MAIL_APPS.includes(value as typeof ELECTRON_MAIL_APPS[number]));
@@ -409,4 +408,3 @@ index 393e079efc..e94be6777d 100644
 +        canUseDocs: async () => false,
      };
  };
-

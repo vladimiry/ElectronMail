@@ -1,0 +1,69 @@
+diff --git a/packages/shared/lib/helpers/url.ts b/packages/shared/lib/helpers/url.ts
+index 788ceadf9d..5d49bd6436 100644
+--- a/packages/shared/lib/helpers/url.ts
++++ b/packages/shared/lib/helpers/url.ts
+@@ -193,13 +193,6 @@ export const getSecondLevelDomain = (hostname: string) => {
+     return hostname.slice(hostname.indexOf('.') + 1);
+ };
+
+-export const getRelativeApiHostname = (hostname: string) => {
+-    const idx = hostname.indexOf('.');
+-    const first = hostname.slice(0, idx);
+-    const second = hostname.slice(idx + 1);
+-    return `${first}-api.${second}`;
+-};
+-
+ export const getIsDohDomain = (origin: string) => {
+     return DOH_DOMAINS.some((dohDomain) => origin.endsWith(dohDomain));
+ };
+@@ -208,28 +201,8 @@ export const getIsConvertHostname = (hostname: string) => {
+     return hostname === 'join.protonvpn.com';
+ };
+
+-const doesHostnameLookLikeIP = (hostname: string) => {
+-    // Quick helper function to tells us if hostname string seems to be IP address or DNS name.
+-    // Relies on a fact, that no TLD ever will probably end with a digit. So if last char is
+-    // a digit, it's probably an IP.
+-    // IPv6 addresses can end with a letter, so there's additional colon check also.
+-    // Probably no need ever to use slow & complicated IP regexes here, but feel free to change
+-    // whenever we have such util functions available.
+-    // Note: only works on hostnames (no port), not origins (can include port and protocol).
+-    return /\d$/.test(hostname) || hostname.includes(':');
+-};
+-
+ export const getApiSubdomainUrl = (pathname: string, origin: string) => {
+-    const url = new URL('', origin);
+-
+-    const usePathPrefix =
+-        url.hostname === 'localhost' || getIsDohDomain(url.origin) || doesHostnameLookLikeIP(url.hostname);
+-    if (usePathPrefix) {
+-        url.pathname = `/api${pathname}`;
+-        return url;
+-    }
+-
+-    url.hostname = getRelativeApiHostname(url.hostname);
++    const url = new URL('/', '___ELECTRON_MAIL_PROTON_API_ENTRY_URL_PLACEHOLDER___');
+     url.pathname = pathname;
+     return url;
+ };
+
+diff --git a/packages/shared/lib/fetch/helpers.ts b/packages/shared/lib/fetch/helpers.ts
+index 8bf57abc3e..24e4890f93 100644
+--- a/packages/shared/lib/fetch/helpers.ts
++++ b/packages/shared/lib/fetch/helpers.ts
+@@ -10,6 +10,7 @@ const appendQueryParams = (url: URL, params: { [key: string]: any }) => {
+     });
+ };
+
++/* <electron-mail-mark> */
+ export const createUrl = (urlString: string, params: { [key: string]: any } = {}, origin?: string) => {
+     let url: URL;
+     if (origin) {
+@@ -20,6 +21,7 @@ export const createUrl = (urlString: string, params: { [key: string]: any } = {}
+     appendQueryParams(url, params);
+     return url;
+ };
++/* </electron-mail-mark> */
+
+ export const checkStatus = (response: Response, config: any) => {
+     const { status } = response;

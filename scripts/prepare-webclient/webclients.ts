@@ -281,31 +281,41 @@ async function executeBuildFlow(
                 assertPathIsInCwd(repoDistDir);
                 await execShell(["npx", ["--no", "rimraf", repoDistDir]]);
 
-                await execShell(["yarn", [
-                    "workspace",
-                    repoType,
-                    "run",
-                    "proton-pack",
-                    "build",
-                    // SRI disabled by patching as "--no-sri" doesn't make effect
-                    // "--no-sri", // the API URL gets injected dynamically by custom protocol which obviously breaks SRI stuff
-                    `--api=${configApiParam}`,
-                    `--appMode=bundle`, // standalone | sso | bundle
-                    ...(publicPath ? [`--publicPath=${publicPath}`] : []),
-                    // eslint-disable-next-line
-                    // https://github.com/ProtonMail/WebClients/blob/8d7f8a902034405988bd70431c714e9fdbb37a1d/packages/pack/bin/protonPack#L38
-                    // `--appMode=bundle`,
-                    ...(repoType === "proton-account" || repoType === "proton-vpn-settings" ? ["--webpackOnCaffeine"] : []),
-                ], {
-                    cwd: repoDir,
-                    env: {
-                        ...process.env,
-                        ...(publicPath && {PUBLIC_PATH: publicPath}),
-                        NODE_ENV: "production",
-                        // picked "build" task of "applications/<app>/package.json", "package.json" patching tracks the change
-                        TS_NODE_PROJECT: path.join(repoDir, "tsconfig.webpack.json"),
-                    },
-                }], publicPath ? {printEnvWhitelist: ["PUBLIC_PATH"]} : undefined);
+                {
+                    // const tag = await execShell(["git", ["tag", "--points-at", "HEAD"], {cwd: repoDir}])
+                    //    .then(({stdout}) => stdout.replace(/(\r\n|\n|\r)/gm, ""));
+                    // const version: string | null = tag.includes("@")
+                    //     ? tag.split("@")[1] ?? null
+                    //     : null;
+
+                    await execShell(["yarn", [
+                        "workspace",
+                        repoType,
+                        "run",
+                        "proton-pack",
+                        "build",
+                        // SRI disabled by patching as "--no-sri" doesn't make effect
+                        // "--no-sri", // the API URL gets injected dynamically by custom protocol which obviously breaks SRI stuff
+                        `--api=${configApiParam}`,
+                        `--appMode=bundle`, // standalone | sso | bundle
+                        ...(publicPath ? [`--publicPath=${publicPath}`] : []),
+                        // eslint-disable-next-line
+                        // https://github.com/ProtonMail/WebClients/blob/8d7f8a902034405988bd70431c714e9fdbb37a1d/packages/pack/bin/protonPack#L38
+                        // `--appMode=bundle`,
+                        "--webpackOnCaffeine",
+                        // ...(repoType === "proton-vpn-settings" ? ["--logical"] : []),
+                        // ...(version ? [`--version=${version}`] : []),
+                    ], {
+                        cwd: repoDir,
+                        env: {
+                            ...process.env,
+                            ...(publicPath && {PUBLIC_PATH: publicPath}),
+                            NODE_ENV: "production",
+                            // picked "build" task of "applications/<app>/package.json", "package.json" patching tracks the change
+                            TS_NODE_PROJECT: path.join(repoDir, "tsconfig.webpack.json"),
+                        },
+                    }], publicPath ? {printEnvWhitelist: ["PUBLIC_PATH"]} : undefined);
+                }
 
                 if (repoType === "proton-drive") {
                     // WARN if path changes, search "Service-Worker-Allowed" keyword in "src/electron-main" and make needed adjustments

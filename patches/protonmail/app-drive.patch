@@ -1,12 +1,12 @@
 diff --git a/applications/drive/package.json b/applications/drive/package.json
-index f082f72e36..63c181b0d9 100644
+index c037e3ce53..e1655f0a06 100644
 --- a/applications/drive/package.json
 +++ b/applications/drive/package.json
 @@ -7,7 +7,6 @@
      "main": "index.ts",
      "scripts": {
          "analyze": "yarn build:web --analyze",
--        "build:web": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --appMode=sso",
+-        "build:web": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --webpackOnCaffeine --appMode=sso",
          "check-types": "tsc",
          "i18n:extract:local": "yarn workspace @proton/i18n build && yarn build:web && proton-i18n extract",
          "i18n:extract:web": "proton-i18n extract",

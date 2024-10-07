@@ -12,18 +12,18 @@ index 597d3dc8b8..4dd04ce581 100644
          "i18n:upgrade": "proton-i18n extract --verbose && proton-i18n crowdin --verbose",
 
 diff --git a/applications/vpn-settings/src/app/MainContainer.tsx b/applications/vpn-settings/src/app/MainContainer.tsx
-index 839082af37..1df204206f 100644
+index bef42a0509..08c58a3c4a 100644
 --- a/applications/vpn-settings/src/app/MainContainer.tsx
 +++ b/applications/vpn-settings/src/app/MainContainer.tsx
-@@ -54,6 +54,7 @@ import {
-     useToggle,
+@@ -61,6 +61,7 @@ import {
+     useUnprivatizeMembers,
      useUser,
      useUserSettings,
 +    AppsDropdown,
  } from '@proton/components';
- import { CancellationReminderSection } from '@proton/components/containers';
- import TwoFactorSection from '@proton/components/containers/account/TwoFactorSection';
-@@ -177,7 +178,7 @@ const MainContainer: FunctionComponent = () => {
+ import { getIsSectionAvailable, getRoutePaths, getSectionPath } from '@proton/components/containers/layout/helper';
+ import { CANCEL_ROUTE } from '@proton/components/containers/payments/subscription/cancellationFlow/helper';
+@@ -188,7 +189,7 @@ const MainContainer: FunctionComponent = () => {
      const sidebar = (
          <Sidebar
              app={APPS.PROTONVPN_SETTINGS}

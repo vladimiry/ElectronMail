@@ -1,0 +1,106 @@
+diff --git a/packages/components/components/drawer/DrawerApp.tsx b/packages/components/components/drawer/DrawerApp.tsx
+index fe278e2760..e9a2f32209 100644
+--- a/packages/components/components/drawer/DrawerApp.tsx
++++ b/packages/components/components/drawer/DrawerApp.tsx
+@@ -81,19 +81,6 @@ const DrawerApp = ({ customAppSettings, onCompose, onMailTo, contactCustomAction
+                     initiative={appInView === DRAWER_NATIVE_APPS.SECURITY_CENTER ? 'drawer-security-center' : undefined}
+                 >
+                     <div className="drawer-app-inner h-full w-full">
+-                        {Object.entries(iframeSrcMap)
+-                            .filter(([, src]) => src)
+-                            .map(([app, src]) => (
+-                                <iframe
+-                                    key={app}
+-                                    id={`drawer-app-iframe-${app}`}
+-                                    className={clsx(['drawer-app-view h-full w-full', appInView !== app && 'hidden'])}
+-                                    src={src}
+-                                    title={c('Info').t`Calendar side panel`}
+-                                    allow="clipboard-read; clipboard-write"
+-                                />
+-                            ))}
+-
+                         {appInView === DRAWER_NATIVE_APPS.CONTACTS && (
+                             <DrawerContactView
+                                 onCompose={onCompose}
+
+diff --git a/applications/mail/src/app/hooks/drawer/useMailDrawer.tsx b/applications/mail/src/app/hooks/drawer/useMailDrawer.tsx
+index faab0dff80..53d289ae91 100644
+--- a/applications/mail/src/app/hooks/drawer/useMailDrawer.tsx
++++ b/applications/mail/src/app/hooks/drawer/useMailDrawer.tsx
+@@ -18,12 +18,14 @@ const useMailDrawer = () => {
+     // TODO: add UserSettings."WalletAccess" condition once available
+     const canShowWalletRightSidebarLink = useFlag('WalletRightSidebarLink');
+
++    // <electron-mail-mark>
+     const drawerSidebarButtons = [
+         <ContactDrawerAppButton aria-expanded={isAppInView(DRAWER_NATIVE_APPS.CONTACTS, appInView)} />,
+         <CalendarDrawerAppButton aria-expanded={isAppInView(APPS.PROTONCALENDAR, appInView)} />,
+         canShowWalletRightSidebarLink && !isElectronApp && <WalletDrawerAppButton />,
+         <SecurityCenterDrawerAppButton aria-expanded={isAppInView(DRAWER_NATIVE_APPS.SECURITY_CENTER, appInView)} />,
+     ].filter(isTruthy);
++    // </electron-mail-mark>
+
+     return { drawerSidebarButtons, showDrawerSidebar };
+ };
+
+diff --git a/packages/components/components/drawer/drawerAppButtons/CalendarDrawerAppButton.tsx b/packages/components/components/drawer/drawerAppButtons/CalendarDrawerAppButton.tsx
+index 9dcbecd2c1..8d6eeefa7e 100644
+--- a/packages/components/components/drawer/drawerAppButtons/CalendarDrawerAppButton.tsx
++++ b/packages/components/components/drawer/drawerAppButtons/CalendarDrawerAppButton.tsx
+@@ -13,26 +13,7 @@ const CalendarDrawerAppButton = ({
+     onClick,
+     ...rest
+ }: Optional<Omit<Props, 'tooltipText' | 'buttonContent'>, 'onClick'>) => {
+-    const { toggleDrawerApp } = useDrawer();
+-    const monthDay = useDynamicMonthDay();
+-
+-    const handleClick = () => {
+-        onClick?.();
+-        toggleDrawerApp({ app: APPS.PROTONCALENDAR })();
+-    };
+-
+-    return (
+-        <DrawerAppButton
+-            key="toggle-calendar-drawer-app-button"
+-            tooltipText={CALENDAR_APP_NAME}
+-            data-testid="calendar-drawer-app-button:calendar-icon"
+-            buttonContent={<CalendarDrawerLogo monthDay={monthDay} />}
+-            onClick={handleClick}
+-            alt={c('Action').t`Toggle Calendar app`}
+-            aria-controls="drawer-app-iframe-proton-calendar"
+-            {...rest}
+-        />
+-    );
++    return null;
+ };
+
+ export default CalendarDrawerAppButton;
+
+diff --git a/packages/components/components/drawer/drawerAppButtons/WalletDrawerAppButton.tsx b/packages/components/components/drawer/drawerAppButtons/WalletDrawerAppButton.tsx
+index b1c5173995..3d3e78ed79 100644
+--- a/packages/components/components/drawer/drawerAppButtons/WalletDrawerAppButton.tsx
++++ b/packages/components/components/drawer/drawerAppButtons/WalletDrawerAppButton.tsx
+@@ -12,22 +12,7 @@ const WalletDrawerAppButton = ({
+     onClick,
+     ...rest
+ }: Optional<Omit<Props, 'tooltipText' | 'buttonContent'>, 'onClick'>) => {
+-    const goToApp = useAppLink();
+-    const handleClick = () => {
+-        goToApp('/', APPS.PROTONWALLET, true);
+-    };
+-    return (
+-        <DrawerAppButton
+-            key="open-wallet-drawer-app-button"
+-            tooltipText={c('wallet_signup_2024:Title').t`Wallet`}
+-            data-testid="wallet-drawer-app-button:wallet-icon"
+-            buttonContent={<WalletDrawerLogo />}
+-            onClick={handleClick}
+-            alt={c('wallet_signup_2024:Action').t`Access Wallet app`}
+-            aria-controls="drawer-app-proton-wallet"
+-            {...rest}
+-        />
+-    );
++    return null;
+ };
+
+ export default WalletDrawerAppButton;

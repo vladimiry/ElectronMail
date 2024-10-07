@@ -17,7 +17,7 @@ export const PROVIDER_REPO_MAP = {
         basePath: "",
         apiSubdomain: "mail-api",
         repoRelativeDistDir: "./dist",
-        tag: "ff2bda2caec07c321bf276451555722e486b3f72",
+        tag: "proton-mail@5.0.48.7",
         protonPack: {
             webpackIndexEntryItems: [
                 // immediate
@@ -51,7 +51,7 @@ export const PROVIDER_REPO_MAP = {
         basePath: "calendar",
         apiSubdomain: "calendar-api",
         repoRelativeDistDir: "./dist",
-        tag: "ff2bda2caec07c321bf276451555722e486b3f72",
+        tag: "proton-calendar@5.0.33.2",
         protonPack: {
             webpackIndexEntryItems: [
                 // immediate
@@ -64,14 +64,14 @@ export const PROVIDER_REPO_MAP = {
         basePath: "drive",
         apiSubdomain: "drive-api",
         repoRelativeDistDir: "./dist",
-        tag: "ff2bda2caec07c321bf276451555722e486b3f72",
+        tag: "proton-drive@5.1.4+080739b0",
         protonPack: {},
     },
     [PROVIDER_APP_NAMES[4]]: {
         basePath: "account/vpn",
         apiSubdomain: "account-api",
         repoRelativeDistDir: "./dist",
-        tag: "ff2bda2caec07c321bf276451555722e486b3f72",
+        tag: "proton-vpn-settings@5.0.138.0",
         protonPack: {},
     },
 } as const;

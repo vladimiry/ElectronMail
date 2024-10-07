@@ -1,12 +1,12 @@
 diff --git a/applications/mail/package.json b/applications/mail/package.json
-index 484bddd761..cbe893e90c 100644
+index d83e6ac79b..131645b41c 100644
 --- a/applications/mail/package.json
 +++ b/applications/mail/package.json
 @@ -6,7 +6,6 @@
      "author": "",
      "main": "index.js",
      "scripts": {
--        "build:web": "cross-env NODE_ENV=production WEBPACK_PARALLELISM=2 TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --appMode=sso",
+-        "build:web": "cross-env NODE_ENV=production WEBPACK_PARALLELISM=2 TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --webpackOnCaffeine --appMode=sso",
          "check-types": "tsc",
          "i18n:extract:web": "proton-i18n extract",
          "i18n:getlatest": "proton-i18n upgrade",
@@ -481,7 +481,7 @@ index 0314390d7b..0000000000
 -export default MailDefaultHandlerModal;
 
 diff --git a/applications/mail/src/app/components/header/search/MailSearch.tsx b/applications/mail/src/app/components/header/search/MailSearch.tsx
-index c980e13679..a079cbd7b9 100644
+index 040d9d0bd7..d52f76b5e3 100644
 --- a/applications/mail/src/app/components/header/search/MailSearch.tsx
 +++ b/applications/mail/src/app/components/header/search/MailSearch.tsx
 @@ -4,21 +4,17 @@ import type { Location } from 'history';
@@ -490,7 +490,6 @@ index c980e13679..a079cbd7b9 100644
  import {
 -    FeatureCode,
      TopNavbarListItemSearchButton,
-     generateUID,
      useAddresses,
      useFolders,
      useLabels,
@@ -499,6 +498,7 @@ index c980e13679..a079cbd7b9 100644
      useToggle,
 -    useUser,
  } from '@proton/components';
+ import generateUID from '@proton/utils/generateUID';
 
  import { ADVANCED_SEARCH_OVERLAY_CLOSE_EVENT } from '../../../constants';
  import { useEncryptedSearchContext } from '../../../containers/EncryptedSearchProvider';
@@ -565,3 +565,33 @@ index d7d70c1d0c..565a2601aa 100644
      ViewLayout: VIEW_LAYOUT;
      SwipeLeft: SWIPE_ACTION; // default 3
      SwipeRight: SWIPE_ACTION; // default 0
+
+diff --git a/applications/mail/src/app/components/assistant/AssistantIframe.tsx b/applications/mail/src/app/components/assistant/AssistantIframe.tsx
+index 5a68c1fd67..2f392dea49 100644
+--- a/applications/mail/src/app/components/assistant/AssistantIframe.tsx
++++ b/applications/mail/src/app/components/assistant/AssistantIframe.tsx
+@@ -1,23 +1,5 @@
+-import { c } from 'ttag';
+-
+-import { getAssistantIframeURL, useAssistant } from '@proton/llm/lib';
+-
+ const AssistantIframe = () => {
+-    const { canShowAssistant } = useAssistant();
+-
+-    if (!canShowAssistant) {
+-        return null;
+-    }
+-
+-    return (
+-        <iframe
+-            className="hidden"
+-            id="assistant-iframe"
+-            title={c('Info').t`writing assistant iframe`}
+-            src={getAssistantIframeURL()}
+-            tabIndex={-1}
+-        />
+-    );
++    return null;
+ };
+
+ export default AssistantIframe;

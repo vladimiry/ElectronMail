@@ -20,6 +20,7 @@ export const HEADERS = {
 } as const;
 
 export const STATIC_ALLOWED_ORIGINS = [
+    // "reports.proton.me", // Content Security Policy (CSP) reporting
     LOCAL_WEBCLIENT_ORIGIN,
     "chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai", // chromium built-in "PDF viewer" extension
     ...(BUILD_ENVIRONMENT === "development"

@@ -22,7 +22,7 @@ const build = (configPatch: Configuration, tsConfigFile: string): Configuration 
                     exclude: [browserWindowAppPath("/")],
                 }],
             },
-            externals: {electron: "require('electron')"},
+            externals: {electron: "require('electron')", "node:url": "require('url')"},
             resolve: {fallback: {"path": false, "fs": false}},
             output: {
                 path: outputRelativePath("electron-preload"),

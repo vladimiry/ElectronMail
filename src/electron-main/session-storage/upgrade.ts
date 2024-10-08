@@ -106,7 +106,7 @@ export const upgradeSessionStorage = (entity: SessionStorageModel): boolean => {
             for (const finalRecord of Object.values(mappedByEntryUrlRecord)) {
                 if (!finalRecord) continue;
                 type Properties = Required<Exclude<ConstructorParameters<(typeof import("tough-cookie"))["Cookie"]>[0], undefined>>;
-                type types = Pick<Properties, "domain" | "path" | "key">;
+                type types = Record<keyof Properties, string>;
                 finalRecord.__cookieStore__ = JSON.stringify(
                     mapKeys(
                         JSON.parse(

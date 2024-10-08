@@ -1,4 +1,4 @@
-import {PlaywrightTestConfig} from "@playwright/test";
+import type {PlaywrightTestConfig} from "@playwright/test";
 
 import {ONE_MINUTE_MS} from "src/shared/const";
 

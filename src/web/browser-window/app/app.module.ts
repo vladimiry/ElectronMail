@@ -8,9 +8,10 @@ import {ButtonsModule} from "ngx-bootstrap/buttons";
 import {CollapseModule} from "ngx-bootstrap/collapse";
 import {EffectsModule} from "@ngrx/effects";
 import {ErrorHandler, Injector, NgModule} from "@angular/core";
-import {META_REDUCERS, RuntimeChecks, StoreModule} from "@ngrx/store";
+import {META_REDUCERS, StoreModule} from "@ngrx/store";
 import {ModalModule} from "ngx-bootstrap/modal";
 import {PopoverModule} from "ngx-bootstrap/popover";
+import type {RuntimeChecks} from "@ngrx/store";
 
 import * as AccountsReducer from "./store/reducers/accounts";
 import {AppComponent} from "./components/app.component";

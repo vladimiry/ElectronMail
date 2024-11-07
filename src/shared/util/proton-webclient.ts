@@ -1,5 +1,5 @@
 import {pick} from "remeda";
-import {URL} from "@cliqz/url-parser";
+import {URL} from "@ghostery/url-parser";
 
 import {AccountConfig} from "src/shared/model/account";
 import {LOCAL_WEBCLIENT_ORIGIN, WEB_CLIENTS_BLANK_HTML_FILE_NAME} from "src/shared/const";

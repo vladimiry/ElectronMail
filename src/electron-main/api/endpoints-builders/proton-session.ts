@@ -1,6 +1,6 @@
 import _logger from "electron-log";
 import {keys} from "ts-transformer-keys";
-import {URL} from "@cliqz/url-parser";
+import {URL} from "@ghostery/url-parser";
 
 import {Context} from "src/electron-main/model";
 import {curryFunctionMembers} from "src/shared/util";

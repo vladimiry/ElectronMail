@@ -1,15 +1,12 @@
 import {Cookie as CookieParser, SameSite} from "@t-bowersox/cookie";
 import type {Cookie as ElectronCookie} from "electron";
-import {URL} from "@cliqz/url-parser";
+import {URL} from "@ghostery/url-parser";
 
 import {getHeader} from "src/electron-main/web-request/service";
 import {HEADERS} from "src/electron-main/web-request/const";
 import {
-    PROTON_API_ENTRY_PROTONMAIL_CH_VALUE,
-    PROTON_API_ENTRY_PROTONMAIL_COM_VALUE,
-    PROTON_API_ENTRY_TOR_V2_VALUE,
-    PROTON_API_ENTRY_TOR_V3_VALUE,
-    PROTON_API_ENTRY_URLS,
+    PROTON_API_ENTRY_PROTONMAIL_CH_VALUE, PROTON_API_ENTRY_PROTONMAIL_COM_VALUE, PROTON_API_ENTRY_TOR_V2_VALUE,
+    PROTON_API_ENTRY_TOR_V3_VALUE, PROTON_API_ENTRY_URLS,
 } from "src/shared/const/proton-url";
 import {PROVIDER_REPO_MAP} from "src/shared/const/proton-apps";
 import {resolvePrimaryDomainNameFromUrlHostname} from "src/shared/util/url";

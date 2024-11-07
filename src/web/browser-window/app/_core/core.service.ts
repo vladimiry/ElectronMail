@@ -4,7 +4,7 @@ import {concat, EMPTY, lastValueFrom, Observable, race, timer} from "rxjs";
 import {filter, first, mergeMap, take, takeUntil} from "rxjs/operators";
 import {Injectable, NgZone} from "@angular/core";
 import {select, Store} from "@ngrx/store";
-import {URL} from "@cliqz/url-parser";
+import {URL} from "@ghostery/url-parser";
 import UUID from "pure-uuid";
 
 import {AccountConfig} from "src/shared/model/account";

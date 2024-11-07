@@ -1,5 +1,5 @@
 import {BeforeSendResponse, HeadersReceivedResponse, OnBeforeSendHeadersListenerDetails, OnHeadersReceivedListenerDetails} from "electron";
-import {URL} from "@cliqz/url-parser";
+import {URL} from "@ghostery/url-parser";
 
 import {CorsProxy, GetHeaderCallResult} from "./model";
 import {HEADERS} from "./const";

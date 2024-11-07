@@ -9,7 +9,7 @@ import path from "path";
 import pathIsInside from "path-is-inside";
 import {promisify} from "util";
 import spawnAsync from "@expo/spawn-async";
-import {URL} from "@cliqz/url-parser";
+import {URL} from "@ghostery/url-parser";
 
 import {CWD_ABSOLUTE_DIR, GIT_CLONE_ABSOLUTE_DIR, OUTPUT_ABSOLUTE_DIR} from "./const";
 import {PROVIDER_REPO_MAP} from "src/shared/const/proton-apps";

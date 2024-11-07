@@ -8,7 +8,7 @@ import path from "path";
 import pathIsInside from "path-is-inside";
 import {promisify} from "util";
 import {Readable} from "stream";
-import {URL} from "@cliqz/url-parser";
+import {URL} from "@ghostery/url-parser";
 
 import type {AccountConfig} from "src/shared/model/account";
 import {AccountSessionAppData, Context} from "src/electron-main/model";
@@ -17,9 +17,7 @@ import {Config} from "src/shared/model/options";
 import {curryFunctionMembers} from "src/shared/util";
 import {LOCAL_WEBCLIENT_DIR_NAME, LOCAL_WEBCLIENT_SCHEME_NAME, WEB_PROTOCOL_DIR, WEB_PROTOCOL_SCHEME} from "src/shared/const";
 import {
-    PROTON_API_URL_PLACEHOLDER,
-    PROTON_APP_MAIL_LOGIN_PATHNAME,
-    PROTON_SUPPRESS_UPSELL_ADS_PLACEHOLDER,
+    PROTON_API_URL_PLACEHOLDER, PROTON_APP_MAIL_LOGIN_PATHNAME, PROTON_SUPPRESS_UPSELL_ADS_PLACEHOLDER,
 } from "src/shared/const/proton-url";
 import {PROVIDER_REPO_MAP} from "src/shared/const/proton-apps";
 import {resolveProtonApiOrigin, resolveProtonAppTypeFromUrlHref} from "src/shared/util/proton-url";

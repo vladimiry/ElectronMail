@@ -39,7 +39,7 @@ jobs:
           with: { name: proton-clients-artifact, path: ./proton-clients-artifact.tar, if-no-files-found: error },
         }
   build-app:
-    strategy: { matrix: { os: [ubuntu-20.04, windows-2019, macos-12] }, fail-fast: false }
+    strategy: { matrix: { os: [ubuntu-20.04, windows-2019, macos-13] }, fail-fast: false }
     runs-on: ${{ matrix.os }}
     steps:
       # <common> TODO use YAML anchors feature when it gets supported
@@ -63,7 +63,7 @@ jobs:
   package-app:
     if: github.event_name == 'push'
     needs: [build-proton-clients, build-app]
-    strategy: { matrix: { os: [ubuntu-20.04, windows-2019, macos-12, macos-latest] }, fail-fast: false }
+    strategy: { matrix: { os: [ubuntu-20.04, windows-2019, macos-13, macos-latest] }, fail-fast: false }
     runs-on: ${{ matrix.os }}
     steps:
       # <common> TODO use YAML anchors feature when it gets supported
@@ -86,7 +86,7 @@ jobs:
       - { name: build, if: runner.os == 'Linux', run: ./scripts/ci/github/package-app-linux.sh }
       - {
           name: build,
-          if: matrix.os == 'macos-12',
+          if: matrix.os == 'macos-13',
           run: ./scripts/ci/github/package-app-osx.sh,
           env: { MACOSX_DEPLOYMENT_TARGET: '10.10' },
         }

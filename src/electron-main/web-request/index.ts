@@ -1,13 +1,10 @@
 import _logger from "electron-log";
 import {
-    OnBeforeRequestListenerDetails,
-    OnBeforeSendHeadersListenerDetails,
-    OnCompletedListenerDetails,
-    OnErrorOccurredListenerDetails,
+    OnBeforeRequestListenerDetails, OnBeforeSendHeadersListenerDetails, OnCompletedListenerDetails, OnErrorOccurredListenerDetails,
     OnHeadersReceivedListenerDetails,
 } from "electron";
 import {pick} from "remeda";
-import {URL} from "@cliqz/url-parser";
+import {URL} from "@ghostery/url-parser";
 
 import {ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN} from "src/shared/const";
 import {AccountConfig} from "src/shared/model/account";

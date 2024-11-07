@@ -1,4 +1,4 @@
-import {URL} from "@cliqz/url-parser";
+import {URL} from "@ghostery/url-parser";
 
 import {EntryUrlItem} from "src/shared/model/common";
 import {PROVIDER_REPO_MAP} from "src/shared/const/proton-apps";

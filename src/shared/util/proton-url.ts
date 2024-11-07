@@ -1,5 +1,5 @@
 import {mapValues} from "remeda";
-import {URL} from "@cliqz/url-parser";
+import {URL} from "@ghostery/url-parser";
 
 import {PROTON_API_ENTRY_URLS, PROTON_API_SUBDOMAINS, PROTON_APP_MAIL_LOGIN_PATHNAME} from "src/shared/const/proton-url";
 import {PROVIDER_REPO_MAP} from "src/shared/const/proton-apps";

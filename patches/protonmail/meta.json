@@ -11,6 +11,7 @@
     "url-8.patch",
     "drawer-app.patch",
     "slug-helper-1.patch",
+    "metrics-1.patch",
     "app-mail.patch"
   ],
   "proton-account": [
@@ -25,6 +26,7 @@
     "url-8.patch",
     "drawer-app.patch",
     "slug-helper-1.patch",
+    "metrics-1.patch",
     "app-account.patch"
   ],
   "proton-calendar": [
@@ -39,6 +41,7 @@
     "url-8.patch",
     "drawer-app.patch",
     "slug-helper-1.patch",
+    "metrics-1.patch",
     "app-calendar.patch"
   ],
   "proton-drive": [
@@ -53,6 +56,7 @@
     "url-8.patch",
     "drawer-app.patch",
     "slug-helper-1.patch",
+    "metrics-1.patch",
     "app-drive.patch"
   ],
   "proton-vpn-settings": [
@@ -67,6 +71,7 @@
     "url-8.patch",
     "drawer-app.patch",
     "slug-helper-1.patch",
+    "metrics-1.patch",
     "app-vpn-settings.patch"
   ]
 }

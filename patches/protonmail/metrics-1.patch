@@ -1,0 +1,78 @@
+diff --git a/packages/metrics/lib/MetricsRequestService.ts b/packages/metrics/lib/MetricsRequestService.ts
+index 0ca90fbfb8..1aa925bc32 100644
+--- a/packages/metrics/lib/MetricsRequestService.ts
++++ b/packages/metrics/lib/MetricsRequestService.ts
+@@ -67,67 +67,19 @@ class MetricsRequestService implements IMetricsRequestService {
+         this._jailCount = 0;
+     }
+
+-    public startBatchingProcess() {
+-        if (this._intervalId !== null || this._batch === undefined) {
+-            return;
+-        }
++    public startBatchingProcess() {}
+
+-        // Very naïve progressive backoff
+-        const frequencyWithIncrementalBackoff = (this._jailCount + 1) * this._batch.frequency;
+-
+-        this._intervalId = setInterval(() => {
+-            void this.processNextBatch();
+-        }, frequencyWithIncrementalBackoff);
+-    }
+-
+-    public stopBatchingProcess() {
+-        if (this._intervalId === null) {
+-            return;
+-        }
+-
+-        clearInterval(this._intervalId);
+-        this._intervalId = null;
+-    }
++    public stopBatchingProcess() {}
+
+     public async processAllRequests() {
+-        if (this._requestQueue.length === 0) {
+-            return;
+-        }
+-
+-        const itemsToProcess = this._requestQueue;
+-        this.clearQueue();
+-
+-        try {
+-            await this.makeRequest(itemsToProcess);
+-        } catch (error) {
+-            this.resetBatchingProcess();
+-        }
+-    }
+-
+-    public clearQueue() {
+-        this._requestQueue = [];
+-    }
+-
+-    public setReportMetrics(reportMetrics: boolean) {
+-        this._reportMetrics = reportMetrics;
++        return Promise.resolve();
+     }
+
+-    public report(request: MetricsRequest) {
+-        if (!this._reportMetrics) {
+-            return;
+-        }
+-
+-        if (this._batch === undefined) {
+-            void this.makeRequest([request]).catch(() => {});
+-            return;
+-        }
++    public clearQueue() {}
+
+-        if (this._intervalId === null) {
+-            this.startBatchingProcess();
+-        }
++    public setReportMetrics(reportMetrics: boolean) {}
+
+-        this._requestQueue.push(request);
+-    }
++    public report(request: MetricsRequest) {}
+
+     private async processNextBatch() {
+         if (this._batch === undefined) {

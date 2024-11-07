@@ -1,8 +1,8 @@
 export interface ProtonApiError {
     config?: unknown;
-    data?:
-        & {Error?: unknown; ErrorDescription?: unknown}
-        & Partial<Pick<import("src/electron-preload/webview/lib/rest-model/response").Response, "Code">>;
+    data?: {Error?: unknown; ErrorDescription?: unknown; Code?: number; dataCode?: number};
+    dataCode?: number;
+    dataError?: string;
     message: string;
     name: string;
     response?: Partial<Response>;

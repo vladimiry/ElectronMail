@@ -1,11 +1,12 @@
 import {curryFunctionMembers} from "src/shared/util";
 import * as Database from "src/electron-preload/webview/lib/database-entity";
 import {DbPatch} from "src/shared/api/common";
-import {isProtonApiError, sanitizeProtonApiError} from "src/electron-preload/lib/util";
+import {isIgnorable404Error} from "src/electron-preload/webview/primary/util";
 import {LABEL_TYPE, SYSTEM_FOLDER_IDENTIFIERS} from "src/shared/model/database";
 import {Logger} from "src/shared/model/common";
 import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
 import * as RestModel from "src/electron-preload/webview/lib/rest-model";
+import {sanitizeProtonApiError} from "src/electron-preload/lib/util";
 
 export const buildDbPatch = async (
     providerApi: ProviderApi,
@@ -103,30 +104,21 @@ export const buildDbPatch = async (
     };
 
     if (!nullUpsert) {
-        // TODO process 404 error of fetching individual entity ("message" case is handled, see "error.data.Code === 15052" check below)
+        // TODO process 404/422 error of fetching individual entity ("message" case is handled, see "error.data.Code === 15052" check below)
         //      so we could catch the individual entity fetching error
-        //      404 error can be ignored as if it occurs because user was moving the email from here to there ending up
+        //      404/422 error can be ignored as if it occurs because user was moving the email from here to there ending up
         //      removing it while syncing cycle was in progress
 
         // fetching mails
-        for (const {id, gotTrashed} of mapping.mails.upsertIds) {
+        for (const {id /*, gotTrashed */} of mapping.mails.upsertIds) {
             try {
                 const response = await providerApi.message.getMessage(id);
                 patch.mails.upsert.push(await Database.buildMail(response.Message, providerApi));
             } catch (error) {
-                if (
-                    gotTrashed
-                    && isProtonApiError(error)
-                    && ( // message has already been removed error condition:
-                        error.status === 422
-                        && error.data?.Code === 15052
-                    )
-                ) { // ignoring the error as permissible
-                    // TODO figure how to suppress displaying this error on "proton ui" in the case we initiated it (triggered the fetching)
+                if (/* gotTrashed && */ isIgnorable404Error(error)) {
+                    // TODO suppress displaying the error on "proton ui" if message fetching got explicitly triggered vs background sync
                     logger.warn(
-                        // WARN don't log message-specific data as it might include sensitive fields
                         `skip message fetching as it has been already removed from the trash before fetch action started`,
-                        // WARN don't log full error as it might include sensitive data
                         JSON.stringify(sanitizeProtonApiError(error)),
                     );
                 } else {

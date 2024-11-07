@@ -8,10 +8,11 @@ import * as DatabaseModel from "src/shared/model/database";
 import {DbPatchBundle} from "./model";
 import {DEFAULT_MESSAGES_STORE_PORTION_SIZE, ONE_SECOND_MS, PACKAGE_VERSION} from "src/shared/const";
 import {FsDbAccount, LABEL_TYPE, SYSTEM_FOLDER_IDENTIFIERS} from "src/shared/model/database";
+import {isIgnorable404Error} from "../../util";
 import {Logger} from "src/shared/model/common";
 import {PROTON_MAX_CONCURRENT_FETCH, PROTON_MAX_QUERY_PORTION_LIMIT} from "src/electron-preload/webview/lib/const";
 import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
-import {resolveCachedConfig, resolveIpcMainApi} from "src/electron-preload/lib/util";
+import {resolveCachedConfig, resolveIpcMainApi, sanitizeProtonApiError} from "src/electron-preload/lib/util";
 import * as RestModel from "src/electron-preload/webview/lib/rest-model";
 
 export const bootstrapDbPatch = (
@@ -162,9 +163,20 @@ export const bootstrapDbPatch = (
 
                 for (const bootstrappedMessageIdsChunk of chunk(bootstrappedMessageIds, PROTON_MAX_CONCURRENT_FETCH)) {
                     await Promise.all(bootstrappedMessageIdsChunk.map(async ({ID: storedMessageId}) => {
-                        const {Message} = await providerApi.message.getMessage(storedMessageId);
-                        persistencePortion.push(await Database.buildMail(Message, providerApi));
-
+                        try {
+                            const {Message} = await providerApi.message.getMessage(storedMessageId);
+                            persistencePortion.push(await Database.buildMail(Message, providerApi));
+                        } catch (error) {
+                            if (!isIgnorable404Error(error)) {
+                                throw error;
+                            }
+                            logger.warn(
+                                `skip message fetching as it has been already removed from the trash before fetch action started`,
+                                JSON.stringify(sanitizeProtonApiError(error)),
+                            );
+                            // skipping "removed" message processing/fetching
+                            return;
+                        }
                         fetchCount++;
                         progress$.next({
                             progress: [

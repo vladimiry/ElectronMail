@@ -1,6 +1,14 @@
 import {buildDbPatchRetryPipeline, isErrorOnRateLimitedMethodCall} from "src/electron-preload/webview/lib/util";
 import {isProtonApiError, sanitizeProtonApiError} from "src/electron-preload/lib/util";
 
+export const isIgnorable404Error: (error: unknown) => boolean = (() => {
+    const errorCodes: ReadonlyArray<number | undefined> = [2501, 15052];
+    return (error: unknown): boolean => {
+        if (!isProtonApiError(error) || error.status !== 422) return false;
+        return errorCodes.includes(error.data?.Code) || errorCodes.includes(error.dataCode);
+    };
+})();
+
 type preprocessErrorType = Parameters<typeof buildDbPatchRetryPipeline>[0];
 
 export const preprocessError: preprocessErrorType = (() => {

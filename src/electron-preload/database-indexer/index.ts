@@ -5,7 +5,7 @@ import {buildLoggerBundle} from "src/electron-preload/lib/util";
 import {getPlainErrorProps} from "src/shared/util";
 import {IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS, IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS} from "src/shared/api/main-process/actions";
 import {IpcMainServiceScan} from "src/shared/api/main-process";
-import {ONE_SECOND_MS} from "src/shared/const";
+import {ONE_MINUTE_MS, ONE_SECOND_MS} from "src/shared/const";
 
 const logger = buildLoggerBundle(__filename);
 
@@ -13,7 +13,7 @@ const logger = buildLoggerBundle(__filename);
 const emptyObject = {} as const;
 const cleanup = SERVICES_FACTORY.cleanup();
 const api = SERVICES_FACTORY.apiClient(cleanup.promise);
-const dbIndexerOn = api("dbIndexerOn", {timeoutMs: ONE_SECOND_MS * 15, logger});
+const dbIndexerOn = api("dbIndexerOn", {timeoutMs: ONE_MINUTE_MS, logger});
 const indexingQueue = new asap();
 const index = createMailsIndex();
 

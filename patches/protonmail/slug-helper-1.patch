@@ -1,0 +1,17 @@
+diff --git a/packages/shared/lib/apps/slugHelper.ts b/packages/shared/lib/apps/slugHelper.ts
+index 48e03122c5..73470d26b4 100644
+--- a/packages/shared/lib/apps/slugHelper.ts
++++ b/packages/shared/lib/apps/slugHelper.ts
+@@ -34,6 +34,12 @@ export const getAppFromHostname = (hostname: string): APP_NAMES | undefined => {
+ };
+
+ export const getAppFromPathnameSafe = (pathname: string) => {
++    {
++        const valueSetByElectronMail = window.sessionStorage.getItem("electron_mail:proton_app_name");
++        if (valueSetByElectronMail) {
++            return valueSetByElectronMail;
++        }
++    }
+     const trimmedPathname = stripLeadingAndTrailingSlash(stripLocalBasenameFromPathname(pathname));
+     return getAppFromPathname(trimmedPathname);
+ };

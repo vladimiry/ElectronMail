@@ -1,15 +1,29 @@
 diff --git a/applications/mail/package.json b/applications/mail/package.json
-index d83e6ac79b..131645b41c 100644
+index 2babdac1e9..374640c10d 100644
 --- a/applications/mail/package.json
 +++ b/applications/mail/package.json
 @@ -6,7 +6,6 @@
      "author": "",
      "main": "index.js",
      "scripts": {
--        "build:web": "cross-env NODE_ENV=production WEBPACK_PARALLELISM=2 TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --webpackOnCaffeine --appMode=sso",
+-        "build:web": "cross-env NODE_ENV=production WEBPACK_PARALLELISM=2 TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --webpackOnCaffeine --appMode=sso --logical",
          "check-types": "tsc",
          "i18n:extract:web": "proton-i18n extract",
          "i18n:getlatest": "proton-i18n upgrade",
+
+diff --git a/applications/mail/src/app/index.tsx b/applications/mail/src/app/index.tsx
+index b4d841c7cd..96d2b5c9b4 100644
+--- a/applications/mail/src/app/index.tsx
++++ b/applications/mail/src/app/index.tsx
+@@ -6,6 +6,8 @@ import App from './App';
+ import { initializePerformanceMetrics } from './helpers/metrics/initializePerformanceMetrics';
+ import './style';
+
++window.sessionStorage.setItem("electron_mail:proton_app_name", "proton-mail");
++
+ initializePerformanceMetrics();
+
+ const container = document.querySelector('.app-root');
 
 diff --git a/applications/mail/webpack.config.ts b/applications/mail/webpack.config.ts
 index 72f0b86274..22c087d99c 100644
@@ -481,23 +495,18 @@ index 0314390d7b..0000000000
 -export default MailDefaultHandlerModal;
 
 diff --git a/applications/mail/src/app/components/header/search/MailSearch.tsx b/applications/mail/src/app/components/header/search/MailSearch.tsx
-index 040d9d0bd7..d52f76b5e3 100644
+index 6d44d81808..26f396c202 100644
 --- a/applications/mail/src/app/components/header/search/MailSearch.tsx
 +++ b/applications/mail/src/app/components/header/search/MailSearch.tsx
-@@ -4,21 +4,17 @@ import type { Location } from 'history';
+@@ -3,16 +3,13 @@ import { useEffect, useState } from 'react';
+ import type { Location } from 'history';
 
+ import { useAddresses } from '@proton/account/addresses/hooks';
+-import { useUser } from '@proton/account/user/hooks';
  import type { Breakpoints } from '@proton/components';
- import {
--    FeatureCode,
-     TopNavbarListItemSearchButton,
-     useAddresses,
-     useFolders,
-     useLabels,
-     usePopperAnchor,
--    useProgressiveRollout,
-     useToggle,
--    useUser,
- } from '@proton/components';
+ import { TopNavbarListItemSearchButton, usePopperAnchor, useProgressiveRollout, useToggle } from '@proton/components';
+-import { FeatureCode } from '@proton/features';
+ import { useFolders, useLabels } from '@proton/mail';
  import generateUID from '@proton/utils/generateUID';
 
  import { ADVANCED_SEARCH_OVERLAY_CLOSE_EVENT } from '../../../constants';
@@ -506,7 +515,7 @@ index 040d9d0bd7..d52f76b5e3 100644
  import { extractSearchParameters } from '../../../helpers/mailboxUrl';
  import { useClickMailContent } from '../../../hooks/useClickMailContent';
  import AdvancedSearch from './AdvancedSearch';
-@@ -36,17 +32,15 @@ interface Props {
+@@ -30,17 +27,15 @@ interface Props {
 
  const MailSearch = ({ breakpoints, labelID, location, columnMode }: Props) => {
      const [uid] = useState(generateUID('advanced-search-overlay'));
@@ -540,11 +549,11 @@ index ebdf5ee22..28adf6c62 100644
      isSearching: false,
 
 diff --git a/applications/mail/src/app/hooks/useMailModel.ts b/applications/mail/src/app/hooks/useMailModel.ts
-index 92034469a9..a49c3d54bb 100644
+index a585711c48..9df657f03c 100644
 --- a/applications/mail/src/app/hooks/useMailModel.ts
 +++ b/applications/mail/src/app/hooks/useMailModel.ts
 @@ -1,6 +1,6 @@
- import { useMailSettings } from '@proton/components/hooks';
+ import { useMailSettings } from '@proton/mail/mailSettings/hooks';
 
 -type MailModel = 'MailSettings';
 +type MailModel = 'MailSettings'; // tracking "MailSettings" constant

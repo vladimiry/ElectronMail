@@ -11,6 +11,20 @@ index c037e3ce53..e1655f0a06 100644
          "i18n:extract:local": "yarn workspace @proton/i18n build && yarn build:web && proton-i18n extract",
          "i18n:extract:web": "proton-i18n extract",
 
+diff --git a/applications/drive/src/app/index.tsx b/applications/drive/src/app/index.tsx
+index 7ca2da66f3..2a99b061bb 100644
+--- a/applications/drive/src/app/index.tsx
++++ b/applications/drive/src/app/index.tsx
+@@ -9,6 +9,8 @@ import { initializePerformanceMetrics } from './utils/performance';
+
+ const isPublicUrl = window.location.pathname.startsWith('/urls');
+
++window.sessionStorage.setItem("electron_mail:proton_app_name", "proton-drive");
++
+ initializePerformanceMetrics(isPublicUrl);
+
+ ReactDOM.render(isPublicUrl ? <UrlsApp /> : <App />, document.querySelector('.app-root'));
+
 diff --git a/applications/drive/webpack.config.ts b/applications/drive/webpack.config.ts
 index afccc2a4b1..8682856d3a 100644
 --- a/applications/drive/webpack.config.ts

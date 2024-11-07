@@ -303,7 +303,7 @@ async function executeBuildFlow(
                         // https://github.com/ProtonMail/WebClients/blob/8d7f8a902034405988bd70431c714e9fdbb37a1d/packages/pack/bin/protonPack#L38
                         // `--appMode=bundle`,
                         "--webpackOnCaffeine",
-                        // ...(repoType === "proton-vpn-settings" ? ["--logical"] : []),
+                        ...(repoType === "proton-drive" ? ["--logical"] : []),
                         // ...(version ? [`--version=${version}`] : []),
                     ], {
                         cwd: repoDir,

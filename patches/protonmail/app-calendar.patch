@@ -1,15 +1,28 @@
 diff --git a/applications/calendar/package.json b/applications/calendar/package.json
-index aa924b6f9f..cea92a186e 100644
+index bd4a61a905..b018e3beb2 100644
 --- a/applications/calendar/package.json
 +++ b/applications/calendar/package.json
 @@ -6,7 +6,6 @@
      "author": "",
      "main": "index.js",
      "scripts": {
--        "build:web": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --webpackOnCaffeine --appMode=sso",
+-        "build:web": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --webpackOnCaffeine --appMode=sso --logical",
          "check-types": "tsc",
          "i18n:extract:web": "proton-i18n extract",
          "i18n:upgrade": "proton-i18n extract --verbose && proton-i18n crowdin --verbose",
+diff --git a/applications/calendar/src/app/index.tsx b/applications/calendar/src/app/index.tsx
+index b4d841c7cd..00ce66f767 100644
+--- a/applications/calendar/src/app/index.tsx
++++ b/applications/calendar/src/app/index.tsx
+@@ -6,6 +6,8 @@ import App from './App';
+ import { initializePerformanceMetrics } from './helpers/metrics/initializePerformanceMetrics';
+ import './style';
+
++window.sessionStorage.setItem("electron_mail:proton_app_name", "proton-calendar");
++
+ initializePerformanceMetrics();
+
+ const container = document.querySelector('.app-root');
 
 diff --git a/applications/calendar/webpack.config.ts b/applications/calendar/webpack.config.ts
 index 729c7fc564..8c21b9143e 100644

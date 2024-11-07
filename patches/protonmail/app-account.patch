@@ -1,30 +1,30 @@
 diff --git a/applications/account/package.json b/applications/account/package.json
-index e6b14ce6c5..efc2dbebdf 100644
+index 3980982181..ea76bb0125 100644
 --- a/applications/account/package.json
 +++ b/applications/account/package.json
 @@ -6,7 +6,6 @@
      "author": "",
      "main": "index.js",
      "scripts": {
--        "build:web": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --webpackOnCaffeine --appMode=sso",
+-        "build:web": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --webpackOnCaffeine --appMode=sso --logical",
          "check-types": "tsc",
          "i18n:extract:web": "proton-i18n extract",
          "i18n:upgrade": "proton-i18n extract --verbose && proton-i18n crowdin --verbose",
 
 diff --git a/applications/account/webpack.config.ts b/applications/account/webpack.config.ts
-index 54f99267f9..68f5892f11 100644
+index f231539e57..8ff8ab8b68 100644
 --- a/applications/account/webpack.config.ts
 +++ b/applications/account/webpack.config.ts
-@@ -6,7 +6,7 @@ import 'webpack-dev-server';
+@@ -7,7 +7,7 @@ import 'webpack-dev-server';
 
  import getConfig from '@proton/pack/webpack.config';
  import CopyIndexHtmlWebpackPlugin from '@proton/pack/webpack/copy-index-html-webpack-plugin';
 -import { addDevEntry, getIndexChunks, getSupportedEntry } from '@proton/pack/webpack/entries';
-+import { /*addLoginEntry,*/ getIndexChunks, getSupportedEntry } from '@proton/pack/webpack/entries';
++import { getIndexChunks, getSupportedEntry } from '@proton/pack/webpack/entries';
 
- import { HrefLang } from './pages/interface';
+ import type { HrefLang } from './pages/interface';
  import { getPages } from './pages/pages';
-@@ -55,7 +55,7 @@ const result = async (env: any): Promise<webpack.Configuration> => {
+@@ -59,7 +59,7 @@ const result = async (env: any): Promise<webpack.Configuration> => {
 
      const { pre, unsupported } = config.entry as any;
 
@@ -33,7 +33,7 @@ index 54f99267f9..68f5892f11 100644
          config.entry = {
              pre,
              private: [path.resolve('./src/app/private.tsx'), getSupportedEntry()],
-@@ -75,7 +75,7 @@ const result = async (env: any): Promise<webpack.Configuration> => {
+@@ -79,7 +79,7 @@ const result = async (env: any): Promise<webpack.Configuration> => {
              })
          );
 
@@ -42,77 +42,3 @@ index 54f99267f9..68f5892f11 100644
 
          return config;
      }
-
-diff --git a/applications/account/src/app/content/MainContainer.tsx b/applications/account/src/app/content/MainContainer.tsx
-index d43566ed37..b5796fccc3 100644
---- a/applications/account/src/app/content/MainContainer.tsx
-+++ b/applications/account/src/app/content/MainContainer.tsx
-@@ -39,7 +39,7 @@ import useAssistantFeatureEnabled from '@proton/components/hooks/assistant/useAs
- import { getPublicUserProtonAddressApps, getSSOVPNOnlyAccountApps } from '@proton/shared/lib/apps/apps';
- import { getAppFromPathnameSafe, getSlugFromApp } from '@proton/shared/lib/apps/slugHelper';
- import { getToApp } from '@proton/shared/lib/authentication/apps';
--import { stripLocalBasenameFromPathname } from '@proton/shared/lib/authentication/pathnameHelper';
-+import { stripLocalBasenameFromPathname, getBasename } from '@proton/shared/lib/authentication/pathnameHelper';
- import { APPS, SETUP_ADDRESS_PATH, VPN_TV_PATHS } from '@proton/shared/lib/constants';
- import { stripLeadingAndTrailingSlash } from '@proton/shared/lib/helpers/string';
- import { getHasPassB2BPlan, hasAIAssistant, hasAllProductsB2CPlan } from '@proton/shared/lib/helpers/subscription';
-@@ -144,21 +144,6 @@ const MainContainer = () => {
-     const [isSessionRecoveryAvailable, loadingIsSessionRecoveryAvailable] = useIsSessionRecoveryAvailable();
-     const recoveryNotification = useRecoveryNotification(false, false, canDisplayNewSentinelSettings);
- 
--    const appFromPathname = getAppFromPathnameSafe(location.pathname);
--    const app = appFromPathname || getToApp(undefined, user);
--    const appSlug = getSlugFromApp(app);
--
--    // We hide the assistant upsell for users on Mail and Calendar app without the assistant when the kill switch is enabled
--    const hasAssistant = hasAIAssistant(subscription);
--    const { killSwitch: assistantUpsellKillSwitch } = useAssistantFeatureEnabled();
--    const hasAllProducts = hasAllProductsB2CPlan(subscription);
--    const isInAllowedApps =
--        hasAllProducts || appFromPathname === APPS.PROTONMAIL || appFromPathname === APPS.PROTONCALENDAR;
--    const assistantKillSwitch = isInAllowedApps ? !hasAssistant && assistantUpsellKillSwitch : true;
--
--    const organizationTheme = useOrganizationTheme();
--    const [memberships] = useGroupMemberships();
--
-     const routes = getRoutes({
-         app,
-         user,
-@@ -178,6 +163,28 @@ const MainContainer = () => {
-         memberships,
-     });
- 
-+    const _EM_defaultAccountRedirect = getDefaultRedirect(routes.account);
-+    const appFromPathname = getAppFromPathnameSafe(location.pathname) ?? (
-+            location.pathname.startsWith(getBasename())
-+                ? location.pathname.endsWith(_EM_defaultAccountRedirect)
-+                    ? getAppFromPathnameSafe(`${getBasename()}${location.pathname.substring(0, location.pathname.length - _EM_defaultAccountRedirect.length)}`)
-+                    : undefined
-+                : getAppFromPathnameSafe(`${getBasename()}/${location.pathname}`)
-+    )
-+    const app = appFromPathname || getToApp(undefined, user);
-+    const appSlug = getSlugFromApp(app);
-+
-+    // We hide the assistant upsell for users on Mail and Calendar app without the assistant when the kill switch is enabled
-+    const hasAssistant = hasAIAssistant(subscription);
-+    const { killSwitch: assistantUpsellKillSwitch } = useAssistantFeatureEnabled();
-+    const hasAllProducts = hasAllProductsB2CPlan(subscription);
-+    const isInAllowedApps =
-+        hasAllProducts || appFromPathname === APPS.PROTONMAIL || appFromPathname === APPS.PROTONCALENDAR;
-+    const assistantKillSwitch = isInAllowedApps ? !hasAssistant && assistantUpsellKillSwitch : true;
-+
-+    const organizationTheme = useOrganizationTheme();
-+    const [memberships] = useGroupMemberships();
-+
-     useEffect(() => {
-         setExpand(false);
-     }, [location.pathname, location.hash]);
-@@ -279,7 +286,7 @@ const MainContainer = () => {
-             if (app === APPS.PROTONPASS) {
-                 return getDefaultPassRedirect(user, routes.account, routes.pass);
-             }
--            return getDefaultRedirect(routes.account);
-+            return _EM_defaultAccountRedirect;
-         })();
- 
-         return <Redirect to={`/${appSlug}${path}`} />;

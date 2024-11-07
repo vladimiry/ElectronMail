@@ -2,10 +2,16 @@ import {buildDbPatchRetryPipeline, isErrorOnRateLimitedMethodCall} from "src/ele
 import {isProtonApiError, sanitizeProtonApiError} from "src/electron-preload/lib/util";
 
 export const isIgnorable404Error: (error: unknown) => boolean = (() => {
-    const errorCodes: ReadonlyArray<number | undefined> = [2501, 15052];
+    const statuses: ReadonlyArray<number> = [422, 404];
+    const codes: ReadonlyArray<number | undefined> = [2501, 15052];
+    const msg = "Message does not exist".toLowerCase();
     return (error: unknown): boolean => {
-        if (!isProtonApiError(error) || error.status !== 422) return false;
-        return errorCodes.includes(error.data?.Code) || errorCodes.includes(error.dataCode);
+        if (!isProtonApiError(error) || !statuses.includes(error.status)) return false;
+        return codes.includes(error.data?.Code)
+            || codes.includes(error.dataCode)
+            || String(error.message).toLowerCase() === msg
+            || String(error.data?.dataError).toLowerCase() === msg
+            || String(error.dataError).toLowerCase() === msg;
     };
 })();
 

@@ -1,5 +1,5 @@
 diff --git a/packages/shared/lib/helpers/sentry.ts b/packages/shared/lib/helpers/sentry.ts
-index d56a7bf7a0..7cadf90d72 100644
+index 349e20b038..08be68f056 100644
 --- a/packages/shared/lib/helpers/sentry.ts
 +++ b/packages/shared/lib/helpers/sentry.ts
 @@ -1,21 +1,14 @@
@@ -46,7 +46,7 @@ index d56a7bf7a0..7cadf90d72 100644
  const isLocalhost = (host: string) => host.startsWith('localhost');
  export const isProduction = (host: string) => host.endsWith('.proton.me') || host === VPN_HOSTNAME;
 
-@@ -180,82 +158,7 @@ function main({
+@@ -180,92 +158,7 @@ function main({
      ignore = ({ host }) => isLocalhost(host),
      denyUrls = getDefaultDenyUrls(),
      ignoreErrors = getDefaultIgnoreErrors(),
@@ -110,6 +110,16 @@ index d56a7bf7a0..7cadf90d72 100644
 -                        [breadcrumb.data.from] = breadcrumb.data.from.split('#');
 -                        [breadcrumb.data.to] = breadcrumb.data.to.split('#');
 -                    }
+-
+-                    // Button titles may contain accidental PII
+-                    if (
+-                        breadcrumb.category === 'ui.click' &&
+-                        breadcrumb.message &&
+-                        breadcrumb.message.startsWith('button')
+-                    ) {
+-                        breadcrumb.message = breadcrumb.message.replace(/\[title=".+?"\]/g, '[title="(Filtered)"]');
+-                    }
+-
 -                    return breadcrumb;
 -                });
 -            }
@@ -130,7 +140,7 @@ index d56a7bf7a0..7cadf90d72 100644
 
  export const traceError = (...args: Parameters<typeof captureException>) => {
      if (!isLocalhost(window.location.host)) {
-@@ -279,15 +182,7 @@ type CaptureExceptionArgs = Parameters<typeof captureException>;
+@@ -289,15 +182,7 @@ type CaptureExceptionArgs = Parameters<typeof captureException>;
   * @param initiative
   * @param error
   */
@@ -143,21 +153,20 @@ index d56a7bf7a0..7cadf90d72 100644
 -        });
 -    }
 -};
-+export const traceInitiativeError = (initiative: MailInitiative, error: CaptureExceptionArgs[0]) => console.error(error);
++export const traceInitiativeError = (initiative: MailInitiative, error: CaptureExceptionArgs[0]) => console.error(initiative, error);
 
  /**
   * Capture message with an additional initiative tag
-@@ -297,12 +192,6 @@ export const traceInitiativeError = (initiative: MailInitiative, error: CaptureE
- export const captureInitiativeMessage: (initiative: SentryInitiative, message: string) => void = (
+@@ -308,11 +193,7 @@ export const captureInitiativeMessage: (initiative: SentryInitiative, message: s
      initiative,
      message
--) => {
+ ) => {
 -    captureMessage(message, {
 -        tags: {
 -            initiative,
 -        },
 -    });
--};
-+) => console.log(message);
++    console.log(initiative, message);
+ };
 
  export default main;

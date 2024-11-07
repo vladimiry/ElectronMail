@@ -1,17 +1,16 @@
 diff --git a/packages/components/hooks/useLinkHandler.tsx b/packages/components/hooks/useLinkHandler.tsx
-index 8fce50519e..f57dcb152b 100644
+index 30cda536c9..48d7c2c459 100644
 --- a/packages/components/hooks/useLinkHandler.tsx
 +++ b/packages/components/hooks/useLinkHandler.tsx
-@@ -14,6 +14,8 @@ import LinkConfirmationModal from '../components/notifications/LinkConfirmationM
- import { getHostname, isExternal, isSubDomain, punycodeUrl } from '../helpers/url';
+@@ -13,6 +13,7 @@ import isTruthy from '@proton/utils/isTruthy';
+ import LinkConfirmationModal from '../components/notifications/LinkConfirmationModal/LinkConfirmationModal';
+ import { getHostname, isExternal, punycodeUrl } from '../helpers/url';
  import { useHandler, useNotifications } from './index';
-
 +import { openNewTab } from '@proton/shared/lib/helpers/browser';
-+
+
  // Reference : Angular/src/app/utils/directives/linkHandler.js
 
- interface UseLinkHandlerOptions {
-@@ -130,6 +132,10 @@ export const useLinkHandler: UseLinkHandler = (
+@@ -130,6 +131,10 @@ export const useLinkHandler: UseLinkHandler = (
              return;
          }
 
@@ -22,7 +21,7 @@ index 8fce50519e..f57dcb152b 100644
          if (
              (askForConfirmation || isPhishingAttempt) &&
              isExternal(src.raw, window.location.hostname) &&
-@@ -137,12 +143,10 @@ export const useLinkHandler: UseLinkHandler = (
+@@ -137,12 +142,10 @@ export const useLinkHandler: UseLinkHandler = (
                  .filter(isTruthy) // currentDomain can be null
                  .some((domain) => isSubDomain(hostname, domain))
          ) {

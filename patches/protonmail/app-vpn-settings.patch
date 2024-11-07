@@ -11,19 +11,33 @@ index 597d3dc8b8..4dd04ce581 100644
          "i18n:extract:web": "proton-i18n extract",
          "i18n:upgrade": "proton-i18n extract --verbose && proton-i18n crowdin --verbose",
 
+diff --git a/applications/drive/src/app/index.tsx b/applications/drive/src/app/index.tsx
+index 7ca2da66f3..4460b1099f 100644
+--- a/applications/drive/src/app/index.tsx
++++ b/applications/drive/src/app/index.tsx
+@@ -9,6 +9,8 @@ import { initializePerformanceMetrics } from './utils/performance';
+
+ const isPublicUrl = window.location.pathname.startsWith('/urls');
+
++window.sessionStorage.setItem("electron_mail:proton_app_name", "proton-vpn-settings");
++
+ initializePerformanceMetrics(isPublicUrl);
+
+ ReactDOM.render(isPublicUrl ? <UrlsApp /> : <App />, document.querySelector('.app-root'));
+
 diff --git a/applications/vpn-settings/src/app/MainContainer.tsx b/applications/vpn-settings/src/app/MainContainer.tsx
-index bef42a0509..08c58a3c4a 100644
+index 01896523c6..6f2fdccf2c 100644
 --- a/applications/vpn-settings/src/app/MainContainer.tsx
 +++ b/applications/vpn-settings/src/app/MainContainer.tsx
-@@ -61,6 +61,7 @@ import {
+@@ -62,6 +62,7 @@ import {
+     useToggle,
      useUnprivatizeMembers,
-     useUser,
      useUserSettings,
 +    AppsDropdown,
  } from '@proton/components';
+ import SSODomainUnverifiedBanner from '@proton/components/containers/account/sso/SSODomainUnverifiedBanner';
  import { getIsSectionAvailable, getRoutePaths, getSectionPath } from '@proton/components/containers/layout/helper';
- import { CANCEL_ROUTE } from '@proton/components/containers/payments/subscription/cancellationFlow/helper';
-@@ -188,7 +189,7 @@ const MainContainer: FunctionComponent = () => {
+@@ -197,7 +198,7 @@ const MainContainer: FunctionComponent = () => {
      const sidebar = (
          <Sidebar
              app={APPS.PROTONVPN_SETTINGS}

@@ -184,11 +184,11 @@ index 36bd0c712..c2fb3681c 100644
      }
 
 diff --git a/applications/mail/src/app/components/list/banners/auto-delete/variations/AutoDeleteFreeBanner.tsx b/applications/mail/src/app/components/list/banners/auto-delete/variations/AutoDeleteFreeBanner.tsx
-index 24c56ef6fe..a6046b391c 100644
+index 5daa32c0a6..6314fc5668 100644
 --- a/applications/mail/src/app/components/list/banners/auto-delete/variations/AutoDeleteFreeBanner.tsx
 +++ b/applications/mail/src/app/components/list/banners/auto-delete/variations/AutoDeleteFreeBanner.tsx
-@@ -7,6 +7,10 @@ import { AutoDeleteUpsellModal, useModalState } from '@proton/components/compone
- import { PromotionBanner } from '@proton/components/containers';
+@@ -4,6 +4,10 @@ import { Button } from '@proton/atoms';
+ import { AutoDeleteUpsellModal, PromotionBanner, useModalState } from '@proton/components';
 
  const AutoDeleteFreeBanner = () => {
 +    if (___ELECTRON_MAIL_PROTON_SUPPRESS_UPSELL_ADS_PLACEHOLDER___) {
@@ -245,21 +245,6 @@ index f7678c871b..fcaee27280 100644
                      {feedbackButton ? <TopNavbarListItem noShrink>{feedbackButton}</TopNavbarListItem> : null}
                      {settingsButton ? (
                          <TopNavbarListItem noShrink className="hidden md:flex">
-
-diff --git a/packages/components/containers/api/ApiProvider.tsx b/packages/components/containers/api/ApiProvider.tsx
-index 75ab18a25e..f52c461a80 100644
---- a/packages/components/containers/api/ApiProvider.tsx
-+++ b/packages/components/containers/api/ApiProvider.tsx
-@@ -111,7 +111,9 @@ const ApiProvider = ({ api, children }: { api: ApiWithListener; children: ReactN
-                             error.cancel = true;
-                             reject(error);
-                         }}
--                    />
-+                    />,
-+                    // trying to force single instance, see https://github.com/vladimiry/ElectronMail/issues/621#issuecomment-1627389416
-+                    "HumanVerificationModal_ID",
-                 );
-             }
 
 diff --git a/packages/components/containers/app/StandaloneApp.tsx b/packages/components/containers/app/StandaloneApp.tsx
 index a7ef1a26ad..0e89cf1ea8 100644

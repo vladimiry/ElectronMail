@@ -1,18 +1,5 @@
-diff --git a/applications/account/package.json b/applications/account/package.json
-index 3980982181..ea76bb0125 100644
---- a/applications/account/package.json
-+++ b/applications/account/package.json
-@@ -6,7 +6,6 @@
-     "author": "",
-     "main": "index.js",
-     "scripts": {
--        "build:web": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --webpackOnCaffeine --appMode=sso --logical",
-         "check-types": "tsc",
-         "i18n:extract:web": "proton-i18n extract",
-         "i18n:upgrade": "proton-i18n extract --verbose && proton-i18n crowdin --verbose",
-
 diff --git a/applications/account/webpack.config.ts b/applications/account/webpack.config.ts
-index f231539e57..8ff8ab8b68 100644
+index 47b1d60b28..34c4b88afd 100644
 --- a/applications/account/webpack.config.ts
 +++ b/applications/account/webpack.config.ts
 @@ -7,7 +7,7 @@ import 'webpack-dev-server';
@@ -32,13 +19,14 @@ index f231539e57..8ff8ab8b68 100644
 +    if (env.appMode === 'bundle') {
          config.entry = {
              pre,
-             private: [path.resolve('./src/app/private.tsx'), getSupportedEntry()],
+             ['private-index']: [path.resolve('./src/app/private.tsx'), getSupportedEntry()],
 @@ -79,7 +79,7 @@ const result = async (env: any): Promise<webpack.Configuration> => {
              })
          );
 
 -        addDevEntry(config);
-+        // addLoginEntry(config); // login page supposed to be used in the app only for the entry/mail app
++        // addDevEntry(config);
 
          return config;
      }
+

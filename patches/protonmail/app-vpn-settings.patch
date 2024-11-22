@@ -26,13 +26,13 @@ index 7ca2da66f3..4460b1099f 100644
  ReactDOM.render(isPublicUrl ? <UrlsApp /> : <App />, document.querySelector('.app-root'));
 
 diff --git a/applications/vpn-settings/src/app/MainContainer.tsx b/applications/vpn-settings/src/app/MainContainer.tsx
-index 01896523c6..6f2fdccf2c 100644
+index 4af4f385b8..bf77e83861 100644
 --- a/applications/vpn-settings/src/app/MainContainer.tsx
 +++ b/applications/vpn-settings/src/app/MainContainer.tsx
 @@ -62,6 +62,7 @@ import {
+     useModalState,
      useToggle,
      useUnprivatizeMembers,
-     useUserSettings,
 +    AppsDropdown,
  } from '@proton/components';
  import SSODomainUnverifiedBanner from '@proton/components/containers/account/sso/SSODomainUnverifiedBanner';

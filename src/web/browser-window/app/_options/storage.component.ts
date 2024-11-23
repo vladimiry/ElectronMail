@@ -10,6 +10,7 @@ import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {State} from "src/web/browser-window/app/store/reducers/options";
 
 @Component({
+    standalone: false,
     selector: "electron-mail-storage",
     templateUrl: "./storage.component.html",
     preserveWhitespaces: true,

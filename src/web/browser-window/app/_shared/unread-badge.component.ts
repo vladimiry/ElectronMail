@@ -7,6 +7,7 @@ import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {State} from "src/web/browser-window/app/store/reducers/options";
 
 @Component({
+    standalone: false,
     selector: "electron-mail-unread-badge",
     templateUrl: "./unread-badge.component.html",
     styleUrls: ["./unread-badge.component.scss"],

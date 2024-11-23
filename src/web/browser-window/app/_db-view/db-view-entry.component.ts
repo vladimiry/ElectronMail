@@ -8,6 +8,7 @@ import {State} from "src/web/browser-window/app/store/reducers/db-view";
 import {WebAccountPk} from "src/web/browser-window/app/model";
 
 @Component({
+    standalone: false,
     selector: "electron-mail-db-view-entry",
     templateUrl: "./db-view-entry.component.html",
     styleUrls: ["./db-view-entry.component.scss"],

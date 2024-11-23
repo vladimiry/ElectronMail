@@ -5,6 +5,7 @@ import {formatDate} from "@angular/common";
 import {NotificationItem} from "src/web/browser-window/app/store/actions/notification";
 
 @Component({
+    standalone: false,
     selector: "electron-mail-notification-item",
     templateUrl: "./notification-item.component.html",
     styleUrls: ["./notification-item.component.scss"],

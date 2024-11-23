@@ -13,6 +13,7 @@ import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.con
 import {State} from "src/web/browser-window/app/store/reducers/options";
 
 @Component({
+    standalone: false,
     selector: "electron-mail-accounts-list",
     templateUrl: "./accounts-list.component.html",
     styleUrls: ["./accounts-list.component.scss"],

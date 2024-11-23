@@ -10,6 +10,7 @@ import {MailsBundleKey} from "src/web/browser-window/app/store/reducers/db-view"
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 
 @Component({
+    standalone: false,
     selector: "electron-mail-db-view-mail-tab",
     templateUrl: "./db-view-mail-tab.component.html",
     styleUrls: ["./db-view-mail-tab.component.scss"],

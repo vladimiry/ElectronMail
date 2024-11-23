@@ -16,6 +16,7 @@ import {MailsBundleKey} from "src/web/browser-window/app/store/reducers/db-view"
 const mailComponentTagName = "electron-mail-db-view-mail".toUpperCase();
 
 @Component({
+    standalone: false,
     selector: "electron-mail-db-view-mails",
     templateUrl: "./db-view-mails.component.html",
     styleUrls: ["./db-view-mails.component.scss"],

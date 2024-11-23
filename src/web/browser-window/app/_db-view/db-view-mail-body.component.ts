@@ -19,6 +19,7 @@ import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {registerNativeThemeReaction} from "src/web/lib/native-theme";
 
 @Component({
+    standalone: false,
     selector: "electron-mail-db-view-mail-body",
     templateUrl: "./db-view-mail-body.component.html",
     styleUrls: ["./db-view-mail-body.component.scss"],

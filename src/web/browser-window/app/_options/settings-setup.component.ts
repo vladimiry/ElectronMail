@@ -7,6 +7,7 @@ import {PACKAGE_GITHUB_PROJECT_URL} from "src/shared/const";
 import {PACKAGE_GITHUB_PROJECT_URL_TOKEN} from "src/web/browser-window/app/app.constants";
 
 @Component({
+    standalone: false,
     selector: "electron-mail-settings-setup",
     templateUrl: "./settings-setup.component.html",
     styleUrls: ["./settings-setup.component.scss"],

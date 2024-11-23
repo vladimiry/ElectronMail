@@ -91,4 +91,7 @@ export function initialConfig(): Config {
     }
 }
 
-export const pickBaseConfigProperties = (config: Config): NoExtraProps<Required<BaseConfig>> => pick(config, keys<BaseConfig>());
+export const pickBaseConfigProperties = (config: Config): NoExtraProps<Required<BaseConfig>> => {
+    // @ts-expect-error TS 5.6.3=>5.7.2: remeda's "pick" started actiong weirdly
+    return pick(config, keys<BaseConfig>());
+};

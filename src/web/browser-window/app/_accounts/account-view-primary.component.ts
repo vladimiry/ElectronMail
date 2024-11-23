@@ -12,6 +12,7 @@ import {IPC_WEBVIEW_API_CHANNELS_MAP} from "src/shared/api/webview/const";
 import {ONE_SECOND_MS} from "src/shared/const";
 
 @Component({
+    standalone: false,
     selector: "electron-mail-account-view-primary",
     template: "",
 })

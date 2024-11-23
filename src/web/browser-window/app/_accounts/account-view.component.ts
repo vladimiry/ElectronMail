@@ -33,6 +33,7 @@ import type {WebAccount} from "src/web/browser-window/app/model";
 const componentDestroyingNotificationSubject$ = new Subject<void>();
 
 @Component({
+    standalone: false,
     selector: "electron-mail-account-view",
     templateUrl: "./account-view.component.html",
     styleUrls: ["./account-view.component.scss"],

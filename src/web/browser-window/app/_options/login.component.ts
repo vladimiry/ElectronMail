@@ -10,6 +10,7 @@ import {OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 
 @Component({
+    standalone: false,
     selector: "electron-mail-login",
     templateUrl: "./login.component.html",
     styleUrls: ["./login.component.scss"],

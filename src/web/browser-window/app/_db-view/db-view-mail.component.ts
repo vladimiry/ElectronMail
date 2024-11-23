@@ -3,6 +3,7 @@ import {ChangeDetectionStrategy, Component, HostBinding, Input} from "@angular/c
 import {MAIL_STATE, MailAddress, View} from "src/shared/model/database";
 
 @Component({
+    standalone: false,
     selector: "electron-mail-db-view-mail",
     templateUrl: "./db-view-mail.component.html",
     styleUrls: ["./db-view-mail.component.scss"],

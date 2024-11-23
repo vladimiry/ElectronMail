@@ -14,6 +14,7 @@ import {PACKAGE_GITHUB_PROJECT_URL_TOKEN} from "src/web/browser-window/app/app.c
 import {State} from "src/web/browser-window/app/store/reducers/options";
 
 @Component({
+    standalone: false,
     selector: "electron-mail-base-settings",
     templateUrl: "./base-settings.component.html",
     styleUrls: ["./base-settings.component.scss"],

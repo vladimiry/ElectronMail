@@ -7,6 +7,7 @@ import {Subscription} from "rxjs";
 import {ROUTER_DATA_OUTLET_PROP} from "src/web/browser-window/app/app.constants";
 
 @Component({
+    standalone: false,
     selector: "electron-mail-router-proxy",
     template: "<router-outlet></router-outlet>",
     styleUrls: ["./router-proxy.component.scss"],

@@ -17,6 +17,7 @@ import {View} from "src/shared/model/database";
 const selector = "electron-mail-db-view-mails-export";
 
 @Component({
+    standalone: false,
     selector,
     templateUrl: "./db-view-mails-export.component.html",
     styleUrls: ["./db-view-mails-export.component.scss"],

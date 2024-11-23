@@ -9,6 +9,7 @@ import {AccountViewAbstractComponent} from "./account-view-abstract-component.di
 import {IPC_WEBVIEW_API_CHANNELS_MAP} from "src/shared/api/webview/const";
 
 @Component({
+    standalone: false,
     selector: "electron-mail-account-view-calendar",
     template: "",
 })

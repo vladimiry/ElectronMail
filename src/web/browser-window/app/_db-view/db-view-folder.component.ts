@@ -3,6 +3,7 @@ import {ChangeDetectionStrategy, Component, Input} from "@angular/core";
 import {LABEL_TYPE, SYSTEM_FOLDER_IDENTIFIERS, View} from "src/shared/model/database";
 
 @Component({
+    standalone: false,
     selector: "electron-mail-db-view-folder",
     templateUrl: "./db-view-folder.component.html",
     styleUrls: ["./db-view-folder.component.scss"],

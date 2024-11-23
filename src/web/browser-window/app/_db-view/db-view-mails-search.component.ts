@@ -12,6 +12,7 @@ import {Instance} from "src/web/browser-window/app/store/reducers/db-view";
 import {SYSTEM_FOLDER_IDENTIFIERS, View} from "src/shared/model/database";
 
 @Component({
+    standalone: false,
     selector: "electron-mail-db-view-mails-search",
     templateUrl: "./db-view-mails-search.component.html",
     styleUrls: ["./db-view-mails-search.component.scss"],

@@ -5,6 +5,7 @@ import {formatCodeLines} from "src/web/browser-window/app/store/util";
 
 // TODO reference template/styles from external files (so can be shared with the class ancestor/successor)
 @Component({
+    standalone: false,
     selector: "electron-mail-account-edit-notification-exec-editor",
     template: `
         <div class="progress mt-2" *ngIf="!editorInstance">

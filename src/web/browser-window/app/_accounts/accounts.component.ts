@@ -15,6 +15,7 @@ import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {WebAccount} from "src/web/browser-window/app/model";
 
 @Component({
+    standalone: false,
     selector: "electron-mail-accounts",
     templateUrl: "./accounts.component.html",
     styleUrls: ["./accounts.component.scss"],

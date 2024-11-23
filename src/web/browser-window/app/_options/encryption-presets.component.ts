@@ -10,6 +10,7 @@ import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {State} from "src/web/browser-window/app/store/reducers/options";
 
 @Component({
+    standalone: false,
     selector: "electron-mail-encryption-presets",
     templateUrl: "./encryption-presets.component.html",
     preserveWhitespaces: true,

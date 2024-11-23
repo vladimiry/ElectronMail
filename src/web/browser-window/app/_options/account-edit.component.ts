@@ -19,6 +19,7 @@ import {validateExternalContentProxyUrlPattern} from "src/shared/util/url";
 import {validateLoginDelaySecondsRange} from "src/shared/util";
 
 @Component({
+    standalone: false,
     selector: "electron-mail-account-edit",
     templateUrl: "./account-edit.component.html",
     styleUrls: ["./account-edit.component.scss"],

@@ -21,17 +21,14 @@ type narrowIndexActionPayloadType = (
 ) => typeof payload;
 
 export const narrowIndexActionPayload: narrowIndexActionPayloadType = ((): narrowIndexActionPayloadType => {
-    type Fn = narrowIndexActionPayloadType;
-    type Mails = ReturnType<Fn>["add"];
-
-    const fieldsToIndex = [((name: keyof Pick<Unpacked<Mails>, "pk">): typeof name => name)("pk"), ...INDEXABLE_MAIL_FIELDS];
-
-    const result: Fn = ({key, remove, add}) => {
+    const fieldsToIndex = ["pk", ...INDEXABLE_MAIL_FIELDS] as const;
+    // @ts-expect-error 5.6.3=>5.7.2: remeda's "pick" started actiong weirdly
+    const result: narrowIndexActionPayloadType = ({key, remove, add}) => {
         return {
             key,
             remove,
             add: add.map((mail) => {
-                return {...pick(mail, fieldsToIndex), [((prop: keyof Pick<typeof mail, "body">) => prop)("body")]: readMailBody(mail)};
+                return {...pick(mail, fieldsToIndex), body: readMailBody(mail)};
             }),
         };
     };

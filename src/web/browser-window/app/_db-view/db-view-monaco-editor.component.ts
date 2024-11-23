@@ -54,6 +54,7 @@ const codeSnippets = ([
 ] as const).map(formatCodeLines);
 
 @Component({
+    standalone: false,
     selector: "electron-mail-db-view-monaco-editor",
     templateUrl: "./db-view-monaco-editor.component.html",
     styleUrls: ["./db-view-monaco-editor.component.scss"],

@@ -28,6 +28,7 @@ const initialComponentState: DeepReadonly<Omit<ComponentState, "account">> = {
 };
 
 @Component({
+    standalone: false,
     selector: "electron-mail-account-title",
     templateUrl: "./account-title.component.html",
     styleUrls: ["./account-title.component.scss"],

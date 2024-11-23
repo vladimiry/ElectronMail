@@ -12,6 +12,7 @@ import {NotificationSelectors} from "src/web/browser-window/app/store/selectors"
 import {State} from "src/web/browser-window/app/store/reducers/notification";
 
 @Component({
+    standalone: false,
     selector: "electron-mail-notification-list",
     templateUrl: "./notification-list.component.html",
     styleUrls: ["./notification-list.component.scss"],

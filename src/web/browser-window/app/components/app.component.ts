@@ -12,6 +12,7 @@ export type CloseableOutletsType =
     | typeof SETTINGS_OUTLET;
 
 @Component({
+    standalone: false,
     selector: "electron-mail-app",
     styleUrls: ["./app.component.scss"],
     template: `

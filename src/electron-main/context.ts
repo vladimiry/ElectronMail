@@ -11,13 +11,7 @@ import path from "path";
 import {Fs as StoreFs, Model as StoreModel, Store} from "fs-json-store";
 
 import {
-    BINARY_NAME,
-    ONE_KB_BYTES,
-    ONE_MB_BYTES,
-    PACKAGE_NAME,
-    RUNTIME_ENV_USER_DATA_DIR,
-    WEB_PROTOCOL_DIR,
-    WEB_PROTOCOL_SCHEME,
+    BINARY_NAME, ONE_KB_BYTES, ONE_MB_BYTES, PACKAGE_NAME, RUNTIME_ENV_USER_DATA_DIR, WEB_PROTOCOL_DIR, WEB_PROTOCOL_SCHEME,
 } from "src/shared/const";
 import {Config, Settings} from "src/shared/model/options";
 import {configEncryptionPresetValidator, INITIAL_STORES, settingsAccountLoginUniquenessValidator} from "./constants";

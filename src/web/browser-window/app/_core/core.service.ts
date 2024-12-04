@@ -32,7 +32,7 @@ export class CoreService {
     parseEntryUrl(
         {entryUrl}: WebAccount["accountConfig"],
         repoType: keyof typeof PROVIDER_REPO_MAP,
-    ): Readonly<{ entryPageUrl: string, sessionStorage: { apiEndpointOrigin: string } }> {
+    ): Readonly<{entryPageUrl: string; sessionStorage: {apiEndpointOrigin: string}}> {
         if (!entryUrl || !entryUrl.startsWith("https://")) {
             throw new Error(`Invalid "${JSON.stringify({entryUrl})}" value`);
         }
@@ -52,8 +52,8 @@ export class CoreService {
         logger_: import("src/shared/model/common").Logger,
         ngOnDestroy$: Observable<void>,
         savedSessionData?: {
-            clientSession?: ProtonClientSession | null
-            sessionStoragePatch?: IpcMainServiceScan["ApiImplReturns"]["resolvedSavedSessionStoragePatch"] | null
+            clientSession?: ProtonClientSession | null;
+            sessionStoragePatch?: IpcMainServiceScan["ApiImplReturns"]["resolvedSavedSessionStoragePatch"] | null;
         },
     ): Promise<void> {
         // eslint-disable-next-line @typescript-eslint/unbound-method

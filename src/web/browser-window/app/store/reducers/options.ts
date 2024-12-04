@@ -32,7 +32,7 @@ export interface State extends fromRoot.State, Partial<InitResponse> {
     settings: Parameters<typeof OPTIONS_ACTIONS.GetSettingsResponse>[0];
     progress: ProgressPatch;
     hasSavedPassword?: boolean;
-    mainProcessNotification: { action: UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS> };
+    mainProcessNotification: {action: UnionOf<typeof IPC_MAIN_API_NOTIFICATION_ACTIONS>};
     shouldUseDarkColors?: boolean;
 }
 

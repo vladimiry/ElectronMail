@@ -45,17 +45,18 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
     private readonly subscription = new Subscription();
 
     protected constructor(
-        private readonly viewType:
-            Extract<keyof typeof __METADATA__.electronLocations.preload, "primary" | "calendar">,
+        private readonly viewType: Extract<keyof typeof __METADATA__.electronLocations.preload, "primary" | "calendar">,
         protected readonly injector: Injector,
     ) {
         super();
 
         this.account$ = this.ngChangesObservable("login").pipe(
-            switchMap((login) => this.injector.get(Store).pipe(
-                select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
-                mergeMap((account) => account ? [account] : EMPTY),
-            )),
+            switchMap((login) =>
+                this.injector.get(Store).pipe(
+                    select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
+                    mergeMap((account) => account ? [account] : EMPTY),
+                )
+            ),
         );
         this.api = this.injector.get(ElectronService);
         this.core = this.injector.get(CoreService);
@@ -106,7 +107,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
             ACCOUNTS_ACTIONS.Patch({
                 login: this.login,
                 patch: {webviewSrcValues: {[this.viewType]: ""}},
-                optionalAccount: true
+                optionalAccount: true,
             }),
         );
     }
@@ -119,11 +120,11 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
         this.event.emit({type: "action", payload});
     }
 
-    protected filterEvent<T extends ChildEvent["type"]>(type: T): Observable<Extract<ChildEvent, { type: T }>> {
+    protected filterEvent<T extends ChildEvent["type"]>(type: T): Observable<Extract<ChildEvent, {type: T}>> {
         return this.event.pipe(
             filter((event) => event.type === type),
             // TODO TS drop type casting "map" https://github.com/microsoft/TypeScript/issues/16069 (or use "mergeMap", see below)
-            map((event) => event as Unpacked<Observable<Extract<ChildEvent, { type: T }>>>),
+            map((event) => event as Unpacked<Observable<Extract<ChildEvent, {type: T}>>>),
         );
     }
 
@@ -171,7 +172,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
                     Object.assign(this.webView, {
                         src,
                         partition,
-                        preload: __METADATA__.electronLocations.preload[this.viewType]
+                        preload: __METADATA__.electronLocations.preload[this.viewType],
                     });
                 }
                 { // mounting
@@ -189,12 +190,14 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
 
         const didStartNavigationArgs = [
             "did-start-navigation",
-            (event: import("electron").Event & {
-                type: string,
-                isInPlace: boolean,
-                isMainFrame: boolean,
-                url: string
-            }) => {
+            (
+                event: import("electron").Event & {
+                    type: string;
+                    isInPlace: boolean;
+                    isMainFrame: boolean;
+                    url: string;
+                },
+            ) => {
                 // console.log(`did-start-navigation`, event);
                 const {type, isInPlace, isMainFrame, url} = event;
                 if (isInPlace || !isMainFrame) return;
@@ -204,7 +207,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
         ] as const;
         const ipcMessageArgs = [
             "ipc-message",
-            ({type, channel}: import("electron").Event & { type: string, channel: string }) => {
+            ({type, channel}: import("electron").Event & {type: string; channel: string}) => {
                 this.event.emit({type: "ipc-message", channel, webView});
                 this.log("verbose", ["webview event", JSON.stringify({type, src: webView.src})]);
             },
@@ -219,7 +222,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
         ] as const;
         const domReadyArgs = [
             "dom-ready",
-            ({type}: import("electron").Event & { type: string }) => {
+            ({type}: import("electron").Event & {type: string}) => {
                 this.event.emit({type: "dom-ready", viewType: this.viewType, webView});
                 this.log("verbose", ["webview event", JSON.stringify({type, src: webView.src})]);
             },
@@ -232,13 +235,16 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
                 if (isWarn || isError) {
                     this.log(
                         lowerConsoleMessageEventLogLevel(isWarn ? "warn" : "error", message),
-                        ["webview event", JSON.stringify({
-                            type,
-                            level,
-                            message: depersonalizeLoggedUrlsInString(message),
-                            line,
-                            sourceId: depersonalizeLoggedUrlsInString(sourceId),
-                        })],
+                        [
+                            "webview event",
+                            JSON.stringify({
+                                type,
+                                level,
+                                message: depersonalizeLoggedUrlsInString(message),
+                                line,
+                                sourceId: depersonalizeLoggedUrlsInString(sourceId),
+                            }),
+                        ],
                     );
                 }
             },
@@ -257,7 +263,7 @@ export abstract class AccountViewAbstractComponent extends NgChangesObservableCo
         ] as const;
         const crashedArgs = [
             "crashed",
-            (event: import("electron").Event & { type: string }) => {
+            (event: import("electron").Event & {type: string}) => {
                 this.log("error", ["webview event", JSON.stringify(pick(event, ["type"]))]);
             },
         ] as const;

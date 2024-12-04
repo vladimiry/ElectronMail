@@ -28,9 +28,11 @@ export class StorageComponent {
         Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
         // TODO make "controls match" to be "common/util" validator
         () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
-            if (this.newPassword
+            if (
+                this.newPassword
                 && this.newPasswordConfirm
-                && this.newPassword.value !== this.newPasswordConfirm.value) {
+                && this.newPassword.value !== this.newPasswordConfirm.value
+            ) {
                 return {mismatch: true};
             }
 

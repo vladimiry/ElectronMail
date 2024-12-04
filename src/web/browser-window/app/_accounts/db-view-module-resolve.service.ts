@@ -7,7 +7,6 @@ type DbViewEntryComponent = import("src/web/browser-window/app/_db-view/db-view-
 
 @Injectable()
 export class DbViewModuleResolve {
-
     private state: {
         resolveComponentFactory: () => Promise<ComponentFactory<DbViewEntryComponent>>;
     } = {

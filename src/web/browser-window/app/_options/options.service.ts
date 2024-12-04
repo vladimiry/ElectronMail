@@ -6,7 +6,7 @@ import {SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.con
 
 @Injectable()
 export class OptionsService {
-    settingsNavigationAction(opts?: { path?: string; queryParams?: Record<string, unknown> }): Action {
+    settingsNavigationAction(opts?: {path?: string; queryParams?: Record<string, unknown>}): Action {
         const path = opts && "path" in opts ? `${SETTINGS_PATH}${opts.path ? "/" + opts.path : ""}` : null;
 
         return NAVIGATION_ACTIONS.Go({

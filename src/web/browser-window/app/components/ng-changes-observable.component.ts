@@ -14,7 +14,7 @@ export abstract class NgChangesObservableComponent implements OnChanges, OnDestr
 
     ngOnChanges(changes: SimpleChanges): void {
         const props: Record<keyof typeof changes, any> // eslint-disable-line @typescript-eslint/no-explicit-any
-            = {};
+         = {};
 
         Object.assign(props, this.ngChanges.value);
 

@@ -133,8 +133,8 @@ export class DbViewMailsExportComponent extends DbViewAbstractComponent implemen
         const mails: View.Mail[] = this.mailsBundleItems
             ? this.mailsBundleItems.map(({mail}) => mail)
             : this.rootConversationNode
-                ? filterConversationNodesMails([this.rootConversationNode])
-                : [];
+            ? filterConversationNodesMails([this.rootConversationNode])
+            : [];
 
         this.store.dispatch(
             DB_VIEW_ACTIONS.DbExport({

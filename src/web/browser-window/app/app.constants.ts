@@ -27,7 +27,7 @@ export const ROUTER_DATA_OUTLET_PROP = "ROUTER_DATA_OUTLET_PROP";
 
 export const FIRE_SYNCING_ITERATION$ = new Subject<LoginFieldContainer>();
 
-export const DBVIEW_MODULE_ENTRY_COMPONENT_TOKEN
-    // eslint-disable-next-line max-len
-    = new InjectionToken<Type<import("src/web/browser-window/app/_db-view/db-view-entry.component").DbViewEntryComponent>>("DbViewEntryComponent");
-
+export const DBVIEW_MODULE_ENTRY_COMPONENT_TOKEN = // eslint-disable-next-line max-len
+    new InjectionToken<Type<import("src/web/browser-window/app/_db-view/db-view-entry.component").DbViewEntryComponent>>(
+        "DbViewEntryComponent",
+    );

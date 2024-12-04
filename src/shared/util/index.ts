@@ -146,13 +146,11 @@ export function buildEnumBundle<M extends Record<string, unknown>, K extends key
 
     interface ParseValue {
         (
-            rawValue: any // eslint-disable-line @typescript-eslint/no-explicit-any
-            ,
+            rawValue: any, // eslint-disable-line @typescript-eslint/no-explicit-any
         ): V;
 
         <S extends boolean>(
-            rawValue: any // eslint-disable-line @typescript-eslint/no-explicit-any
-            ,
+            rawValue: any, // eslint-disable-line @typescript-eslint/no-explicit-any
             strict: S,
         ): S extends true ? V : V | undefined;
     }

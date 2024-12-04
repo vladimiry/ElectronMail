@@ -2,7 +2,19 @@ import type {Action} from "@ngrx/store";
 import {BehaviorSubject, combineLatest, EMPTY, lastValueFrom, merge, of, Subject, Subscription, timer} from "rxjs";
 import {Component, ComponentRef, ElementRef, HostBinding, Input, NgZone, ViewChild, ViewContainerRef} from "@angular/core";
 import {
-    debounceTime, distinctUntilChanged, filter, first, map, mergeMap, pairwise, startWith, switchMap, take, takeUntil, tap, withLatestFrom,
+    debounceTime,
+    distinctUntilChanged,
+    filter,
+    first,
+    map,
+    mergeMap,
+    pairwise,
+    startWith,
+    switchMap,
+    take,
+    takeUntil,
+    tap,
+    withLatestFrom,
 } from "rxjs/operators";
 import type {Observable} from "rxjs";
 import type {OnDestroy, OnInit} from "@angular/core";
@@ -42,10 +54,12 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
     readonly login: string = "";
 
     readonly account$: Observable<WebAccount> = this.ngChangesObservable("login").pipe(
-        switchMap((login) => this.store.pipe(
-            select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
-            mergeMap((account) => account ? [account] : EMPTY),
-        )),
+        switchMap((login) =>
+            this.store.pipe(
+                select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
+                mergeMap((account) => account ? [account] : EMPTY),
+            )
+        ),
     );
 
     // TODO angular: get rid of @HostBinding("class") /  @Input() workaround https://github.com/angular/angular/issues/7289
@@ -53,9 +67,12 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
     readonly class: string = "";
 
     viewModeClass: "vm-live" | "vm-database" = "vm-live";
-    readonly webViewsState: Readonly<Record<"primary" | "calendar", {
-        readonly src$: BehaviorSubject<string>; readonly domReady$: Subject<Electron.WebviewTag>;
-    }>> = {
+    readonly webViewsState: Readonly<
+        Record<"primary" | "calendar", {
+            readonly src$: BehaviorSubject<string>;
+            readonly domReady$: Subject<Electron.WebviewTag>;
+        }>
+    > = {
         primary: {src$: new BehaviorSubject(""), domReady$: new Subject()},
         calendar: {src$: new BehaviorSubject(""), domReady$: new Subject()},
     };
@@ -114,7 +131,8 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
                     first(),
                     switchMap(({accountConfig: {login}}) => {
                         return this.accountsService.setupLoginDelayTrigger(
-                            {login, takeUntil$: this.webViewsState.primary.domReady$.asObservable()}, this.logger,
+                            {login, takeUntil$: this.webViewsState.primary.domReady$.asObservable()},
+                            this.logger,
                         );
                     }),
                     withLatestFrom(this.account$),
@@ -141,7 +159,8 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
                         await this.ipcMainClient("resetProtonBackendSession")(key);
                         // reset the "client session" and navigate
                         await this.core.applyProtonClientSessionAndNavigate(
-                            ...applyProtonClientSessionAndNavigateArgs, {sessionStoragePatch},
+                            ...applyProtonClientSessionAndNavigateArgs,
+                            {sessionStoragePatch},
                         );
                     };
                     if (!accountConfig.persistentSession) {
@@ -154,10 +173,12 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
                     if (!(await this.ipcMainClient("applySavedProtonBackendSession")(key))) {
                         return baseReturn();
                     }
-                    await this.core.applyProtonClientSessionAndNavigate(...[
-                        ...applyProtonClientSessionAndNavigateArgs,
-                        {clientSession, sessionStoragePatch},
-                    ] as const);
+                    await this.core.applyProtonClientSessionAndNavigate(
+                        ...[
+                            ...applyProtonClientSessionAndNavigateArgs,
+                            {clientSession, sessionStoragePatch},
+                        ] as const,
+                    );
                 }),
         );
 
@@ -247,10 +268,8 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
                         const executeShellCommand = notificationShellExec && notificationShellExecCode;
                         const accountMetadataSettled = Boolean(
                             (useCustomNotification || executeShellCommand)
-                            &&
-                            database
-                            &&
-                            (await this.ipcMainClient("dbGetAccountMetadata")({login}))?.latestEventId
+                                && database
+                                && (await this.ipcMainClient("dbGetAccountMetadata")({login}))?.latestEventId,
                         );
                         const {accountIndex} = await this.resolveAccountIndex();
                         const body = useCustomNotification && accountMetadataSettled
@@ -268,10 +287,11 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
                                     tag: `main_unread_notification_${await sha256(login)}`,
                                     icon: DESKTOP_NOTIFICATION_ICON_URL,
                                 },
-                            ).onclick = () => this.zone.run(() => {
-                                this.store.dispatch(ACCOUNTS_ACTIONS.Select({login}));
-                                this.store.dispatch(NAVIGATION_ACTIONS.ToggleBrowserWindow({forcedState: true}));
-                            });
+                            ).onclick = () =>
+                                this.zone.run(() => {
+                                    this.store.dispatch(ACCOUNTS_ACTIONS.Select({login}));
+                                    this.store.dispatch(NAVIGATION_ACTIONS.ToggleBrowserWindow({forcedState: true}));
+                                });
                         } else {
                             this.logger.verbose(`skipping notification displaying due to the empty "${nameof(body)}"`);
                         }
@@ -309,11 +329,11 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
 
     onEventChild(
         event:
-            | { type: "did-start-navigation"; url: string }
-            | { type: "ipc-message"; channel: string, webView: Electron.WebviewTag }
-            | { type: "dom-ready"; viewType: keyof typeof AccountViewComponent.prototype.webViewsState; webView: Electron.WebviewTag }
-            | { type: "action"; payload: Action }
-            | { type: "log"; data: [LogLevel, ...string[]] },
+            | {type: "did-start-navigation"; url: string}
+            | {type: "ipc-message"; channel: string; webView: Electron.WebviewTag}
+            | {type: "dom-ready"; viewType: keyof typeof AccountViewComponent.prototype.webViewsState; webView: Electron.WebviewTag}
+            | {type: "action"; payload: Action}
+            | {type: "log"; data: [LogLevel, ...string[]]},
     ): void {
         if (event.type === "log") {
             const [level, ...args] = event.data;
@@ -432,8 +452,7 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
                             }
                         },
                         ${ONE_SECOND_MS / 2},
-                    );`,
-                )
+                    );`)
                 .catch((error) => {
                     this.logger.error("failed to focus protonmail mailbox container DOM element", error);
                 });

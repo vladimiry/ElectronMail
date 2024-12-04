@@ -33,7 +33,7 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
         {value: "light", title: "Light"},
     ];
 
-    readonly idleTimeLogOutSecValues: Array<Readonly<{ title: string; valueSec: number }>> = [
+    readonly idleTimeLogOutSecValues: Array<Readonly<{title: string; valueSec: number}>> = [
         {title: "Disabled", valueSec: 0},
         {title: "3 minutes", valueSec: 60 * 3},
         {title: "5 minutes", valueSec: 60 * 5},
@@ -77,7 +77,7 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
 
     readonly form = new FormGroup(this.controls);
 
-    readonly colorPickerOpened: { bg: boolean; text: boolean; icon: boolean } = {bg: false, text: false, icon: false};
+    readonly colorPickerOpened: {bg: boolean; text: boolean; icon: boolean} = {bg: false, text: false, icon: false};
 
     readonly $trayIconColor: Observable<string>;
     readonly $unreadBgColor: Observable<string>;
@@ -90,8 +90,7 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
     private readonly subscription = new Subscription();
 
     constructor(
-        @Inject(PACKAGE_GITHUB_PROJECT_URL_TOKEN)
-        public readonly PACKAGE_GITHUB_PROJECT_URL: string,
+        @Inject(PACKAGE_GITHUB_PROJECT_URL_TOKEN) public readonly PACKAGE_GITHUB_PROJECT_URL: string,
         private readonly store: Store<State>,
         private readonly elementRef: ElementRef,
     ) {

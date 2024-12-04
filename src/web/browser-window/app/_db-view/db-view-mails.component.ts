@@ -52,22 +52,26 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
     );
 
     readonly mailsBundle$ = this.mailsBundleKey$.pipe(
-        mergeMap((mailsBundleKey) => this.instance$.pipe(
-            map((instance) => instance[mailsBundleKey]),
-            distinctUntilChanged(),
-        )),
+        mergeMap((mailsBundleKey) =>
+            this.instance$.pipe(
+                map((instance) => instance[mailsBundleKey]),
+                distinctUntilChanged(),
+            )
+        ),
     );
 
     readonly plainMailsBundle$ = this.mailsBundleKey$.pipe(
-        mergeMap((mailsBundleKey) => this.instance$.pipe(
-            map((instance) => {
-                const key = mailsBundleKey === "folderConversationsBundle"
-                    ? "folderMailsBundle"
-                    : mailsBundleKey;
-                return instance[key];
-            }),
-            distinctUntilChanged(),
-        )),
+        mergeMap((mailsBundleKey) =>
+            this.instance$.pipe(
+                map((instance) => {
+                    const key = mailsBundleKey === "folderConversationsBundle"
+                        ? "folderMailsBundle"
+                        : mailsBundleKey;
+                    return instance[key];
+                }),
+                distinctUntilChanged(),
+            )
+        ),
     );
 
     readonly title$ = this.mailsBundle$.pipe(
@@ -167,15 +171,14 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
             const staticFilter = ({id, type}: Folder): boolean => {
                 return (
                     type === LABEL_TYPE.MESSAGE_FOLDER
-                    &&
-                    !excludeIds.has(id)
+                    && !excludeIds.has(id)
                 );
             };
             return combineLatest([
                 this.instance$.pipe(
                     map((value) => value.folders),
                     distinctUntilChanged(),
-                    map(({custom, system}) => ([...system, ...custom])),
+                    map(({custom, system}) => [...system, ...custom]),
                     map((items) => items.filter(staticFilter)),
                 ),
                 this.instance$.pipe(
@@ -241,7 +244,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
                         this.store.pipe(
                             select(AccountsSelectors.FEATURED.selectedLogin),
                         ),
-                    )
+                    ),
                 )
                 .subscribe(([{keyCode}, selectedLogin]) => {
                     // only processing keydown event on selected account
@@ -289,18 +292,16 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
 
                     if (
                         up
-                        &&
                         // TODO cache ":first-of-type" element on rendered mails list change
-                        selected === this.elementRef.nativeElement.querySelector(`${mailComponentTagName}:first-of-type`)
+                        && selected === this.elementRef.nativeElement.querySelector(`${mailComponentTagName}:first-of-type`)
                     ) {
                         return;
                     }
 
                     if (
                         down
-                        &&
                         // TODO cache ":last-of-type" element on rendered mails list change
-                        selected === this.elementRef.nativeElement.querySelector(`${mailComponentTagName}:last-of-type`)
+                        && selected === this.elementRef.nativeElement.querySelector(`${mailComponentTagName}:last-of-type`)
                     ) {
                         return;
                     }
@@ -308,8 +309,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
                     // TODO TS: use type-guard function to resolve/narrow Node as Element
                     if (
                         toSelect.nodeType !== Node.ELEMENT_NODE
-                        ||
-                        (toSelect as Element).tagName !== mailComponentTagName
+                        || (toSelect as Element).tagName !== mailComponentTagName
                     ) {
                         throw new Error("Failed to resolve sibling mail element");
                     }
@@ -426,7 +426,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
     }
 
     private resolveSelectedMailElement(): Element | null {
-        return (this.elementRef.nativeElement)
+        return this.elementRef.nativeElement
             .querySelector(`${mailComponentTagName}.${DB_VIEW_MAIL_SELECTED_CLASS_NAME}`);
     }
 }

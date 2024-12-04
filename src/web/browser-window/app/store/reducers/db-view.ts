@@ -17,17 +17,19 @@ export type MailSorter = NoExtraProps<{
 
 export type MailsBundle = NoExtraProps<{
     title: string;
-    items: Array<{ mail: View.Mail; conversationSize: number }>;
+    items: Array<{mail: View.Mail; conversationSize: number}>;
     sorters: MailSorter[];
     sorterIndex: number;
-    paging: NoExtraProps<{ page: number; end: number; nextPageSize: number; pageSize: number }>;
-}>
+    paging: NoExtraProps<{page: number; end: number; nextPageSize: number; pageSize: number}>;
+}>;
 
-export type MailsBundleKey = keyof Pick<Instance,
+export type MailsBundleKey = keyof Pick<
+    Instance,
     | "folderMailsBundle"
     | "folderConversationsBundle"
     | "searchMailsBundle"
-    | "searchNoQueryMailsBundle">;
+    | "searchNoQueryMailsBundle"
+>;
 
 export type SearchMailsBundleKey = Extract<MailsBundleKey, "searchMailsBundle" | "searchNoQueryMailsBundle">;
 
@@ -276,8 +278,7 @@ function innerReducer(state = initialState, action: UnionOf<typeof DB_VIEW_ACTIO
 
                 if (
                     selectedMail
-                    &&
-                    !allSelectedFolderMailPks.has(selectedMail.conversationMail.pk)
+                    && !allSelectedFolderMailPks.has(selectedMail.conversationMail.pk)
                 ) {
                     delete instance.selectedMail;
                 }

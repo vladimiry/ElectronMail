@@ -39,9 +39,10 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractComponent im
                         // TODO move to "effects"
                         const {login} = account.accountConfig;
                         await this.injector.get(ElectronService).primaryLoginWebViewClient(
-                            {webView}, {
+                            {webView},
+                            {
                                 finishPromise: firstValueFrom(this.buildNavigationOrDestroyingSingleNotification()),
-                                timeoutMs: ONE_SECOND_MS * 10
+                                timeoutMs: ONE_SECOND_MS * 10,
                             },
                         )("fillLogin")({accountIndex: account.accountIndex, login});
                         this.action(ACCOUNTS_ACTIONS.Patch({login, patch: {loginFilledOnce: true}}));

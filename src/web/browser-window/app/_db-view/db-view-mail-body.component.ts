@@ -34,12 +34,9 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
         mergeMap((value) => value ? [value] : EMPTY),
         distinctUntilChanged((prev, curr) => (
             prev.rootNode.entryPk === curr.rootNode.entryPk
-            &&
-            prev.conversationMail.pk === curr.conversationMail.pk
-            &&
-            prev.conversationMail.body === curr.conversationMail.body
-            &&
-            isDeepEqual(prev.conversationMail.failedDownload, curr.conversationMail.failedDownload)
+            && prev.conversationMail.pk === curr.conversationMail.pk
+            && prev.conversationMail.body === curr.conversationMail.body
+            && isDeepEqual(prev.conversationMail.failedDownload, curr.conversationMail.failedDownload)
         )),
     );
 
@@ -144,8 +141,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
                 const selectedRef = this.dbViewMailElementRefs.find((ref) => {
                     return Boolean(
                         ref.nativeElement.offsetParent
-                        &&
-                        ref.nativeElement.classList.contains(DB_VIEW_MAIL_SELECTED_CLASS_NAME)
+                            && ref.nativeElement.classList.contains(DB_VIEW_MAIL_SELECTED_CLASS_NAME),
                     );
                 });
                 if (selectedRef) {
@@ -206,7 +202,6 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
         this.subscription.unsubscribe();
         this.iframeBodyEventSubject$.complete();
         this.releaseBodyIframe();
-
     }
 
     private renderBody(mail: Mail): void {

@@ -170,7 +170,7 @@ export class DbViewMailsSearchComponent extends DbViewAbstractComponent implemen
         this.backToListHandler.emit();
     }
 
-    onEditorContentChange({codeEditorContent}: { codeEditorContent?: string }): void {
+    onEditorContentChange({codeEditorContent}: {codeEditorContent?: string}): void {
         this.codeFilter = codeEditorContent;
     }
 

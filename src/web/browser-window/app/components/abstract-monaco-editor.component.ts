@@ -20,7 +20,7 @@ export abstract class AbstractMonacoEditorComponent extends NgChangesObservableC
     login!: AccountConfig["login"];
 
     @Output()
-    readonly content = new EventEmitter<{ codeEditorContent?: string }>();
+    readonly content = new EventEmitter<{codeEditorContent?: string}>();
 
     folders$: Observable<Array<Pick<View.Folder, "id" | "unread" | "type" | "name">>> = of([]);
 
@@ -56,11 +56,11 @@ export abstract class AbstractMonacoEditorComponent extends NgChangesObservableC
             .pipe(takeUntil(this.ngOnDestroy$))
             .subscribe((event) => {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                const {stack = "", name}: { stack?: string, name?: string } = event?.reason ?? {};
+                const {stack = "", name}: {stack?: string; name?: string} = event?.reason ?? {};
                 if (
                     name === "Canceled"
-                    &&
-                    ["Delayer.cancel", "Function.onMouseLeave"].every((stackToInclude) => stack.includes(stackToInclude))) {
+                    && ["Delayer.cancel", "Function.onMouseLeave"].every((stackToInclude) => stack.includes(stackToInclude))
+                ) {
                     event.preventDefault();
                 }
             });
@@ -108,7 +108,8 @@ export abstract class AbstractMonacoEditorComponent extends NgChangesObservableC
                 width: this.updateMonacoEditorWidthPostprocessing(widthBy),
                 height: editorInstance.getLayoutInfo().height,
             });
-        } finally {} // eslint-disable-line no-empty
+        } finally { // eslint-disable-next-line no-empty
+        }
     }
 
     protected updateMonacoEditorHeight(): void {
@@ -129,7 +130,8 @@ export abstract class AbstractMonacoEditorComponent extends NgChangesObservableC
 
         try {
             editorInstance.layout({width, height: contentHeight});
-        } finally {} // eslint-disable-line no-empty
+        } finally { // eslint-disable-next-line no-empty
+        }
     }
 
     protected folderDtsCodeInclude(
@@ -177,8 +179,7 @@ export abstract class AbstractMonacoEditorComponent extends NgChangesObservableC
             `
             declare const filterMessage = (
                 fn: (mail: ${this.initializeEditorFunctionMailDts(folders)}) => boolean,
-            ) => void;`
-            ,
+            ) => void;`,
             `
             declare const formatNotificationContent = (
                 fn: (
@@ -188,8 +189,7 @@ export abstract class AbstractMonacoEditorComponent extends NgChangesObservableC
                         mails: Array<${this.initializeEditorFunctionMailDts(folders, ", BodyText: string ")}>,
                     },
                 ) => string,
-            ) => void;`
-            ,
+            ) => void;`,
             `
             declare const formatNotificationShellExecArguments = (
                 fn: (
@@ -200,8 +200,7 @@ export abstract class AbstractMonacoEditorComponent extends NgChangesObservableC
                         process: { env: Record<string, string> },
                     },
                 ) => { command: string, options?: { cwd?: string, env?: Record<string, string> } },
-            ) => void;`
-            ,
+            ) => void;`,
         ].join("");
     }
 

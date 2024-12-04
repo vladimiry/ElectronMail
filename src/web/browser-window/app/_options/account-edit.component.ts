@@ -30,7 +30,9 @@ export class AccountEditComponent implements OnInit, OnDestroy {
     accountIndex = 0;
     readonly userDataDir = __METADATA__.electronLocations.userDataDir;
     entryUrlItems = [...PROTON_API_ENTRY_RECORDS];
-    controls: Record<keyof Pick<AccountConfig,
+    controls: Record<
+        | keyof Pick<
+            AccountConfig,
             | "customNotification"
             | "customNotificationCode"
             | "notificationShellExec"
@@ -47,10 +49,12 @@ export class AccountEditComponent implements OnInit, OnDestroy {
             | "externalContentProxyUrlPattern"
             | "enableExternalContentProxy"
             | "loginDelayUntilSelected"
-            | "loginDelaySecondsRange">
+            | "loginDelaySecondsRange"
+        >
         | keyof Pick<Required<Required<AccountConfig>["proxy"]>, "proxyRules" | "proxyBypassRules">
         | keyof AccountConfig["credentials"],
-        AbstractControl> = {
+        AbstractControl
+    > = {
         customNotification: new FormControl(false),
         customNotificationCode: new FormControl(null),
         notificationShellExec: new FormControl(false),
@@ -59,7 +63,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         blockNonEntryUrlBasedRequests: new FormControl(null),
         externalContentProxyUrlPattern: new FormControl(
             null,
-            (): null | { errorMsg: string } => {
+            (): null | {errorMsg: string} => {
                 if (!this.controls) {
                     return null;
                 }
@@ -102,7 +106,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         loginDelayUntilSelected: new FormControl(null),
         loginDelaySecondsRange: new FormControl(
             null,
-            (): null | { errorMsg: string } => {
+            (): null | {errorMsg: string} => {
                 if (!this.controls) {
                     return null;
                 }
@@ -132,8 +136,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
     private readonly subscription = new Subscription();
 
     constructor(
-        @Inject(PACKAGE_GITHUB_PROJECT_URL_TOKEN)
-        public readonly PACKAGE_GITHUB_PROJECT_URL: string,
+        @Inject(PACKAGE_GITHUB_PROJECT_URL_TOKEN) public readonly PACKAGE_GITHUB_PROJECT_URL: string,
         private readonly store: Store<State>,
         private readonly activatedRoute: ActivatedRoute,
         private readonly elementRef: ElementRef,
@@ -158,18 +161,22 @@ export class AccountEditComponent implements OnInit, OnDestroy {
             this.controls.database.valueChanges,
         ).pipe(
             startWith(null), // initial logic triggering (once)
-            switchMap(() => of(
-                Boolean(this.controls.customNotification.value) && Boolean(this.controls.database.value)
-            )),
+            switchMap(() =>
+                of(
+                    Boolean(this.controls.customNotification.value) && Boolean(this.controls.database.value),
+                )
+            ),
         );
         this.notificationShellExecCodeEditable$ = merge(
             this.controls.notificationShellExec.valueChanges,
             this.controls.database.valueChanges,
         ).pipe(
             startWith(null), // initial logic triggering (once)
-            switchMap(() => of(
-                Boolean(this.controls.notificationShellExec.value) && Boolean(this.controls.database.value)
-            )),
+            switchMap(() =>
+                of(
+                    Boolean(this.controls.notificationShellExec.value) && Boolean(this.controls.database.value),
+                )
+            ),
         );
     }
 
@@ -197,7 +204,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
                     map(({login}) => Boolean(login)),
                 ),
             ]).pipe(
-                startWith([false, false]),   // initial logic triggering (once),
+                startWith([false, false]), // initial logic triggering (once),
             ).subscribe(([database, login]) => {
                 const methodName = database && login ? "enable" : "disable";
                 this.controls.customNotification[methodName]();
@@ -216,22 +223,24 @@ export class AccountEditComponent implements OnInit, OnDestroy {
                     removeControl(controlName);
                 }
 
-                for (const prop of [
-                    "customNotification",
-                    "customNotificationCode",
-                    "notificationShellExec",
-                    "notificationShellExecCode",
-                    "customCSS",
-                    "title",
-                    "database",
-                    "localStoreViewByDefault",
-                    "persistentSession",
-                    "customUserAgent",
-                    "entryUrl",
-                    "blockNonEntryUrlBasedRequests",
-                    "externalContentProxyUrlPattern",
-                    "enableExternalContentProxy",
-                ] as const) {
+                for (
+                    const prop of [
+                        "customNotification",
+                        "customNotificationCode",
+                        "notificationShellExec",
+                        "notificationShellExecCode",
+                        "customCSS",
+                        "title",
+                        "database",
+                        "localStoreViewByDefault",
+                        "persistentSession",
+                        "customUserAgent",
+                        "entryUrl",
+                        "blockNonEntryUrlBasedRequests",
+                        "externalContentProxyUrlPattern",
+                        "enableExternalContentProxy",
+                    ] as const
+                ) {
                     controls[prop].patchValue(account[prop]);
                 }
 
@@ -275,22 +284,20 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         const proxy: AccountConfig["proxy"] = {
             proxyRules: ( // eslint-disable-line @typescript-eslint/no-unsafe-assignment
                 controls.proxyRules.value
-                &&
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-                controls.proxyRules.value.trim()
+                && controls.proxyRules.value.trim()
             ),
             proxyBypassRules: ( // eslint-disable-line @typescript-eslint/no-unsafe-assignment
                 controls.proxyBypassRules.value
-                &&
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-                controls.proxyBypassRules.value.trim() // eslint-disable-line @typescript-eslint/no-unsafe-call
+                && controls.proxyBypassRules.value.trim() // eslint-disable-line @typescript-eslint/no-unsafe-call
             ),
         };
         /* eslint-disable @typescript-eslint/no-unsafe-assignment */
         const patch: Readonly<AccountConfigCreateUpdatePatch> = {
             login: account
-                ? account.login :
-                controls.login.value,
+                ? account.login
+                : controls.login.value,
             title: controls.title.value,
             customNotification: Boolean(controls.customNotification.value),
             customNotificationCode: controls.customNotificationCode.value,
@@ -350,11 +357,11 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         this.store.dispatch(NAVIGATION_ACTIONS.OpenSettingsFolder());
     }
 
-    customNotificationCodeChange({codeEditorContent}: { codeEditorContent?: string }): void {
+    customNotificationCodeChange({codeEditorContent}: {codeEditorContent?: string}): void {
         this.controls.customNotificationCode.patchValue(codeEditorContent);
     }
 
-    notificationShellExecCodeChange({codeEditorContent}: { codeEditorContent?: string }): void {
+    notificationShellExecCodeChange({codeEditorContent}: {codeEditorContent?: string}): void {
         this.controls.notificationShellExecCode.patchValue(codeEditorContent);
     }
 

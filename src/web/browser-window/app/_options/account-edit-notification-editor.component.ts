@@ -72,9 +72,11 @@ export class AccountEditNotificationEditorComponent extends AbstractMonacoEditor
             this.folders$ = bootstrapFetchCompletePing$
                 .pipe(
                     take(1),
-                    switchMap(([, login]) => from(
-                        ipcMainClient("dbGetAccountFoldersView")({login}),
-                    )),
+                    switchMap(([, login]) =>
+                        from(
+                            ipcMainClient("dbGetAccountFoldersView")({login}),
+                        )
+                    ),
                     mergeMap((value) => value ? [[...value.folders.system, ...value.folders.custom]] : []),
                     takeUntil(this.ngOnDestroy$),
                 );

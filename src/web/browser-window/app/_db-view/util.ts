@@ -8,10 +8,12 @@ import {Instance} from "src/web/browser-window/app/store/reducers/db-view";
 
 export const resolveInstance$ = (store: Store, login$: Observable<AccountConfig["login"]>): Observable<Instance> => {
     return login$.pipe(
-        mergeMap((login) => store.pipe(
-            select(DbViewSelectors.FEATURED.instance(), login),
-            distinctUntilChanged(),
-            mergeMap((instance) => instance ? of(instance) : EMPTY),
-        )),
+        mergeMap((login) =>
+            store.pipe(
+                select(DbViewSelectors.FEATURED.instance(), login),
+                distinctUntilChanged(),
+                mergeMap((instance) => instance ? of(instance) : EMPTY),
+            )
+        ),
     );
 };

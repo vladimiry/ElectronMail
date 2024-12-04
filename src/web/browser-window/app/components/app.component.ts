@@ -32,8 +32,8 @@ export class AppComponent {
         private location: Location,
         private store: Store<State>,
     ) {
-		setTheme("bs4");
-	}
+        setTheme("bs4");
+    }
 
     @HostListener("document:keyup", ["$event"])
     onKeyUp({key}: KeyboardEvent): void {

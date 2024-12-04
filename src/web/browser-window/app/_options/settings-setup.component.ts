@@ -20,9 +20,11 @@ export class SettingsSetupComponent extends LoginBaseComponent {
         Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
         // TODO make "controls match" to be "common/util" validator
         () => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
-            if (this.password
+            if (
+                this.password
                 && this.passwordConfirm
-                && this.password.value !== this.passwordConfirm.value) {
+                && this.password.value !== this.passwordConfirm.value
+            ) {
                 return {mismatch: true};
             }
 
@@ -37,8 +39,7 @@ export class SettingsSetupComponent extends LoginBaseComponent {
     });
 
     constructor(
-        @Inject(PACKAGE_GITHUB_PROJECT_URL_TOKEN)
-        public readonly PACKAGE_GITHUB_PROJECT_URL: string,
+        @Inject(PACKAGE_GITHUB_PROJECT_URL_TOKEN) public readonly PACKAGE_GITHUB_PROJECT_URL: string,
         protected readonly injector: Injector,
     ) {
         super(injector);

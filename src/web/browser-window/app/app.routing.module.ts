@@ -3,7 +3,14 @@ import {PreloadAllModules, RouterModule} from "@angular/router";
 import type {Routes} from "@angular/router";
 
 import {
-    ACCOUNTS_OUTLET, ACCOUNTS_PATH, NOTIFICATIONS_OUTLET, NOTIFICATIONS_PATH, SETTINGS_OUTLET, SETTINGS_PATH, STUB_OUTLET, STUB_PATH,
+    ACCOUNTS_OUTLET,
+    ACCOUNTS_PATH,
+    NOTIFICATIONS_OUTLET,
+    NOTIFICATIONS_PATH,
+    SETTINGS_OUTLET,
+    SETTINGS_PATH,
+    STUB_OUTLET,
+    STUB_PATH,
 } from "./app.constants";
 import {RouterProxyComponent} from "./components/router-proxy.component";
 

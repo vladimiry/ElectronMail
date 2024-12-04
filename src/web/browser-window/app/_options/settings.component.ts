@@ -11,8 +11,7 @@ import {State} from "src/web/browser-window/app/store/reducers/options";
     styleUrls: ["./settings.component.scss"],
 })
 export class SettingsComponent {
-    constructor(private optionsService: OptionsService,
-                private store: Store<State>) {}
+    constructor(private optionsService: OptionsService, private store: Store<State>) {}
 
     close(): void {
         this.store.dispatch(this.optionsService.settingsNavigationAction());

@@ -30,11 +30,9 @@ export class ElectronService implements OnDestroy {
                 .pipe(
                     select(OptionsSelectors.FEATURED.config),
                     mergeMap((config) => {
-                        const defined = (
-                            config &&
-                            typeof config.timeouts === "object" &&
-                            typeof config.timeouts.defaultApiCall === "number"
-                        );
+                        const defined = config
+                            && typeof config.timeouts === "object"
+                            && typeof config.timeouts.defaultApiCall === "number";
                         return defined
                             ? [config.timeouts.defaultApiCall]
                             : [];
@@ -51,7 +49,7 @@ export class ElectronService implements OnDestroy {
     }
 
     primaryWebViewClient(
-        {webView}: { webView: Electron.WebviewTag },
+        {webView}: {webView: Electron.WebviewTag},
         options?: LimitedCallOptions,
     ): ReturnType<typeof __ELECTRON_EXPOSURE__.buildIpcPrimaryWebViewClient> {
         return __ELECTRON_EXPOSURE__.buildIpcPrimaryWebViewClient(
@@ -61,7 +59,7 @@ export class ElectronService implements OnDestroy {
     }
 
     primaryLoginWebViewClient(
-        {webView}: { webView: Electron.WebviewTag },
+        {webView}: {webView: Electron.WebviewTag},
         options?: LimitedCallOptions,
     ): ReturnType<typeof __ELECTRON_EXPOSURE__.buildIpcPrimaryLoginWebViewClient> {
         return __ELECTRON_EXPOSURE__.buildIpcPrimaryLoginWebViewClient(
@@ -71,7 +69,7 @@ export class ElectronService implements OnDestroy {
     }
 
     calendarWebViewClient(
-        {webView}: { webView: Electron.WebviewTag },
+        {webView}: {webView: Electron.WebviewTag},
         options?: LimitedCallOptions,
     ): ReturnType<typeof __ELECTRON_EXPOSURE__.buildIpcCalendarWebViewClient> {
         return __ELECTRON_EXPOSURE__.buildIpcCalendarWebViewClient(

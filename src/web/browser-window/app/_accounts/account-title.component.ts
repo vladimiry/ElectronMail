@@ -12,11 +12,11 @@ import {State} from "src/web/browser-window/app/store/reducers/accounts";
 import {WebAccount} from "src/web/browser-window/app/model";
 
 interface ComponentState {
-    account: WebAccount
-    selected: boolean
-    stored: boolean
-    title: string
-    contextMenuOpen: boolean
+    account: WebAccount;
+    selected: boolean;
+    stored: boolean;
+    title: string;
+    contextMenuOpen: boolean;
 }
 
 const initialComponentState: DeepReadonly<Omit<ComponentState, "account">> = {
@@ -63,8 +63,7 @@ export class AccountTitleComponent implements OnInit, OnDestroy {
             // TODO live attachments export: print export progress in a separate app notifications section, not inside the account button
             title: (
                 (account.accountConfig.title || account.accountConfig.login)
-                +
-                account.dbExportProgress
+                + account.dbExportProgress
                     .map((item, idx, {length}) => ` (export${length > 1 ? ` ${idx + 1}` : ""}: ${item.progress}%)`)
                     .join("")
             ),
@@ -90,7 +89,7 @@ export class AccountTitleComponent implements OnInit, OnDestroy {
             ((): Unsubscribable => {
                 const target = document.body;
                 const args = ["click", ({target: eventTarget}: MouseEvent) => {
-                    const traversing: { el: Node | null, depthLimit: number } = {el: eventTarget as Node, depthLimit: 10};
+                    const traversing: {el: Node | null; depthLimit: number} = {el: eventTarget as Node, depthLimit: 10};
                     const {nativeElement} = this.elementRef; // eslint-disable-line @typescript-eslint/no-unsafe-assignment
                     while (traversing.el && traversing.depthLimit) {
                         if (traversing.el === nativeElement) return;

@@ -22,8 +22,7 @@ export class DbMetadataResetRequestComponent implements OnInit, OnDestroy {
     private readonly subscription = new Subscription();
 
     constructor(
-        @Inject(PACKAGE_GITHUB_PROJECT_URL_TOKEN)
-        public readonly PACKAGE_GITHUB_PROJECT_URL: string,
+        @Inject(PACKAGE_GITHUB_PROJECT_URL_TOKEN) public readonly PACKAGE_GITHUB_PROJECT_URL: string,
         private readonly store: Store<State>,
         private readonly elementRef: ElementRef,
     ) {
@@ -44,7 +43,7 @@ export class DbMetadataResetRequestComponent implements OnInit, OnDestroy {
         });
     }
 
-    submit(options?: { reset?: boolean }): void {
+    submit(options?: {reset?: boolean}): void {
         this.store.dispatch(
             OPTIONS_ACTIONS.ResetDbMetadata({reset: options?.reset}),
         );

@@ -11,29 +11,31 @@ import {ofType} from "src/shared/util/ngrx-of-type";
 @Injectable()
 export class NotificationEffects {
     $notification = createEffect(
-        () => merge(
-            this.actions$.pipe(ofType(NOTIFICATION_ACTIONS.Error)),
-            this.actions$.pipe(ofType(NOTIFICATION_ACTIONS.ErrorSkipLogging)),
-            this.actions$.pipe(ofType(NOTIFICATION_ACTIONS.Message)),
-            this.actions$.pipe(ofType(NOTIFICATION_ACTIONS.Update)),
-        ).pipe(
-            map(() => {
-                return NAVIGATION_ACTIONS.Go({path: [{outlets: {[NOTIFICATIONS_OUTLET]: NOTIFICATIONS_PATH}}]});
-            }),
-        ),
+        () =>
+            merge(
+                this.actions$.pipe(ofType(NOTIFICATION_ACTIONS.Error)),
+                this.actions$.pipe(ofType(NOTIFICATION_ACTIONS.ErrorSkipLogging)),
+                this.actions$.pipe(ofType(NOTIFICATION_ACTIONS.Message)),
+                this.actions$.pipe(ofType(NOTIFICATION_ACTIONS.Update)),
+            ).pipe(
+                map(() => {
+                    return NAVIGATION_ACTIONS.Go({path: [{outlets: {[NOTIFICATIONS_OUTLET]: NOTIFICATIONS_PATH}}]});
+                }),
+            ),
     );
 
     updateOverlayIcon$ = createEffect(
-        () => this.actions$.pipe(
-            ofType(NOTIFICATION_ACTIONS.UpdateOverlayIcon),
-            concatMap(({payload}) => {
-                return from(
-                    this.electronService.ipcMainClient()("updateOverlayIcon")(payload),
-                ).pipe(
-                    mergeMap(() => EMPTY),
-                );
-            }),
-        ),
+        () =>
+            this.actions$.pipe(
+                ofType(NOTIFICATION_ACTIONS.UpdateOverlayIcon),
+                concatMap(({payload}) => {
+                    return from(
+                        this.electronService.ipcMainClient()("updateOverlayIcon")(payload),
+                    ).pipe(
+                        mergeMap(() => EMPTY),
+                    );
+                }),
+            ),
         {dispatch: false},
     );
 

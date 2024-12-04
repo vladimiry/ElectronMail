@@ -15,7 +15,7 @@ export const DB_VIEW_ACTIONS = propsRecordToActionsRecord(
         }>(),
         SetFolders: props<{
             webAccountPk: WebAccountPk;
-            folders: { system: View.Folder[]; custom: View.Folder[] };
+            folders: {system: View.Folder[]; custom: View.Folder[]};
         }>(),
         SelectFolder: props<{
             webAccountPk: WebAccountPk;

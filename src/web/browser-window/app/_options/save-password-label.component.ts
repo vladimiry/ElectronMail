@@ -37,8 +37,7 @@ export class SavePasswordLabelComponent implements OnInit, OnDestroy {
     private readonly subscription = new Subscription();
 
     constructor(
-        @Inject(PACKAGE_GITHUB_PROJECT_URL_TOKEN)
-        public readonly PACKAGE_GITHUB_PROJECT_URL: string,
+        @Inject(PACKAGE_GITHUB_PROJECT_URL_TOKEN) public readonly PACKAGE_GITHUB_PROJECT_URL: string,
         private readonly store: Store<State>,
         private readonly elementRef: ElementRef,
     ) {

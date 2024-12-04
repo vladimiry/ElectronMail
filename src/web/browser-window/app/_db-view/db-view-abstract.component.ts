@@ -37,11 +37,13 @@ export abstract class DbViewAbstractComponent extends NgChangesObservableCompone
     );
 
     account$ = this.webAccountPk$.pipe(
-        mergeMap(({login}) => this.store.pipe(
-            select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
-            mergeMap((value) => value ? [value] : EMPTY),
-            distinctUntilChanged(),
-        )),
+        mergeMap(({login}) =>
+            this.store.pipe(
+                select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
+                mergeMap((value) => value ? [value] : EMPTY),
+                distinctUntilChanged(),
+            )
+        ),
     );
 
     onlineAndSignedIn$: Observable<boolean> = combineLatest([

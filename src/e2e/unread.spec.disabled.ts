@@ -5,10 +5,7 @@ import {asyncDelay} from "src/shared/util";
 import {initAppWithTestContext} from "./lib/init-app";
 import {LoginFieldContainer} from "src/shared/model/container";
 import {
-    ONE_SECOND_MS,
-    RUNTIME_ENV_E2E_PROTONMAIL_2FA_CODE,
-    RUNTIME_ENV_E2E_PROTONMAIL_LOGIN,
-    RUNTIME_ENV_E2E_PROTONMAIL_PASSWORD,
+    ONE_SECOND_MS, RUNTIME_ENV_E2E_PROTONMAIL_2FA_CODE, RUNTIME_ENV_E2E_PROTONMAIL_LOGIN, RUNTIME_ENV_E2E_PROTONMAIL_PASSWORD,
     RUNTIME_ENV_E2E_PROTONMAIL_UNREAD_MIN,
 } from "src/shared/const";
 import {test} from "./lib/test";

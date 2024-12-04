@@ -56,7 +56,8 @@ export const SETTINGS = (
                         (accumulator, {database}) => accumulator + Number(Boolean(database)),
                         0,
                     );
-                }),
+                },
+            ),
         } as const;
     }
 )();

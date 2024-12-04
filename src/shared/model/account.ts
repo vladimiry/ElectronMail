@@ -48,8 +48,4 @@ export type AccountSessionStoragePatchBundle = Record<
 export type Notifications = NoExtraProps<{
     unread: number;
     loggedIn: boolean;
-    pageType: NoExtraProps<{
-        url?: string;
-        type: "unknown";
-    }>;
 }>;

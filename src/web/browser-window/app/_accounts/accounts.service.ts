@@ -1,4 +1,4 @@
-import {delay, distinctUntilChanged, filter, map, mergeMap, pairwise, switchMap, take, takeUntil, tap} from "rxjs/operators";
+import {delay, distinctUntilChanged, filter, map, mergeMap, switchMap, take, takeUntil, tap} from "rxjs/operators";
 import {EMPTY, merge, Observable, of, race, timer} from "rxjs";
 import {Injectable} from "@angular/core";
 import {isDeepEqual, pick} from "remeda";
@@ -21,7 +21,7 @@ export class AccountsService {
     }
 
     generatePrimaryNotificationsStateResetAction(
-        {login, optionalAccount}: { login: string; optionalAccount?: boolean }
+        {login, optionalAccount}: {login: string; optionalAccount?: boolean},
     ): ReturnType<typeof ACCOUNTS_ACTIONS.Patch> {
         return ACCOUNTS_ACTIONS.Patch({
             login,
@@ -40,9 +40,9 @@ export class AccountsService {
     }
 
     setupLoginDelayTrigger(
-        {login, takeUntil$}: NoExtraProps<Pick<WebAccount["accountConfig"], "login">> & { takeUntil$: Observable<Electron.WebviewTag> },
+        {login, takeUntil$}: NoExtraProps<Pick<WebAccount["accountConfig"], "login">> & {takeUntil$: Observable<Electron.WebviewTag>},
         logger: ReturnType<typeof getWebLogger>,
-    ): Observable<{ trigger: string }> {
+    ): Observable<{trigger: string}> {
         const account$ = this.store.pipe(
             select(AccountsSelectors.ACCOUNTS.pickAccount({login})),
         );
@@ -58,7 +58,7 @@ export class AccountsService {
             // so we re-setup the "delay" logic if related props changed (see above "distinctUntilChanged" check)
             switchMap(({accountConfig}) => {
                 const {loginDelaySecondsRange, loginDelayUntilSelected} = pick(accountConfig, [...props]);
-                const delayTriggers: Array<Observable<{ trigger: string }>> = [];
+                const delayTriggers: Array<Observable<{trigger: string}>> = [];
 
                 logger.info(`login delay configs: ${JSON.stringify({loginDelayUntilSelected, loginDelaySecondsRange})}`);
 
@@ -98,48 +98,40 @@ export class AccountsService {
 
                     delayTriggers.push(
                         fireDeselectAndDelayForOneSec$.pipe(
-                            mergeMap(() => merge(
-                                (() => {
-                                    this.store.dispatch(
-                                        ACCOUNTS_ACTIONS.Patch({login, patch: {loginDelayedUntilSelected: true}}),
-                                    );
-                                    return EMPTY;
-                                })(),
-                                this.store.pipe(
-                                    select(AccountsSelectors.FEATURED.selectedLogin),
-                                    filter((selectedLogin) => selectedLogin === login),
-                                    // delay handles the case if the app has no selected account and "on select" trigger gets disabled
-                                    // if there is no selected account the app will select the account automatically
-                                    // and previously setup "on select" trigger kicks in before it gets reset by new TryToLogin action
-                                    delay(ONE_SECOND_MS * 1.5),
-                                    map(() => ({trigger: "triggered on account selection"})),
-                                ),
-                            )),
+                            mergeMap(() =>
+                                merge(
+                                    (() => {
+                                        this.store.dispatch(
+                                            ACCOUNTS_ACTIONS.Patch({login, patch: {loginDelayedUntilSelected: true}}),
+                                        );
+                                        return EMPTY;
+                                    })(),
+                                    this.store.pipe(
+                                        select(AccountsSelectors.FEATURED.selectedLogin),
+                                        filter((selectedLogin) => selectedLogin === login),
+                                        // delay handles the case if the app has no selected account and "on select" trigger gets disabled
+                                        // if there is no selected account the app will select the account automatically
+                                        // and previously setup "on select" trigger kicks in before it gets reset by new TryToLogin action
+                                        delay(ONE_SECOND_MS * 1.5),
+                                        map(() => ({trigger: "triggered on account selection"})),
+                                    ),
+                                )
+                            ),
                         ),
                     );
                 }
 
-                const delayTriggersDispose$ = race(
-                    account$.pipe(
-                        mergeMap((account) => account ? [account] : []),
-                        map(({notifications: {pageType}}) => pageType.type),
-                        distinctUntilChanged(),
-                        pairwise(),
-                        filter(([/* prev */, curr]) => curr !== "unknown"),
-                        map((value) => `page type changed to ${JSON.stringify(value)}`),
-                    ),
-                    account$.pipe(
-                        map((account) => {
-                            if (!account) {
-                                return `Account has been removed`;
-                            }
-                            if (account.progress.password) {
-                                return `"login" action performing is already in progress`;
-                            }
-                            return void 0;
-                        }),
-                        filter((reason) => typeof reason === "string"),
-                    ),
+                const delayTriggersDispose$ = account$.pipe(
+                    map((account) => {
+                        if (!account) {
+                            return `Account has been removed`;
+                        }
+                        if (account.progress.password) {
+                            return `"login" action performing is already in progress`;
+                        }
+                        return void 0;
+                    }),
+                    filter((reason) => typeof reason === "string"),
                 ).pipe(
                     take(1),
                     tap((reason) => {
@@ -154,17 +146,19 @@ export class AccountsService {
                     : of({trigger: "triggered immediate login (as no delays defined)"});
 
                 return trigger$.pipe(
-                    mergeMap(({trigger}) => this.store.pipe(
-                        select(AccountsSelectors.FEATURED.selectedLogin),
-                        take(1),
-                        map((selectedLogin) => {
-                            if (!selectedLogin) {
-                                // let's select the account if none has been selected
-                                this.store.dispatch(ACCOUNTS_ACTIONS.Select({login}));
-                            }
-                            return {trigger};
-                        }),
-                    )),
+                    mergeMap(({trigger}) =>
+                        this.store.pipe(
+                            select(AccountsSelectors.FEATURED.selectedLogin),
+                            take(1),
+                            map((selectedLogin) => {
+                                if (!selectedLogin) {
+                                    // let's select the account if none has been selected
+                                    this.store.dispatch(ACCOUNTS_ACTIONS.Select({login}));
+                                }
+                                return {trigger};
+                            }),
+                        )
+                    ),
                     tap(({trigger}) => {
                         this.store.dispatch(this.buildLoginDelaysResetAction({login}));
                         logger.info(`login trigger: ${trigger})`);

@@ -15,7 +15,7 @@ export const featureName = "accounts";
 export interface State extends fromRoot.State {
     selectedLogin?: string;
     initialized?: boolean;
-    globalProgress: { indexing?: boolean/*, accountTogglingByEntryUrlChange?: boolean*/ };
+    globalProgress: {indexing?: boolean /*, accountTogglingByEntryUrlChange?: boolean*/};
     // TODO consider using "@ngrx/entity" library instead of dealing with a raw array
     accounts: WebAccount[];
 }
@@ -67,15 +67,11 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
                                 accountIndex: -1,
                                 accountConfig,
                                 progress: {},
-                                notifications: {
-                                    unread: 0,
-                                    loggedIn: false,
-                                    pageType: {url: "", type: "unknown"},
-                                },
+                                notifications: {unread: 0, loggedIn: false},
                                 dbExportProgress: [],
                                 webviewSrcValues: {
                                     calendar: "",
-                                    primary: ""
+                                    primary: "",
                                 },
                             };
 
@@ -87,16 +83,14 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
 
                 if (
                     typeof draftState.selectedLogin === "undefined"
-                    ||
-                    !webAccounts
+                    || !webAccounts
                         .map(({accountConfig: {login}}) => login)
                         .includes(draftState.selectedLogin)
                 ) { // setting new "selected login" value
                     const webAccountToSelect = webAccounts.find((webAccount) => {
                         return (
                             !webAccount.loginDelayedUntilSelected
-                            &&
-                            !webAccount.loginDelayedSeconds
+                            && !webAccount.loginDelayedSeconds
                         );
                     });
                     draftState.selectedLogin = webAccountToSelect && webAccountToSelect.accountConfig.login;

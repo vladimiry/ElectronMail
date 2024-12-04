@@ -4,11 +4,7 @@ import {pick} from "remeda";
 
 import {BaseConfig, Config} from "src/shared/model/options";
 import {
-    DEFAULT_API_CALL_TIMEOUT,
-    DEFAULT_MESSAGES_STORE_PORTION_SIZE,
-    ONE_MINUTE_MS,
-    ONE_SECOND_MS,
-    ZOOM_FACTOR_DEFAULT,
+    DEFAULT_API_CALL_TIMEOUT, DEFAULT_MESSAGES_STORE_PORTION_SIZE, ONE_MINUTE_MS, ONE_SECOND_MS, ZOOM_FACTOR_DEFAULT,
 } from "src/shared/const";
 
 export function initialConfig(): Config {
@@ -64,7 +60,6 @@ export function initialConfig(): Config {
             dbCompression2: {type: "zstd", level: 3, mailsPortionSize: {min: 700, max: 900}},
             dbMergeBytesFileSizeThreshold: 1024 * 1024 * 5, // 5 MB
             // base
-            calendarNotification: false,
             checkUpdateAndNotify: false,
             customTrayIconColor: "",
             customTrayIconSize: false,

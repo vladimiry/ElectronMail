@@ -38,7 +38,6 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     dbCompression2: {type: "gzip" | "zstd"; level: number; mailsPortionSize: {min: number; max: number}};
     dbMergeBytesFileSizeThreshold: number;
     // base
-    calendarNotification: boolean;
     checkUpdateAndNotify: boolean;
     customTrayIconColor: string;
     customTrayIconSize: boolean;
@@ -65,7 +64,6 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
 
 export type BaseConfig = Pick<
     Config,
-    | "calendarNotification"
     | "checkUpdateAndNotify"
     | "customTrayIconColor"
     | "customTrayIconSize"

@@ -73,7 +73,6 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
         themeSource: new FormControl(),
         unreadNotifications: new FormControl(),
         zoomFactor: new FormControl(),
-        calendarNotification: new FormControl(),
     };
 
     readonly form = new FormGroup(this.controls);

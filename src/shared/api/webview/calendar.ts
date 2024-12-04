@@ -2,7 +2,6 @@ import {ActionType, createWebViewApiService, ScanService} from "electron-rpc-api
 
 import {buildLoggerBundle} from "src/electron-preload/lib/util";
 import {IPC_WEBVIEW_API_CHANNELS_MAP} from "./const";
-import {Notifications} from "src/shared/model/account";
 
 const channel = IPC_WEBVIEW_API_CHANNELS_MAP.calendar.communication;
 
@@ -20,6 +19,4 @@ export type ProtonCalendarApiScan = ScanService<typeof PROTON_CALENDAR_IPC_WEBVI
 
 export type ProtonCalendarApi = ProtonCalendarApiScan["ApiClient"];
 
-export type ProtonCalendarNotificationOutput = Partial<Pick<Notifications, "loggedInCalendar">> & {
-    calendarNotification?: ConstructorParameters<typeof window.Notification>;
-};
+export type ProtonCalendarNotificationOutput = unknown;

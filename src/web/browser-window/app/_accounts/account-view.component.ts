@@ -1,11 +1,8 @@
 import type {Action} from "@ngrx/store";
-import {
-    BehaviorSubject, combineLatest, EMPTY, firstValueFrom, lastValueFrom, merge, of, race, Subject, Subscription, throwError, timer,
-} from "rxjs";
+import {BehaviorSubject, combineLatest, EMPTY, lastValueFrom, merge, of, Subject, Subscription, timer} from "rxjs";
 import {Component, ComponentRef, ElementRef, HostBinding, Input, NgZone, ViewChild, ViewContainerRef} from "@angular/core";
 import {
-    concatMap, debounceTime, distinctUntilChanged, filter, first, map, mergeMap, pairwise, startWith, switchMap, take, takeUntil, tap,
-    withLatestFrom,
+    debounceTime, distinctUntilChanged, filter, first, map, mergeMap, pairwise, startWith, switchMap, take, takeUntil, tap, withLatestFrom,
 } from "rxjs/operators";
 import type {Observable} from "rxjs";
 import type {OnDestroy, OnInit} from "@angular/core";
@@ -70,10 +67,6 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
     );
     private readonly loggedIn$ = this.account$.pipe(
         map(({notifications: {loggedIn}}) => loggedIn),
-        distinctUntilChanged(),
-    );
-    private readonly loggedInCalendar$ = this.account$.pipe(
-        map(({notifications: {loggedInCalendar}}) => loggedInCalendar),
         distinctUntilChanged(),
     );
     private readonly ipcMainClient;
@@ -402,66 +395,6 @@ export class AccountViewComponent extends NgChangesObservableComponent implement
                 }),
             );
         }
-
-        this.subscription.add(
-            combineLatest([
-                this.loggedIn$,
-                this.loggedInCalendar$,
-                this.store.pipe(
-                    select(OptionsSelectors.CONFIG.calendarNotification),
-                ),
-            ]).pipe(
-                withLatestFrom(
-                    this.account$,
-                    this.store.pipe(
-                        select(OptionsSelectors.CONFIG.timeouts),
-                    ),
-                ),
-            ).subscribe(async (
-                [[loggedIn, loggedInCalendar, calendarNotification], {accountConfig}, {webViewApiPing: calendarGetsSignedInStateTimeoutMs}]
-            ) => {
-                if (!calendarNotification) {
-                    // TODO make sure that calendar-related component/webview actually disappears
-                    this.webViewsState.calendar.src$.next("");
-                    return;
-                }
-                if (!loggedIn || loggedInCalendar) {
-                    return;
-                }
-                const project = "proton-calendar";
-                const [clientSession, sessionStoragePatch] = await Promise.all([
-                    resolveLiveProtonClientSession(),
-                    (async () => {
-                        return primaryWebViewClient("resolvedLiveSessionStoragePatch")(await this.resolveAccountIndex());
-                    })(),
-                ]);
-                // TODO if "src$" has been set before, consider only refreshing the client session without full page reload
-                await Promise.all([
-                    // the app shares the same backend between mail and calendar, so applying here only the client session
-                    await this.core.applyProtonClientSessionAndNavigate(
-                        accountConfig,
-                        project,
-                        this.webViewsState.calendar.domReady$,
-                        (src: string) => this.webViewsState.calendar.src$.next(src),
-                        this.logger,
-                        this.ngOnDestroy$.asObservable(),
-                        {clientSession, sessionStoragePatch},
-                    ),
-                    firstValueFrom(
-                        race(
-                            this.loggedInCalendar$.pipe(
-                                filter(Boolean),
-                            ),
-                            timer(calendarGetsSignedInStateTimeoutMs).pipe(
-                                concatMap(() => throwError(
-                                    new Error(`The Calendar has not got the signed-in stage in ${calendarGetsSignedInStateTimeoutMs}ms`)),
-                                ),
-                            ),
-                        ),
-                    ),
-                ]);
-            }),
-        );
     }
 
     ngOnDestroy(): void {

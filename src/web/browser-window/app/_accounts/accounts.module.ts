@@ -2,7 +2,6 @@ import {BsDropdownModule} from "ngx-bootstrap/dropdown";
 import {EffectsModule} from "@ngrx/effects";
 import {NgModule, NO_ERRORS_SCHEMA} from "@angular/core";
 
-import {AccountsCalendarNsEffects} from "./effects/accounts-calendar-ns.effects";
 import {AccountsComponent} from "./accounts.component";
 import {AccountsDbSyncingEffects} from "./effects/accounts-db-syncing.effects";
 import {AccountsEffects} from "./effects/accounts.effects";
@@ -23,7 +22,6 @@ import {SharedModule} from "src/web/browser-window/app/_shared/shared.module";
         SharedModule,
         AccountsRoutingModule,
         EffectsModule.forFeature([
-            AccountsCalendarNsEffects,
             AccountsDbSyncingEffects,
             AccountsEffects,
             AccountsPrimaryNsEffects,

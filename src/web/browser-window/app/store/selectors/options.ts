@@ -27,7 +27,6 @@ export const CONFIG = {
     unreadBgColor: createSelector(FEATURED.config, (config) => config.customUnreadBgColor || DEFAULT_UNREAD_BADGE_BG_COLOR),
     unreadTextColor: createSelector(FEATURED.config, (config) => config.customUnreadTextColor || DEFAULT_UNREAD_BADGE_BG_TEXT),
     hideControls: createSelector(FEATURED.config, (config) => config.hideControls),
-    calendarNotification: createSelector(FEATURED.config, (config) => config.calendarNotification),
     timeouts: createSelector(FEATURED.config, (config) => config.timeouts),
     localDbMailsListViewMode: createSelector(FEATURED.config, (config) => config.localDbMailsListViewMode),
     doNotRenderNotificationBadgeValue: createSelector(FEATURED.config, (config) => config.doNotRenderNotificationBadgeValue),

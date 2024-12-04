@@ -54,5 +54,5 @@ export type ProtonPrimaryApiScan = ScanService<typeof PROTON_PRIMARY_IPC_WEBVIEW
 export type ProtonPrimaryApi = ProtonPrimaryApiScan["ApiClient"];
 
 export type ProtonPrimaryNotificationOutput =
-    & Partial<Omit<Notifications, "loggedInCalendar">>
+    & Notifications
     & Partial<{batchEntityUpdatesCounter: number}>;

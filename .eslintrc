@@ -105,6 +105,7 @@
                     }
                 ],
                 "@typescript-eslint/member-ordering": "off",
+                "@angular-eslint/prefer-standalone": "off",
                 "@angular-eslint/directive-selector": [
                     "error",
                     {

@@ -5,7 +5,7 @@ import {select, Store} from "@ngrx/store";
 
 import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
 import {Instance, State} from "src/web/browser-window/app/store/reducers/db-view";
-import {NgChangesObservableComponent} from "src/web/browser-window/app/components/ng-changes-observable.component";
+import {NgChangesObservableDirective} from "src/web/browser-window/app/components/ng-changes-observable.directive";
 import {resolveInstance$} from "./util";
 import {WebAccountPk} from "src/web/browser-window/app/model";
 
@@ -28,7 +28,7 @@ export class AnimationFrameTickScheduler {
 @Directive()
 // so weird not single-purpose directive huh, https://github.com/angular/angular/issues/30080#issuecomment-539194668
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
-export abstract class DbViewAbstractComponent extends NgChangesObservableComponent {
+export abstract class DbViewAbstractComponent extends NgChangesObservableDirective {
     @Input({required: true})
     webAccountPk!: WebAccountPk;
 

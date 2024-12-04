@@ -1,18 +1,7 @@
 import type {Action} from "@ngrx/store";
 import {Actions, createEffect} from "@ngrx/effects";
 import {
-    catchError,
-    concatMap,
-    debounce,
-    debounceTime,
-    delay,
-    filter,
-    finalize,
-    mergeMap,
-    switchMap,
-    takeUntil,
-    tap,
-    withLatestFrom,
+    catchError, concatMap, debounce, debounceTime, delay, filter, finalize, mergeMap, switchMap, takeUntil, tap, withLatestFrom,
 } from "rxjs/operators";
 import {concat, EMPTY, from, fromEvent, merge, of, race, Subject, timer} from "rxjs";
 import {Injectable} from "@angular/core";
@@ -75,7 +64,7 @@ export class AccountsDbSyncingEffects {
                                         concat(
                                             of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {selectingMailOnline: true}})),
                                             from(
-                                                this.api.primaryWebViewClient({webView}, {finishPromise})(
+                                                this.api.primaryMailWebViewClient({webView}, {finishPromise})(
                                                     "selectMailOnline",
                                                     {timeoutMs: ONE_SECOND_MS * 5},
                                                 )({...selectMailOnlineInput, accountIndex}),
@@ -103,7 +92,7 @@ export class AccountsDbSyncingEffects {
                                         concat(
                                             of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {makingMailRead: true}})),
                                             from(
-                                                this.api.primaryWebViewClient({webView})(
+                                                this.api.primaryMailWebViewClient({webView})(
                                                     "makeMailRead",
                                                     {timeoutMs: 0},
                                                 )({messageIds, accountIndex}),
@@ -132,7 +121,7 @@ export class AccountsDbSyncingEffects {
                                         concat(
                                             of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {settingMailFolder: true}})),
                                             from(
-                                                this.api.primaryWebViewClient({webView})(
+                                                this.api.primaryMailWebViewClient({webView})(
                                                     "setMailFolder",
                                                     {timeoutMs: 0},
                                                 )({folderId, messageIds, accountIndex}),
@@ -161,7 +150,7 @@ export class AccountsDbSyncingEffects {
                                         concat(
                                             of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {deletingMessages: true}})),
                                             from(
-                                                this.api.primaryWebViewClient({webView})(
+                                                this.api.primaryMailWebViewClient({webView})(
                                                     "deleteMessages",
                                                     {timeoutMs: 0},
                                                 )({messageIds, accountIndex}),
@@ -190,7 +179,11 @@ export class AccountsDbSyncingEffects {
                                         concat(
                                             of(ACCOUNTS_ACTIONS.PatchProgress({login, patch: {fetchingSingleMail: true}})),
                                             from(
-                                                this.api.primaryWebViewClient({webView})("fetchSingleMail")({...pk, mailPk, accountIndex}),
+                                                this.api.primaryMailWebViewClient({webView})("fetchSingleMail")({
+                                                    ...pk,
+                                                    mailPk,
+                                                    accountIndex,
+                                                }),
                                             ).pipe(
                                                 mergeMap(() =>
                                                     of<Action>(
@@ -213,7 +206,7 @@ export class AccountsDbSyncingEffects {
                             const buildDbPatchMethodName = "buildDbPatch";
 
                             return of(
-                                this.api.primaryWebViewClient({webView}, {finishPromise})(buildDbPatchMethodName, {timeoutMs: 0}),
+                                this.api.primaryMailWebViewClient({webView}, {finishPromise})(buildDbPatchMethodName, {timeoutMs: 0}),
                             ).pipe(
                                 withLatestFrom(
                                     this.store.pipe(select(OptionsSelectors.FEATURED.config)),
@@ -308,7 +301,7 @@ export class AccountsDbSyncingEffects {
 
                             {
                                 const methodName = "throwErrorOnRateLimitedMethodCall";
-                                this.api.primaryWebViewClient({webView})(
+                                this.api.primaryMailWebViewClient({webView})(
                                     methodName,
                                     {timeoutMs: ONE_SECOND_MS},
                                 )({accountIndex}).catch((error) => {

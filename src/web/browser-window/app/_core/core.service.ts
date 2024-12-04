@@ -29,24 +29,30 @@ export class CoreService {
         private readonly actions$: Actions,
     ) {}
 
-    parseEntryUrl(
-        {entryUrl}: WebAccount["accountConfig"],
-        repoType: keyof typeof PROVIDER_REPO_MAP,
-    ): Readonly<{entryPageUrl: string; sessionStorage: {apiEndpointOrigin: string}}> {
+    parseSessionStorageOrigin(
+        {entryUrl}: Pick<WebAccount["accountConfig"], "entryUrl">,
+    ): Readonly<{apiEndpointOrigin: string}> {
         if (!entryUrl || !entryUrl.startsWith("https://")) {
             throw new Error(`Invalid "${JSON.stringify({entryUrl})}" value`);
         }
+        return {apiEndpointOrigin: parseUrlOriginWithNullishCheck(entryUrl)};
+    }
+
+    parseEntryUrl(
+        {entryUrl}: Pick<WebAccount["accountConfig"], "entryUrl">,
+        repoType: keyof typeof PROVIDER_REPO_MAP,
+    ): Readonly<{entryPageUrl: string; sessionStorage: {apiEndpointOrigin: string}}> {
+        const sessionStorage = this.parseSessionStorageOrigin({entryUrl});
         const {basePath} = PROVIDER_REPO_MAP[repoType];
         return {
             entryPageUrl: `${LOCAL_WEBCLIENT_ORIGIN}${basePath ? "/" + basePath : ""}`,
-            sessionStorage: {apiEndpointOrigin: parseUrlOriginWithNullishCheck(entryUrl)},
+            sessionStorage,
         };
     }
 
     // TODO move method to "_accounts/*.service"
     async applyProtonClientSessionAndNavigate(
-        accountConfig: WebAccount["accountConfig"],
-        repoType: keyof typeof PROVIDER_REPO_MAP,
+        {entryUrl, entryProtonApp}: Pick<WebAccount["accountConfig"], "entryUrl" | "entryProtonApp">,
         webViewDomReady$: import("rxjs").Observable<Electron.WebviewTag>,
         setWebViewSrc: (src: string) => void,
         logger_: import("src/shared/model/common").Logger,
@@ -61,7 +67,7 @@ export class CoreService {
         const loaderId = new UUID(4).format();
         const loaderIdParam = "loader-id";
         const loaderSrcOrigin = parseUrlOriginWithNullishCheck(
-            this.parseEntryUrl(accountConfig, repoType).entryPageUrl,
+            this.parseEntryUrl({entryUrl}, entryProtonApp).entryPageUrl,
         );
         const loaderSrc = `${loaderSrcOrigin}/${WEB_CLIENTS_BLANK_HTML_FILE_NAME}?${loaderIdParam}=${loaderId}`;
         const {webViewBlankDOMLoaded: loaderIdTimeoutMs} = await lastValueFrom(
@@ -120,11 +126,13 @@ export class CoreService {
                         })();`;
                     };
                     const finalCodePart = `(() => {
-                        window.location.assign("./${PROVIDER_REPO_MAP[repoType].basePath}")
+                        window.sessionStorage.setItem("electron_mail:proton_app_name", "${entryProtonApp}");
+                        window.location.assign("./${PROVIDER_REPO_MAP[entryProtonApp].basePath}")
                     })();`;
-                    const prependCodeParts: string[] = [];
+                    const sesionFillingCodeParts: string[] = [];
+
                     if (savedSessionData?.clientSession) {
-                        prependCodeParts.push(...[
+                        sesionFillingCodeParts.push(...[
                             generateSessionStoragePatchingCode(savedSessionData?.clientSession.sessionStorage),
                             `(() => {
                                 const windowNameStr = ${JSON.stringify(JSON.stringify(savedSessionData?.clientSession.windowName))};
@@ -132,13 +140,14 @@ export class CoreService {
                             })();`,
                         ]);
                     }
+
                     if (savedSessionData?.sessionStoragePatch) {
-                        prependCodeParts.push(generateSessionStoragePatchingCode(savedSessionData?.sessionStoragePatch));
+                        sesionFillingCodeParts.push(generateSessionStoragePatchingCode(savedSessionData?.sessionStoragePatch));
                     }
 
-                    if (prependCodeParts.length) {
+                    if (sesionFillingCodeParts.length) {
                         return `
-                            ${prependCodeParts.join("\n\r")};
+                            ${sesionFillingCodeParts.join("\n\r")};
                             ${finalCodePart}
                         `;
                     }

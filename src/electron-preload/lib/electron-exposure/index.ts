@@ -1,17 +1,17 @@
 import {ElectronWindow} from "src/shared/model/electron";
 import {IPC_MAIN_API} from "src/shared/api/main-process";
 import {LOGGER} from "src/electron-preload/lib/electron-exposure/logger";
-import {PROTON_CALENDAR_IPC_WEBVIEW_API} from "src/shared/api/webview/calendar";
-import {PROTON_PRIMARY_IPC_WEBVIEW_API} from "src/shared/api/webview/primary";
+import {PROTON_PRIMARY_COMMON_IPC_WEBVIEW_API} from "src/shared/api/webview/primary-common";
 import {PROTON_PRIMARY_LOGIN_IPC_WEBVIEW_API} from "src/shared/api/webview/primary-login";
+import {PROTON_PRIMARY_MAIL_IPC_WEBVIEW_API} from "src/shared/api/webview/primary-mail";
 import {registerDocumentClickEventListener} from "src/electron-preload/lib/events-handling";
 
 export const ELECTRON_WINDOW: Readonly<ElectronWindow> = Object.freeze({
     __ELECTRON_EXPOSURE__: Object.freeze({
         buildIpcMainClient: IPC_MAIN_API.client.bind(IPC_MAIN_API),
-        buildIpcPrimaryWebViewClient: PROTON_PRIMARY_IPC_WEBVIEW_API.client.bind(PROTON_PRIMARY_IPC_WEBVIEW_API),
+        buildIpcPrimaryCommonWebViewClient: PROTON_PRIMARY_COMMON_IPC_WEBVIEW_API.client.bind(PROTON_PRIMARY_COMMON_IPC_WEBVIEW_API),
         buildIpcPrimaryLoginWebViewClient: PROTON_PRIMARY_LOGIN_IPC_WEBVIEW_API.client.bind(PROTON_PRIMARY_LOGIN_IPC_WEBVIEW_API),
-        buildIpcCalendarWebViewClient: PROTON_CALENDAR_IPC_WEBVIEW_API.client.bind(PROTON_CALENDAR_IPC_WEBVIEW_API),
+        buildIpcPrimaryMailWebViewClient: PROTON_PRIMARY_MAIL_IPC_WEBVIEW_API.client.bind(PROTON_PRIMARY_MAIL_IPC_WEBVIEW_API),
         registerDocumentClickEventListener,
         Logger: LOGGER,
     }),

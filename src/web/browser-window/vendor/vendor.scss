@@ -16,6 +16,7 @@
 form .required label::after {
     content: "*";
     color: theme-color("danger");
+    padding-left: $app-spacer-1;
 }
 
 .dropdown-toggle {

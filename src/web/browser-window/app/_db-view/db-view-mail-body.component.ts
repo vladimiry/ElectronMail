@@ -65,8 +65,6 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
 
     private shouldUseDarkColors?: boolean;
 
-    private readonly subscription = new Subscription();
-
     private readonly bodyIframeEventHandler = (event: Event): void => {
         this.zone.run(() => {
             this.iframeBodyEventSubject$.next(event);
@@ -95,10 +93,10 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
                 this.elementRef.nativeElement,
                 this.logger,
             );
-            this.subscription.add({unsubscribe: this.elementRefClickSubscription.unsubscribe});
+            this.addSubscription({unsubscribe: this.elementRefClickSubscription.unsubscribe});
         }
 
-        this.subscription.add(
+        this.addSubscription(
             this.store
                 .pipe(select(OptionsSelectors.FEATURED.shouldUseDarkColors))
                 .subscribe((shouldUseDarkColors) => {
@@ -108,7 +106,7 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
     }
 
     ngAfterViewInit(): void {
-        this.subscription.add(
+        this.addSubscription(
             this.iframeBodyEventSubject$.pipe(
                 filter(({type}) => type === "click"),
                 map((event) => event as MouseEvent),
@@ -119,13 +117,13 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
             }),
         );
 
-        this.subscription.add(
+        this.addSubscription(
             this.selectedMailToggled$.subscribe((selectedMail) => {
                 this.renderBody(selectedMail.conversationMail);
             }),
         );
 
-        this.subscription.add(
+        this.addSubscription(
             combineLatest([
                 this.conversationCollapsed$.pipe(
                     distinctUntilChanged(),
@@ -199,7 +197,6 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
 
     ngOnDestroy(): void {
         super.ngOnDestroy();
-        this.subscription.unsubscribe();
         this.iframeBodyEventSubject$.complete();
         this.releaseBodyIframe();
     }

@@ -6,7 +6,7 @@ import {lzutf8Util} from "src/shared/util/entity";
 import {MessagesResponse} from "src/electron-preload/webview/lib/rest-model";
 import {MIME_TYPES} from "src/shared/model/database";
 import {ONE_SECOND_MS, PACKAGE_VERSION} from "src/shared/const";
-import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
+import {ProviderApi} from "src/electron-preload/webview/primary/mail/provider-api/model";
 import * as RestModel from "src/electron-preload/webview/lib/rest-model";
 
 const logger = buildLoggerBundle(__filename);

@@ -263,10 +263,9 @@ async function executeBuildFlow(
                     : undefined;
 
                 {
-                    const webpackIndexEntryItems = repoType === "proton-mail" || repoType === "proton-calendar"
+                    const webpackIndexEntryItems = "webpackIndexEntryItems" in PROVIDER_REPO_MAP[repoType].protonPack
                         ? PROVIDER_REPO_MAP[repoType].protonPack.webpackIndexEntryItems
-                        : undefined;
-
+                        : null;
                     // https://github.com/ProtonMail/proton-pack/tree/2e44d5fd9d2df39787202fc08a90757ea47fe480#how-to-configure
                     writeFile(
                         path.join(appDir, "./proton.config.js"),

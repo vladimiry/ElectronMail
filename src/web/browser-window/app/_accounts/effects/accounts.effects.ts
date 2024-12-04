@@ -7,7 +7,7 @@ import {select, Store} from "@ngrx/store";
 
 import {ACCOUNTS_ACTIONS, OPTIONS_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {AccountsSelectors} from "src/web/browser-window/app/store/selectors";
-import {AccountViewComponent} from "src/web/browser-window/app/_accounts/account-view.component";
+import {AccountViewComponent} from "src/web/browser-window/app/_accounts/account.component";
 import {ofType} from "src/shared/util/ngrx-of-type";
 import {ONE_SECOND_MS} from "src/shared/const";
 import {State} from "src/web/browser-window/app/store/reducers/accounts";

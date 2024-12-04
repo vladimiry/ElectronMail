@@ -10,8 +10,7 @@ import {AccountsPrimaryNsEffects} from "./effects/accounts-primary-ns.effects";
 import {AccountsRoutingModule} from "./accounts.routing.module";
 import {AccountsService} from "./accounts.service";
 import {AccountTitleComponent} from "./account-title.component";
-import {AccountViewCalendarComponent} from "./account-view-calendar.component";
-import {AccountViewComponent} from "./account-view.component";
+import {AccountViewComponent} from "./account.component";
 import {AccountViewPrimaryComponent} from "./account-view-primary.component";
 import {DbViewModuleResolve} from "./db-view-module-resolve.service";
 import {SharedModule} from "src/web/browser-window/app/_shared/shared.module";
@@ -28,11 +27,10 @@ import {SharedModule} from "src/web/browser-window/app/_shared/shared.module";
         ]),
     ],
     declarations: [
-        AccountViewComponent,
-        AccountsComponent,
         AccountTitleComponent,
-        AccountViewCalendarComponent,
+        AccountViewComponent,
         AccountViewPrimaryComponent,
+        AccountsComponent,
     ],
     providers: [
         AccountsGuard,

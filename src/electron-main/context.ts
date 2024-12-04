@@ -106,9 +106,6 @@ function initLocations(storeFs: StoreModel.StoreFs, paths?: ContextInitOptionsPa
             primary: formatFileUrl(
                 appRelativePath(`./electron-preload/webview/primary/index${BUILD_ENVIRONMENT === "e2e" ? "-e2e" : ""}.js`),
             ),
-            calendar: formatFileUrl(
-                appRelativePath(`./electron-preload/webview/calendar/index${BUILD_ENVIRONMENT === "e2e" ? "-e2e" : ""}.js`),
-            ),
         },
         // TODO electron: get rid of "baseURLForDataURL" workaround, see https://github.com/electron/electron/issues/20700
         vendorsAppCssLinkHrefs: ["shared-vendor-dark", "shared-vendor-light"].map((value) =>

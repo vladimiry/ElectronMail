@@ -77,11 +77,11 @@
     <div *ngIf="loginsDistinctAccountCountChange$ | async; let logins" class="account-block">
         <div *ngIf="logins.length; then accountsDefined else accountsUndefined"></div>
         <ng-template #accountsDefined>
-            <electron-mail-account-view
+            <electron-mail-account
                 *ngFor="let login of logins"
                 [login]="login"
                 [ngClass]="{'d-none': login != (selectedLogin$ | async)}"
-            ></electron-mail-account-view>
+            ></electron-mail-account>
         </ng-template>
         <ng-template #accountsUndefined>
             <div class="d-flex justify-content-center align-items-center p-3 no-accounts-block">

@@ -1,4 +1,15 @@
-export const PROVIDER_APP_NAMES = ["proton-mail", "proton-account", "proton-calendar", "proton-drive", "proton-vpn-settings"] as const;
+import {
+    WEBVIEW_PRIMARY_INTERNALS_KEYS,
+    WEBVIEW_PRIMARY_INTERNALS_APP_TYPES,
+} from "src/electron-preload/webview/primary/common/provider-api/const";
+
+export const PROVIDER_APP_NAMES = [
+    WEBVIEW_PRIMARY_INTERNALS_APP_TYPES[0],
+    "proton-account",
+    WEBVIEW_PRIMARY_INTERNALS_APP_TYPES[1],
+    WEBVIEW_PRIMARY_INTERNALS_APP_TYPES[2],
+    "proton-vpn-settings",
+] as const;
 
 export const PROVIDER_REPO_STANDARD_SETUP_WEBPACK_INDEX_ENTRY_ITEMS = [
     // immediate
@@ -26,7 +37,7 @@ export const PROVIDER_REPO_MAP = {
                 "../../packages/shared/lib/api/labels.ts",
                 "../../packages/shared/lib/api/messages.ts",
                 "../../packages/shared/lib/mail/mailSettings.ts",
-                "./src/app/containers/PageContainer.tsx",
+                WEBVIEW_PRIMARY_INTERNALS_KEYS["proton-mail"].key,
                 "./src/app/helpers/mailboxUrl.ts",
                 "./src/app/helpers/message/messageDecrypt.ts",
                 // lazy/dynamic
@@ -55,7 +66,7 @@ export const PROVIDER_REPO_MAP = {
         protonPack: {
             webpackIndexEntryItems: [
                 // immediate
-                "./src/app/./containers/calendar/MainContainer",
+                WEBVIEW_PRIMARY_INTERNALS_KEYS["proton-calendar"].key,
                 ...PROVIDER_REPO_STANDARD_SETUP_WEBPACK_INDEX_ENTRY_ITEMS,
             ],
         },
@@ -65,7 +76,13 @@ export const PROVIDER_REPO_MAP = {
         apiSubdomain: "drive-api",
         repoRelativeDistDir: "./dist",
         tag: "proton-drive@5.2.0+5c841022",
-        protonPack: {},
+        protonPack: {
+            webpackIndexEntryItems: [
+                // immediate
+                WEBVIEW_PRIMARY_INTERNALS_KEYS["proton-drive"].key,
+                ...PROVIDER_REPO_STANDARD_SETUP_WEBPACK_INDEX_ENTRY_ITEMS,
+            ],
+        },
     },
     [PROVIDER_APP_NAMES[4]]: {
         basePath: "account/vpn",

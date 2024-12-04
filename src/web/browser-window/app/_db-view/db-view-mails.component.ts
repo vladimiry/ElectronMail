@@ -1,5 +1,5 @@
 import {ChangeDetectionStrategy, Component, ElementRef, Input} from "@angular/core";
-import {combineLatest, fromEvent, Observable, Subscription} from "rxjs";
+import {combineLatest, fromEvent, Observable} from "rxjs";
 import {distinctUntilChanged, first, map, mergeMap, tap, withLatestFrom} from "rxjs/operators";
 import type {OnDestroy, OnInit} from "@angular/core";
 import {select} from "@ngrx/store";
@@ -196,8 +196,6 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
         }
     )();
 
-    private subscription = new Subscription();
-
     private _uid?: string;
 
     @Input({required: false})
@@ -220,7 +218,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
 
     ngOnInit(): void {
         // TODO use @HostListener approach as soon as https://github.com/angular/angular/issues/19878 gets resolved
-        this.subscription.add(
+        this.addSubscription(
             fromEvent<MouseEvent>(this.elementRef.nativeElement, "click").subscribe((event) => {
                 const target = event.target as Element;
                 const mailElement = DbViewMailsComponent.resolveMailComponentElement(target);
@@ -237,7 +235,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
             }),
         );
 
-        this.subscription.add(
+        this.addSubscription(
             fromEvent<KeyboardEvent>(document, "keydown")
                 .pipe(
                     withLatestFrom(
@@ -323,7 +321,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
                 }),
         );
 
-        this.subscription.add(
+        this.addSubscription(
             this.instance$.pipe(
                 map((value) => value.selectedMail),
                 distinctUntilChanged(),
@@ -343,7 +341,7 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
             }),
         );
 
-        this.subscription.add(
+        this.addSubscription(
             this.mailsBundleKey$.subscribe(() => {
                 this.store.dispatch(DB_VIEW_ACTIONS.Paging({
                     webAccountPk: this.webAccountPk,
@@ -415,7 +413,6 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
 
     ngOnDestroy(): void {
         super.ngOnDestroy();
-        this.subscription.unsubscribe();
     }
 
     private resolveSinglePlainItemsAndPkNotification() { // eslint-disable-line @typescript-eslint/explicit-function-return-type

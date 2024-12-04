@@ -27,6 +27,7 @@ export type AccountConfig = NoExtraProps<{
     customNotificationCode?: string;
     notificationShellExec?: boolean;
     notificationShellExecCode?: string;
+    entryProtonApp: "proton-mail" | "proton-calendar" | "proton-drive";
 }>;
 
 export type AccountPersistentSession = NoExtraProps<{

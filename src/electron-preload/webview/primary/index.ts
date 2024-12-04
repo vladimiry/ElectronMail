@@ -1,60 +1,74 @@
-import {IPC_WEBVIEW_API_CHANNELS_MAP} from "src/shared/api/webview/const";
+import {disableBrowserNotificationFeature} from "src/electron-preload/webview/lib/util";
+import {WEBVIEW_PRIMARY_INTERNALS_APP_TYPES} from "./common/provider-api/const";
 import {PROTON_APP_MAIL_LOGIN_PATHNAME} from "src/shared/const/proton-url";
 
 const main = async (): Promise<void> => {
     const [
-        {ipcRenderer},
         {WEBVIEW_LOGGERS},
         {curryFunctionMembers},
-        {testProtonMailAppPage},
+        {testProtonAppPage},
         {documentCookiesForCustomScheme, attachUnhandledErrorHandler},
         {getLocationHref},
-        {initProviderApi},
-        {registerApi},
+        {initProviderApi: initCommonProviderApi},
+        {initProviderApi: initMailProviderApi},
+        {registerApi: registerCommonApi},
+        {registerApi: registerMailApi},
         {registerApi: registerLoginApi},
         {setupProtonOpenNewTabEventHandler},
         {setupProviderIntegration},
     ] = await Promise.all([
-        import("electron"),
         import("src/electron-preload/webview/lib/const"),
         import("src/shared/util"),
         import("src/shared/util/proton-webclient"),
         import("src/electron-preload/webview/lib/util"),
         import("src/shared/util/web"),
-        import("./provider-api"),
-        import("./api"),
-        import("./api/login"),
+        import("./common/provider-api"),
+        import("./mail/provider-api"),
+        import("./common/api"),
+        import("./mail/api"),
+        import("./mail/api/login"),
         import("src/electron-preload/webview/lib/custom-event"),
-        import("./provider-api/setup"),
+        import("./mail/provider-api/setup"),
     ]);
     const logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, __filename);
 
     attachUnhandledErrorHandler(logger);
-
-    const protonAppPageStatus = testProtonMailAppPage({url: getLocationHref(), logger});
-
     documentCookiesForCustomScheme.enable(logger);
     setupProtonOpenNewTabEventHandler(logger);
-    setupProviderIntegration(protonAppPageStatus);
 
-    if (protonAppPageStatus.packagedWebClientUrl?.pathname === PROTON_APP_MAIL_LOGIN_PATHNAME) {
+    // TODO use "mapToObj"
+    const protonAppPageStatuses = {
+        ["proton-mail"]: testProtonAppPage("proton-mail", {url: getLocationHref(), logger}),
+        ["proton-calendar"]: testProtonAppPage("proton-calendar", {url: getLocationHref(), logger}),
+        ["proton-drive"]: testProtonAppPage("proton-drive", {url: getLocationHref(), logger}),
+    } as const;
+
+    if (!Object.values(protonAppPageStatuses).some((v) => v.blankHtmlPage)) {
+        setupProviderIntegration();
+    }
+
+    if (Object.values(protonAppPageStatuses).some((v) => v.packagedWebClientUrl?.pathname === PROTON_APP_MAIL_LOGIN_PATHNAME)) {
         registerLoginApi();
         return;
     }
 
-    if (!protonAppPageStatus.shouldInitProviderApi) {
-        return;
+    // TODO "provider APIs" timeouts
+    if (protonAppPageStatuses["proton-mail"].targetedProtonProject) {
+        disableBrowserNotificationFeature(logger);
+        const [commonProviderApi, mainProviderApi] = await Promise.all([
+            initCommonProviderApi("proton-mail"),
+            initMailProviderApi(),
+        ]);
+        registerCommonApi(commonProviderApi, logger);
+        registerMailApi(commonProviderApi, mainProviderApi);
+    } else {
+        for (const type of WEBVIEW_PRIMARY_INTERNALS_APP_TYPES) {
+            if (!protonAppPageStatuses[type].targetedProtonProject) continue;
+            const commonProviderApi = await initCommonProviderApi(type);
+            registerCommonApi(commonProviderApi, logger);
+            break;
+        }
     }
-
-    try {
-        // TODO set up timeout
-        registerApi(await initProviderApi());
-    } catch (error) {
-        logger.error(error);
-        throw error;
-    }
-
-    ipcRenderer.sendToHost(IPC_WEBVIEW_API_CHANNELS_MAP.primary.registered);
 };
 
 (async () => {

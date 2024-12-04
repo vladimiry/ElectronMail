@@ -2,7 +2,7 @@ import {ChangeDetectionStrategy, Component, Inject, Injector, Input} from "@angu
 import {distinctUntilChanged, filter, mergeMap, switchMap, take, takeUntil, withLatestFrom} from "rxjs/operators";
 import {from, timer} from "rxjs";
 
-import {AbstractMonacoEditorComponent} from "src/web/browser-window/app/components/abstract-monaco-editor.component";
+import {AbstractMonacoEditorDirective} from "src/web/browser-window/app/components/abstract-monaco-editor.directive";
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {formatCodeLines} from "src/web/browser-window/app/store/util";
 import {ONE_SECOND_MS} from "src/shared/const";
@@ -28,7 +28,7 @@ import {SPACER_PX} from "src/web/constants";
     `],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AccountEditNotificationEditorComponent extends AbstractMonacoEditorComponent {
+export class AccountEditNotificationEditorComponent extends AbstractMonacoEditorDirective {
     @Input({required: true})
     editable = false;
 

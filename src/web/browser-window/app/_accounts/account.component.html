@@ -1,0 +1,7 @@
+<electron-mail-account-view-primary
+    (event)="onEventChild($event)"
+    [login]="login"
+    [webViewSrc]="(webViewsState.primary.src$ | async) || ''"
+></electron-mail-account-view-primary>
+
+<ng-container #tplDbViewComponentContainerRef></ng-container>

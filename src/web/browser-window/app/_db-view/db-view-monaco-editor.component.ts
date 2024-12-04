@@ -3,7 +3,7 @@ import {debounceTime, distinctUntilChanged, filter, map, pairwise, takeUntil, wi
 import {fromEvent, merge, Subscription} from "rxjs";
 import type {OnInit} from "@angular/core";
 
-import {AbstractMonacoEditorComponent} from "src/web/browser-window/app/components/abstract-monaco-editor.component";
+import {AbstractMonacoEditorDirective} from "src/web/browser-window/app/components/abstract-monaco-editor.directive";
 import {formatCodeLines} from "src/web/browser-window/app/store/util";
 import {ONE_SECOND_MS} from "src/shared/const";
 import {resolveInstance$} from "./util";
@@ -60,7 +60,7 @@ const codeSnippets = ([
     styleUrls: ["./db-view-monaco-editor.component.scss"],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DbViewMonacoEditorComponent extends AbstractMonacoEditorComponent implements OnInit {
+export class DbViewMonacoEditorComponent extends AbstractMonacoEditorDirective implements OnInit {
     readonly instance$ = resolveInstance$(this.store, this.ngChangesObservable("login"));
 
     readonly folders$ = this.instance$.pipe(

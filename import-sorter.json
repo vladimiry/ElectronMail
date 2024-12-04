@@ -5,7 +5,7 @@
   "quoteMark": "double",
   "groupRules": [
     {},
-    "^(scripts/|src/|webpack-configs/|webpack-configs/|\\./|\\.\\./)"
+    "^(scripts/|src/|webpack-configs/|\\./|\\.\\./)"
   ],
   "wrappingStyle": {
     "maxBindingNamesPerLine": 0,

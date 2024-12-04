@@ -12,7 +12,7 @@ import {FsDbAccount} from "src/shared/model/database";
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
 import {LOCAL_WEBCLIENT_ORIGIN, ONE_MINUTE_MS, ONE_SECOND_MS} from "src/shared/const";
 import {Logger} from "src/shared/model/common";
-import {ProviderApi} from "src/electron-preload/webview/primary/provider-api/model";
+import {ProviderApi} from "src/electron-preload/webview/primary/mail/provider-api/model";
 import {RATE_LIMITED_METHOD_CALL_MESSAGE} from "src/electron-preload/webview/lib/const";
 import {resolveIpcMainApi} from "src/electron-preload/lib/util";
 import * as RestModel from "src/electron-preload/webview/lib/rest-model";

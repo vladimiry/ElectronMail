@@ -7,16 +7,9 @@ import {CONF, ENV, GLOBAL_STATE} from "src/e2e/lib/const";
 import {ONE_SECOND_MS} from "src/shared/const";
 import {PROTON_API_ENTRY_URLS} from "src/shared/const/proton-url";
 import {TestContext} from "./model";
+import {WEBVIEW_PRIMARY_INTERNALS_APP_TYPES} from "src/electron-preload/webview/primary/common/provider-api/const";
 
 const {expect} = playwrightTest;
-
-const resolveEntryUrlIndexByValue = (entryUrl: string): number => {
-    const index = PROTON_API_ENTRY_URLS.findIndex((url) => url === entryUrl);
-    if (index === -1) {
-        throw new Error(`Failed to resolve entry url index by "${entryUrl}" value`);
-    }
-    return index;
-};
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const buildWorkflow = (testContext: TestContext) => {
@@ -178,7 +171,9 @@ export const buildWorkflow = (testContext: TestContext) => {
             }
         },
 
-        async addAccount(account: {login?: string; password?: string; twoFactorCode?: string; entryUrlValue?: string}): Promise<void> {
+        async addAccount(
+            account: {login?: string; password?: string; twoFactorCode?: string; entryUrlValue?: string; entryProtonApp?: string},
+        ): Promise<void> {
             const login = account.login
                 ? account.login
                 : `${ENV.loginPrefix}-${GLOBAL_STATE.loginPrefixCount++}`;
@@ -189,17 +184,25 @@ export const buildWorkflow = (testContext: TestContext) => {
             await testContext.firstWindowPage.click("#goToAccountsSettingsLink");
 
             {
+                const valueIndex = account.entryProtonApp
+                    ? WEBVIEW_PRIMARY_INTERNALS_APP_TYPES.findIndex((value) => value === account.entryProtonApp)
+                    : 0;
+                const el = await testContext.firstWindowPage.waitForSelector("#entryProtonAppField .ng-select-container", {
+                    state: "visible",
+                });
+                await el.dispatchEvent("mousedown");
+                await testContext.firstWindowPage.click(`[entry-proton-app-option-index="${valueIndex}"]`);
+            }
+
+            {
+                const valueIndex = account.entryUrlValue
+                    ? PROTON_API_ENTRY_URLS.findIndex((value) => value === account.entryUrlValue)
+                    : 0;
                 const el = await testContext.firstWindowPage.waitForSelector("#accountEditFormEntryUrlField .ng-select-container", {
                     state: "visible",
                 });
                 await el.dispatchEvent("mousedown");
-            }
-
-            {
-                const entryUrlIndex = account.entryUrlValue
-                    ? resolveEntryUrlIndexByValue(account.entryUrlValue)
-                    : 0;
-                await testContext.firstWindowPage.click(`[entry-url-option-index="${entryUrlIndex}"]`);
+                await testContext.firstWindowPage.click(`[entry-url-option-index="${valueIndex}"]`);
             }
 
             await testContext.firstWindowPage.fill("[formControlName=login]", login);

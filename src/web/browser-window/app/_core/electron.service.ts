@@ -48,11 +48,11 @@ export class ElectronService implements OnDestroy {
         );
     }
 
-    primaryWebViewClient(
+    primaryCommonWebViewClient(
         {webView}: {webView: Electron.WebviewTag},
         options?: LimitedCallOptions,
-    ): ReturnType<typeof __ELECTRON_EXPOSURE__.buildIpcPrimaryWebViewClient> {
-        return __ELECTRON_EXPOSURE__.buildIpcPrimaryWebViewClient(
+    ): ReturnType<typeof __ELECTRON_EXPOSURE__.buildIpcPrimaryCommonWebViewClient> {
+        return __ELECTRON_EXPOSURE__.buildIpcPrimaryCommonWebViewClient(
             webView,
             {options: this.buildApiCallOptions(options)},
         );
@@ -68,11 +68,11 @@ export class ElectronService implements OnDestroy {
         );
     }
 
-    calendarWebViewClient(
+    primaryMailWebViewClient(
         {webView}: {webView: Electron.WebviewTag},
         options?: LimitedCallOptions,
-    ): ReturnType<typeof __ELECTRON_EXPOSURE__.buildIpcCalendarWebViewClient> {
-        return __ELECTRON_EXPOSURE__.buildIpcCalendarWebViewClient(
+    ): ReturnType<typeof __ELECTRON_EXPOSURE__.buildIpcPrimaryMailWebViewClient> {
+        return __ELECTRON_EXPOSURE__.buildIpcPrimaryMailWebViewClient(
             webView,
             {options: this.buildApiCallOptions(options)},
         );

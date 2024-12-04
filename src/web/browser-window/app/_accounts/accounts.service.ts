@@ -20,7 +20,17 @@ export class AccountsService {
     ) {
     }
 
-    generatePrimaryNotificationsStateResetAction(
+    generateCommonNotificationsStateResetAction(
+        {login, optionalAccount}: {login: string; optionalAccount?: boolean},
+    ): ReturnType<typeof ACCOUNTS_ACTIONS.Patch> {
+        return ACCOUNTS_ACTIONS.Patch({
+            login,
+            patch: {notifications: {loggedIn: false}},
+            optionalAccount,
+        });
+    }
+
+    generateMailNotificationsStateResetAction(
         {login, optionalAccount}: {login: string; optionalAccount?: boolean},
     ): ReturnType<typeof ACCOUNTS_ACTIONS.Patch> {
         return ACCOUNTS_ACTIONS.Patch({

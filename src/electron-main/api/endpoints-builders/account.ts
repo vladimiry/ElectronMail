@@ -55,6 +55,7 @@ export async function buildEndpoints(
                 proxy,
                 loginDelayUntilSelected,
                 loginDelaySecondsRange,
+                entryProtonApp,
             },
         ) {
             assertEntryUrl(entryUrl);
@@ -80,6 +81,7 @@ export async function buildEndpoints(
                 proxy,
                 loginDelayUntilSelected,
                 loginDelaySecondsRange,
+                entryProtonApp,
             };
             const result = await ctx.settingsStoreQueue.q(async () => {
                 const settings = await ctx.settingsStore.readExisting();
@@ -114,6 +116,7 @@ export async function buildEndpoints(
                 proxy,
                 loginDelayUntilSelected,
                 loginDelaySecondsRange,
+                entryProtonApp,
             },
         ) {
             assertEntryUrl(entryUrl);
@@ -151,6 +154,7 @@ export async function buildEndpoints(
                 account.proxy = proxy;
                 account.loginDelayUntilSelected = loginDelayUntilSelected;
                 account.loginDelaySecondsRange = loginDelaySecondsRange;
+                account.entryProtonApp = entryProtonApp;
 
                 if (credentials) {
                     const {credentials: existingCredentials} = account;

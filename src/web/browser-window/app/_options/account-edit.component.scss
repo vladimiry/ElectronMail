@@ -22,34 +22,4 @@
     .custom-notification-hint {
         color: map_get($app-account-title-btn-colors, "selected-text");
     }
-
-    #accountEditFormEntryUrlField {
-        .badge {
-            $local-color: theme-color("primary");
-            $online-color: theme-color("danger");
-
-            display: inline-block;
-            background-color: transparent;
-            color: $online-color;
-            border: 1px solid $online-color;
-            min-width: 3.8em;
-            vertical-align: middle;
-            font-weight: bold;
-
-            &::after {
-                display: inline-block;
-                content: "live / online";
-                font-weight: normal;
-            }
-
-            &.badge-local {
-                color: $local-color;
-                border: 1px solid $local-color;
-
-                &::after {
-                    content: "packaged in the app";
-                }
-            }
-        }
-    }
 }

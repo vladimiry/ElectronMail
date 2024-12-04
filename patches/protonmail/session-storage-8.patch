@@ -121,13 +121,21 @@ index f24616faf9..6c05699766 100644
 +/* </electron-mail-mark> */
 
 diff --git a/packages/shared/lib/authentication/createAuthenticationStore.ts b/packages/shared/lib/authentication/createAuthenticationStore.ts
-index b5cbba6cf7..21c710ab33 100644
+index aab52552ad..149992dfa7 100644
 --- a/packages/shared/lib/authentication/createAuthenticationStore.ts
 +++ b/packages/shared/lib/authentication/createAuthenticationStore.ts
-@@ -48,8 +48,8 @@ const defaultAuthData = {
+@@ -6,6 +6,7 @@ import { stripLeadingAndTrailingSlash } from '../helpers/string';
+ import { appMode } from '../webpack.constants';
+ import { getBasename, getLocalIDFromPathname, stripLocalBasenameFromPathname } from './pathnameHelper';
+ import { getPersistedSession } from './persistedSessionStorage';
++import { APPS_CONFIGURATION } from '@proton/shared/lib/constants';
+
+ const MAILBOX_PASSWORD_KEY = 'proton:mailbox_pwd';
+ const UID_KEY = 'proton:oauth:UID';
+@@ -51,8 +52,8 @@ const defaultAuthData = {
      basename: undefined,
  };
- 
+
 -const getInitialState = (mode: 'sso' | 'standalone', oldUID?: string, oldLocalID?: number): AuthData => {
 -    if (mode === 'standalone') {
 +const getInitialState = (mode: 'sso' | 'standalone' | 'bundle', oldUID?: string, oldLocalID?: number): AuthData => {
@@ -135,7 +143,22 @@ index b5cbba6cf7..21c710ab33 100644
          return {
              UID: oldUID,
              localID: undefined,
-@@ -215,7 +215,7 @@ const createAuthenticationStore = ({ mode = appMode, initialAuth, store: { set,
+@@ -175,6 +176,14 @@ const createAuthenticationStore = ({ mode = appMode, initialAuth, store: { set,
+             basename = undefined;
+         }
+
++        {
++            const protonApp = window.sessionStorage.getItem("electron_mail:proton_app_name");
++            if (protonApp && protonApp in APPS_CONFIGURATION) {
++                const {publicPath} = APPS_CONFIGURATION[protonApp as keyof typeof APPS_CONFIGURATION];
++                return publicPath || "/";
++            }
++        }
++
+         return getPath(basename, window.location.href, path);
+     };
+
+@@ -218,7 +227,7 @@ const createAuthenticationStore = ({ mode = appMode, initialAuth, store: { set,
              return basename;
          },
          get ready(): boolean {

@@ -42,5 +42,6 @@ export type AccountConfigCreateUpdatePatch = NoExtraProps<
         | "customUserAgent"
         | "proxy"
         | "title"
+        | "entryProtonApp"
     >
 >;

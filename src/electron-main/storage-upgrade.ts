@@ -360,6 +360,9 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
             }
         }
     },
+    "5.2.4": (config) => {
+        delete (config as {calendarNotification?: unknown}).calendarNotification;
+    },
     // last updater
     "100.0.0": (config) => {
         // ensuring default base props are set
@@ -512,6 +515,11 @@ export const upgradeSettings: upgradeSettingsType = ((): upgradeSettingsType => 
                     if ([PROTON_API_ENTRY_PROTONMAIL_COM_VALUE, PROTON_API_ENTRY_PROTONMAIL_CH_VALUE].includes(account.entryUrl)) {
                         account.entryUrl = PROTON_API_ENTRY_PRIMARY_VALUE;
                     }
+                }
+            },
+            "5.2.4": (settings) => {
+                for (const account of settings.accounts) {
+                    if (!account.entryProtonApp) account.entryProtonApp = "proton-mail";
                 }
             },
             // last updater

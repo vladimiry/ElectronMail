@@ -31,46 +31,56 @@
                 </label>
             </div>
         </div>
-        <div class="form-group required">
-            <ng-template #entryUrlItemTemplate let-index="index" let-item="item">
-                {{ item.title }}
-                <div class="badge badge-secondary badge-local">
-                    web client:
-                </div>
-            </ng-template>
-            <ng-template #entryUrlItemTemplate let-index="index" let-item="item">
-                {{ item.title }}
-                <div class="badge badge-secondary badge-local">
-                    web client:
-                </div>
-            </ng-template>
-            <div class="clearfix">
-                <label class="d-block pull-left">API entry point</label>
-                <div class="pull-right">
-                    <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/29">#29</a>,
-                    <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/79">#79</a>,
-                    <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/80">#80</a>,
-                    <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/164">#164</a>
-                </div>
-            </div>
-            <ng-select
-                [clearable]="false" [searchable]="false" [items]="entryUrlItems" bindLabel="title" bindValue="value"
-                formControlName="entryUrl" id="accountEditFormEntryUrlField"
-            >
+
+        <div class="row">
+            <ng-template #ngSelectEntryItemTpm let-index="index" let-item="item">{{ item.title }}</ng-template>
+            <div class="col-md-6 required form-group">
+                <label class="d-block mb-2">Entry Proton App</label>
+                <ng-select
+                    [clearable]="false"
+                    [items]="entryProtonApps"
+                    [searchable]="false"
+                    bindLabel="title"
+                    bindValue="value"
+                    formControlName="entryProtonApp"
+                    id="entryProtonAppField"
+                >
                 <ng-template let-index="index" let-item="item" ng-label-tmp>
-                    <ng-container
-                        [ngTemplateOutletContext]="{item: item, index: index}" [ngTemplateOutlet]="entryUrlItemTemplate"
-                    ></ng-container>
+                    <ng-container [ngTemplateOutletContext]="{item: item, index: index}" [ngTemplateOutlet]="ngSelectEntryItemTpm"></ng-container>
                 </ng-template>
                 <ng-template let-index="index" let-item="item" ng-option-tmp>
-                    <div [attr.entry-url-option-index]="index">
-                        <ng-container
-                            [ngTemplateOutletContext]="{item: item, index: index}" [ngTemplateOutlet]="entryUrlItemTemplate"
-                        ></ng-container>
+                    <div [attr.entry-proton-app-option-index]="index">
+                        <ng-container [ngTemplateOutletContext]="{item: item, index: index}" [ngTemplateOutlet]="ngSelectEntryItemTpm"></ng-container>
                     </div>
                 </ng-template>
             </ng-select>
+            </div>
+            <div class="col-md-6 required form-group">
+                <div class="d-flex justify-content-between">
+                    <label class="d-block mb-2">Proton API</label>
+                    <div class="mb-2">
+                        <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/29">#29</a>,
+                        <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/79">#79</a>,
+                        <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/80">#80</a>,
+                        <a href="{{ PACKAGE_GITHUB_PROJECT_URL }}/issues/164">#164</a>
+                    </div>
+                </div>
+                <ng-select
+                    [clearable]="false" [searchable]="false" [items]="entryUrlItems" bindLabel="title" bindValue="value"
+                    formControlName="entryUrl" id="accountEditFormEntryUrlField"
+                >
+                    <ng-template let-index="index" let-item="item" ng-label-tmp>
+                        <ng-container [ngTemplateOutletContext]="{item: item, index: index}" [ngTemplateOutlet]="ngSelectEntryItemTpm"></ng-container>
+                    </ng-template>
+                    <ng-template let-index="index" let-item="item" ng-option-tmp>
+                        <div [attr.entry-url-option-index]="index">
+                            <ng-container [ngTemplateOutletContext]="{item: item, index: index}" [ngTemplateOutlet]="ngSelectEntryItemTpm"></ng-container>
+                        </div>
+                    </ng-template>
+                </ng-select>
+            </div>
         </div>
+
         <div *ngIf="!account" class="form-group required">
             <label>Login</label>
             <input
@@ -105,7 +115,7 @@
                         style="margin-left: 3px"
                         container="body"
                         placement="bottom"
-                        [popover]="'If specified will be displayed in the app UI instead of login value. The alias value also gets displayed in the desktop notification message.'"
+                        [popover]="'If specified, it will be displayed in the app UI instead of login value. The alias value also gets displayed in the desktop notification message.'"
                         triggers="mouseenter:mouseleave"
                     ></i>
                 </label>

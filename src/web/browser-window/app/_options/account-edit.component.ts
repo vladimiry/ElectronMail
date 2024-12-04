@@ -50,6 +50,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
             | "enableExternalContentProxy"
             | "loginDelayUntilSelected"
             | "loginDelaySecondsRange"
+            | "entryProtonApp"
         >
         | keyof Pick<Required<Required<AccountConfig>["proxy"]>, "proxyRules" | "proxyBypassRules">
         | keyof AccountConfig["credentials"],
@@ -122,6 +123,10 @@ export class AccountEditComponent implements OnInit, OnDestroy {
                 return null;
             },
         ),
+        entryProtonApp: new FormControl(
+            null,
+            Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
+        ),
     };
     form = new FormGroup(this.controls);
     account?: AccountConfig;
@@ -131,6 +136,12 @@ export class AccountEditComponent implements OnInit, OnDestroy {
     notificationEditorCode = "";
     customNotificationCodeEditable$: Observable<boolean>;
     notificationShellExecCodeEditable$: Observable<boolean>;
+
+    readonly entryProtonApps = [
+        {value: "proton-mail", title: "Mail"},
+        {value: "proton-calendar", title: "Calendar"},
+        {value: "proton-drive", title: "Drive"},
+    ] as const;
 
     private readonly logger = getWebLogger(__filename, nameof(AccountEditComponent));
     private readonly subscription = new Subscription();
@@ -239,6 +250,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
                         "blockNonEntryUrlBasedRequests",
                         "externalContentProxyUrlPattern",
                         "enableExternalContentProxy",
+                        "entryProtonApp",
                     ] as const
                 ) {
                     controls[prop].patchValue(account[prop]);
@@ -329,6 +341,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
                 }
                 return validated;
             })(),
+            entryProtonApp: controls.entryProtonApp.value,
         };
         /* eslint-enable @typescript-eslint/no-unsafe-assignment */
 

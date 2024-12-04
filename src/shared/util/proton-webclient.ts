@@ -10,47 +10,46 @@ import {resolveProtonAppTypeFromUrlHref} from "src/shared/util/proton-url";
 export const getWebViewPartitionName = ({login, entryUrl}: DeepReadonly<Pick<AccountConfig, "login" | "entryUrl">>): string =>
     `partition/webview/${login}/${entryUrl}`;
 
-const testProtonAppPage = (
-    targetProjectType: keyof typeof PROVIDER_REPO_MAP,
+type testProtonAppPageResult<T extends keyof typeof PROVIDER_REPO_MAP, P extends boolean = boolean> = P extends true ? {
+        targetedProtonProject: P;
+        blankHtmlPage: false;
+        packagedWebClientUrl: ReturnType<typeof parsePackagedWebClientUrl>;
+        projectType: T;
+    }
+    : {
+        targetedProtonProject: false;
+        blankHtmlPage: boolean;
+        packagedWebClientUrl: ReturnType<typeof parsePackagedWebClientUrl>;
+        projectType?: keyof typeof PROVIDER_REPO_MAP;
+    };
+
+export const testProtonAppPage = <T extends keyof typeof PROVIDER_REPO_MAP>(
+    targetProjectType: T,
     {url, logger}: {url: string; logger: import("src/shared/model/common").Logger},
-): {
-    shouldInitProviderApi: boolean;
-    blankHtmlPage: boolean;
-    packagedWebClientUrl: ReturnType<typeof parsePackagedWebClientUrl>;
-    projectType?: keyof typeof PROVIDER_REPO_MAP;
-} => {
+): testProtonAppPageResult<T> => {
     let projectType: keyof typeof PROVIDER_REPO_MAP | undefined;
     const packagedWebClientUrl = parsePackagedWebClientUrl(url);
     const blankHtmlPage = packagedWebClientUrl?.pathname === `/${WEB_CLIENTS_BLANK_HTML_FILE_NAME}`;
-    const protonMailProject = Boolean(
+    const targetedProtonProject = Boolean(
         !blankHtmlPage
+            && packagedWebClientUrl?.pathname !== PROTON_APP_MAIL_LOGIN_PATHNAME
             && packagedWebClientUrl
             && (projectType = resolvePackagedWebClientApp(packagedWebClientUrl).project) === targetProjectType,
     );
     const result = {
-        shouldInitProviderApi: protonMailProject && packagedWebClientUrl?.pathname !== PROTON_APP_MAIL_LOGIN_PATHNAME,
+        targetedProtonProject,
         blankHtmlPage,
         packagedWebClientUrl,
         projectType,
-    } as const;
+    };
 
     logger.verbose(nameof(testProtonAppPage), JSON.stringify({...result, url, projectType}));
 
-    return result;
-};
+    if (targetedProtonProject && !blankHtmlPage && projectType === targetProjectType) {
+        return result as testProtonAppPageResult<T, true>;
+    }
 
-export const testProtonMailAppPage = (
-    params: {url: string; logger: import("src/shared/model/common").Logger},
-): ReturnType<typeof testProtonAppPage> & {shouldDisableBrowserNotificationFeature: boolean} => {
-    const baseResult = testProtonAppPage("proton-mail", params);
-
-    return {...baseResult, shouldDisableBrowserNotificationFeature: baseResult.shouldInitProviderApi};
-};
-
-export const testProtonCalendarAppPage = (
-    params: {url: string; logger: import("src/shared/model/common").Logger},
-): ReturnType<typeof testProtonAppPage> => {
-    return testProtonAppPage("proton-calendar", params);
+    return result as testProtonAppPageResult<T, false>;
 };
 
 export const parsePackagedWebClientUrl = (url: string): null | Readonly<Pick<URL, "protocol" | "hostname" | "pathname" | "href">> => {

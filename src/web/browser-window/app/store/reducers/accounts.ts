@@ -70,7 +70,6 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
                                 notifications: {unread: 0, loggedIn: false},
                                 dbExportProgress: [],
                                 webviewSrcValues: {
-                                    calendar: "",
                                     primary: "",
                                 },
                             };

@@ -26,18 +26,9 @@ index b4d841c7cd..96d2b5c9b4 100644
  const container = document.querySelector('.app-root');
 
 diff --git a/applications/mail/webpack.config.ts b/applications/mail/webpack.config.ts
-index 72f0b86274..22c087d99c 100644
+index 72f0b86274..68abcf32f9 100644
 --- a/applications/mail/webpack.config.ts
 +++ b/applications/mail/webpack.config.ts
-@@ -5,7 +5,7 @@ import { Configuration, ProvidePlugin } from 'webpack';
- import { InjectManifest } from 'workbox-webpack-plugin';
-
- import getConfig from '@proton/pack/webpack.config';
--import { addDevEntry, getIndexChunks, getSupportedEntry, mergeEntry } from '@proton/pack/webpack/entries';
-+import { addLoginEntry, getIndexChunks } from '@proton/pack/webpack/entries';
-
- const result = (env: any): Configuration => {
-     setAutoFreeze(false);
 @@ -41,14 +41,6 @@ const result = (env: any): Configuration => {
          );
          // }
@@ -53,16 +44,15 @@ index 72f0b86274..22c087d99c 100644
          const htmlPlugin = config.plugins.find((plugin): plugin is HtmlWebpackPlugin => {
              return plugin instanceof HtmlWebpackPlugin;
          });
-@@ -58,7 +50,7 @@ const result = (env: any): Configuration => {
+@@ -57,7 +49,7 @@ const result = (env: any): Configuration => {
+         }
          const htmlIndex = config.plugins.indexOf(htmlPlugin);
 
 -        if (env.appMode === 'standalone') {
--            addDevEntry(config);
-+        if (env.appMode === 'bundle') { // including login page for the "mail" app
-+            addLoginEntry(config);
++        if (env.appMode === 'bundle') { // making "login.html" page included in the root folder
+             addDevEntry(config);
          }
 
-         // We keep the order because the other plugins have an impact
 @@ -75,19 +67,6 @@ const result = (env: any): Configuration => {
                  inject: 'body',
              })
@@ -425,18 +415,18 @@ index 2aaa779d3..487f54ff3 100644
  };
 
 diff --git a/applications/mail/src/app/components/drawer/MailQuickSettings.tsx b/applications/mail/src/app/components/drawer/MailQuickSettings.tsx
-index c7fa985bb1..c7b33cf2f9 100644
+index a0158185f3..c9f107441d 100644
 --- a/applications/mail/src/app/components/drawer/MailQuickSettings.tsx
 +++ b/applications/mail/src/app/components/drawer/MailQuickSettings.tsx
-@@ -40,7 +40,6 @@ import { useGetStartedChecklist } from 'proton-mail/containers/onboardingCheckli
+@@ -51,7 +51,6 @@ import { useGetStartedChecklist } from 'proton-mail/containers/onboardingCheckli
  import useMailModel from 'proton-mail/hooks/useMailModel';
 
  import ClearBrowserDataModal from '../header/ClearBrowserDataModal';
 -import MailDefaultHandlerModal from '../header/MailDefaultHandlerModal';
+ import { useMailOnboardingTelemetry } from '../onboarding/useMailOnboardingTelemetry';
 
  const { OFF, UNSET, SERVER_ONLY } = AI_ASSISTANT_ACCESS;
-
-@@ -378,7 +377,6 @@ const MailQuickSettings = () => {
+@@ -417,7 +416,6 @@ const MailQuickSettings = () => {
                  </Tooltip>
              </QuickSettingsButtonSection>
 

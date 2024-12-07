@@ -25,31 +25,6 @@ index 7ca2da66f3..2a99b061bb 100644
 
  ReactDOM.render(isPublicUrl ? <UrlsApp /> : <App />, document.querySelector('.app-root'));
 
-diff --git a/applications/drive/webpack.config.ts b/applications/drive/webpack.config.ts
-index afccc2a4b1..8682856d3a 100644
---- a/applications/drive/webpack.config.ts
-+++ b/applications/drive/webpack.config.ts
-@@ -2,7 +2,7 @@ import HtmlWebpackPlugin from 'html-webpack-plugin';
- import webpack from 'webpack';
-
- import getConfig from '@proton/pack/webpack.config';
--import { addDevEntry, getIndexChunks } from '@proton/pack/webpack/entries';
-+import { addLoginEntry, getIndexChunks } from '@proton/pack/webpack/entries';
-
- /**
-  * There are some specific references to Buffer in the drive application,
-@@ -47,8 +47,8 @@ const result = (env: any): webpack.Configuration => {
-         })
-     );
-
--    if (env.appMode === 'standalone') {
--        addDevEntry(config);
-+    if (env.appMode === 'standalone') { // keeping original condition, so login page only included for the "mail" app
-+        addLoginEntry(config);
-     }
-
-     return {
-
 diff --git a/applications/drive/src/.htaccess b/applications/drive/src/.htaccess
 index b0b25a5fae..11d4e4af0f 100644
 --- a/applications/drive/src/.htaccess
@@ -69,20 +44,36 @@ index b0b25a5fae..11d4e4af0f 100644
    AddOutputFilter INCLUDES;DEFLATE svg
 
 diff --git a/applications/drive/src/app/store/_downloads/fileSaver/download.ts b/applications/drive/src/app/store/_downloads/fileSaver/download.ts
-index 7483da5f4f..62d7bb7733 100644
+index e3a5bd4889..da2217e2f3 100644
 --- a/applications/drive/src/app/store/_downloads/fileSaver/download.ts
 +++ b/applications/drive/src/app/store/_downloads/fileSaver/download.ts
-@@ -13,8 +13,7 @@ import { TransferMeta } from '../../../components/TransferManager/transfer';
+@@ -1,6 +1,5 @@
+ import { WritableStream } from 'web-streams-polyfill';
+
+-import { isIos, isSafari } from '@proton/shared/lib/helpers/browser';
+ import { stripLeadingAndTrailingSlash } from '@proton/shared/lib/helpers/string';
+ import { PUBLIC_PATH } from '@proton/shared/lib/webpack.constants';
+
+@@ -15,17 +14,7 @@ let workerWakeupInterval: ReturnType<typeof setInterval>;
   * IOS - forces all browsers to use webkit, so same problems as safari in all browsers.
   * For them download is done in-memory using blob response.
   */
--export const isUnsupported = () =>
--    !('serviceWorker' in navigator) || isSafari() || (isEdge() && !isEdgeChromium()) || isIos();
+-export const isUnsupported = () => {
+-    /* TODO: To be removed after test DRVWEB-4375 */
+-    if (typeof window !== 'undefined') {
+-        const isSWForSafariEnabled = 'isSWForSafariEnabled' in window && window.isSWForSafariEnabled;
+-        if (isSWForSafariEnabled) {
+-            return !('serviceWorker' in navigator);
+-        }
+-    }
+-    // Original
+-    return !('serviceWorker' in navigator) || isSafari() || isIos();
+-};
 +export const isUnsupported = () => !('serviceWorker' in navigator);
 
  // createDownloadIframe opens download URL created in service worker to
  // initialize the download in the browser. The response has headers to
-@@ -56,21 +55,28 @@ function serviceWorkerKeepAlive() {
+@@ -73,6 +62,7 @@ function serviceWorkerKeepAlive() {
      }, 10000);
  }
 
@@ -90,27 +81,16 @@ index 7483da5f4f..62d7bb7733 100644
  export async function initDownloadSW() {
      if (isUnsupported()) {
          throw new Error('Saving file via download is unsupported by this browser');
-     }
-
--    await navigator.serviceWorker.register(
--        /* webpackChunkName: "downloadSW" */
--        new URL('./downloadSW', import.meta.url),
--        {
--            scope: `/${stripLeadingAndTrailingSlash(PUBLIC_PATH)}`,
--        }
--    );
-+    try {
-+        await navigator.serviceWorker.register(
-+            /* webpackChunkName: "downloadSW" */
-+            new URL('./downloadSW', import.meta.url),
-+            {
-+                scope: `/${stripLeadingAndTrailingSlash(PUBLIC_PATH)}`,
-+            }
-+        );
-+    } catch (e) {
-+        console.error(`Failed to register service worker.`, e.message);
-+        throw e;
-+    }
+@@ -81,7 +71,7 @@ export async function initDownloadSW() {
+     await navigator.serviceWorker
+         .register(
+             /* webpackChunkName: "downloadSW" */
+-            new URL('./downloadSW', import.meta.url),
++            new URL('./downloadSW', import.meta.url), // electron-mail-mark
+             {
+                 scope: `/${stripLeadingAndTrailingSlash(PUBLIC_PATH)}`,
+             }
+@@ -107,6 +97,7 @@ export async function initDownloadSW() {
 
      serviceWorkerKeepAlive();
  }

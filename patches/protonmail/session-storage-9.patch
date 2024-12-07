@@ -1,0 +1,170 @@
+diff --git a/packages/account/bootstrap/index.ts b/packages/account/bootstrap/index.ts
+index d384249b94..916fcbd953 100644
+--- a/packages/account/bootstrap/index.ts
++++ b/packages/account/bootstrap/index.ts
+@@ -83,6 +83,7 @@ const handleUID = (UID: string | undefined) => {
+     metrics.setAuthHeaders(UID || '');
+ };
+
++/* <electron-mail-mark> tracking use of: createSecureSessionStorage() */
+ export const createAuthentication = (args?: Partial<Parameters<typeof createAuthenticationStore>[0]>) => {
+     return createAuthenticationStore({
+         store: createSecureSessionStorage(),
+@@ -90,6 +91,7 @@ export const createAuthentication = (args?: Partial<Parameters<typeof createAuth
+         ...args,
+     });
+ };
++/* </electron-mail-mark> */
+
+ export const removeLoaderClassName = () => {
+     document.querySelector('.app-root-loader')?.classList.add('hidden');
+
+diff --git a/packages/shared/lib/authentication/createSecureSessionStorage.ts b/packages/shared/lib/authentication/createSecureSessionStorage.ts
+index 2477711b0..a6c9fe1a5 100644
+--- a/packages/shared/lib/authentication/createSecureSessionStorage.ts
++++ b/packages/shared/lib/authentication/createSecureSessionStorage.ts
+@@ -1,29 +1,26 @@
++/* <electron-mail-mark> */
+ import { load, save } from '../helpers/secureSessionStorage';
+ import createStore from '../helpers/store';
+
+ const createSecureSessionStorage = () => {
+     const store = createStore(load());
++    const saveStateDo = () => {
++        save(store.getState());
++    };
++
++    window.addEventListener("electron-mail:packages/shared/lib/authentication/createSecureSessionStorage.ts:unloadLike", saveStateDo);
+
+     if ('onpagehide' in window) {
+         const handlePageShow = () => {
+             // This does not need to do anything. The main purpose is just to reset window.name and sessionStorage to fix the Safari 13.1 described below
+             load();
+         };
+-
+-        const handlePageHide = () => {
+-            // Cannot use !event.persisted because Safari 13.1 does not send that when you are navigating on the same domain
+-            save(store.getState());
+-        };
+-
+         window.addEventListener('pageshow', handlePageShow, true);
+-        window.addEventListener('pagehide', handlePageHide, true);
++        window.addEventListener('pagehide', saveStateDo, true);
+     } else {
+-        const handleUnload = () => {
+-            save(store.getState());
+-        };
+         // This gets narrowed to never because of the onpagehide
+         // @ts-ignore
+-        window.addEventListener('unload', handleUnload, true);
++        window.addEventListener('unload', saveStateDo, true);
+     }
+
+     return store;
+@@ -32,3 +29,4 @@ const createSecureSessionStorage = () => {
+ export type SecureSessionStorage = ReturnType<typeof createSecureSessionStorage>;
+
+ export default createSecureSessionStorage;
++/* </electron-mail-mark> */
+
+diff --git a/packages/shared/lib/helpers/secureSessionStorage.ts b/packages/shared/lib/helpers/secureSessionStorage.ts
+index f24616faf9..6c05699766 100644
+--- a/packages/shared/lib/helpers/secureSessionStorage.ts
++++ b/packages/shared/lib/helpers/secureSessionStorage.ts
+@@ -119,6 +119,7 @@ export const separateParts = (data: any) =>
+         { share1: {}, share2: {} }
+     );
+
++/* <electron-mail-mark> */
+ const SESSION_STORAGE_KEY = 'proton:storage';
+ export const save = (data: any) => {
+     if (!hasSessionStorage()) {
+@@ -133,6 +134,34 @@ export const load = () => {
+     if (!hasSessionStorage()) {
+         return {};
+     }
++    {
++        const MAILBOX_PASSWORD_KEY = "proton:mailbox_pwd";
++        const UID_KEY = "proton:oauth:UID";
++        if ( // using old logic: https://github.com/ProtonMail/WebClients/commit/c0354e1522a5c499aacc0d43960473d8eb658793
++            !window.sessionStorage.getItem(SESSION_STORAGE_KEY)
++            &&
++            (
++                window.sessionStorage.getItem(MAILBOX_PASSWORD_KEY)
++                &&
++                window.sessionStorage.getItem(UID_KEY)
++            )
++        ) {
++            const readSessionStorage = (keys: string[] = []) => {
++                return keys.reduce<{ [key: string]: any }>((acc, key) => {
++                    acc[key] = window.sessionStorage.getItem(key);
++                    window.sessionStorage.removeItem(key);
++                    return acc;
++                }, {});
++            };
++            const load = (keys: string[]) => {
++                const nameStorage = deserialize(window.name);
++                window.name = '';
++                const sessionData = readSessionStorage(keys);
++                return mergeParts(nameStorage, sessionData);
++            };
++            return load([MAILBOX_PASSWORD_KEY, UID_KEY]);
++        }
++    }
+     try {
+         const share1 = deserialize(window.name);
+         const share2 = window.sessionStorage.getItem(SESSION_STORAGE_KEY) || '';
+@@ -148,3 +177,4 @@ export const load = () => {
+         return {};
+     }
+ };
++/* </electron-mail-mark> */
+
+diff --git a/packages/shared/lib/authentication/createAuthenticationStore.ts b/packages/shared/lib/authentication/createAuthenticationStore.ts
+index b7d1404e84..211d35a460 100644
+--- a/packages/shared/lib/authentication/createAuthenticationStore.ts
++++ b/packages/shared/lib/authentication/createAuthenticationStore.ts
+@@ -4,6 +4,7 @@ import type { OfflineKey } from '@proton/shared/lib/authentication/offlineKey';
+ import { appMode } from '../webpack.constants';
+ import { getBasename, getLocalIDFromPathname, getParsedPathWithoutLocalIDBasename } from './pathnameHelper';
+ import { getPersistedSession } from './persistedSessionStorage';
++import { APPS_CONFIGURATION } from '@proton/shared/lib/constants';
+
+ const MAILBOX_PASSWORD_KEY = 'proton:mailbox_pwd';
+ const UID_KEY = 'proton:oauth:UID';
+@@ -32,8 +33,8 @@ const defaultAuthData = {
+     basename: undefined,
+ };
+
+-const getInitialState = (mode: 'sso' | 'standalone', oldUID?: string, oldLocalID?: number): AuthData => {
+-    if (mode === 'standalone') {
++const getInitialState = (mode: 'sso' | 'standalone' | 'bundle', oldUID?: string, oldLocalID?: number): AuthData => {
++    if (mode === 'bundle') {
+         return {
+             UID: oldUID,
+             localID: undefined,
+@@ -152,6 +153,14 @@ const createAuthenticationStore = ({ mode = appMode, initialAuth, store: { set,
+             basename = undefined;
+         }
+
++        {
++            const protonApp = window.sessionStorage.getItem("electron_mail:proton_app_name");
++            if (protonApp && protonApp in APPS_CONFIGURATION) {
++                const {publicPath} = APPS_CONFIGURATION[protonApp as keyof typeof APPS_CONFIGURATION];
++                return publicPath || "/";
++            }
++        }
++
+         return getPath(basename, window.location.href, path);
+     };
+
+@@ -195,7 +204,7 @@ const createAuthenticationStore = ({ mode = appMode, initialAuth, store: { set,
+             return basename;
+         },
+         get ready(): boolean {
+-            return Boolean(initialAuthData.UID && initialUID && getClientKey());
++            return Boolean(initialAuthData.UID && initialUID);
+         },
+     };
+ };
+

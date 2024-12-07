@@ -69,18 +69,16 @@ index 55715b89d..c87879ad4 100755
              }
 
 diff --git a/packages/pack/webpack/entries.ts b/packages/pack/webpack/entries.ts
-index 30db3c5c9f..0a8a32dfba 100644
+index 30db3c5c9f..6c7a92bdc7 100644
 --- a/packages/pack/webpack/entries.ts
 +++ b/packages/pack/webpack/entries.ts
-@@ -27,25 +27,15 @@ export const mergeEntry = (originalEntry: any, entry: any) => {
-     };
+@@ -28,24 +28,14 @@ export const mergeEntry = (originalEntry: any, entry: any) => {
  };
 
--export const addDevEntry = (config: any) => {
+ export const addDevEntry = (config: any) => {
 -    if (config.mode === 'production') {
 -        return;
 -    }
-+export const addLoginEntry = (config: any) => {
      // @ts-ignore
 -    config.entry.dev = [require.resolve('@proton/components/containers/app/StandaloneApp.tsx')];
 +    config.entry.login = [require.resolve('@proton/components/containers/app/StandaloneApp.tsx')];

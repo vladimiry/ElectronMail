@@ -50,7 +50,7 @@
     "build:web:browser-window:dev": "cross-env NODE_ENV=development npm-run-all build:web:browser-window",
     "build:web:search": "pnpm run webpack:shortcut -- --config ./webpack-configs/web/search-in-page-browser-view.ts",
     "build:web:search:dev": "cross-env NODE_ENV=development npm-run-all build:web:search",
-    "build:electron-builder-hooks:celanup": "rimraf ./scripts/electron-builder/hooks/afterPack/index.js",
+    "build:electron-builder-hooks:celanup": "rimraf ./scripts/electron-builder/*.cjs",
     "build:electron-builder-hooks:build": "pnpm run webpack:shortcut -- --config ./webpack-configs/electron-builder-hooks.ts",
     "build:electron-builder-hooks": "npm-run-all build:electron-builder-hooks:celanup build:electron-builder-hooks:build",
     "prepare-native-deps": "npm-run-all clean:prebuilds prepare:remove:prebuild-install scripts/prepare-native-deps",

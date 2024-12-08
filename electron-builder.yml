@@ -26,7 +26,7 @@ asarUnpack:
   - './node_modules/keytar/**/*'
   - './node_modules/msgpackr-extract/**/*'
   - './node_modules/sodium-native/**/*'
-afterPack: './scripts/electron-builder/hooks/afterPack/index.cjs'
+afterPack: './scripts/electron-builder/hook-after-pack.cjs'
 
 mac:
   icon: ./app/assets/icons/mac/icon.icns

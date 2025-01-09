@@ -64,6 +64,8 @@ const resolveResourcePathname: (requestPathname: string) => string | undefined =
 async function resolveFileSystemResourceLocation(directory: string, requestUrl: URL): Promise<string | null> {
     const requestPathname = requestUrl.pathname === PROTON_APP_MAIL_LOGIN_PATHNAME
         ? "login.html"
+        : requestUrl.pathname === "/inbox"
+        ? "/"
         : requestUrl.pathname;
     const resourcePathname = requestPathname !== "/" && !path.extname(requestPathname)
         ? resolveResourcePathname(requestPathname)

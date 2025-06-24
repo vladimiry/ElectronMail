@@ -1,6 +1,6 @@
 import type {Action} from "@ngrx/store";
 import {combineLatest, Observable, of, race} from "rxjs";
-import {Directive, ElementRef, EventEmitter, Injector, Input, Output, Renderer2} from "@angular/core";
+import {Directive, ElementRef, EventEmitter, Input, Output, Renderer2} from "@angular/core";
 import {distinctUntilChanged, filter, map, mergeMap, take} from "rxjs/operators";
 import {DOCUMENT} from "@angular/common";
 import type {OnDestroy} from "@angular/core";
@@ -35,10 +35,11 @@ export abstract class AccountViewAbstractDirective extends AccountLoginAwareDire
     protected readonly core: CoreService;
 
     protected constructor(
-        private readonly viewType: Extract<keyof typeof __METADATA__.electronLocations.preload, "primary">,
-        protected readonly injector: Injector,
+        // eslint-disable-next-line @angular-eslint/prefer-inject
+        protected readonly viewType: Extract<keyof typeof __METADATA__.electronLocations.preload, "primary"> = "primary",
     ) {
-        super(injector);
+        super();
+
         this.log("info", [nameof(AccountViewAbstractDirective), "constructor"]);
 
         this.api = this.injector.get(ElectronService);

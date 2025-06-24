@@ -1,7 +1,7 @@
 import {Actions, createEffect} from "@ngrx/effects";
 import {concatMap, filter, finalize, map, mergeMap, switchMap, takeUntil, tap, throttleTime, withLatestFrom} from "rxjs/operators";
 import {EMPTY, forkJoin, from, merge, of} from "rxjs";
-import {Injectable, NgZone} from "@angular/core";
+import {inject, Injectable, NgZone} from "@angular/core";
 import {omit, pick} from "remeda";
 import {select, Store} from "@ngrx/store";
 import UUID from "pure-uuid";
@@ -20,6 +20,11 @@ const _logger = getWebLogger(__filename);
 
 @Injectable()
 export class DbViewEffects {
+    private api = inject(ElectronService);
+    private store = inject<Store<State>>(Store);
+    private ngZone = inject(NgZone);
+    private readonly actions$ = inject(Actions);
+
     mountInstance$ = createEffect(
         () =>
             this.actions$.pipe(
@@ -214,11 +219,4 @@ export class DbViewEffects {
                 }),
             ),
     );
-
-    constructor(
-        private api: ElectronService,
-        private store: Store<State>,
-        private ngZone: NgZone,
-        private readonly actions$: Actions,
-    ) {}
 }

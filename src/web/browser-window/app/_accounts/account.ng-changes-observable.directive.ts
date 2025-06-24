@@ -1,4 +1,4 @@
-import {Directive, Injector, Input} from "@angular/core";
+import {Directive, Injector, Input, inject} from "@angular/core";
 import {distinctUntilChanged, map, mergeMap, switchMap, take} from "rxjs/operators";
 import {EMPTY, lastValueFrom} from "rxjs";
 import type {Observable} from "rxjs";
@@ -13,6 +13,8 @@ import type {WebAccount} from "src/web/browser-window/app/model";
 // so weird not single-purpose directive huh, https://github.com/angular/angular/issues/30080#issuecomment-539194668
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
 export abstract class AccountLoginAwareDirective extends NgChangesObservableDirective {
+    protected readonly injector = inject(Injector);
+
     @Input({required: true})
     readonly login: string = "";
 
@@ -32,9 +34,7 @@ export abstract class AccountLoginAwareDirective extends NgChangesObservableDire
 
     protected readonly ipcMainClient;
 
-    constructor(
-        protected readonly injector: Injector,
-    ) {
+    constructor() {
         super();
         this.ipcMainClient = this.injector.get(ElectronService).ipcMainClient();
     }

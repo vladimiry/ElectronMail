@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, ElementRef, Input, Renderer2} from "@angular/core";
+import {ChangeDetectionStrategy, Component, ElementRef, inject, Input, Renderer2} from "@angular/core";
 import {Observable, Subscription} from "rxjs";
 import type {OnDestroy, OnInit} from "@angular/core";
 import {select, Store} from "@ngrx/store";
@@ -14,6 +14,10 @@ import {State} from "src/web/browser-window/app/store/reducers/options";
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UnreadBadgeComponent implements OnInit, OnDestroy {
+    private readonly store = inject<Store<State>>(Store);
+    private readonly elementRef = inject(ElementRef);
+    private readonly renderer = inject(Renderer2);
+
     @Input({required: true})
     value!: number;
 
@@ -24,11 +28,7 @@ export class UnreadBadgeComponent implements OnInit, OnDestroy {
 
     private readonly subscription = new Subscription();
 
-    constructor(
-        private readonly store: Store<State>,
-        private readonly elementRef: ElementRef,
-        private readonly renderer: Renderer2,
-    ) {
+    constructor() {
         this.doNotRenderNotificationBadgeValue$ = this.store.pipe(select(OptionsSelectors.CONFIG.doNotRenderNotificationBadgeValue));
     }
 

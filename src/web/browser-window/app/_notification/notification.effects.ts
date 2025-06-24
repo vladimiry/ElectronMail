@@ -1,7 +1,7 @@
 import {Actions, createEffect} from "@ngrx/effects";
 import {concatMap, map, mergeMap} from "rxjs/operators";
 import {EMPTY, from, merge} from "rxjs";
-import {Injectable} from "@angular/core";
+import {inject, Injectable} from "@angular/core";
 
 import {ElectronService} from "src/web/browser-window/app/_core/electron.service";
 import {NAVIGATION_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
@@ -10,6 +10,9 @@ import {ofType} from "src/shared/util/ngrx-of-type";
 
 @Injectable()
 export class NotificationEffects {
+    private electronService = inject(ElectronService);
+    private readonly actions$ = inject(Actions);
+
     $notification = createEffect(
         () =>
             merge(
@@ -38,9 +41,4 @@ export class NotificationEffects {
             ),
         {dispatch: false},
     );
-
-    constructor(
-        private electronService: ElectronService,
-        private readonly actions$: Actions,
-    ) {}
 }

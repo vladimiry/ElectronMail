@@ -1,6 +1,6 @@
 import {delay, distinctUntilChanged, filter, map, mergeMap, switchMap, take, takeUntil, tap} from "rxjs/operators";
 import {EMPTY, merge, Observable, of, race, timer} from "rxjs";
-import {Injectable} from "@angular/core";
+import {inject, Injectable} from "@angular/core";
 import {isDeepEqual, pick} from "remeda";
 import {select, Store} from "@ngrx/store";
 
@@ -15,10 +15,7 @@ import {WebAccount} from "src/web/browser-window/app/model";
 
 @Injectable()
 export class AccountsService {
-    constructor(
-        private readonly store: Store<State>,
-    ) {
-    }
+    private readonly store = inject<Store<State>>(Store);
 
     generateCommonNotificationsStateResetAction(
         {login, optionalAccount}: {login: string; optionalAccount?: boolean},

@@ -50,7 +50,7 @@ export function buildMinimalWebConfig(
         buildBaseConfig({
             target: "web",
             entry: {index: chunkPath("./index.ts")},
-            output: {path: outputRelativePath("./web", options.chunkName), publicPath: "", libraryTarget: "module"},
+            output: {path: outputRelativePath("./web", options.chunkName), publicPath: "auto", libraryTarget: "module"},
             experiments: {outputModule: true},
             module: {
                 rules: [{test: /\.html$/, use: [{loader: "html-loader", options: {minimize: false}}]}, {

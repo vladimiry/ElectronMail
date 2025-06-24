@@ -1,5 +1,5 @@
 import type {CdkDragDrop} from "@angular/cdk/drag-drop";
-import {Component, HostBinding} from "@angular/core";
+import {Component, HostBinding, inject} from "@angular/core";
 import {map, withLatestFrom} from "rxjs/operators";
 import {Observable, Subject, Subscription} from "rxjs";
 import type {OnDestroy} from "@angular/core";
@@ -19,6 +19,8 @@ import {State} from "src/web/browser-window/app/store/reducers/options";
     styleUrls: ["./accounts-list.component.scss"],
 })
 export class AccountsListComponent implements OnDestroy {
+    private readonly store = inject<Store<State>>(Store);
+
     readonly accounts$: Observable<AccountConfig[]>;
     readonly changingAccountOrder$: Observable<boolean>;
     readonly togglingAccountDisabling$: Observable<boolean>;
@@ -30,9 +32,7 @@ export class AccountsListComponent implements OnDestroy {
 
     private subscription = new Subscription();
 
-    constructor(
-        private readonly store: Store<State>,
-    ) {
+    constructor() {
         this.accounts$ = this.store.select(OptionsSelectors.SETTINGS.accounts);
         this.changingAccountOrder$ = this.store
             .select(OptionsSelectors.FEATURED.progress)

@@ -1,5 +1,5 @@
 import {BehaviorSubject, Subscription} from "rxjs";
-import {Component, ElementRef, HostListener, Input} from "@angular/core";
+import {Component, ElementRef, HostListener, inject, Input} from "@angular/core";
 import {filter, first, map} from "rxjs/operators";
 import type {OnDestroy, OnInit} from "@angular/core";
 import {select, Store} from "@ngrx/store";
@@ -34,6 +34,9 @@ const initialComponentState: DeepReadonly<Omit<ComponentState, "account">> = {
     styleUrls: ["./account-title.component.scss"],
 })
 export class AccountTitleComponent implements OnInit, OnDestroy {
+    private readonly store = inject<Store<State>>(Store);
+    private readonly elementRef = inject(ElementRef);
+
     @Input({required: false})
     highlighting = true;
 
@@ -69,11 +72,6 @@ export class AccountTitleComponent implements OnInit, OnDestroy {
             ),
         });
     }
-
-    constructor(
-        private readonly store: Store<State>,
-        private readonly elementRef: ElementRef,
-    ) {}
 
     ngOnInit(): void {
         if (this.highlighting) {

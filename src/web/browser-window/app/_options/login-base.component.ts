@@ -1,5 +1,5 @@
 import type {AfterViewInit, OnDestroy} from "@angular/core";
-import {Directive, ElementRef, Injector, QueryList, ViewChildren} from "@angular/core";
+import {Directive, ElementRef, QueryList, ViewChildren, inject} from "@angular/core";
 import {filter, map, pairwise} from "rxjs/operators";
 import {FormControl, Validators} from "@angular/forms";
 import {Observable, Subscription} from "rxjs";
@@ -14,6 +14,8 @@ import {State} from "src/web/browser-window/app/store/reducers/options";
 // so weird not single-purpose directive huh, https://github.com/angular/angular/issues/30080#issuecomment-539194668
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
 export abstract class LoginBaseComponent implements AfterViewInit, OnDestroy {
+    protected readonly store = inject<Store<State>>(Store);
+
     readonly password = new FormControl(
         null,
         Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
@@ -24,16 +26,12 @@ export abstract class LoginBaseComponent implements AfterViewInit, OnDestroy {
     @ViewChildren("passwordRef")
     passwordElementRefQuery!: QueryList<ElementRef>;
 
-    protected readonly store: Store<State>;
     readonly signingIn$: Observable<boolean>;
     readonly loadingDatabase$: Observable<boolean>;
 
     protected readonly subscription = new Subscription();
 
-    constructor(
-        protected injector: Injector,
-    ) {
-        this.store = this.injector.get<Store<State>>(Store);
+    constructor() {
         this.signingIn$ = this.store.pipe(
             select(OptionsSelectors.FEATURED.progress),
             map((progress) => Boolean(progress.signingIn)),

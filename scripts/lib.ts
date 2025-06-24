@@ -68,11 +68,7 @@ export async function execShell(
     {
         const stringifiedOptions = JSON.stringify({
             ...(options && omit(options, ["env"])),
-            ...{
-                whitelistedEnv: options?.env && printEnvWhitelist?.length
-                    ? pick(options.env, [...printEnvWhitelist])
-                    : undefined,
-            },
+            ...(options?.env && printEnvWhitelist?.length ? {whitelistedEnv: pick(options.env, [...printEnvWhitelist])} : undefined),
         });
         const optionsPart = stringifiedOptions !== "{}"
             ? ` (options: ${stringifiedOptions})`

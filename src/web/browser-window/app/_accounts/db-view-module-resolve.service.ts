@@ -1,4 +1,4 @@
-import {Compiler, ComponentFactory, ComponentRef, Injectable, Injector, ViewContainerRef} from "@angular/core";
+import {Compiler, ComponentFactory, ComponentRef, inject, Injectable, Injector, ViewContainerRef} from "@angular/core";
 
 import {DBVIEW_MODULE_ENTRY_COMPONENT_TOKEN} from "src/web/browser-window/app/app.constants";
 import {WebAccountPk} from "src/web/browser-window/app/model";
@@ -7,6 +7,8 @@ type DbViewEntryComponent = import("src/web/browser-window/app/_db-view/db-view-
 
 @Injectable()
 export class DbViewModuleResolve {
+    private injector = inject(Injector);
+
     private state: {
         resolveComponentFactory: () => Promise<ComponentFactory<DbViewEntryComponent>>;
     } = {
@@ -24,10 +26,6 @@ export class DbViewModuleResolve {
             return componentFactory;
         },
     };
-
-    constructor(
-        private injector: Injector,
-    ) {}
 
     async mountDbViewEntryComponent(
         container: ViewContainerRef,

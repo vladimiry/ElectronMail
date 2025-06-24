@@ -1,6 +1,6 @@
 import type {AfterViewInit, OnDestroy, OnInit} from "@angular/core";
 import {BehaviorSubject, combineLatest, EMPTY, Observable, Subject, Subscription} from "rxjs";
-import {ChangeDetectionStrategy, Component, ElementRef, Input, NgZone, QueryList, ViewChildren} from "@angular/core";
+import {ChangeDetectionStrategy, Component, ElementRef, inject, Input, NgZone, QueryList, ViewChildren} from "@angular/core";
 import {delay, distinctUntilChanged, filter, first, map, mergeMap, pairwise, withLatestFrom} from "rxjs/operators";
 import {isDeepEqual} from "remeda";
 import {select} from "@ngrx/store";
@@ -26,6 +26,9 @@ import {registerNativeThemeReaction} from "src/web/lib/native-theme";
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DbViewMailBodyComponent extends DbViewAbstractComponent implements OnInit, OnDestroy, AfterViewInit {
+    private elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
+    private zone = inject(NgZone);
+
     @Input({required: false})
     selectedFolderData?: Instance["selectedFolderData"];
 
@@ -79,13 +82,6 @@ export class DbViewMailBodyComponent extends DbViewAbstractComponent implements 
     });
 
     private readonly logger = getWebLogger(__filename, nameof(DbViewMailBodyComponent));
-
-    constructor(
-        private elementRef: ElementRef<HTMLElement>,
-        private zone: NgZone,
-    ) {
-        super();
-    }
 
     ngOnInit(): void {
         {

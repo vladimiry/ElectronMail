@@ -1,5 +1,5 @@
 import {ActivatedRoute} from "@angular/router";
-import {Component, HostBinding} from "@angular/core";
+import {Component, HostBinding, inject} from "@angular/core";
 import {filter, map} from "rxjs/operators";
 import type {OnDestroy, OnInit} from "@angular/core";
 import {Subscription} from "rxjs";
@@ -13,14 +13,12 @@ import {ROUTER_DATA_OUTLET_PROP} from "src/web/browser-window/app/app.constants"
     styleUrls: ["./router-proxy.component.scss"],
 })
 export class RouterProxyComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+
     @HostBinding("class")
     outlet = "";
 
     private subscription = new Subscription();
-
-    constructor(
-        private route: ActivatedRoute,
-    ) {}
 
     ngOnInit(): void {
         this.subscription.add(

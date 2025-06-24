@@ -1,6 +1,6 @@
 import {AccordionModule} from "ngx-bootstrap/accordion";
 import {CollapseModule} from "ngx-bootstrap/collapse";
-import {ColorPickerModule} from "ngx-color-picker";
+import {ColorPickerComponent, ColorPickerDirective} from "ngx-color-picker";
 import {DragDropModule} from "@angular/cdk/drag-drop";
 import {EffectsModule} from "@ngrx/effects";
 import {NgModule} from "@angular/core";
@@ -28,7 +28,8 @@ import {StorageComponent} from "./storage.component";
     imports: [
         AccordionModule,
         CollapseModule,
-        ColorPickerModule,
+        ColorPickerComponent,
+        ColorPickerDirective,
         DragDropModule,
         PopoverModule,
         SharedModule,

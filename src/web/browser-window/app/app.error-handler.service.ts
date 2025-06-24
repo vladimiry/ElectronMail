@@ -1,5 +1,5 @@
 import combineErrors from "combine-errors";
-import {ErrorHandler, Injectable, Injector} from "@angular/core";
+import {ErrorHandler, inject, Injectable, Injector} from "@angular/core";
 import {pick} from "remeda";
 import {serializeError} from "serialize-error";
 import {Store} from "@ngrx/store";
@@ -11,7 +11,7 @@ const logger = getWebLogger(__filename);
 
 @Injectable()
 export class AppErrorHandler implements ErrorHandler {
-    constructor(private readonly injector: Injector) {}
+    private readonly injector = inject(Injector);
 
     handleError(
         error: Error & {errors?: unknown},

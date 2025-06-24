@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component} from "@angular/core";
+import {ChangeDetectionStrategy, Component, inject} from "@angular/core";
 import {combineLatest, Observable, Subscription} from "rxjs";
 import {distinctUntilChanged, map} from "rxjs/operators";
 import {isDeepEqual} from "remeda";
@@ -23,6 +23,10 @@ import {WebAccount} from "src/web/browser-window/app/model";
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountsComponent implements OnInit, OnDestroy {
+    private readonly coreService = inject(CoreService);
+    private readonly api = inject(ElectronService);
+    private readonly store = inject<Store<State>>(Store);
+
     unreadSummary?: number;
     readonly userDataDir = __METADATA__.electronLocations.userDataDir;
     readonly initialized$: Observable<boolean | undefined>;
@@ -36,11 +40,7 @@ export class AccountsComponent implements OnInit, OnDestroy {
     );
     private readonly subscription = new Subscription();
 
-    constructor(
-        private readonly coreService: CoreService,
-        private readonly api: ElectronService,
-        private readonly store: Store<State>,
-    ) {
+    constructor() {
         this.initialized$ = this.store.pipe(select(AccountsSelectors.FEATURED.initialized));
         this.layoutMode$ = this.store.pipe(select(OptionsSelectors.CONFIG.layoutMode));
         this.hideControls$ = this.store.pipe(select(OptionsSelectors.CONFIG.hideControls));

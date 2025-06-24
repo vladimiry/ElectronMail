@@ -1,6 +1,6 @@
 import {AbstractControl, FormControl, FormGroup, Validators} from "@angular/forms";
 import {BsModalRef, BsModalService} from "ngx-bootstrap/modal";
-import {ChangeDetectionStrategy, Component, Input, TemplateRef} from "@angular/core";
+import {ChangeDetectionStrategy, Component, inject, Input, TemplateRef} from "@angular/core";
 import {clone, pick} from "remeda";
 import {EMPTY, from} from "rxjs";
 import {mergeMap, takeUntil} from "rxjs/operators";
@@ -24,6 +24,9 @@ const selector = "electron-mail-db-view-mails-export";
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DbViewMailsExportComponent extends DbViewAbstractComponent implements OnInit {
+    private readonly api = inject(ElectronService);
+    private readonly modalService = inject(BsModalService);
+
     @Input({required: false})
     mailsBundleItems?: MailsBundle["items"];
 
@@ -53,13 +56,6 @@ export class DbViewMailsExportComponent extends DbViewAbstractComponent implemen
     modalRef?: BsModalRef;
 
     modalOpeningProgress = false;
-
-    constructor(
-        private readonly api: ElectronService,
-        private readonly modalService: BsModalService,
-    ) {
-        super();
-    }
 
     ngOnInit(): void {
         this.onlineAndSignedIn$

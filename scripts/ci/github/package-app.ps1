@@ -1,25 +1,30 @@
-# $env:DEBUG = "*"
-# $env:DEBUG = $null
+$ErrorActionPreference = 'Stop'
 
-echo "::group::vs build tools setup"
-./scripts/ci/github/install-vs-build-tools.ps1 -IncludeWin81Sdk $true
-npm config set msvs_version 2017
-echo "::endgroup::"
+function Run($cmd) {
+    Write-Host "Running: $cmd"
+    Invoke-Expression $cmd
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "❌ Command failed: $cmd"
+        exit $LASTEXITCODE
+    }
+}
 
 echo "::group::compile native modules"
-pnpm run prepare-native-deps
+Run 'pnpm run prepare-native-deps'
 echo "::endgroup::"
 
 echo "::group::test e2e"
-pnpm run test:e2e
+# TODO enable e2e test running on Windows
+# currently "playwright._electron.launch" call ends up with error on Windows: "electron.launch: Process failed to launch!"
+# Run 'pnpm run test:e2e'
 echo "::endgroup::"
 
 echo "::group::package"
-pnpm run build:electron-builder-hooks
-npm run electron-builder:shortcut -- --publish never
+Run 'pnpm run build:electron-builder-hooks'
+Run 'pnpm run electron-builder:dist'
 echo "::endgroup::"
 
 echo "::group::hash & upload"
-pnpm run scripts/dist-packages/print-hashes
-pnpm run scripts/dist-packages/upload
+Run 'pnpm run scripts/dist-packages/print-hashes'
+Run 'pnpm run scripts/dist-packages/upload'
 echo "::endgroup::"

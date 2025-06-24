@@ -1,5 +1,5 @@
 import {combineLatest, firstValueFrom, merge, of, race, Subject, timer} from "rxjs";
-import {Component, Injector} from "@angular/core";
+import {Component, inject} from "@angular/core";
 import {debounceTime, distinctUntilChanged, filter, first, map, switchMap, takeUntil, tap, withLatestFrom} from "rxjs/operators";
 import {isDeepEqual} from "remeda";
 import type {OnInit} from "@angular/core";
@@ -25,6 +25,8 @@ import {State} from "src/web/browser-window/app/store/reducers/accounts";
     template: "",
 })
 export class AccountViewPrimaryComponent extends AccountViewAbstractDirective implements OnInit {
+    private readonly store = inject<Store<State>>(Store);
+
     private readonly logger = getWebLogger(__filename, nameof(AccountViewPrimaryComponent));
 
     private readonly loggedIn$ = this.account$.pipe(
@@ -32,11 +34,8 @@ export class AccountViewPrimaryComponent extends AccountViewAbstractDirective im
         distinctUntilChanged(),
     );
 
-    constructor(
-        injector: Injector,
-        private readonly store: Store<State>,
-    ) {
-        super("primary", injector);
+    constructor() {
+        super("primary");
     }
 
     ngOnInit(): void {

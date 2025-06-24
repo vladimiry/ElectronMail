@@ -13,6 +13,9 @@ yarn-error.log
 # generated code
 /src/electron-main/window/about.json
 
+# Angular
+/.angular/cache/
+
 /app/
 /app-dev/
 /dist/

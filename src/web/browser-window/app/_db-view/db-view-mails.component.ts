@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, ElementRef, Input} from "@angular/core";
+import {ChangeDetectionStrategy, Component, ElementRef, inject, Input} from "@angular/core";
 import {combineLatest, fromEvent, Observable} from "rxjs";
 import {distinctUntilChanged, first, map, mergeMap, tap, withLatestFrom} from "rxjs/operators";
 import type {OnDestroy, OnInit} from "@angular/core";
@@ -23,6 +23,8 @@ const mailComponentTagName = "electron-mail-db-view-mail".toUpperCase();
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DbViewMailsComponent extends DbViewAbstractComponent implements OnInit, OnDestroy {
+    private elementRef = inject<ElementRef<Element>>(ElementRef);
+
     // TODO enable iteration limit
     private static resolveMailComponentElement(element: Element | null): Element | null {
         while (element) {
@@ -208,12 +210,6 @@ export class DbViewMailsComponent extends DbViewAbstractComponent implements OnI
             }));
         }
         this._uid = value;
-    }
-
-    constructor(
-        private elementRef: ElementRef<Element>,
-    ) {
-        super();
     }
 
     ngOnInit(): void {

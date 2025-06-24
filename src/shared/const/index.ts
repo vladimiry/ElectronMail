@@ -1,4 +1,4 @@
-import packageJSON from "package.json" assert {type: "json"};
+import packageJSON from "package.json" with {type: "json"};
 
 import {LogLevel} from "src/shared/model/common";
 import {PROTON_SHARED_MESSAGE_INTERFACE} from "src/shared/const/proton-apps";

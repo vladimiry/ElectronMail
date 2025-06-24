@@ -1,7 +1,7 @@
 import {Actions, createEffect} from "@ngrx/effects";
 import {concatMap, mergeMap} from "rxjs/operators";
 import {EMPTY, from} from "rxjs";
-import {Injectable, NgZone} from "@angular/core";
+import {inject, Injectable, NgZone} from "@angular/core";
 import {Router} from "@angular/router";
 
 import {ACCOUNTS_OUTLET, SETTINGS_OUTLET, STUB_OUTLET, STUB_PATH} from "src/web/browser-window/app/app.constants";
@@ -15,6 +15,11 @@ const _logger = getWebLogger(__filename);
 
 @Injectable()
 export class NavigationEffects {
+    private electronService = inject(ElectronService);
+    private readonly actions$ = inject(Actions);
+    private router = inject(Router);
+    private ngZone = inject(NgZone);
+
     go$ = createEffect(
         () =>
             this.actions$.pipe(
@@ -132,11 +137,4 @@ export class NavigationEffects {
             ),
         {dispatch: false},
     );
-
-    constructor(
-        private electronService: ElectronService,
-        private readonly actions$: Actions,
-        private router: Router,
-        private ngZone: NgZone,
-    ) {}
 }

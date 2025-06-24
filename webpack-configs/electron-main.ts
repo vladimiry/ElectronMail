@@ -1,5 +1,5 @@
 import {mapValues} from "remeda";
-import packageJSON from "package.json" assert {type: "json"};
+import packageJSON from "package.json" with {type: "json"};
 import path from "path";
 import webpack from "webpack";
 

@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, Input} from "@angular/core";
+import {ChangeDetectionStrategy, Component, inject, Input} from "@angular/core";
 import {Deferred} from "ts-deferred";
 import type {OnDestroy, OnInit} from "@angular/core";
 import {Store} from "@ngrx/store";
@@ -15,14 +15,12 @@ import {WebAccountPk} from "src/web/browser-window/app/model";
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DbViewEntryComponent implements OnDestroy, OnInit {
+    private store = inject<Store<State>>(Store);
+
     @Input({required: true})
     webAccountPk!: WebAccountPk;
 
     private finishDeferred = new Deferred<void>();
-
-    constructor(
-        private store: Store<State>,
-    ) {}
 
     ngOnInit(): void {
         this.store.dispatch(

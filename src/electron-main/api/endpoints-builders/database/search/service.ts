@@ -1,3 +1,4 @@
+import type {QuickJSHandle} from "quickjs-emscripten";
 import {shouldInterruptAfterDeadline} from "quickjs-emscripten";
 
 import {augmentRawMailWithFolders, resolveCachedQuickJSInstance} from "src/electron-main/api/util";
@@ -72,7 +73,78 @@ export const secondSearchStep = async (
     // TODO quickJS:
     //  - improve performance (execute function on context with preset variables/functions)
     //  - process mails in batch mode vs per-email function calling)
-    const quickJS = codeFilter && await resolveCachedQuickJSInstance();
+    const codeFilterService = codeFilter && await (async () => {
+        const deadline = Date.now() + ONE_SECOND_MS;
+        const runtime = (await resolveCachedQuickJSInstance()).newRuntime();
+        runtime.setInterruptHandler(shouldInterruptAfterDeadline(deadline));
+        const context = runtime.newContext();
+        const stubResult = context.evalCode(
+            `
+                globalThis.${QUICK_JS_EVAL_CODE_VARIABLE_NAME}__filter__ = undefined;
+                function filterMessage(fn) {
+                    globalThis.${QUICK_JS_EVAL_CODE_VARIABLE_NAME}__filter__ = fn;
+                }
+            `,
+        );
+        if (stubResult.error) throw new Error("Failed to inject stub");
+        stubResult.dispose();
+        const userResult = context.evalCode(codeFilter);
+        if (userResult.error) throw new Error("User code failed");
+        userResult.dispose();
+        const filterFnHandle = context.getProp(context.global, `${QUICK_JS_EVAL_CODE_VARIABLE_NAME}__filter__`);
+        if (context.typeof(filterFnHandle) !== "function") {
+            throw new Error("User code did not provide a valid filter function");
+        }
+        function injectValue(value: unknown): QuickJSHandle {
+            if (value === null || value === undefined) return context.undefined;
+            const type = typeof value;
+            if (type === "string") return context.newString(value as string);
+            if (type === "number") return context.newNumber(value as number);
+            if (type === "boolean") return value ? context.true : context.false;
+            if (Array.isArray(value)) {
+                const arrHandle = context.newArray();
+                for (let i = 0; i < value.length; i++) {
+                    const itemHandle = injectValue(value[i]);
+                    context.setProp(arrHandle, i, itemHandle);
+                    itemHandle.dispose();
+                }
+                return arrHandle;
+            }
+            if (type === "object") {
+                const objHandle = context.newObject();
+                for (const [key, val] of Object.entries(value)) {
+                    const valHandle = injectValue(val);
+                    context.setProp(objHandle, key, valHandle);
+                    valHandle.dispose();
+                }
+                return objHandle;
+            }
+            return context.newString(String(value));
+        }
+        return {
+            filter(mail: ReturnType<typeof augmentRawMailWithFolders>): boolean {
+                runtime.setInterruptHandler(shouldInterruptAfterDeadline(deadline));
+                const mailHandle = injectValue(mail);
+                const resultHandle = context.callFunction(filterFnHandle, context.undefined, mailHandle);
+                mailHandle.dispose();
+                if (resultHandle.error) {
+                    const errorValue = resultHandle.error;
+                    const errorMessage = context.dump(errorValue); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+                    errorValue.dispose();
+                    throw new Error(`Filter execution failed: ${errorMessage}`);
+                }
+                const result = context.dump(resultHandle.value); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+                resultHandle.dispose();
+                return result; // eslint-disable-line @typescript-eslint/no-unsafe-return
+            },
+            dispose() {
+                filterFnHandle.dispose();
+                context.dispose();
+                runtime.dispose();
+            },
+        };
+    })();
+
     const filters = {
         byFolder: folderIds
             ? ({id}: View.Folder): boolean => folderIds.includes(id)
@@ -80,31 +152,14 @@ export const secondSearchStep = async (
         byHasAttachment: hasAttachments
             ? (attachmentsCount: number): boolean => Boolean(attachmentsCount)
             : () => true,
-        byCode: codeFilter
+        byCode: codeFilterService
             ? ({pk, folders}: View.Mail): boolean => {
                 const mail = account.mails[pk];
                 if (typeof mail === "undefined") {
                     throw new Error(`Failed to resolve ${nameof(mail)}`);
                 }
-                if (!quickJS) {
-                    throw new Error(`"${nameof(quickJS)}" has not been initialized`);
-                }
-                const augmentedRawMailSerialized = JSON.stringify(JSON.stringify(augmentRawMailWithFolders(mail, folders, false)));
-                const evalCode = `
-                    (() => {
-                        let ${QUICK_JS_EVAL_CODE_VARIABLE_NAME} = false;
-                        const filterMessage = (fn) => {
-                            ${QUICK_JS_EVAL_CODE_VARIABLE_NAME} = fn(
-                                JSON.parse(${augmentedRawMailSerialized}),
-                            );
-                        };
-                        {
-                            ${codeFilter}
-                        }
-                        return Boolean(${QUICK_JS_EVAL_CODE_VARIABLE_NAME});
-                    })()
-                `;
-                return quickJS.evalCode(evalCode, {shouldInterrupt: shouldInterruptAfterDeadline(Date.now() + ONE_SECOND_MS)}) as boolean;
+                // const augmentedRawMailSerialized = JSON.stringify(JSON.stringify(augmentRawMailWithFolders(mail, folders, false)));
+                return codeFilterService.filter(augmentRawMailWithFolders(mail, folders, false));
             }
             : () => true,
         bySentDateAfter: (() => {
@@ -158,6 +213,8 @@ export const secondSearchStep = async (
 
         mailsBundleItems.push(...matchedScoredNodeMails.map((mail) => ({mail, conversationSize: allNodeMailsCount})));
     }
+
+    if (codeFilterService) codeFilterService.dispose();
 
     return mailsBundleItems;
 };

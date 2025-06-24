@@ -1,5 +1,5 @@
 import {createIpcMainApiService} from "electron-rpc-api";
-import {Injectable, NgZone} from "@angular/core";
+import {inject, Injectable, NgZone} from "@angular/core";
 import {mergeMap} from "rxjs/operators";
 import type {OnDestroy} from "@angular/core";
 import {select, Store} from "@ngrx/store";
@@ -18,13 +18,13 @@ const logger = getWebLogger(__filename);
 
 @Injectable()
 export class ElectronService implements OnDestroy {
+    private store = inject<Store<State>>(Store);
+    private ngZone = inject(NgZone);
+
     private defaultApiCallTimeoutMs = DEFAULT_API_CALL_TIMEOUT;
     private readonly subscription = new Subscription();
 
-    constructor(
-        private store: Store<State>,
-        private ngZone: NgZone,
-    ) {
+    constructor() {
         this.subscription.add(
             this.store
                 .pipe(

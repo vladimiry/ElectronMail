@@ -1,7 +1,7 @@
 import {AbstractControl, FormControl, FormGroup, Validators} from "@angular/forms";
 import {ActivatedRoute} from "@angular/router";
 import {combineLatest, merge, Observable, of, Subscription} from "rxjs";
-import {Component, ElementRef, Inject, Input} from "@angular/core";
+import {Component, ElementRef, inject, Input} from "@angular/core";
 import {concatMap, distinctUntilChanged, map, mergeMap, startWith, switchMap} from "rxjs/operators";
 import type {OnDestroy, OnInit} from "@angular/core";
 import {select, Store} from "@ngrx/store";
@@ -26,6 +26,11 @@ import {validateLoginDelaySecondsRange} from "src/shared/util";
     preserveWhitespaces: true,
 })
 export class AccountEditComponent implements OnInit, OnDestroy {
+    readonly PACKAGE_GITHUB_PROJECT_URL = inject(PACKAGE_GITHUB_PROJECT_URL_TOKEN);
+    private readonly store = inject<Store<State>>(Store);
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly elementRef = inject(ElementRef);
+
     @Input({required: true})
     accountIndex = 0;
     readonly userDataDir = __METADATA__.electronLocations.userDataDir;
@@ -146,12 +151,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
     private readonly logger = getWebLogger(__filename, nameof(AccountEditComponent));
     private readonly subscription = new Subscription();
 
-    constructor(
-        @Inject(PACKAGE_GITHUB_PROJECT_URL_TOKEN) public readonly PACKAGE_GITHUB_PROJECT_URL: string,
-        private readonly store: Store<State>,
-        private readonly activatedRoute: ActivatedRoute,
-        private readonly elementRef: ElementRef,
-    ) {
+    constructor() {
         this.account$ = merge(this.activatedRoute.params, this.activatedRoute.queryParams).pipe(
             mergeMap(({login}) => login ? [String(login)] : []),
             concatMap((login) => this.store.select(OptionsSelectors.SETTINGS.pickAccount({login}))),

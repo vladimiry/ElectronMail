@@ -28,16 +28,13 @@ export function ensureFileHasNoSuidBit(file: string): void {
 }
 
 export async function build(packageType: "appimage" | "snap"): Promise<{packageFile: string}> {
-    await execShell(["npm", [...`run electron-builder:shortcut -- --publish never --linux ${packageType}`.split(" ")]]);
+    await execShell(["npm", [...`run electron-builder:shortcut -- --linux ${packageType}`.split(" ")]]);
 
     // TODO move "fastGlob" to lib function with inner "sanitizeFastGlobPattern" call
     const [packageFile] = await fastGlob(
         sanitizeFastGlobPattern(path.join(
-            // TODO resolve "./dist" programmatically from "electron-builder.yml"
-            "./dist",
-            "*." + (packageType === "appimage"
-                ? "AppImage"
-                : packageType),
+            "./dist", // TODO resolve "./dist" programmatically from "electron-builder.yml"
+            "*." + (packageType === "appimage" ? "AppImage" : packageType),
         )),
         {absolute: true, deep: 1, onlyFiles: true, stats: false},
     );

@@ -1,7 +1,7 @@
 import {Actions, createEffect} from "@ngrx/effects";
 import {catchError, distinctUntilChanged, filter, mergeMap, skip, takeUntil, tap, withLatestFrom} from "rxjs/operators";
 import {EMPTY, from, merge, of, throwError} from "rxjs";
-import {Injectable} from "@angular/core";
+import {inject, Injectable} from "@angular/core";
 import {select, Store} from "@ngrx/store";
 import {serializeError} from "serialize-error";
 
@@ -23,6 +23,12 @@ const _logger = getWebLogger(__filename);
 
 @Injectable()
 export class AccountsPrimaryNsEffects {
+    private readonly actions$ = inject(Actions);
+    private readonly api = inject(ElectronService);
+    private readonly core = inject(CoreService);
+    private readonly store = inject<Store<State>>(Store);
+    private readonly accountsService = inject(AccountsService);
+
     readonly common$ = createEffect(
         () =>
             this.actions$.pipe(
@@ -151,12 +157,4 @@ export class AccountsPrimaryNsEffects {
                 }),
             ),
     );
-
-    constructor(
-        private readonly actions$: Actions,
-        private readonly api: ElectronService,
-        private readonly core: CoreService,
-        private readonly store: Store<State>,
-        private readonly accountsService: AccountsService,
-    ) {}
 }

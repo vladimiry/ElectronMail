@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, Inject, Injector, Input} from "@angular/core";
+import {ChangeDetectionStrategy, Component, Input} from "@angular/core";
 import {distinctUntilChanged, filter, mergeMap, switchMap, take, takeUntil, withLatestFrom} from "rxjs/operators";
 import {from, timer} from "rxjs";
 
@@ -53,15 +53,15 @@ export class AccountEditNotificationEditorComponent extends AbstractMonacoEditor
         },
     ] as const).map(formatCodeLines);
 
-    constructor(@Inject(Injector) injector: Injector) {
-        super(injector, () => this.initialContent ?? (this.codeSnippets[0]?.value || ""));
+    constructor() {
+        super(() => this.initialContent ?? (this.codeSnippets[0]?.value || ""));
 
         this.editable$ = this
             .ngChangesObservable("editable")
             .pipe(distinctUntilChanged());
 
         {
-            const ipcMainClient = injector.get(ElectronService).ipcMainClient();
+            const ipcMainClient = this.injector.get(ElectronService).ipcMainClient();
             const login$ = this.ngChangesObservable("login");
             const bootstrapFetchCompletePing$ = timer(0, ONE_SECOND_MS).pipe(
                 switchMap(() => login$),

@@ -4,7 +4,7 @@ import {
     catchError, concatMap, debounce, debounceTime, delay, filter, finalize, mergeMap, switchMap, takeUntil, tap, withLatestFrom,
 } from "rxjs/operators";
 import {concat, EMPTY, from, fromEvent, merge, of, race, Subject, timer} from "rxjs";
-import {Injectable} from "@angular/core";
+import {inject, Injectable} from "@angular/core";
 import {select, Store} from "@ngrx/store";
 
 import {ACCOUNTS_ACTIONS, DB_VIEW_ACTIONS, NOTIFICATION_ACTIONS} from "src/web/browser-window/app/store/actions";
@@ -24,6 +24,11 @@ const _logger = getWebLogger(__filename);
 
 @Injectable()
 export class AccountsDbSyncingEffects {
+    private readonly actions$ = inject(Actions);
+    private readonly api = inject(ElectronService);
+    private readonly core = inject(CoreService);
+    private readonly store = inject<Store<State>>(Store);
+
     readonly disposing$ = new Map<string, /* login */ Subject<void>>();
 
     readonly effect$ = createEffect(
@@ -328,11 +333,4 @@ export class AccountsDbSyncingEffects {
             );
         },
     );
-
-    constructor(
-        private readonly actions$: Actions,
-        private readonly api: ElectronService,
-        private readonly core: CoreService,
-        private readonly store: Store<State>,
-    ) {}
 }

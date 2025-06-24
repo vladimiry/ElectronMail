@@ -1,4 +1,4 @@
-import {Component} from "@angular/core";
+import {Component, inject} from "@angular/core";
 import {Store} from "@ngrx/store";
 
 import {OptionsService} from "./options.service";
@@ -11,7 +11,8 @@ import {State} from "src/web/browser-window/app/store/reducers/options";
     styleUrls: ["./settings.component.scss"],
 })
 export class SettingsComponent {
-    constructor(private optionsService: OptionsService, private store: Store<State>) {}
+    private optionsService = inject(OptionsService);
+    private store = inject<Store<State>>(Store);
 
     close(): void {
         this.store.dispatch(this.optionsService.settingsNavigationAction());

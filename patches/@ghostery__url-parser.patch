@@ -1,12 +1,32 @@
-diff --git a/build/types/lib/url-search-params.d.ts b/build/types/lib/url-search-params.d.ts
-index afd381876c68bb40c97449e816af482666dd84d0..8ca067d72ee769b0699bfcbdf952b2aa50df684e 100644
---- a/build/types/lib/url-search-params.d.ts
-+++ b/build/types/lib/url-search-params.d.ts
-@@ -24,6 +24,7 @@ export default class SearchParams implements IURLSearchParams {
+diff --git a/dist/commonjs/url-search-params.d.ts b/dist/commonjs/url-search-params.d.ts
+index a1e8be1830e9549e3c9e53b53a586b491d4d2c30..c7da3a6f8c320ed486c6e156123a1edf3f935bed 100644
+--- a/dist/commonjs/url-search-params.d.ts
++++ b/dist/commonjs/url-search-params.d.ts
+@@ -4,14 +4,14 @@ export default class SearchParams implements IURLSearchParams {
+     params: [string, string][];
+     isEncoded: boolean;
+     constructor(init?: string | [string, string][] | Record<string, string>);
+-    entries(): URLSearchParamsIterator<[string, string]>;
++    entries(): import("url").URLSearchParamsIterator<[string, string]>;
+     append(name: string, value: string): void;
+     delete(name: string): void;
+     forEach(callback: (value: string, name: string, searchParams: this) => void): void;
+     get(name: string): string | null;
+     getAll(name: string): string[];
+     has(name: string): boolean;
+-    keys(): URLSearchParamsIterator<string>;
++    keys(): import("url").URLSearchParamsIterator<string>;
+     /**
+      * The set() method of the URLSearchParams interface sets the value associated with a given
+      * search parameter to the given value. If there were several matching values, this method
+@@ -22,8 +22,8 @@ export default class SearchParams implements IURLSearchParams {
+     set(name: string, value: string): void;
+     sort(): void;
      toString(): string;
-     values(): IterableIterator<string>;
-     [Symbol.iterator](): IterableIterator<[string, string]>;
-+    readonly size: number;
+-    values(): URLSearchParamsIterator<string>;
+-    [Symbol.iterator](): URLSearchParamsIterator<[string, string]>;
++    values(): import("url").URLSearchParamsIterator<string>;
++    [Symbol.iterator](): import("url").URLSearchParamsIterator<[string, string]>;
+     get size(): number;
  }
  export declare function extractParams(urlString: string, start: number, end: number, params: SearchParams, separators: number[], equals: number, breakCodes: number[], { encode }?: {
-     encode: boolean;

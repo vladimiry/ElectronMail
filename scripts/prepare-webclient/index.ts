@@ -4,8 +4,10 @@ import pathIsInside from "path-is-inside";
 import {buildProtonClients} from "./webclients";
 import {catchTopLeventAsync} from "scripts/lib";
 import {CWD_ABSOLUTE_DIR} from "scripts/const";
-import {generateDtsForMonacoEditor} from "./monaco-editor-dts";
-import {LOCAL_WEBCLIENT_DIR_NAME} from "src/shared/const";
+import {generateGlobalTypescriptEnvDeclaration} from "./dts-global-ts-env2";
+import {generateProtonMessageDeclaration} from "./dts-proton-message";
+import {LOCAL_WEBCLIENT_DIR_NAME, PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION} from "src/shared/const";
+import {PROTON_SHARED_MESSAGE_INTERFACE} from "src/shared/const/proton-apps";
 
 const [, , appDestDir_] = process.argv;
 if (!appDestDir_) {
@@ -18,6 +20,16 @@ if (!pathIsInside(appDestDir, CWD_ABSOLUTE_DIR)) {
 }
 
 catchTopLeventAsync(async () => {
+    // should be executed before d.ts generating as it clones the further referenced Proton project...
     await buildProtonClients({destDir: path.join(appDestDir, LOCAL_WEBCLIENT_DIR_NAME)});
-    await generateDtsForMonacoEditor({sharedProtonPackageDir: "./output/git/WebClients/packages/shared", destDir: appDestDir});
+
+    generateGlobalTypescriptEnvDeclaration(
+        "./node_modules/typescript/lib",
+        path.join(appDestDir, PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION.system),
+    );
+
+    generateProtonMessageDeclaration(
+        path.join("./output/git/WebClients/packages/shared", PROTON_SHARED_MESSAGE_INTERFACE.projectRelativeFile),
+        path.join(appDestDir, PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION.protonMessage),
+    );
 });

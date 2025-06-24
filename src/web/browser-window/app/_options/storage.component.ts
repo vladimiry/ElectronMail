@@ -1,4 +1,4 @@
-import {Component} from "@angular/core";
+import {Component, inject} from "@angular/core";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {map} from "rxjs/operators";
 import {Observable} from "rxjs";
@@ -16,6 +16,8 @@ import {State} from "src/web/browser-window/app/store/reducers/options";
     preserveWhitespaces: true,
 })
 export class StorageComponent {
+    private store = inject<Store<State>>(Store);
+
     password = new FormControl<string | null>(
         null,
         Validators.required, // eslint-disable-line @typescript-eslint/unbound-method
@@ -61,7 +63,7 @@ export class StorageComponent {
     changingPassword$: Observable<boolean>;
     reEncryptingSettings$: Observable<boolean>;
 
-    constructor(private store: Store<State>) {
+    constructor() {
         this.changingPassword$ = this.store
             .select(OptionsSelectors.FEATURED.progress)
             .pipe(map((progress) => Boolean(progress.changingPassword)));

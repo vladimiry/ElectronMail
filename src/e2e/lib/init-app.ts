@@ -1,6 +1,7 @@
 import byline from "byline";
 import fs from "fs";
 import fsExtra from "fs-extra";
+// import os from "os";
 import path from "path";
 import playwright from "playwright";
 import playwrightTest from "@playwright/test";
@@ -9,13 +10,7 @@ import {spy as sinonSpy} from "sinon";
 import {APP_DIR_PATH, CONF, ENV, MAIN_SCRIPT_FILE, ROOT_DIR_PATH} from "src/e2e/lib/const";
 import {asyncDelay} from "src/shared/util";
 import {
-    BINARY_NAME,
-    LOCAL_WEBCLIENT_ORIGIN,
-    ONE_SECOND_MS,
-    PACKAGE_NAME,
-    PACKAGE_VERSION,
-    PRODUCT_NAME,
-    RUNTIME_ENV_USER_DATA_DIR,
+    BINARY_NAME, LOCAL_WEBCLIENT_ORIGIN, ONE_SECOND_MS, PACKAGE_NAME, PACKAGE_VERSION, PRODUCT_NAME, RUNTIME_ENV_USER_DATA_DIR,
 } from "src/shared/const";
 import {buildWorkflow} from "./workflow";
 import {mainProcessEvaluationFunctions} from "src/e2e/lib/util";
@@ -49,7 +44,12 @@ export const initAppWithTestContext = async (
     //      - folder prepared by running "electron-builder --dir"
     const app = testContext.app = await playwright._electron.launch({
         args: [MAIN_SCRIPT_FILE, `--user-data-dir=${testContext.userDataDirPath}`],
-        env: {...process.env, ELECTRON_ENABLE_LOGGING: "1", [RUNTIME_ENV_USER_DATA_DIR]: testContext.userDataDirPath},
+        env: {
+            ...process.env,
+            [RUNTIME_ENV_USER_DATA_DIR]: testContext.userDataDirPath,
+            ELECTRON_ENABLE_LOGGING: "1",
+            // ...(os.platform() === "darwin" ? {ELECTRON_DISABLE_GPU: "1"} : undefined),
+        },
     });
 
     testContext.firstWindowPage = await app.firstWindow();
@@ -109,13 +109,12 @@ export const initAppWithTestContext = async (
                     stream.on("data", (_, line = String(_)) => {
                         if (
                             line.includes("keytar")
-                            || (line.includes("[electron-rpc-api]")
-                                && line.includes(`Object has been destroyed: "sender"`))
-                            || (line.includes(`failed to resolve window bounds`)
-                                && line.includes("Object has been destroyed"))
+                            || (line.includes("[electron-rpc-api]") && line.includes(`Object has been destroyed: "sender"`))
+                            || (line.includes(`failed to resolve window bounds`) && line.includes("Object has been destroyed"))
                             || line.includes(`"message":"Found a 'popover' attribute.`)
-                            || (line.includes(`"type":"did-fail-load"`)
-                                && line.includes(`"validatedURL":"${LOCAL_WEBCLIENT_ORIGIN}/"`))
+                            || (line.includes(`"type":"did-fail-load"`) && line.includes(`"validatedURL":"${LOCAL_WEBCLIENT_ORIGIN}/"`))
+                            || line.includes(`Fetch API cannot load ${LOCAL_WEBCLIENT_ORIGIN}/assets/static/sprite-icons.`)
+                            || line.includes(`Fetch API cannot load ${LOCAL_WEBCLIENT_ORIGIN}/assets/static/file-icons.`)
                         ) {
                             return;
                         }

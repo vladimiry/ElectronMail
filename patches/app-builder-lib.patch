@@ -1,5 +1,5 @@
 diff --git a/templates/nsis/include/installer.nsh b/templates/nsis/include/installer.nsh
-index 34e91dfe82fdbb2e929820f2e8deb771b7f7893c..27f12cd7e56754c3692db1656f59a7078766423d 100644
+index 34e91dfe82fdbb2e929820f2e8deb771b7f7893c..ee0bfba79aafb8ab8d89d91b6cd79a9d2a789580 100644
 --- a/templates/nsis/include/installer.nsh
 +++ b/templates/nsis/include/installer.nsh
 @@ -174,7 +174,7 @@

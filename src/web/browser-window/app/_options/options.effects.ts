@@ -3,7 +3,7 @@ import {catchError, concatMap, filter, finalize, map, mergeMap, startWith, switc
 import type {DecryptionError} from "fs-json-store-encryption-adapter/lib/errors";
 import {doNothing} from "remeda";
 import {EMPTY, from, merge, of, timer} from "rxjs";
-import {Injectable, NgZone} from "@angular/core";
+import {inject, Injectable, NgZone} from "@angular/core";
 import {select, Store} from "@ngrx/store";
 
 import {ACCOUNTS_OUTLET, ACCOUNTS_PATH, SETTINGS_OUTLET, SETTINGS_PATH} from "src/web/browser-window/app/app.constants";
@@ -24,6 +24,13 @@ const _logger = getWebLogger(__filename);
 
 @Injectable()
 export class OptionsEffects {
+    private optionsService = inject(OptionsService);
+    private coreService = inject(CoreService);
+    private api = inject(ElectronService);
+    private store = inject<Store<State>>(Store);
+    private ngZone = inject(NgZone);
+    private readonly actions$ = inject(Actions);
+
     setupMainProcessNotification$ = createEffect(
         () =>
             this.actions$.pipe(
@@ -457,16 +464,11 @@ export class OptionsEffects {
             ),
     );
 
-    constructor(
-        private optionsService: OptionsService,
-        private coreService: CoreService,
-        private api: ElectronService,
-        private store: Store<State>,
-        private ngZone: NgZone,
-        private readonly actions$: Actions,
-    ) {
+    constructor() {
+        const {store} = this;
+
         store.dispatch = ((dispatch) => {
-            const result: typeof store.dispatch = (...args) => {
+            const result: typeof store.dispatch = (...args: Parameters<typeof store.dispatch>) => {
                 return this.ngZone.run(() => dispatch(...args));
             };
             return result;

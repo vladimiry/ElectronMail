@@ -1,4 +1,4 @@
-import {Directive, ElementRef, EventEmitter, Injector, Input, NgZone, Output} from "@angular/core";
+import {Directive, ElementRef, EventEmitter, inject, Injector, Input, NgZone, Output} from "@angular/core";
 import {filter, take, takeUntil} from "rxjs/operators";
 import {fromEvent, Observable, of, Subscription} from "rxjs";
 import {editor as monacoEditor, languages as monacoLanguages, Selection as MonacoSelection} from "monaco-editor";
@@ -16,6 +16,11 @@ import {State} from "src/web/browser-window/app/store/reducers/root";
 // so weird not single-purpose directive huh, https://github.com/angular/angular/issues/30080#issuecomment-539194668
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
 export abstract class AbstractMonacoEditorDirective extends NgChangesObservableDirective implements OnInit, OnDestroy {
+    protected readonly injector = inject(Injector);
+    protected readonly store = inject<Store<State>>(Store);
+    private readonly zone = inject(NgZone);
+    private readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
+
     @Input({required: true})
     login!: AccountConfig["login"];
 
@@ -26,19 +31,13 @@ export abstract class AbstractMonacoEditorDirective extends NgChangesObservableD
 
     editorInstance?: ReturnType<typeof monacoEditor.create>;
 
-    protected readonly store: Store<State>;
-
     protected editable$: Observable<boolean> = of(true);
 
-    private readonly zone: NgZone;
-
-    private readonly elementRef: ElementRef<HTMLElement>;
-
-    protected constructor(injector: Injector, private readonly resolveInitialValue: () => string) {
+    protected constructor(
+        // eslint-disable-next-line @angular-eslint/prefer-inject
+        private readonly resolveInitialValue: () => string,
+    ) {
         super();
-        this.store = injector.get<Store<State>>(Store);
-        this.zone = injector.get(NgZone);
-        this.elementRef = injector.get<ElementRef<HTMLElement>>(ElementRef);
     }
 
     ngOnInit(): void {

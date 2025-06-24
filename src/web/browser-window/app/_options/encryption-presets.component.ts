@@ -1,4 +1,4 @@
-import {Component, Input} from "@angular/core";
+import {Component, inject, Input} from "@angular/core";
 import {FormGroup} from "@angular/forms";
 import {map, takeUntil} from "rxjs/operators";
 import {Observable, Subject} from "rxjs";
@@ -16,6 +16,8 @@ import {State} from "src/web/browser-window/app/store/reducers/options";
     preserveWhitespaces: true,
 })
 export class EncryptionPresetsComponent implements OnInit, OnDestroy {
+    private store = inject<Store<State>>(Store);
+
     readonly config$: Observable<Config>;
     readonly unSubscribe$ = new Subject();
     readonly keyDerivation = KEY_DERIVATION_PRESETS;
@@ -25,7 +27,7 @@ export class EncryptionPresetsComponent implements OnInit, OnDestroy {
     @Input({required: true})
     formGroup!: FormGroup;
 
-    constructor(private store: Store<State>) {
+    constructor() {
         this.config$ = this.store.select(OptionsSelectors.FEATURED.config);
     }
 

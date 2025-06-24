@@ -1,4 +1,4 @@
-import {Component, Inject, Injector} from "@angular/core";
+import {Component, inject} from "@angular/core";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 
 import {LoginBaseComponent} from "./login-base.component";
@@ -14,6 +14,8 @@ import {PACKAGE_GITHUB_PROJECT_URL_TOKEN} from "src/web/browser-window/app/app.c
     preserveWhitespaces: true,
 })
 export class SettingsSetupComponent extends LoginBaseComponent {
+    readonly PACKAGE_GITHUB_PROJECT_URL = inject(PACKAGE_GITHUB_PROJECT_URL_TOKEN);
+
     readonly userDataDir = __METADATA__.electronLocations.userDataDir;
 
     passwordConfirm = new FormControl(null, [
@@ -37,13 +39,6 @@ export class SettingsSetupComponent extends LoginBaseComponent {
         password: this.password,
         passwordConfirm: this.passwordConfirm,
     });
-
-    constructor(
-        @Inject(PACKAGE_GITHUB_PROJECT_URL_TOKEN) public readonly PACKAGE_GITHUB_PROJECT_URL: string,
-        protected readonly injector: Injector,
-    ) {
-        super(injector);
-    }
 
     openSettingsFolder(): void {
         this.store.dispatch(

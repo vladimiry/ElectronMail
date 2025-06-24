@@ -1,6 +1,6 @@
 import {Actions, createEffect} from "@ngrx/effects";
 import {concatMap, delay, first, map, mergeMap, withLatestFrom} from "rxjs/operators";
-import {Injectable} from "@angular/core";
+import {inject, Injectable} from "@angular/core";
 import {merge, of, race, throwError, timer} from "rxjs";
 import {produce} from "immer";
 import {select, Store} from "@ngrx/store";
@@ -14,6 +14,9 @@ import {State} from "src/web/browser-window/app/store/reducers/accounts";
 
 @Injectable()
 export class AccountsEffects {
+    private readonly actions$ = inject(Actions);
+    private readonly store = inject<Store<State>>(Store);
+
     readonly wireUpConfigs$ = createEffect(
         () =>
             this.actions$.pipe(
@@ -66,9 +69,4 @@ export class AccountsEffects {
                 }),
             ),
     );
-
-    constructor(
-        private readonly actions$: Actions,
-        private readonly store: Store<State>,
-    ) {}
 }

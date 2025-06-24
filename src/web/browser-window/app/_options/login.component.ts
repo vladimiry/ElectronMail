@@ -1,5 +1,5 @@
 import {combineLatest} from "rxjs";
-import {Component, Injector} from "@angular/core";
+import {Component} from "@angular/core";
 import {filter, take} from "rxjs/operators";
 import {FormGroup} from "@angular/forms";
 import type {OnInit} from "@angular/core";
@@ -21,12 +21,6 @@ export class LoginComponent extends LoginBaseComponent implements OnInit {
         password: this.password,
         savePassword: this.savePassword,
     });
-
-    constructor(
-        injector: Injector,
-    ) {
-        super(injector);
-    }
 
     ngOnInit(): void {
         this.subscription.add(

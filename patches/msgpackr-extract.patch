@@ -1,0 +1,50 @@
+diff --git a/binding.gyp b/binding.gyp
+index 7ff7a52602e3d6a3d2cd2a2d4ed10e0268358eb5..ed257df5ffe6e33ed495511025cae9435da113f8 100644
+--- a/binding.gyp
++++ b/binding.gyp
+@@ -23,6 +23,19 @@
+       "sources": [
+         "src/extract.cpp",
+       ],
++      "xcode_settings": {
++        "OTHER_CPLUSPLUSFLAGS": [ "-std=c++20" ]
++      },
++      "msvs_settings": {
++        "VCCLCompilerTool": {
++          "AdditionalOptions": [ "/std:c++20" ]
++        }
++      },
++      "msbuild_settings": {
++        "ClCompile": {
++          "LanguageStandard": "stdcpp20"
++        }
++      },      
+       "defines": [ "NAPI_DISABLE_CPP_EXCEPTIONS" ],
+       "conditions": [
+         ["OS=='linux'", {
+@@ -33,6 +46,7 @@
+             "-fPIC",
+             "-fvisibility=hidden",
+             "-fvisibility-inlines-hidden",
++            "-std=c++20"
+           ],
+           "conditions": [
+             ["gcc_version>=7", {
+@@ -51,6 +65,9 @@
+             "-O3"
+           ],
+         }],
++        ["OS=='win'", {
++          "cflags_cc": [ "/std:c++20" ]
++        }],        
+         ["enable_v8!='false'", {
+           "defines": ["ENABLE_V8_API=1"]
+         }],
+diff --git a/index.js b/index.js
+index 967188a6f508e93811b1fa92efc1afd2d5eb7375..d3657f6fd6a5a0a3a0cbc9634cef07444d9df4c1 100644
+--- a/index.js
++++ b/index.js
+@@ -1 +1 @@
+-module.exports = require('node-gyp-build-optional-packages')(__dirname);
+\ No newline at end of file
++module.exports = require('./build/Release/extract.node')

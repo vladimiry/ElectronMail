@@ -1,5 +1,5 @@
 import {AngularWebpackPlugin, AngularWebpackPluginOptions} from "@ngtools/webpack";
-import {LegacyNgcOptions, StrictTemplateOptions} from "@angular/compiler-cli/src/ngtsc/core/api";
+import {LegacyNgcOptions, TypeCheckingOptions} from "@angular/compiler-cli/src/ngtsc/core/api";
 import linkerPlugin from "@angular/compiler-cli/linker/babel";
 import {readConfiguration} from "@angular/compiler-cli";
 
@@ -84,9 +84,12 @@ const config = buildBaseWebConfig({
     },
     resolve: {alias: {images: rootRelativePath("images")}},
     plugins: [(() => {
-        const strictTemplateOptions: NoExtraProps<Pick<NoExtraProps<Required<StrictTemplateOptions>>, "strictTemplates">> = {
-            // if "true", implies all template strictness flags below (unless individually disabled)
-            // see https://angular.io/guide/template-typecheck
+        const typeCheckingOptions: NoExtraProps<
+            Pick<NoExtraProps<Required<TypeCheckingOptions>>, "strictTemplates">
+        > = {
+            // Unless otherwise commented, each "TypeCheckingOptions" option is set to the value for "strictTemplates" ("true" when
+            // "strictTemplates" is "true" and conversely, the other way around).
+            // See https://angular.io/guide/template-typecheck for details.
             strictTemplates: angularCompilationFlags.ivy,
         };
 
@@ -103,7 +106,7 @@ const config = buildBaseWebConfig({
             preserveWhitespaces: false,
             disableTypeScriptVersionCheck: true,
             ...legacyNgcOptions,
-            ...strictTemplateOptions,
+            ...typeCheckingOptions,
             ...readConfiguration(tsConfigFile).options,
         };
 
@@ -123,7 +126,6 @@ const config = buildBaseWebConfig({
     optimization: {
         splitChunks: {
             cacheGroups: {
-                defaultVendors: false,
                 vendors: {
                     test: /[\\/]node_modules[\\/]/,
                     priority: -10,

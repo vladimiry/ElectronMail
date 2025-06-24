@@ -2,7 +2,7 @@ import path from "path";
 
 import {addCommandLineArgs, build, DISABLE_SANDBOX_ARGS_LINE, ensureFileHasNoSuidBit} from "scripts/electron-builder/lib";
 import {assertPathIsInCwd, catchTopLeventAsync, execShell, resolveExecutable} from "scripts/lib";
-import {BINARY_NAME} from "src/shared/const";
+import {PRODUCT_NAME} from "src/shared/const";
 
 // TODO pass destination directory instead of hardcoding it ("--appimage-extract" doesn't support destination parameter at the moment)
 const extractedImageFolderName = "squashfs-root";
@@ -18,10 +18,12 @@ async function unpack({packageFile}: {packageFile: string}): Promise<{packageDir
     return {packageDir};
 }
 
+// https://github.com/electron-userland/electron-builder-binaries/releases/download/appimage-12.0.1/appimage-12.0.1.7z
+
 async function resolveAppImageTool(): Promise<{command: string}> {
     const {command} = await resolveExecutable(
-        "https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage",
-        "df3baf5ca5facbecfc2f3fa6713c29ab9cefa8fd8c1eac5d283b79cab33e4acb",
+        "https://github.com/AppImage/appimagetool/releases/download/1.9.0/appimagetool-x86_64.AppImage",
+        "46fdd785094c7f6e545b61afcfb0f3d98d8eab243f644b4b17698c01d06083d1",
         "appimagetool",
     );
     const cwd = path.dirname(command);
@@ -41,7 +43,7 @@ async function packAndCleanup({packageFile, packageDir}: {packageFile: string; p
         await execShell(["chmod", ["0755", path.join(packageDir, "./AppRun")]]);
     }
     await execShell(["rm", ["--force", packageFile]]);
-    await execShell([command, ["-n", "--comp", "xz", packageDir, packageFile], {env: {...process.env, ARCH: "x86_64"}}], {
+    await execShell([command, ["-n", "--comp", "zstd", packageDir, packageFile], {env: {...process.env, ARCH: "x86_64"}}], {
         printEnvWhitelist: ["ARCH"],
     });
     assertPathIsInCwd(packageDir);
@@ -56,7 +58,7 @@ async function postProcess({packageFile}: {packageFile: string}): Promise<void> 
         searchValue,
         replaceWith: `${searchValue} ${DISABLE_SANDBOX_ARGS_LINE}`,
     });
-    ensureFileHasNoSuidBit(path.join(packageDir, BINARY_NAME));
+    ensureFileHasNoSuidBit(path.join(packageDir, PRODUCT_NAME));
     await packAndCleanup({packageDir, packageFile});
 }
 

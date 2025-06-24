@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, Inject, Injector} from "@angular/core";
+import {ChangeDetectionStrategy, Component} from "@angular/core";
 import {debounceTime, distinctUntilChanged, filter, map, pairwise, takeUntil, withLatestFrom} from "rxjs/operators";
 import {fromEvent, merge, Subscription} from "rxjs";
 import type {OnInit} from "@angular/core";
@@ -76,8 +76,8 @@ export class DbViewMonacoEditorComponent extends AbstractMonacoEditorDirective i
 
     private selectedMail = false;
 
-    constructor(@Inject(Injector) injector: Injector) {
-        super(injector, () => this.codeSnippets[0]?.value ?? "");
+    constructor() {
+        super(() => this.codeSnippets[0]?.value ?? "");
     }
 
     protected parentElSelectorForGettingWidth(): string {

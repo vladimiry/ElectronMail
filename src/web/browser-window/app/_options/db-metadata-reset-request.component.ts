@@ -1,4 +1,4 @@
-import {Component, ElementRef, Inject} from "@angular/core";
+import {Component, ElementRef, inject} from "@angular/core";
 import {map} from "rxjs/operators";
 import {Observable, Subscription} from "rxjs";
 import type {OnDestroy, OnInit} from "@angular/core";
@@ -17,15 +17,15 @@ import {State} from "src/web/browser-window/app/store/reducers/options";
     templateUrl: "./db-metadata-reset-request.component.html",
 })
 export class DbMetadataResetRequestComponent implements OnInit, OnDestroy {
+    readonly PACKAGE_GITHUB_PROJECT_URL = inject(PACKAGE_GITHUB_PROJECT_URL_TOKEN);
+    private readonly store = inject<Store<State>>(Store);
+    private readonly elementRef = inject(ElementRef);
+
     public readonly resettingDbMetadata$: Observable<boolean>;
     private readonly logger = getWebLogger(__filename, nameof(DbMetadataResetRequestComponent));
     private readonly subscription = new Subscription();
 
-    constructor(
-        @Inject(PACKAGE_GITHUB_PROJECT_URL_TOKEN) public readonly PACKAGE_GITHUB_PROJECT_URL: string,
-        private readonly store: Store<State>,
-        private readonly elementRef: ElementRef,
-    ) {
+    constructor() {
         this.resettingDbMetadata$ = this.store.pipe(
             select(OptionsSelectors.FEATURED.progress),
             map((progress) => Boolean(progress.resettingDbMetadata)),

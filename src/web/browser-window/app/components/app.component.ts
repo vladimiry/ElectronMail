@@ -1,4 +1,4 @@
-import {Component, HostListener} from "@angular/core";
+import {Component, HostListener, inject} from "@angular/core";
 import {Location} from "@angular/common";
 import {setTheme} from "ngx-bootstrap/utils";
 import {Store} from "@ngrx/store";
@@ -23,15 +23,15 @@ export type CloseableOutletsType =
     `,
 })
 export class AppComponent {
+    private location = inject(Location);
+    private store = inject<Store<State>>(Store);
+
     private closeableOutlets: CloseableOutletsType[] = [
         NOTIFICATIONS_OUTLET,
         SETTINGS_OUTLET,
     ];
 
-    constructor(
-        private location: Location,
-        private store: Store<State>,
-    ) {
+    constructor() {
         setTheme("bs4");
     }
 

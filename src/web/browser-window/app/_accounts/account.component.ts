@@ -1,8 +1,18 @@
 import type {Action} from "@ngrx/store";
 import {BehaviorSubject, combineLatest, Subject, timer} from "rxjs";
-import {Component, ComponentRef, ElementRef, HostBinding, Injector, Input, NgZone, ViewChild, ViewContainerRef} from "@angular/core";
+import {Component, ComponentRef, ElementRef, HostBinding, inject, Input, NgZone, ViewChild, ViewContainerRef} from "@angular/core";
 import {
-    distinctUntilChanged, filter, first, map, mergeMap, pairwise, startWith, switchMap, take, takeUntil, withLatestFrom,
+    distinctUntilChanged,
+    filter,
+    first,
+    map,
+    mergeMap,
+    pairwise,
+    startWith,
+    switchMap,
+    take,
+    takeUntil,
+    withLatestFrom,
 } from "rxjs/operators";
 import type {OnDestroy, OnInit} from "@angular/core";
 import {select, Store} from "@ngrx/store";
@@ -31,6 +41,10 @@ const componentDestroyingNotificationSubject$ = new Subject<void>();
     styleUrls: ["./account.component.scss"],
 })
 export class AccountViewComponent extends AccountLoginAwareDirective implements OnInit, OnDestroy {
+    private readonly core = inject(CoreService);
+    private readonly store = inject<Store<State>>(Store);
+    private readonly zone = inject(NgZone);
+
     static componentDestroyingNotification$ = componentDestroyingNotificationSubject$.asObservable();
 
     private readonly logger = getWebLogger(__filename, nameof(AccountViewComponent));
@@ -53,13 +67,8 @@ export class AccountViewComponent extends AccountLoginAwareDirective implements 
         return `${this.class} ${this.viewModeClass}`;
     }
 
-    constructor(
-        private readonly core: CoreService,
-        private readonly store: Store<State>,
-        private readonly zone: NgZone,
-        injector: Injector,
-    ) {
-        super(injector);
+    constructor() {
+        super();
         this.logger.info();
     }
 

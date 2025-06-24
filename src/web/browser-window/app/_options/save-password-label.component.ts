@@ -1,4 +1,4 @@
-import {Component, ElementRef, Inject, Input} from "@angular/core";
+import {Component, ElementRef, inject, Input} from "@angular/core";
 import {Observable, Subscription} from "rxjs";
 import type {OnDestroy, OnInit} from "@angular/core";
 import {select, Store} from "@ngrx/store";
@@ -17,6 +17,10 @@ import {State} from "src/web/browser-window/app/store/reducers/options";
     templateUrl: "./save-password-label.component.html",
 })
 export class SavePasswordLabelComponent implements OnInit, OnDestroy {
+    readonly PACKAGE_GITHUB_PROJECT_URL = inject(PACKAGE_GITHUB_PROJECT_URL_TOKEN);
+    private readonly store = inject<Store<State>>(Store);
+    private readonly elementRef = inject(ElementRef);
+
     readonly userDataDir = __METADATA__.electronLocations.userDataDir;
 
     @Input({required: true})
@@ -36,11 +40,7 @@ export class SavePasswordLabelComponent implements OnInit, OnDestroy {
 
     private readonly subscription = new Subscription();
 
-    constructor(
-        @Inject(PACKAGE_GITHUB_PROJECT_URL_TOKEN) public readonly PACKAGE_GITHUB_PROJECT_URL: string,
-        private readonly store: Store<State>,
-        private readonly elementRef: ElementRef,
-    ) {
+    constructor() {
         this.keytarSupport$ = this.store.pipe(
             select(OptionsSelectors.FEATURED.keytarSupport),
         );

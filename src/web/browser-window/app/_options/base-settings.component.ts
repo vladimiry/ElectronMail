@@ -1,5 +1,5 @@
 import {AbstractControl, FormControl, FormGroup, Validators} from "@angular/forms";
-import {Component, ElementRef, Inject} from "@angular/core";
+import {Component, ElementRef, inject} from "@angular/core";
 import {distinctUntilChanged, distinctUntilKeyChanged, first, map} from "rxjs/operators";
 import {Observable, Subscription} from "rxjs";
 import type {OnDestroy, OnInit} from "@angular/core";
@@ -21,6 +21,10 @@ import {State} from "src/web/browser-window/app/store/reducers/options";
     preserveWhitespaces: true,
 })
 export class BaseSettingsComponent implements OnInit, OnDestroy {
+    readonly PACKAGE_GITHUB_PROJECT_URL = inject(PACKAGE_GITHUB_PROJECT_URL_TOKEN);
+    private readonly store = inject<Store<State>>(Store);
+    private readonly elementRef = inject(ElementRef);
+
     readonly userDataDir = __METADATA__.electronLocations.userDataDir;
 
     readonly logLevels = LOG_LEVELS.map((value) => ({title: value.charAt(0).toUpperCase() + value.slice(1), value}));
@@ -89,11 +93,7 @@ export class BaseSettingsComponent implements OnInit, OnDestroy {
 
     private readonly subscription = new Subscription();
 
-    constructor(
-        @Inject(PACKAGE_GITHUB_PROJECT_URL_TOKEN) public readonly PACKAGE_GITHUB_PROJECT_URL: string,
-        private readonly store: Store<State>,
-        private readonly elementRef: ElementRef,
-    ) {
+    constructor() {
         this.$trayIconColor = this.store.pipe(select(OptionsSelectors.CONFIG.trayIconColor));
         this.$unreadBgColor = this.store.pipe(select(OptionsSelectors.CONFIG.unreadBgColor));
         this.$unreadTextColor = this.store.pipe(select(OptionsSelectors.CONFIG.unreadTextColor));

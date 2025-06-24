@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, ElementRef} from "@angular/core";
+import {ChangeDetectionStrategy, Component, ElementRef, inject} from "@angular/core";
 import {Observable, Subscription} from "rxjs";
 import type {OnDestroy, OnInit} from "@angular/core";
 import {pairwise} from "rxjs/operators";
@@ -19,16 +19,16 @@ import {State} from "src/web/browser-window/app/store/reducers/notification";
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NotificationListComponent implements OnInit, OnDestroy {
+    private store = inject<Store<State>>(Store);
+    private elementRef = inject(ElementRef);
+
     $items: Observable<NotificationItem[]>;
 
     private readonly logger = getWebLogger(__filename, nameof(NotificationListComponent));
 
     private subscription = new Subscription();
 
-    constructor(
-        private store: Store<State>,
-        private elementRef: ElementRef,
-    ) {
+    constructor() {
         this.$items = this.store.select(NotificationSelectors.FEATURED.items);
     }
 

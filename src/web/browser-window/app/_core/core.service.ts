@@ -2,7 +2,7 @@ import type {Action} from "@ngrx/store";
 import {Actions} from "@ngrx/effects";
 import {concat, EMPTY, lastValueFrom, Observable, race, timer} from "rxjs";
 import {filter, first, mergeMap, take, takeUntil} from "rxjs/operators";
-import {Injectable, NgZone} from "@angular/core";
+import {inject, Injectable, NgZone} from "@angular/core";
 import {select, Store} from "@ngrx/store";
 import {URL} from "@ghostery/url-parser";
 import UUID from "pure-uuid";
@@ -23,11 +23,9 @@ import {WebAccount} from "src/web/browser-window/app/model";
 
 @Injectable()
 export class CoreService {
-    constructor(
-        private store: Store<State>,
-        private zone: NgZone,
-        private readonly actions$: Actions,
-    ) {}
+    private store = inject<Store<State>>(Store);
+    private zone = inject(NgZone);
+    private readonly actions$ = inject(Actions);
 
     parseSessionStorageOrigin(
         {entryUrl}: Pick<WebAccount["accountConfig"], "entryUrl">,

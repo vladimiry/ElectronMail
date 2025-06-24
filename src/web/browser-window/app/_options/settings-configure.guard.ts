@@ -1,6 +1,6 @@
 import type {CanActivate} from "@angular/router";
 import {concatMap} from "rxjs/operators";
-import {Injectable} from "@angular/core";
+import {inject, Injectable} from "@angular/core";
 import {Observable, of} from "rxjs";
 import {select, Store} from "@ngrx/store";
 
@@ -10,9 +10,7 @@ import {State} from "src/web/browser-window/app/store/reducers/options";
 
 @Injectable()
 export class SettingsConfigureGuard implements CanActivate {
-    constructor(
-        private store: Store<State>,
-    ) {}
+    private store = inject<Store<State>>(Store);
 
     canActivate(): Observable<boolean> {
         return this.store.pipe(

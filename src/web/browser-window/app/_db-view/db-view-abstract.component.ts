@@ -11,9 +11,9 @@ import {WebAccountPk} from "src/web/browser-window/app/model";
 
 @Injectable({providedIn: "root"})
 export class AnimationFrameTickScheduler {
-    private isScheduled = false;
+    private readonly appRef = inject(ApplicationRef);
 
-    constructor(private readonly appRef: ApplicationRef) {}
+    private isScheduled = false;
 
     schedule(): void {
         if (this.isScheduled) return;
@@ -67,7 +67,7 @@ export abstract class DbViewAbstractComponent extends NgChangesObservableDirecti
     private readonly cdRef: ChangeDetectorRef;
     private readonly tickScheduler: AnimationFrameTickScheduler;
 
-    protected constructor() {
+    public constructor() {
         super();
         this.cdRef = inject(ChangeDetectorRef);
         this.tickScheduler = inject(AnimationFrameTickScheduler);

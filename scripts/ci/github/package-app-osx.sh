@@ -1,11 +1,17 @@
 #!/bin/bash
 
-set -ev
+set -e  # exit on error
+set -v  # verbose output
 
-ARCH="${ELECTRON_DEST_MAIL_ARCH:-x64}" # defaults to "x64"
+if [ -z "${ELECTRON_MAIL_NODE_DEST_ARCH}" ]; then
+  echo "❌ Error: Environment variable ELECTRON_MAIL_NODE_DEST_ARCH is not set." >&2
+  exit 1
+fi
 
 echo "::group::tweak the system"
-brew install automake libtool
+if [[ "$ELECTRON_MAIL_NODE_DEST_ARCH" == "arm64" ]]; then
+  brew install automake libtool
+fi
 echo "::endgroup::"
 
 echo "::group::compile native modules"
@@ -13,17 +19,12 @@ pnpm run prepare-native-deps
 echo "::endgroup::"
 
 echo "::group::test e2e"
-# TODO arm64: enable e2e tests running for darwin-arm64 build, see the blocker https://github.com/actions/virtual-environments/issues/2187
-# TODO get back e2e test on macos-x64 system
-# disabled since previously successful/released tags and new ones too started to get "electron.launch: Process failed to launch!" error on "github actions ci"
-#if [[ ${ARCH} == "x64" ]]; then
-#  pnpm run test:e2e
-#fi
+pnpm run test:e2e
 echo "::endgroup::"
 
 echo "::group::package"
 pnpm run build:electron-builder-hooks
-npm run electron-builder:shortcut -- --${ARCH} --publish never
+pnpm run electron-builder:dist --${ELECTRON_MAIL_NODE_DEST_ARCH}
 echo "::endgroup::"
 
 echo "::group::hash & upload"

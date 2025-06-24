@@ -15,13 +15,15 @@ sudo apt-get install --yes --no-install-recommends snapcraft squashfs-tools
 sudo apt-get install --yes --no-install-recommends libsecret-1-dev
 # purpose: pacman build fails also due missing "bsdtar", see https://github.com/jordansissel/fpm/issues/1453#issuecomment-356138549
 sudo apt-get install --yes --no-install-recommends libarchive-tools
+# purpose: AppImage re-packaging
+sudo apt-get install --yes --no-install-recommends desktop-file-utils
 # </purpose: native modules compiling>
 export CC=gcc-10
 export CXX=g++-10
 echo "::endgroup::"
 
-# assuming that "ubuntu-20.04" image comes with glibc v2.31, see https://github.com/vladimiry/ElectronMail/issues/389#issuecomment-812071591
-GLIBC_INFO_EXPECTED_SUB="release version 2.31"
+# assuming that "ubuntu-22.04" image comes with glibc v2.31, see https://github.com/vladimiry/ElectronMail/issues/389#issuecomment-812071591
+GLIBC_INFO_EXPECTED_SUB="release version 2.35"
 GLIBC_INFO=$(lsof -p $$ | grep libc | awk ' { print $NF" --version"; } ' | sh)
 echo $GLIBC_INFO
 if [[ "$GLIBC_INFO" != *"$GLIBC_INFO_EXPECTED_SUB"* ]]; then

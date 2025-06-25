@@ -1,8 +1,8 @@
 diff --git a/packages/shared/lib/helpers/sentry.ts b/packages/shared/lib/helpers/sentry.ts
-index 10fbb88611..4a7ba54f7a 100644
+index 52cf78fdc8..32ac55564b 100644
 --- a/packages/shared/lib/helpers/sentry.ts
 +++ b/packages/shared/lib/helpers/sentry.ts
-@@ -181,108 +181,14 @@ function main({
+@@ -182,120 +182,7 @@ function main({
      ignore = ({ host }) => isLocalhost(host),
      denyUrls = getDefaultDenyUrls(),
      ignoreErrors = getDefaultIgnoreErrors(),
@@ -71,6 +71,11 @@ index 10fbb88611..4a7ba54f7a 100644
 -                        [breadcrumb.data.to] = breadcrumb.data.to.split('#');
 -                    }
 -
+-                    if (breadcrumb.category === 'fetch' && breadcrumb.data) {
+-                        // Redact email addresses in breadcrumb messages
+-                        breadcrumb.message = breadcrumb.data.url.replace(/Email=[^&]+/, 'Email=[Filtered]');
+-                    }
+-
 -                    // Button titles may contain accidental PII
 -                    if (
 -                        breadcrumb.category === 'ui.click' &&
@@ -81,6 +86,25 @@ index 10fbb88611..4a7ba54f7a 100644
 -                    }
 -
 -                    return breadcrumb;
+-                });
+-            }
+-
+-            // This will prevent from sending the password in the public url. Ex: https://drive.proton.dev/urls/TBYS1295RG#[password]
+-            if (event.exception && event.exception.values) {
+-                event.exception.values = event.exception.values.map((error) => {
+-                    if (
+-                        error.value &&
+-                        error.value.includes('/urls/') &&
+-                        error.value.match(new RegExp(`#[a-zA-Z0-9]{${SHARE_GENERATED_PASSWORD_LENGTH}}\\b`))
+-                    ) {
+-                        // Redact sensitive information in the error message
+-                        error.value = error.value.replace(
+-                            new RegExp(`#[a-zA-Z0-9]{${SHARE_GENERATED_PASSWORD_LENGTH}}\\b.*$`),
+-                            '#[Filtered]'
+-                        );
+-                    }
+-
+-                    return error;
 -                });
 -            }
 -
@@ -96,28 +120,15 @@ index 10fbb88611..4a7ba54f7a 100644
 -        scope.setTag('appVersion', APP_VERSION);
 -    });
 -}
-+}: SentryOptions) {}
-
++}: SentryOptions) { }
+ 
  export const traceError = (...args: Parameters<typeof captureException>) => {
--    if (!isLocalhost(window.location.host)) {
--        captureException(...args);
--        Availability.mark(AvailabilityTypes.SENTRY);
--    }
-+    console.error(...args);
- };
-
- export const captureMessage = (...args: Parameters<typeof sentryCaptureMessage>) => {
--    if (!isLocalhost(window.location.host)) {
--        sentryCaptureMessage(...args);
--    }
-+    console.log(...args);
- };
-
- type MailInitiative = 'drawer-security-center' | 'composer' | 'assistant' | 'mail-onboarding';
-@@ -295,13 +201,7 @@ type CaptureExceptionArgs = Parameters<typeof captureException>;
+     if (!isLocalhost(window.location.host)) {
+@@ -342,15 +229,7 @@ type CaptureExceptionArgs = Parameters<typeof captureException>;
+  * @param initiative
   * @param error
   */
- export const traceInitiativeError = (initiative: MailInitiative, error: CaptureExceptionArgs[0]) => {
+-export const traceInitiativeError = (initiative: SentryInitiative, error: CaptureExceptionArgs[0]) => {
 -    if (!isLocalhost(window.location.host)) {
 -        captureException(error, {
 -            tags: {
@@ -125,20 +136,23 @@ index 10fbb88611..4a7ba54f7a 100644
 -            },
 -        });
 -    }
-+    console.error(initiative, error);
- };
-
+-};
++export const traceInitiativeError = (initiative: SentryInitiative, error: CaptureExceptionArgs[0]) => console.error(initiative, error);
+ 
  /**
-@@ -313,11 +213,7 @@ export const captureInitiativeMessage: (initiative: SentryInitiative, message: s
+  * Capture message with an additional initiative tag
+@@ -360,12 +239,6 @@ export const traceInitiativeError = (initiative: SentryInitiative, error: Captur
+ export const captureInitiativeMessage: (initiative: SentryInitiative, message: string) => void = (
      initiative,
      message
- ) => {
+-) => {
 -    captureMessage(message, {
 -        tags: {
 -            initiative,
 -        },
 -    });
-+    console.log(initiative, message);
- };
-
+-};
++) => console.log(initiative, message);
+ 
  export default main;
+-- 

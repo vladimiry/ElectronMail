@@ -15,7 +15,7 @@ export type LazyKeys = StrictExclude<
     StrictExtract<
         Keys,
         | "../../packages/components/hooks/useGetVerificationPreferences.ts"
-        | "../../packages/mail/mailSettings/hooks.ts"
+        | "../../packages/mail/store/mailSettings/hooks.ts"
         | "./src/app/helpers/attachment/attachmentLoader.ts"
         | "./src/app/hooks/message/useGetMessageKeys.ts"
         | "./src/app/hooks/contact/useContacts.ts"
@@ -29,7 +29,7 @@ export type ImmediateKeys = StrictExclude<Keys, LazyKeys>;
 //      like: typeof import("output/git/proton-mail/src/app/containers/PageContainer.tsx")
 export type ProviderInternals = AddInitializedProp<
     & {
-        [K in StrictExtract<ImmediateKeys, "./src/app/containers/PageContainer.tsx">]: DefineObservableValue<
+        [K in StrictExtract<ImmediateKeys, "./src/app/components/layout/PrivateLayout.tsx">]: DefineObservableValue<
             {
                 readonly privateScope: null | {
                     // https://github.com/ProtonMail/WebClients/blob/a3e170b4831899c1bc6cda3bea20b668a7670541/packages/components/hooks/useGetVerificationPreferences.ts#L31
@@ -61,12 +61,11 @@ export type ProviderInternals = AddInitializedProp<
     & WrapToValueProp<
         & {
             [K in StrictExtract<ImmediateKeys, "./src/app/helpers/message/messageDecrypt.ts">]: {
-                // https://github.com/ProtonMail/WebClients/blob/03822ade27ff3cbaa7549492232f290cb14924e8/applications/mail/src/app/helpers/message/messageDecrypt.ts#L167
+                // https://github.com/ProtonMail/WebClients/blob/6a18ff6f6b95c141a22adfeacb3a3ab00519e435/applications/mail/src/app/helpers/message/messageDecrypt.ts#L100
                 readonly decryptMessage: (
                     message: RestModel.Message,
-                    privateKeys: MessageKeys["privateKeys"],
-                    // getAttachment?: (ID: string) => DecryptResultPmcrypto | undefined,
-                    // onUpdateAttachment?: (ID: string, attachment: DecryptResultPmcrypto) => void,
+                    privateKeys: MessageKeys["decryptionKeys"],
+                    // onUpdateAttachment?: (ID: string, attachment: DecryptedAttachment) => void,
                     // password?: string
                 ) => Promise<
                     Readonly<{
@@ -128,7 +127,10 @@ export type ProviderInternals = AddInitializedProp<
     >
 >;
 
-type PrivateScope = StrictExclude<Unpacked<ProviderInternals["./src/app/containers/PageContainer.tsx"]["value$"]>["privateScope"], null>;
+type PrivateScope = StrictExclude<
+    Unpacked<ProviderInternals["./src/app/components/layout/PrivateLayout.tsx"]["value$"]>["privateScope"],
+    null
+>;
 
 export type ProviderInternalsLazy = AddInitializedProp<
     & {
@@ -142,7 +144,11 @@ export type ProviderInternalsLazy = AddInitializedProp<
         };
     }
     & { [K in StrictExtract<LazyKeys, "./src/app/hooks/contact/useContacts.ts">]: {useContactsMap: () => PrivateScope["contactsMap"]} }
-    & { [K in StrictExtract<LazyKeys, "../../packages/mail/mailSettings/hooks.ts">]: {useMailSettings: () => PrivateScope["mailSettings"]} }
+    & {
+        [K in StrictExtract<LazyKeys, "../../packages/mail/store/mailSettings/hooks.ts">]: {
+            useMailSettings: () => PrivateScope["mailSettings"];
+        };
+    }
     & {
         [K in StrictExtract<LazyKeys, "./src/app/helpers/attachment/attachmentLoader.ts">]: {
             getDecryptedAttachment: PrivateScope["getDecryptedAttachment"];
@@ -236,8 +242,7 @@ export interface VerificationPreferences {
 }
 
 export interface MessageKeys {
-    readonly publicKeys: readonly unknown[];
-    readonly privateKeys: readonly unknown[];
+    readonly decryptionKeys: readonly unknown[];
 }
 
 export interface MessageVerification {

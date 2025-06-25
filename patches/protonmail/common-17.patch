@@ -1,0 +1,395 @@
+diff --git a/packages/shared/lib/helpers/desktop.ts b/packages/shared/lib/helpers/desktop.ts
+index 23850e082c..e96178c368 100644
+--- a/packages/shared/lib/helpers/desktop.ts
++++ b/packages/shared/lib/helpers/desktop.ts
+@@ -1,15 +1,14 @@
+-import UAParser from 'ua-parser-js';
+-
+ import type { APP_NAMES } from '../constants';
+ import { APPS } from '../constants';
+-import { isLinux, isMac, isWindows } from './browser';
+-
+-const uaParser = new UAParser();
+-const ua = uaParser.getResult();
++import {
++  isLinux,
++  isMac,
++  isWindows,
++} from './browser';
+
+ export const SUPPORTED_ELECTRON_APP: APP_NAMES[] = [APPS.PROTONACCOUNT, APPS.PROTONCALENDAR, APPS.PROTONMAIL];
+
+-export const isElectronApp = /electron/i.test(ua.ua);
++export const isElectronApp = false;
+ export const isElectronOnMac = isElectronApp && isMac();
+ export const isElectronOnWindows = isElectronApp && isWindows();
+ export const isElectronOnLinux = isElectronApp && isLinux();
+@@ -24,12 +23,11 @@ export const isElectronOnInboxApps = (app: APP_NAMES) => {
+
+ /* Electron apps built with Electron Forge will inject the `productName` and
+  * `version` properties of the app's package.json in the user-agent. */
+-export const isElectronMail = isElectronApp && /ProtonMail/i.test(ua.ua);
+-export const isElectronPass = isElectronApp && /ProtonPass/i.test(ua.ua);
++export const isElectronMail = isElectronApp;
++export const isElectronPass = isElectronApp;
+
+ /*
+  * The version of the application is injected in the user-agent by Electron Forge.
+  * This method works if the version uses the following format: `x.y.z`.
+  */
+-export const electronAppVersion = ua.ua.match(/((ProtonMail|ProtonPass)\/)(?<version>([0-9][.]).{3})/i)?.groups
+-    ?.version;
++export const electronAppVersion = undefined;
+
+diff --git a/packages/shared/lib/helpers/browser.ts b/packages/shared/lib/helpers/browser.ts
+index 5a82fb1e2c..6bc1d54ca6 100644
+--- a/packages/shared/lib/helpers/browser.ts
++++ b/packages/shared/lib/helpers/browser.ts
+@@ -3,6 +3,23 @@ import UAParser from 'ua-parser-js';
+ import { Version } from '@proton/shared/lib/helpers/version';
+ 
+ const uaParser = new UAParser();
++
++{
++    const platform = String(navigator.platform);
++    const userAgents = {
++        linux: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
++        windows: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
++        macos: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
++    } as const;
++    uaParser.setUA(
++        platform.startsWith("Linux")
++            ? userAgents.linux
++            : platform.startsWith("Win")
++                ? userAgents.windows
++                : userAgents.macos
++    );
++}
++
+ const ua = uaParser.getResult();
+ 
+ export const hasModulesSupport = () => {
+@@ -205,13 +222,12 @@ export const requireDirectAction = () => isSafari() || isFirefox() || isEdgeChro
+  * @links { https://mathiasbynens.github.io/rel-noopener/}
+  */
+ export const openNewTab = (url: string) => {
+-    const anchor = document.createElement('a');
+-
+-    anchor.setAttribute('rel', 'noreferrer nofollow noopener');
+-    anchor.setAttribute('target', '_blank');
+-    anchor.href = url;
+-
+-    return anchor.click();
++    window.dispatchEvent(
++        new CustomEvent(
++            "electron-mail:packages/shared/lib/helpers/browser.ts:openNewTab",
++            { detail: { url } },
++        ),
++    );
+ };
+ 
+ // On safari < 14 the Version cookie is sent for index.html file but
+
+diff --git a/packages/components/components/link/SettingsLink.tsx b/packages/components/components/link/SettingsLink.tsx
+index 5081c4003..cde37c0cb 100644
+--- a/packages/components/components/link/SettingsLink.tsx
++++ b/packages/components/components/link/SettingsLink.tsx
+@@ -48,7 +48,7 @@ const SettingsLink = ({ path, app, children, ...rest }: Props, ref: Ref<HTMLAnch
+             ref={ref}
+             toApp={APPS.PROTONACCOUNT}
+             // If going to settings for the same app
+-            target={canOpenInSameTab(APP_NAME, settingsApp, toSettingsForApp) ? '_self' : '_blank'}
++            target={canOpenInSameTab(APP_NAME, settingsApp, toSettingsForApp) || app === APPS.PROTONVPN_SETTINGS ? '_self' : '_blank'}
+             {...rest}
+         >
+             {children}
+
+diff --git a/packages/components/helpers/earlyAccessDesynchronization.ts b/packages/components/helpers/earlyAccessDesynchronization.ts
+index 36bd0c712..c2fb3681c 100644
+--- a/packages/components/helpers/earlyAccessDesynchronization.ts
++++ b/packages/components/helpers/earlyAccessDesynchronization.ts
+@@ -42,6 +42,7 @@ export const handleEarlyAccessDesynchronization = ({
+     earlyAccessScope: Feature<Environment> | undefined;
+     appName: APP_NAMES;
+ }) => {
++    return;
+     if (doesNotSupportEarlyAccessVersion()) {
+         return;
+     }
+
+diff --git a/packages/components/containers/app/StandaloneApp.tsx b/packages/components/containers/app/StandaloneApp.tsx
+index 69e6172ef0..a032bc484b 100644
+--- a/packages/components/containers/app/StandaloneApp.tsx
++++ b/packages/components/containers/app/StandaloneApp.tsx
+@@ -16,7 +16,7 @@ import useInstance from '@proton/hooks/useInstance';
+ import { ProtonStoreProvider } from '@proton/redux-shared-store';
+ import { ignoredActions, ignoredPaths } from '@proton/redux-shared-store/sharedSerializable';
+ import createApi from '@proton/shared/lib/api/createApi';
+-import { APPS } from '@proton/shared/lib/constants';
++import { APPS, ELECTRON_MAIL_APPS, APPS_CONFIGURATION } from '@proton/shared/lib/constants';
+ import { replaceUrl } from '@proton/shared/lib/helpers/browser';
+ import type { ProtonConfig } from '@proton/shared/lib/interfaces';
+ import { createUnauthenticatedApi } from '@proton/shared/lib/unauthApi/unAuthenticatedApi';
+@@ -25,7 +25,7 @@ import noop from '@proton/utils/noop';
+ 
+ import '@proton/styles/scss/_proton-account.scss';
+ 
+-const config = { APP_NAME: APPS.PROTONACCOUNT, APP_VERSION: '5.0.999.999', API_URL: '/api' } as ProtonConfig;
++const config = { APP_NAME: APPS.PROTONACCOUNT, APP_VERSION: '5.0.999.999', API_URL: '___ELECTRON_MAIL_PROTON_API_ENTRY_URL_PLACEHOLDER___' } as ProtonConfig;
+ const api = createApi({ config });
+ const authentication = createAuthentication();
+ const unauthenticatedApi = createUnauthenticatedApi(api);
+@@ -77,7 +77,14 @@ const Component = () => {
+                                                 onStartAuth={() => unauthenticatedApi.startUnAuthFlow()}
+                                                 onLogin={async (args) => {
+                                                     authentication.login(args.data);
+-                                                    window.location.pathname = '/';
++
++                                                    {
++                                                        const appTypeSetByElectronMail = window.sessionStorage.getItem("electron_mail:proton_app_name");
++                                                        window.location.pathname = ELECTRON_MAIL_APPS.includes(appTypeSetByElectronMail)
++                                                            ? APPS_CONFIGURATION[appTypeSetByElectronMail].publicPath
++                                                            : '/';
++                                                    }
++
+                                                     return { state: 'complete' };
+                                                 }}
+                                             />
+--
+
+diff --git a/packages/components/containers/login/MinimalLoginContainer.tsx b/packages/components/containers/login/MinimalLoginContainer.tsx
+index 4fc08ba6e4..a07d4241f3 100644
+--- a/packages/components/containers/login/MinimalLoginContainer.tsx
++++ b/packages/components/containers/login/MinimalLoginContainer.tsx
+@@ -4,8 +4,6 @@ import { useEffect, useRef, useState } from 'react';
+ import { c } from 'ttag';
+ 
+ import { Button, CircleLoader } from '@proton/atoms';
+-import Checkbox from '@proton/components/components/input/Checkbox';
+-import Label from '@proton/components/components/label/Label';
+ import InputFieldTwo from '@proton/components/components/v2/field/InputField';
+ import PasswordInputTwo from '@proton/components/components/v2/input/PasswordInput';
+ import useFormErrors from '@proton/components/components/v2/useFormErrors';
+@@ -188,7 +186,7 @@ const LoginForm = ({
+     const [loading, withLoading] = useLoading();
+     const [username, setUsername] = useState('');
+     const [password, setPassword] = useState('');
+-    const [persistent, setPersistent] = useLocalState(true, 'default-persistent');
++    const [persistent] = useLocalState(false, 'default-persistent');
+     const challengeRefLogin = useRef<ChallengeRef>();
+     const usernameRef = useRef<HTMLInputElement>(null);
+     const [challengeLoading, setChallengeLoading] = useState(hasChallenge);
+@@ -216,7 +214,7 @@ const LoginForm = ({
+                 </div>
+             )}
+             <form
+-                name="loginForm"
++                name="loginForm" // tracking this
+                 className={challengeLoading ? 'hidden' : undefined}
+                 onSubmit={(event) => {
+                     event.preventDefault();
+@@ -248,7 +246,7 @@ const LoginForm = ({
+                     />
+                 )}
+                 <InputFieldTwo
+-                    id="username"
++                    id="username" // tracking this
+                     bigger
+                     label={c('Label').t`Email or username`}
+                     error={validator([requiredValidator(username)])}
+@@ -268,17 +266,6 @@ const LoginForm = ({
+                     onValue={setPassword}
+                     rootClassName="mt-2"
+                 />
+-                <div className="flex flex-row items-start align-center mb-2">
+-                    <Checkbox
+-                        id="staySignedIn"
+-                        className="mr-2"
+-                        checked={persistent}
+-                        onChange={() => setPersistent(!persistent)}
+-                    />
+-                    <Label htmlFor="staySignedIn" className="p-0 flex-1">
+-                        {c('Label').t`Keep me signed in`}
+-                    </Label>
+-                </div>
+                 <div className="flex justify-space-between mt-4">
+                     {needHelp}
+                     <Button color="norm" size="large" type="submit" fullWidth loading={loading} data-cy-login="submit">
+--
+
+diff --git a/packages/components/hooks/useLoad.ts b/packages/components/hooks/useLoad.ts
+index c72145327e..bd29c31242 100644
+--- a/packages/components/hooks/useLoad.ts
++++ b/packages/components/hooks/useLoad.ts
+@@ -1,13 +1,3 @@
+-import { useEffect } from 'react';
+-
+-import { formatURLForAjaxRequest } from '@proton/shared/lib/helpers/url';
+-import noop from '@proton/utils/noop';
+-
+-const useLoad = (urlParameters?: Record<string, string>) => {
+-    useEffect(() => {
+-        const url = formatURLForAjaxRequest(window.location.href, urlParameters);
+-        fetch(url).catch(noop);
+-    }, []);
+-};
++const useLoad = () => {}; // wipping "noop" request
+
+ export default useLoad;
+
+diff --git a/packages/shared/lib/apps/apps.ts b/packages/shared/lib/apps/apps.ts
+index 703b1bc182..f9e8fa5fd6 100644
+--- a/packages/shared/lib/apps/apps.ts
++++ b/packages/shared/lib/apps/apps.ts
+@@ -1,4 +1,4 @@
+-import { APPS, type APP_NAMES, USER_ROLES } from '../constants';
++import { APPS, type APP_NAMES, USER_ROLES, ELECTRON_MAIL_APPS } from '../constants';
+ import { isElectronMail } from '../helpers/desktop';
+ import type { OrganizationExtended, User } from '../interfaces';
+ import { getIsGlobalSSOAccount, getIsPublicUserWithoutProtonAddress, getIsSSOVPNOnlyAccount } from '../keys';
+@@ -96,7 +96,7 @@ export const getAvailableApps = (
+     const availableAppsByOrganization = getAvailableAppsByOrganization(options);
+     return allApps.filter((app) => {
+         return !removeApps.has(app) && availableAppsByUser.has(app) && availableAppsByOrganization.has(app);
+-    });
++    }).filter((value) => ELECTRON_MAIL_APPS.includes(value as typeof ELECTRON_MAIL_APPS[number]));
+ };
+ 
+ export const appSupportsSSO = (appName?: APP_NAMES) => {
+
+diff --git a/applications/drive/src/app/store/_documents/useDriveDocsFeatureFlag.ts b/applications/drive/src/app/store/_documents/useDriveDocsFeatureFlag.ts
+index a085c6868f..5647645b59 100644
+--- a/applications/drive/src/app/store/_documents/useDriveDocsFeatureFlag.ts
++++ b/applications/drive/src/app/store/_documents/useDriveDocsFeatureFlag.ts
+@@ -1,14 +1,8 @@
+-import { useFlag } from '@proton/unleash';
+-
+ /**
+  * Contains logic relating to the availability of Proton Docs.
+  */
+ export const useDriveDocsFeatureFlag = () => {
+-    const disabled = useFlag('DriveDocsDisabled');
+-
+-    const isDocsEnabled = !disabled;
+-
+     return {
+-        isDocsEnabled,
++        isDocsEnabled: false,
+     };
+ };
+
+diff --git a/packages/components/containers/topBanners/DesktopNotificationTopBanner.tsx b/packages/components/containers/topBanners/DesktopNotificationTopBanner.tsx
+deleted file mode 100644
+index 988ad7b79f..0000000000
+--- a/packages/components/containers/topBanners/DesktopNotificationTopBanner.tsx
++++ /dev/null
+@@ -1,87 +0,0 @@
+-import { useLayoutEffect, useRef, useState } from 'react';
+-
+-import { c } from 'ttag';
+-
+-import { useUserSettings } from '@proton/account/userSettings/hooks';
+-import useConfig from '@proton/components/hooks/useConfig';
+-import { getAppName } from '@proton/shared/lib/apps/helper';
+-import type { APP_NAMES } from '@proton/shared/lib/constants';
+-import { APPS } from '@proton/shared/lib/constants';
+-import { isMobile } from '@proton/shared/lib/helpers/browser';
+-import { Status, getStatus, request } from '@proton/shared/lib/helpers/desktopNotification';
+-import type { UserSettings } from '@proton/shared/lib/interfaces';
+-
+-import useLocalState from '../../hooks/useLocalState';
+-import TopBanner from './TopBanner';
+-
+-const DesktopNotificationTopBanner = () => {
+-    const [status, setStatus] = useState<Status>(getStatus());
+-    const [dontAsk, setDontAsk] = useLocalState(false, 'dont-ask-desktop-notification');
+-    const { APP_NAME } = useConfig();
+-    const onMobile = useRef(isMobile());
+-    const [userSettings] = useUserSettings();
+-
+-    const initialUserSettings = useRef<UserSettings>();
+-
+-    const { AppWelcome = {} } = initialUserSettings.current || {};
+-    const { Calendar = [], Mail = [] } = AppWelcome;
+-
+-    // We don't want to display this banner to a new user on the first use, we are waiting for a refresh to do it
+-    const hasSeenAppBefore =
+-        APP_NAME === APPS.PROTONMAIL ? !!Mail.length : APP_NAME === APPS.PROTONCALENDAR ? !!Calendar.length : false;
+-    const canShowBanner = !!initialUserSettings && hasSeenAppBefore;
+-
+-    useLayoutEffect(() => {
+-        if (!initialUserSettings.current && userSettings) {
+-            initialUserSettings.current = userSettings;
+-        }
+-    }, [userSettings]);
+-
+-    if (onMobile.current) {
+-        // NOTE: we could support mobile notification but this require to run a service worker
+-        return null;
+-    }
+-
+-    const appName = getAppName(APP_NAME);
+-
+-    if (!([APPS.PROTONMAIL, APPS.PROTONCALENDAR] as APP_NAMES[]).includes(APP_NAME)) {
+-        return null;
+-    }
+-
+-    if (dontAsk) {
+-        return null;
+-    }
+-
+-    if ([Status.GRANTED, Status.DENIED].includes(status)) {
+-        return null;
+-    }
+-
+-    if (!canShowBanner) {
+-        return null;
+-    }
+-
+-    const handleEnable = () => {
+-        request(
+-            () => setStatus(getStatus()),
+-            () => setStatus(getStatus())
+-        );
+-    };
+-
+-    const enableDesktopNotifications = (
+-        <button
+-            key="enable-desktop-notifications"
+-            className="link align-baseline text-left"
+-            type="button"
+-            onClick={handleEnable}
+-        >
+-            {c('Action').t`enable desktop notifications`}
+-        </button>
+-    );
+-
+-    return (
+-        <TopBanner onClose={() => setDontAsk(true)} className="bg-info">{c('Info')
+-            .jt`${appName} needs your permission to ${enableDesktopNotifications}.`}</TopBanner>
+-    );
+-};
+-
+-export default DesktopNotificationTopBanner;
+
+diff --git a/packages/components/containers/topBanners/TopBanners.tsx b/packages/components/containers/topBanners/TopBanners.tsx
+index 9cf4a6061a..3d609b33d6 100644
+--- a/packages/components/containers/topBanners/TopBanners.tsx
++++ b/packages/components/containers/topBanners/TopBanners.tsx
+@@ -4,7 +4,6 @@ import type { APP_NAMES } from '@proton/shared/lib/constants';
+ 
+ import BadAppVersionBanner from './BadAppVersionBanner';
+ import DelinquentTopBanner from './DelinquentTopBanner';
+-import DesktopNotificationTopBanner from './DesktopNotificationTopBanner';
+ import OnlineTopBanner from './OnlineTopBanner';
+ import PendingInvitationTopBanner from './PendingInvitationTopBanner';
+ import SessionRecoveryBanners from './SessionRecoveryBanners';
+@@ -29,7 +28,6 @@ const TopBanners = ({ children, app }: Props) => {
+             <StorageLimitTopBanner app={app} />
+             <BadAppVersionBanner />
+             <SubUserTopBanner />
+-            <DesktopNotificationTopBanner />
+             <PendingInvitationTopBanner />
+             <SubscriptionEndsBanner app={app} />
+             <SessionRecoveryBanners />
+--

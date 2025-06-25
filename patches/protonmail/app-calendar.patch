@@ -1,15 +1,46 @@
+diff --git a/package.json b/package.json
+index 0195dc8bea..949d07c41e 100644
+--- a/package.json
++++ b/package.json
+@@ -3,7 +3,7 @@
+     "private": true,
+     "license": "GPL-3.0",
+     "workspaces": [
+-        "applications/*",
++        "applications/calendar",
+         "applications/pass-desktop/native",
+         "packages/*",
+         "packages/wasm/*",
+@@ -60,4 +60,4 @@
+     "publishConfig": {
+         "registry": "https://nexus.protontech.ch/repository/web-npm/"
+     }
+-}
++}
+\ No newline at end of file
+--
+
 diff --git a/applications/calendar/package.json b/applications/calendar/package.json
-index bd4a61a905..b018e3beb2 100644
+index 7853a4e574..ea6bda411b 100644
 --- a/applications/calendar/package.json
 +++ b/applications/calendar/package.json
 @@ -6,7 +6,6 @@
      "author": "",
      "main": "index.js",
      "scripts": {
--        "build:web": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --webpackOnCaffeine --appMode=sso --logical",
+-        "build:web": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --configV2 --webpackOnCaffeine --appMode=sso --logical",
          "check-types": "tsc",
          "i18n:extract:web": "proton-i18n extract",
          "i18n:upgrade": "proton-i18n extract --verbose && proton-i18n crowdin --verbose",
+@@ -74,4 +73,4 @@
+         "prettier": "^3.6.2",
+         "typescript": "^5.8.3"
+     }
+-}
++}
+\ No newline at end of file
+--
+
 diff --git a/applications/calendar/src/app/index.tsx b/applications/calendar/src/app/index.tsx
 index b4d841c7cd..00ce66f767 100644
 --- a/applications/calendar/src/app/index.tsx

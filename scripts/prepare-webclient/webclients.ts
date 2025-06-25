@@ -4,36 +4,14 @@ import fsExtra from "fs-extra";
 import path from "path";
 
 import {applyPatch, assertPathIsInCwd, CONSOLE_LOG, execShell, resolveGitOutputBackupDir} from "scripts/lib";
-import {BINARY_NAME, WEB_CLIENTS_BLANK_HTML_FILE_NAME} from "src/shared/const";
 import {CWD_ABSOLUTE_DIR, GIT_CLONE_ABSOLUTE_DIR} from "scripts/const";
 import {PROTON_API_URL_PLACEHOLDER} from "src/shared/const/proton-url";
 import {PROVIDER_APP_NAMES, PROVIDER_REPO_MAP} from "src/shared/const/proton-apps";
+import {WEB_CLIENTS_BLANK_HTML_FILE_NAME} from "src/shared/const";
 
 const shouldFailOnBuildEnvVarName = "ELECTRON_MAIL_SHOULD_FAIL_ON_BUILD";
 
 const shouldFailOnBuild = Boolean(process.env[shouldFailOnBuildEnvVarName]);
-
-async function configure({cwd, envFileName = "./appConfig.json"}: {cwd: string; envFileName?: string}): Promise<{configApiParam: string}> {
-    const configApiParam = `${BINARY_NAME}_API_PARAM`;
-    writeFile(
-        path.join(cwd, envFileName),
-        JSON.stringify(
-            {
-                [configApiParam]: {
-                    // https://github.com/ProtonMail/WebClient/issues/166#issuecomment-561060855
-                    api: PROTON_API_URL_PLACEHOLDER,
-                    secure: "https://secure.protonmail.com",
-                },
-                // so "dsn: SENTRY_CONFIG[env].sentry" code line not throwing ("env" variable gets resolved with "dev" value)
-                // https://github.com/ProtonMail/WebClient/blob/aebd13605eec849bab199ffc0e58407a2e0d6537/env/config.js#L146
-                dev: {},
-            },
-            null,
-            2,
-        ),
-    );
-    return {configApiParam};
-}
 
 function resolveWebpackConfigPatchingCode(
     {webpackConfigVarName, webpackIndexEntryItems}: {webpackConfigVarName: string; webpackIndexEntryItems?: unknown},
@@ -207,7 +185,7 @@ async function executeBuildFlow(
             }
 
             // eslint-disable-next-line import/no-relative-parent-imports
-            for (const patchFileName of (await import("../../patches/protonmail/meta.json", {assert: {type: "json"}})).default[repoType]) {
+            for (const patchFileName of (await import("../../patches/protonmail/meta.json", {with: {type: "json"}})).default[repoType]) {
                 await applyPatch({patchFile: path.join(CWD_ABSOLUTE_DIR, "./patches/protonmail", patchFileName), cwd: repoDir});
             }
 
@@ -257,7 +235,6 @@ async function executeBuildFlow(
             } else { // building
                 await state.buildingSetup();
 
-                const {configApiParam} = await configure({cwd: appDir});
                 const publicPath: string | undefined = PROVIDER_REPO_MAP[repoType].basePath
                     ? `/${PROVIDER_REPO_MAP[repoType].basePath}/`
                     : undefined;
@@ -281,29 +258,20 @@ async function executeBuildFlow(
                 await execShell(["npx", ["--no", "rimraf", repoDistDir]]);
 
                 {
-                    // const tag = await execShell(["git", ["tag", "--points-at", "HEAD"], {cwd: repoDir}])
-                    //    .then(({stdout}) => stdout.replace(/(\r\n|\n|\r)/gm, ""));
-                    // const version: string | null = tag.includes("@")
-                    //     ? tag.split("@")[1] ?? null
-                    //     : null;
-
                     await execShell(["yarn", [
                         "workspace",
                         repoType,
                         "run",
                         "proton-pack",
                         "build",
-                        // SRI disabled by patching as "--no-sri" doesn't make effect
-                        // "--no-sri", // the API URL gets injected dynamically by custom protocol which obviously breaks SRI stuff
-                        `--api=${configApiParam}`,
-                        `--appMode=bundle`, // standalone | sso | bundle
                         ...(publicPath ? [`--publicPath=${publicPath}`] : []),
-                        // eslint-disable-next-line
-                        // https://github.com/ProtonMail/WebClients/blob/8d7f8a902034405988bd70431c714e9fdbb37a1d/packages/pack/bin/protonPack#L38
-                        // `--appMode=bundle`,
+                        "--no-api-proxy",
+                        "--no-sri",
+                        `--api=${PROTON_API_URL_PLACEHOLDER}`,
+                        `--appMode=standalone`,
                         "--webpackOnCaffeine",
-                        ...(repoType === "proton-drive" ? ["--logical"] : []),
-                        // ...(version ? [`--version=${version}`] : []),
+                        "--configV2",
+                        ...(repoType == "proton-drive" ? ["--handleSupportAndErrors", "--optimizeAssets"] : ["--logical"]),
                     ], {
                         cwd: repoDir,
                         env: {

@@ -15,9 +15,9 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
 
     return new Promise((resolve /*, reject */) => { // TODO reject on timeout
         const result: ProviderInternals = {
-            "./src/app/containers/PageContainer.tsx": {
+            "./src/app/components/layout/PrivateLayout.tsx": {
                 value$: new BehaviorSubject(
-                    {privateScope: null} as Unpacked<ProviderInternals["./src/app/containers/PageContainer.tsx"]["value$"]>,
+                    {privateScope: null} as Unpacked<ProviderInternals["./src/app/components/layout/PrivateLayout.tsx"]["value$"]>,
                 ),
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
                 _valueShape: null as any,
@@ -45,7 +45,7 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
             resultKeys: Object.keys(result) as ReadonlyArray<keyof typeof result>,
             preChunkItemOverridingHook({resultKey}) {
                 if (
-                    resultKey === "./src/app/containers/PageContainer.tsx"
+                    resultKey === "./src/app/components/layout/PrivateLayout.tsx"
                     || resultKey === "./src/app/helpers/message/messageDecrypt.ts"
                 ) {
                     // mark lazy-loaded modules as initialized immediately since these modules get
@@ -54,11 +54,11 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
                 }
             },
             chunkItemHook({resultKey, webpack_exports, webpack_require}) {
-                if (resultKey === "./src/app/containers/PageContainer.tsx") {
+                if (resultKey === "./src/app/components/layout/PrivateLayout.tsx") {
                     webpackJsonpPushUtil.handleObservableValue(result, {
                         resultKey,
                         webpack_exports,
-                        itemName: "PageParamsParser",
+                        itemName: "PrivateLayout",
                         itemCallResultTypeValidation: "object", // import("react").ReactNode
                         itemCallResultHandler: (itemCallResult, notify, markAsInitialized) => {
                             const {createElement, useEffect} = webpack_require<typeof import("react")>("../../node_modules/react/index.js");
@@ -77,7 +77,7 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
                                         return webpack_require<ProviderInternalsLazy[typeof key]>(key);
                                     })();
                                     const useMailSettingsModule = (() => {
-                                        const key = "../../packages/mail/mailSettings/hooks.ts";
+                                        const key = "../../packages/mail/store/mailSettings/hooks.ts";
                                         return webpack_require<ProviderInternalsLazy[typeof key]>(key);
                                     })();
                                     const getDecryptedAttachmentModule = (() => {

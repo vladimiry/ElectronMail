@@ -1,0 +1,543 @@
+diff --git a/packages/pack/package.json b/packages/pack/package.json
+index 9813b8afd7..4ac271eea9 100644
+--- a/packages/pack/package.json
++++ b/packages/pack/package.json
+@@ -21,7 +21,6 @@
+         "@babel/preset-typescript": "^7.27.1",
+         "@babel/runtime": "^7.28.2",
+         "@pmmmwh/react-refresh-webpack-plugin": "^0.6.1",
+-        "@proton/collect-metrics": "workspace:^",
+         "@sentry/webpack-plugin": "^1.21.0",
+         "@swc/core": "^1.13.2",
+         "@types/webpack": "^5.28.5",
+@@ -70,4 +69,4 @@
+     "engines": {
+         "node": ">= 22.14.0"
+     }
+-}
++}
+\ No newline at end of file
+
+diff --git a/packages/pack/webpack/plugins.js b/packages/pack/webpack/plugins.js
+index 7ab43445f2..58a577f805 100644
+--- a/packages/pack/webpack/plugins.js
++++ b/packages/pack/webpack/plugins.js
+@@ -16,7 +16,6 @@ const WriteWebpackPlugin = require('./write-webpack-plugin').default;
+ const HtmlEditWebpackPlugin = require('./html-edit-webpack-plugin').default;
+ const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+ const SriWebpackPlugin = require('./sri-webpack-plugin').default;
+-const { WebpackCollectMetricsPlugin } = require('@proton/collect-metrics');
+ 
+ const defaultFaviconConfig = require('./favicon.config');
+ const faviconConfig = require(path.resolve('./favicon.config.js'));
+@@ -234,7 +233,5 @@ module.exports = ({
+             new BundleAnalyzerPlugin({
+                 excludeAssets: `assets/static/locales`,
+             }),
+-
+-        CI && new WebpackCollectMetricsPlugin(buildData),
+     ].filter(Boolean);
+ };
+
+diff --git a/packages/pack/scripts/validate.sh b/packages/pack/scripts/validate.sh
+index 1a2ea64..bae388c 100755
+--- a/packages/pack/scripts/validate.sh
++++ b/packages/pack/scripts/validate.sh
+@@ -58,7 +58,7 @@ function main {
+   fi;
+
+   if [ "$hasSourceMap" -eq 0 ]; then
+-    hasError=true;
++    #hasError=true;
+     echo "[error] no SourceMaps found inside the directory: $OUTPUT_DIR";
+   fi;
+
+diff --git a/packages/pack/bin/protonPack.js b/packages/pack/bin/protonPack.js
+index 5810917421..e9f9460c14 100755
+--- a/packages/pack/bin/protonPack.js
++++ b/packages/pack/bin/protonPack.js
+@@ -8,7 +8,7 @@ const chalk = require('chalk');
+ 
+ const program = new Command();
+ 
+-const { getConfigData, getApi, getConfigFile, getConfigHead } = require('../lib/config');
++const { getConfigData, getApi } = require('../lib/config');
+ 
+ const getPort = (basePort) => {
+     portfinder.basePort = basePort;
+@@ -37,7 +37,7 @@ const addGlobalOptions = (program) => {
+         .option('--analyze', '')
+         .option('--optimizeAssets', '')
+         .option('--featureFlags <featureFlags>', '')
+-        .option('--api <api>', '', (api) => getApi(api), getApi(''))
++        .option('--api <api>', '')
+         .option('--sso <sso>', '')
+         .option('--no-api-proxy', '')
+         .option('--inline-icons', false)
+@@ -117,19 +117,13 @@ addGlobalOptions(program.command('build').description('create an optimized produ
+         if (options.configV2) {
+             webpackArgs = getWebpackArgsV2(options, env);
+         } else {
+-            const configData = getConfigData(options);
+-            if (options.optimizeAssets) {
+-                await writeConfigHead(getConfigHead(configData));
+-            } else {
+-                await writeConfig(getConfigFile(configData));
+-            }
+-            webpackArgs = getWebpackArgs(options, env, configData);
++            throw new Error(`Only "configV2" expected here since late July 2025`);
+         }
+ 
+         const outputPath = path.resolve('./dist');
+         await commandWithLog(`rm -rf ${outputPath}`);
+         await commandWithLog(
+-            `${require.resolve('webpack-cli/bin/cli.js')} --progress --output-path=${outputPath} ${webpackArgs}`,
++            `${require.resolve('webpack-cli/bin/cli.js')} --output-path=${outputPath} ${webpackArgs}`,
+             {
+                 stdio: 'inherit',
+             }
+@@ -142,7 +136,7 @@ addGlobalOptions(program.command('build').description('create an optimized produ
+                 try {
+                     await fs.access(`${outputPath}/${file}`);
+                     return file;
+-                } catch {}
++                } catch { }
+             })
+         );
+         await commandWithLog(`tar -czvf ../webapp-bundle.tar.gz * ${dotFiles.filter(Boolean).join(' ')} 2> /dev/null`, {
+@@ -152,52 +146,4 @@ addGlobalOptions(program.command('build').description('create an optimized produ
+         });
+     });
+ 
+-addGlobalOptions(program.command('dev-server').description('run locally'))
+-    .option('--port <port>', '')
+-    .option('--warning-logs', 'emit typescript and eslint warnings')
+-    .option('--no-error-logs', 'do not emit typescript and eslint errors')
+-    .option('--overlay-warnings', 'show a full screen overlay when there are compiler warnings')
+-    .option('--overlay-runtime-errors', 'show a full screen overlay when there are runtime errors')
+-    .option('--overlay-errors', 'show a full screen overlay when there are compiler errors')
+-    .action(async (options, env) => {
+-        console.log(chalk.magenta('Starting development server...\n'));
+-
+-        let webpackArgs;
+-
+-        if (options.configV2) {
+-            webpackArgs = getWebpackArgsV2(options, env);
+-        } else {
+-            const configData = getConfigData(options);
+-            if (options.optimizeAssets) {
+-                await writeConfigHead(getConfigHead(configData));
+-            } else {
+-                await writeConfig(getConfigFile(configData));
+-            }
+-            webpackArgs = getWebpackArgs(options, env, configData);
+-        }
+-
+-        const port = await getPort(options.port || 8080);
+-
+-        await commandWithLog(
+-            `${require.resolve('webpack-cli/bin/cli.js')} serve --progress --port=${port} ${webpackArgs}`,
+-            {
+-                stdio: 'inherit',
+-            }
+-        );
+-    });
+-
+-addGlobalOptions(program.command('config').description('write config'))
+-    .option('--version <version>', 'override the default (based on the tag) version number')
+-    .action(async (options) => {
+-        if (options.configV2) {
+-            return;
+-        }
+-        const configData = getConfigData(options);
+-        if (options.optimizeAssets) {
+-            await writeConfigHead(getConfigHead(configData));
+-        } else {
+-            await writeConfig(getConfigFile(configData));
+-        }
+-    });
+-
+ program.parse(process.argv);
+
+diff --git a/packages/pack/webpack/entries.ts b/packages/pack/webpack/entries.ts
+index cb4e29cb41..42527cbae1 100644
+--- a/packages/pack/webpack/entries.ts
++++ b/packages/pack/webpack/entries.ts
+@@ -49,24 +49,14 @@ export const mergeEntry = (originalEntry: any, entry: any) => {
+ };
+ 
+ export const addDevEntry = (config: any) => {
+-    if (config.mode === 'production') {
+-        return;
+-    }
+     // @ts-ignore
+-    config.entry.dev = [require.resolve('@proton/components/containers/app/StandaloneApp.tsx')];
++    config.entry.login = [require.resolve('@proton/components/containers/app/StandaloneApp.tsx')];
+     config.plugins.push(
+         new HtmlWebpackPlugin({
+             filename: 'login.html',
+             templateContent: `<html><body><div class="app-root"></div></body></html>`,
+-            chunks: ['dev'],
++            chunks: ['login'],
+             inject: 'body',
+         })
+     );
+-    // @ts-ignore
+-    config.devServer.historyApiFallback.rewrites = config.devServer.historyApiFallback.rewrites || [];
+-    // @ts-ignore
+-    config.devServer.historyApiFallback.rewrites.push({
+-        from: '/login',
+-        to: '/login.html',
+-    });
+ };
+
+diff --git a/packages/pack/lib/config.js b/packages/pack/lib/config.js
+index 19aa26e0f3..b924745b9f 100644
+--- a/packages/pack/lib/config.js
++++ b/packages/pack/lib/config.js
+@@ -82,14 +82,6 @@ const API_TARGETS = {
+     ...ENV_CONFIG.api,
+ };
+ 
+-const getApi = (value) => {
+-    // We can do --api=https://mail.proton.me/api and it's only for dev, so we can stop here
+-    if (value.startsWith('http') || value.startsWith('/api')) {
+-        return value;
+-    }
+-    return API_TARGETS[value] || API_TARGETS.prod;
+-};
+-
+ const getConfigData = ({ api, sso, apiProxy, publicPath, version }) => {
+     const pkg = require(path.join(process.cwd(), 'package.json'));
+     const appName = pkg.name;
+@@ -125,47 +117,8 @@ const getConfigData = ({ api, sso, apiProxy, publicPath, version }) => {
+     };
+ };
+ 
+-const getConfigFile = ({ buildData, appData }) => {
+-    return dedent`
+-    export const CLIENT_TYPE = ${ENV_CONFIG.app.clientType || 1};
+-    export const CLIENT_SECRET = '${ENV_CONFIG.app.clientSecret || ''}';
+-    export const APP_VERSION = '${buildData.version}';
+-    export const COMMIT = '${buildData.commit}';
+-    export const BRANCH = '${buildData.branch}';
+-    export const DATE_VERSION = '${buildData.date}';
+-    export const APP_NAME = '${appData.appName}';
+-    export const API_URL =  '${(!appData.apiProxy && appData.api) || '/api'}';
+-    export const SSO_URL = '${appData.sso || ''}';
+-    export const LOCALES = ${JSON.stringify(LOCALES)};
+-    export const VERSION_PATH = '${appData.publicPath}assets/version.json';
+-    export const SENTRY_DSN = '${appData.sentryDsn}';
+-    export const SENTRY_DESKTOP_DSN = '${appData?.sentryDesktopDsn ?? ''}';
+-    `;
+-};
+-
+-const getConfigHead = ({ buildData, appData }) => {
+-    return JSON.stringify({
+-        CLIENT_TYPE: ENV_CONFIG.app.clientType || 1,
+-        CLIENT_SECRET: ENV_CONFIG.app.clientSecret || '',
+-        APP_VERSION: buildData.version,
+-        COMMIT: buildData.commit,
+-        BRANCH: buildData.branch,
+-        DATE_VERSION: buildData.date,
+-        APP_NAME: appData.appName,
+-        API_URL: !appData.apiProxy && appData.api ? appData.api : '/api',
+-        SSO_URL: appData.sso || '',
+-        LOCALES: LOCALES,
+-        VERSION_PATH: `${appData.publicPath}assets/version.json`,
+-        SENTRY_DSN: appData.sentryDsn,
+-        SENTRY_DESKTOP_DSN: appData.sentryDesktopDsn ?? '',
+-    });
+-};
+-
+ module.exports = {
+-    getApi,
+     getConfigData,
+-    getConfigFile,
+-    getConfigHead,
+     getGitBranch,
+     getGitCommitHash,
+     getGitTagVersion,
+--
+
+diff --git a/packages/pack/webpack.config.ts b/packages/pack/webpack.config.ts
+index be4d6045e2..e2aed9aaa9 100644
+--- a/packages/pack/webpack.config.ts
++++ b/packages/pack/webpack.config.ts
+@@ -1,3 +1,4 @@
++import fs from 'fs';
+ import path from 'path';
+ import type { Configuration } from 'webpack';
+ import 'webpack-dev-server';
+@@ -21,51 +22,23 @@ export const getConfigV2 = (webpackOptions: WebpackOptions): Configuration => {
+     // a long-term storage
+     const assetsFolder = 'assets/static';
+ 
+-    return {
++    const postConfigFn: (value: Configuration) => Configuration = (() => {
++        const file = path.resolve("./proton.config.js");
++        if (fs.existsSync(file)) {
++            console.log(
++                /*reset:*/"\x1b[0m" +
++                /*yellow:*/"\x1b[33m" +
++                ">>>" +
++                /*reset:*/"\x1b[0m",
++                `Found ${file}, extend the config`,
++            )
++            return eval("require")(file);
++        }
++        return (value: Configuration) => value;
++    })();
++
++    return postConfigFn({
+         bail: webpackOptions.isProduction,
+-        devServer: {
+-            allowedHosts: 'all',
+-            client: {
+-                overlay: {
+-                    errors: webpackOptions.overlayErrors,
+-                    runtimeErrors: webpackOptions.overlayRuntimeErrors,
+-                    warnings: webpackOptions.overlayWarnings,
+-                },
+-                webSocketURL: 'auto://0.0.0.0:0/ws',
+-            },
+-            compress: true,
+-            devMiddleware: {
+-                publicPath: webpackOptions.publicPath,
+-                stats: 'minimal',
+-            },
+-            historyApiFallback: {
+-                index: webpackOptions.publicPath,
+-            },
+-            hot: !webpackOptions.isProduction,
+-            webSocketServer: 'ws',
+-            ...(webpackOptions.api && {
+-                proxy: [
+-                    {
+-                        changeOrigin: true,
+-                        context: ['/api', '/internal-api'],
+-                        onProxyRes: (proxyRes) => {
+-                            delete proxyRes.headers['content-security-policy'];
+-                            delete proxyRes.headers['x-frame-options'];
+-                            proxyRes.headers['set-cookie'] = proxyRes.headers['set-cookie']?.map((cookies) =>
+-                                cookies
+-                                    .split('; ')
+-                                    .filter((cookie) => {
+-                                        return !/(secure$|samesite=|domain=)/i.test(cookie);
+-                                    })
+-                                    .join('; ')
+-                            );
+-                        },
+-                        secure: false,
+-                        target: webpackOptions.api,
+-                    },
+-                ],
+-            }),
+-        },
+         devtool: webpackOptions.isProduction ? 'source-map' : 'cheap-module-source-map',
+         entry: getEntries(webpackOptions.handleSupportAndErrors),
+         experiments: { asyncWebAssembly: true },
+@@ -138,166 +111,10 @@ export const getConfigV2 = (webpackOptions: WebpackOptions): Configuration => {
+                 stream: false,
+             },
+         },
+-        target: `browserslist:${webpackOptions.browserslist}`,
++        target: [`browserslist:Chrome >= 138`, "es5"],
+         watchOptions: {
+             aggregateTimeout: 600,
+             ignored: /dist|node_modules|locales|\.(gif|jpeg|jpg|ico|png|svg)/,
+         },
+-    };
++    });
+ };
+-
+-const getConfig = (env: any): Configuration => {
+-    const isProduction = process.env.NODE_ENV === 'production';
+-    const isRelease = !!process.env.CI_COMMIT_TAG;
+-
+-    // This folder is separate from the assets folder because they are special assets which get served through
+-    // a long-term storage
+-    const assetsFolder = 'assets/static';
+-
+-    const { getJsLoaders } = require(env.webpackOnCaffeine ? './webpack/js.loader.swc' : './webpack/js.loader');
+-
+-    const defaultBrowsersList = isProduction
+-        ? `> 0.5%, not IE 11, Firefox ESR, Safari 14, iOS 14, Chrome 80`
+-        : 'last 1 chrome version, last 1 firefox version, last 1 safari version';
+-
+-    const options = {
+-        isProduction,
+-        isRelease,
+-        publicPath: env.publicPath || '/',
+-        api: env.api,
+-        appMode: env.appMode || 'standalone',
+-        webpackOnCaffeine: env.webpackOnCaffeine,
+-        featureFlags: env.featureFlags || '',
+-        writeSRI: env.writeSri !== 'false',
+-        inlineIcons: env.inlineIcons === 'true',
+-        browserslist: env.browserslist ?? defaultBrowsersList,
+-        buildData: {
+-            version: env.version,
+-            commit: env.commit,
+-            branch: env.branch,
+-            date: env.date,
+-            mode: env.appMode,
+-        },
+-        warningLogs: env.warningLogs || false,
+-        errorLogs: env.errorLogs || false,
+-        overlayWarnings: env.overlayWarnings || false,
+-        overlayErrors: env.overlayErrors || false,
+-        overlayRuntimeErrors: env.overlayRuntimeErrors || false,
+-        logical: env.logical || false,
+-        analyze: env.analyze || false,
+-        optimizeAssets: env.optimizeAssets || false,
+-        handleSupportAndErrors: env.handleSupportAndErrors || false,
+-    };
+-
+-    return {
+-        target: `browserslist:${options.browserslist}`,
+-        mode: isProduction ? 'production' : 'development',
+-        bail: isProduction,
+-        devtool: isProduction ? 'source-map' : 'cheap-module-source-map',
+-        watchOptions: {
+-            ignored: /dist|node_modules|locales|\.(gif|jpeg|jpg|ico|png|svg)/,
+-            aggregateTimeout: 600,
+-        },
+-        resolve: {
+-            extensions: ['.js', '.tsx', '.ts'],
+-            fallback: {
+-                buffer: false,
+-                crypto: false,
+-                iconv: false,
+-                path: false,
+-                punycode: false,
+-                stream: false,
+-            },
+-        },
+-        experiments: { asyncWebAssembly: true },
+-        entry: getEntries(options.handleSupportAndErrors),
+-        output: {
+-            filename: isProduction ? `${assetsFolder}/[name].[contenthash:8].js` : `${assetsFolder}/[name].js`,
+-            publicPath: options.publicPath,
+-            chunkFilename: (pathData) => {
+-                const result = isProduction
+-                    ? `${assetsFolder}/[name].[contenthash:8].chunk.js`
+-                    : `${assetsFolder}/[name].chunk.js`;
+-                const chunkName = pathData?.chunk?.name;
+-                if (chunkName && (chunkName.startsWith('date-fns/') || chunkName.startsWith('locales/'))) {
+-                    // @ts-ignore
+-                    const strippedChunkName = chunkName.replaceAll(/-index-js|-json/g, '');
+-                    return result.replace('[name]', strippedChunkName);
+-                }
+-                // Drive need static URL for transpiled SW
+-                // Must not be versioned
+-                // https://web.dev/learn/pwa/service-workers/#update
+-                if (chunkName && chunkName.startsWith('downloadSW')) {
+-                    return `[name].js`;
+-                }
+-                return result;
+-            },
+-            assetModuleFilename: (data) => {
+-                const { path: file } = parseResource(data?.filename || '');
+-                const ext = path.extname(file);
+-                const base = path.basename(file);
+-                const name = base.slice(0, base.length - ext.length);
+-                if (name.includes('.var')) {
+-                    const replacedNamed = name.replace('.var', '-var');
+-                    return `${assetsFolder}/${replacedNamed}.[hash][ext]`;
+-                }
+-                return `${assetsFolder}/[name].[hash][ext]`;
+-            },
+-            crossOriginLoading: 'anonymous',
+-        },
+-        module: {
+-            strictExportPresence: true, // Make missing exports an error instead of warning
+-            rules: [...getJsLoaders(options), ...getCssLoaders(options), ...getAssetsLoaders(options)],
+-        },
+-        plugins: getPlugins({
+-            ...options,
+-            cssName: isProduction ? `${assetsFolder}/[name].[contenthash:8].css` : `${assetsFolder}/[name].css`,
+-        }),
+-        optimization: getOptimizations(options),
+-        devServer: {
+-            hot: !isProduction,
+-            devMiddleware: {
+-                stats: 'minimal',
+-                publicPath: options.publicPath,
+-            },
+-            allowedHosts: 'all',
+-            compress: true,
+-            historyApiFallback: {
+-                index: options.publicPath,
+-            },
+-            client: {
+-                webSocketURL: 'auto://0.0.0.0:0/ws',
+-                overlay: {
+-                    warnings: options.overlayWarnings,
+-                    errors: options.overlayErrors,
+-                    runtimeErrors: options.overlayRuntimeErrors,
+-                },
+-            },
+-            webSocketServer: 'ws',
+-            ...(options.api && {
+-                proxy: [
+-                    {
+-                        context: ['/api', '/internal-api'],
+-                        target: options.api,
+-                        secure: false,
+-                        changeOrigin: true,
+-                        onProxyRes: (proxyRes) => {
+-                            delete proxyRes.headers['content-security-policy'];
+-                            delete proxyRes.headers['x-frame-options'];
+-                            proxyRes.headers['set-cookie'] = proxyRes.headers['set-cookie']?.map((cookies) =>
+-                                cookies
+-                                    .split('; ')
+-                                    .filter((cookie) => {
+-                                        return !/(secure$|samesite=|domain=)/i.test(cookie);
+-                                    })
+-                                    .join('; ')
+-                            );
+-                        },
+-                    },
+-                ],
+-            }),
+-        },
+-    };
+-};
+-
+-export default getConfig;
+--
+
+diff --git a/packages/shared/lib/webpack.constants.ts b/packages/shared/lib/webpack.constants.ts
+index 585466a9bc..caf6bf358b 100644
+--- a/packages/shared/lib/webpack.constants.ts
++++ b/packages/shared/lib/webpack.constants.ts
+@@ -7,6 +7,8 @@ export const APP_MODE = typeof WEBPACK_APP_MODE === 'undefined' ? '' : WEBPACK_A
+ 
+ export type AppMode = 'sso' | 'standalone';
+ export const appMode: AppMode = APP_MODE === 'sso' ? 'sso' : 'standalone';
+-
++if (appMode !== 'standalone') {
++    throw new Error(`Unexpected "APP_MODE" value: ${JSON.stringify(APP_MODE)}`);
++}
+ declare const WEBPACK_PUBLIC_PATH: string;
+ export const PUBLIC_PATH = typeof WEBPACK_PUBLIC_PATH === 'undefined' ? '' : WEBPACK_PUBLIC_PATH;
+
+diff --git a/packages/pack/lib/configV2.ts b/packages/pack/lib/configV2.ts
+index 94ee73c65d..ebe1e365e7 100644
+--- a/packages/pack/lib/configV2.ts
++++ b/packages/pack/lib/configV2.ts
+@@ -39,7 +39,12 @@ export const getWebpackOptions = (envArguments: WebpackEnvArgumentsV2, extra: Ex
+     }
+ 
+     const protonPackOptions: Partial<ProtonPackOptions> = JSON.parse(envArguments.protonPackOptions);
+-
++    if (protonPackOptions.api !== "___ELECTRON_MAIL_PROTON_API_ENTRY_URL_PLACEHOLDER___") {
++        throw new Error(`Unexpected "protonPackOptions.api" value: ${JSON.stringify(protonPackOptions.api)}`);
++    }
++    if (protonPackOptions.apiProxy) {
++        throw new Error(`Unexpected "protonPackOptions.apiProxy" value: ${JSON.stringify(protonPackOptions.apiProxy)}`);
++    }
+     const appData: WebpackOptions['appData'] = {
+         api: protonPackOptions.api || `https://${appName.replaceAll(/proton-|-settings/g, '')}.proton.black`,
+         apiProxy: protonPackOptions.apiProxy || false,

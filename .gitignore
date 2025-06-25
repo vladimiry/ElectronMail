@@ -1,6 +1,7 @@
-# IDE Idea
+# IDEs
 /.idea
 *.iml
+/.vscode
 
 # node modules stuff
 .pnpm-debug.log

@@ -1,7 +1,19 @@
+import {
+    EnumDeclaration,
+    Identifier,
+    ImportDeclaration,
+    InterfaceDeclaration,
+    Node,
+    Project,
+    SourceFile,
+    SyntaxKind,
+    TypeAliasDeclaration,
+    TypeElement,
+    TypeNode,
+} from "ts-morph";
 import fs from "fs";
 import fsExtra from "fs-extra";
 import path from "path";
-import {Project, SyntaxKind} from "ts-morph";
 
 import {CONSOLE_LOG} from "scripts/lib";
 
@@ -38,25 +50,27 @@ export const generateProtonMessageDeclaration = (inputFile: string, destFile: st
     }
 
     outputFile.saveSync();
-    fs.writeFileSync(destFile, `declare module "${MODULE_NAME}" {\n` + fs.readFileSync(destFile) + "}\n");
+    fs.writeFileSync(destFile, `declare module "${MODULE_NAME}" {\n` + fs.readFileSync(destFile).toString() + "}\n");
     CONSOLE_LOG(`"${destFile}" created`);
-
-    function resolveDeclaration(decl: any) {
+    function resolveDeclaration(decl: InterfaceDeclaration | TypeAliasDeclaration | EnumDeclaration): void {
         const name = decl.getName();
         if (visited.has(name)) return;
         visited.add(name);
         outputFile.addStatements(decl.getText());
 
-        decl.getExtends && decl.getExtends().forEach((ext: any) => {
+        const heritageClauses = "getExtends" in decl ? decl.getExtends() : undefined;
+        heritageClauses?.forEach((ext) => {
             const extType = ext.getExpression().getText();
             resolveByName(extType, decl.getSourceFile());
         });
 
-        decl.getProperties && decl.getProperties().forEach((prop: any) => {
-            const typeNode = prop.getTypeNode();
+        const properties = "getProperties" in decl ? decl.getProperties() : undefined;
+        properties?.forEach((prop: TypeElement) => {
+            if (!Node.isPropertySignature(prop)) return;
+            const typeNode: TypeNode | undefined = prop.getTypeNode();
             if (!typeNode) return;
-            const identifiers = typeNode.getDescendantsOfKind(SyntaxKind.Identifier);
-            identifiers.forEach((id: any) => {
+            const identifiers: Identifier[] = typeNode.getDescendantsOfKind(SyntaxKind.Identifier);
+            identifiers.forEach((id) => {
                 resolveByName(id.getText(), decl.getSourceFile());
             });
         });
@@ -64,7 +78,7 @@ export const generateProtonMessageDeclaration = (inputFile: string, destFile: st
         collectImports(decl);
     }
 
-    function resolveByName(name: string, fromFile: any) {
+    function resolveByName(name: string, fromFile: SourceFile): void {
         if (visited.has(name)) return;
 
         const localDecl = fromFile.getInterface(name) || fromFile.getTypeAlias(name) || fromFile.getEnum(name);
@@ -73,8 +87,8 @@ export const generateProtonMessageDeclaration = (inputFile: string, destFile: st
             return;
         }
 
-        const importDecl = fromFile.getImportDeclarations().find((imp: any) =>
-            imp.getNamedImports().some((ni: any) => ni.getName() === name)
+        const importDecl = fromFile.getImportDeclarations().find((imp: ImportDeclaration) =>
+            imp.getNamedImports().some((ni) => ni.getName() === name)
         );
         if (!importDecl) return;
 
@@ -91,14 +105,14 @@ export const generateProtonMessageDeclaration = (inputFile: string, destFile: st
         }
     }
 
-    function collectImports(node: any) {
-        const ids = node.getDescendantsOfKind(SyntaxKind.Identifier);
-        ids.forEach((id: any) => {
+    function collectImports(node: Node): void {
+        const ids: Identifier[] = node.getDescendantsOfKind(SyntaxKind.Identifier);
+        ids.forEach((id) => {
             const name = id.getText();
             if (visited.has(name)) return;
 
-            const importDecl = node.getSourceFile().getImportDeclarations().find((imp: any) =>
-                imp.getNamedImports().some((ni: any) => ni.getName() === name)
+            const importDecl = node.getSourceFile().getImportDeclarations().find((imp: ImportDeclaration) =>
+                imp.getNamedImports().some((ni) => ni.getName() === name)
             );
             if (importDecl) {
                 const module = importDecl.getModuleSpecifierValue();

@@ -1,3 +1,17 @@
+diff --git a/packages/components/containers/app/AppsDropdown.tsx b/packages/components/containers/app/AppsDropdown.tsx
+index 243cb69f73..91d388c9c8 100644
+--- a/packages/components/containers/app/AppsDropdown.tsx
++++ b/packages/components/containers/app/AppsDropdown.tsx
+@@ -84,7 +84,7 @@ const AppsDropdown = forwardRef<HTMLButtonElement, AppsDropdownProps>(
+                                         current={current}
+                                         reloadDocument={reloadDocument}
+                                         // The same app opens in the same window, other apps in new windows
+-                                        target={APP_NAME === appToLinkTo ? '_self' : '_blank'}
++                                        target='_self'
+                                     >
+                                         <ProductIcon appToLinkTo={appToLinkTo} current={current} />
+                                     </ProductLink>
+
 diff --git a/packages/components/containers/app/ProductLink.tsx b/packages/components/containers/app/ProductLink.tsx
 index f4063f683d..c44af97579 100644
 --- a/packages/components/containers/app/ProductLink.tsx
@@ -20,3 +34,60 @@ index f4063f683d..c44af97579 100644
          return (
              <a
                  href={getAppStaticUrl(appToLinkTo)}
+
+diff --git a/packages/components/components/link/AppLink.tsx b/packages/components/components/link/AppLink.tsx
+index f4a57fb878..7acb97ab7a 100644
+--- a/packages/components/components/link/AppLink.tsx
++++ b/packages/components/components/link/AppLink.tsx
+@@ -18,50 +18,10 @@ export interface AppLinkProps extends Omit<AnchorHTMLAttributes<HTMLAnchorElemen
+ 
+ const AppLink = ({ to, toApp, reloadDocument, children, ...rest }: AppLinkProps, ref: Ref<HTMLAnchorElement>) => {
+     const { APP_NAME } = useConfig();
+-    const authentication = useAuthentication();
+ 
+     const targetApp = toApp ?? (reloadDocument ? APP_NAME : undefined);
+ 
+     if (targetApp && (targetApp !== APP_NAME || reloadDocument)) {
+-        if (authentication.mode === 'sso') {
+-            // If in vpn-level account settings and want to visit the proton vpn app
+-            if (targetApp === APPS.PROTONVPN_SETTINGS) {
+-                const href = `https://${VPN_HOSTNAME}/${stripLeadingAndTrailingSlash(to)}`;
+-                return (
+-                    // internal link, trusted
+-                    <a ref={ref} {...rest} target="_blank" href={href}>
+-                        {children}
+-                    </a>
+-                );
+-            }
+-            const localID = authentication.getLocalID?.();
+-
+-            const href = getAppHref(to, targetApp, localID);
+-            return (
+-                // internal link, trusted
+-                <a ref={ref} target="_blank" {...rest} href={href}>
+-                    {children}
+-                </a>
+-            );
+-        }
+-        if (APP_NAME === APPS.PROTONVPN_SETTINGS) {
+-            const href = getAppHref(to, targetApp);
+-            return (
+-                // internal link, trusted
+-                <a ref={ref} target="_blank" {...rest} href={href}>
+-                    {children}
+-                </a>
+-            );
+-        }
+-        if (authentication.mode === 'standalone') {
+-            return (
+-                <Tooltip title="Disabled in standalone mode">
+-                    <a ref={ref} {...rest} onClick={(e) => e.preventDefault()} href="#">
+-                        {children}
+-                    </a>
+-                </Tooltip>
+-            );
+-        }
+         const href = getAppHrefBundle(to, targetApp);
+ 
+         return (
+--

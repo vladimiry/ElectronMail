@@ -40,7 +40,7 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
 
     return (async (): Promise<ProviderApi> => {
         const [standardSetupPublicApi, internals] = await Promise.all([resolveStandardSetupPublicApi(logger), resolveProviderInternals()]);
-        const internalsPrivateScope$ = internals["./src/app/containers/PageContainer.tsx"].value$.pipe(distinctUntilChanged());
+        const internalsPrivateScope$ = internals["./src/app/components/layout/PrivateLayout.tsx"].value$.pipe(distinctUntilChanged());
         const resolvePrivateApi = async () => { // eslint-disable-line @typescript-eslint/explicit-function-return-type
             return lastValueFrom(internalsPrivateScope$.pipe(
                 first(),
@@ -73,7 +73,7 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                     const messageKeys = await privateApi.getMessageKeys(message);
                     const decryptMessage = await internals["./src/app/helpers/message/messageDecrypt.ts"].value.decryptMessage(
                         message,
-                        messageKeys.privateKeys,
+                        messageKeys.decryptionKeys,
                     );
                     if (decryptMessage.errors) {
                         logger.error(decryptMessage.errors);

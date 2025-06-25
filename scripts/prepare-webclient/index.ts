@@ -4,7 +4,7 @@ import pathIsInside from "path-is-inside";
 import {buildProtonClients} from "./webclients";
 import {catchTopLeventAsync} from "scripts/lib";
 import {CWD_ABSOLUTE_DIR} from "scripts/const";
-import {generateGlobalTypescriptEnvDeclaration} from "./dts-global-ts-env2";
+import {generateGlobalTypescriptEnvDeclaration} from "./dts-global-ts-env";
 import {generateProtonMessageDeclaration} from "./dts-proton-message";
 import {LOCAL_WEBCLIENT_DIR_NAME, PROTON_MONACO_EDITOR_DTS_ASSETS_LOCATION} from "src/shared/const";
 import {PROTON_SHARED_MESSAGE_INTERFACE} from "src/shared/const/proton-apps";

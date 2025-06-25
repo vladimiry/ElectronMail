@@ -1,32 +1,78 @@
+diff --git a/package.json b/package.json
+index 0195dc8bea..949d07c41e 100644
+--- a/package.json
++++ b/package.json
+@@ -3,7 +3,7 @@
+     "private": true,
+     "license": "GPL-3.0",
+     "workspaces": [
+-        "applications/*",
++        "applications/account",
+         "applications/pass-desktop/native",
+         "packages/*",
+         "packages/wasm/*",
+@@ -60,4 +60,4 @@
+     "publishConfig": {
+         "registry": "https://nexus.protontech.ch/repository/web-npm/"
+     }
+-}
++}
+\ No newline at end of file
+--
+
+diff --git a/applications/account/package.json b/applications/account/package.json
+index 75bede49fa..7ab7d02751 100644
+--- a/applications/account/package.json
++++ b/applications/account/package.json
+@@ -6,7 +6,6 @@
+     "author": "",
+     "main": "index.js",
+     "scripts": {
+-        "build:web": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --configV2 --webpackOnCaffeine --appMode=sso --logical",
+         "check-types": "tsc",
+         "i18n:extract:web": "proton-i18n extract",
+         "i18n:upgrade": "proton-i18n extract --verbose && proton-i18n crowdin --verbose",
+@@ -77,4 +76,4 @@
+         "prettier": "^3.6.2",
+         "typescript": "^5.8.3"
+     }
+-}
++}
+\ No newline at end of file
+--
+
+diff --git a/packages/recovery-kit/package.json b/packages/recovery-kit/package.json
+index 3130a8c561..9736133d88 100644
+--- a/packages/recovery-kit/package.json
++++ b/packages/recovery-kit/package.json
+@@ -11,6 +11,7 @@
+     "dependencies": {
+         "@pdfme/common": "^5.3.1",
+         "@pdfme/generator": "^5.3.1",
++        "@pdfme/schemas": "^5.3.1",
+         "@proton/utils": "workspace:^"
+     },
+     "devDependencies": {
+@@ -20,4 +21,4 @@
+         "ts-jest": "^29.4.0",
+         "typescript": "^5.8.3"
+     }
+-}
++}
+\ No newline at end of file
+--
+
 diff --git a/applications/account/webpack.config.ts b/applications/account/webpack.config.ts
-index 47b1d60b28..34c4b88afd 100644
+index 2582067a9e..890f8a6b93 100644
 --- a/applications/account/webpack.config.ts
 +++ b/applications/account/webpack.config.ts
-@@ -7,7 +7,7 @@ import 'webpack-dev-server';
-
- import getConfig from '@proton/pack/webpack.config';
- import CopyIndexHtmlWebpackPlugin from '@proton/pack/webpack/copy-index-html-webpack-plugin';
--import { addDevEntry, getIndexChunks, getSupportedEntry } from '@proton/pack/webpack/entries';
-+import { getIndexChunks, getSupportedEntry } from '@proton/pack/webpack/entries';
-
- import type { HrefLang } from './pages/interface';
- import { getPages } from './pages/pages';
-@@ -59,7 +59,7 @@ const result = async (env: any): Promise<webpack.Configuration> => {
-
-     const { pre, unsupported } = config.entry as any;
-
--    if (env.appMode === 'standalone') {
-+    if (env.appMode === 'bundle') {
-         config.entry = {
-             pre,
-             ['private-index']: [path.resolve('./src/app/private.tsx'), getSupportedEntry()],
-@@ -79,7 +79,7 @@ const result = async (env: any): Promise<webpack.Configuration> => {
+@@ -75,8 +75,6 @@ const result = async (env: any): Promise<webpack.Configuration> => {
              })
          );
-
+ 
 -        addDevEntry(config);
-+        // addDevEntry(config);
-
+-
          return config;
      }
-
+ 
+--

@@ -1,0 +1,57 @@
+diff --git a/packages/shared/lib/constants.ts b/packages/shared/lib/constants.ts
+index 58883ae2cb..6f91783d26 100644
+--- a/packages/shared/lib/constants.ts
++++ b/packages/shared/lib/constants.ts
+@@ -79,6 +79,14 @@ export const APPS = {
+     PROTONAUTHENTICATOR: 'proton-authenticator',
+ } as const;
+ 
++export const ELECTRON_MAIL_APPS = [
++    APPS.PROTONACCOUNT,
++    APPS.PROTONCALENDAR,
++    APPS.PROTONDRIVE,
++    APPS.PROTONMAIL,
++    APPS.PROTONVPN_SETTINGS,
++] as const;
++
+ interface AppConfiguration {
+     publicPath: string;
+     subdomain: string;
+@@ -95,7 +103,7 @@ interface AppConfiguration {
+ 
+ export const APPS_CONFIGURATION: { [key in APP_NAMES]: AppConfiguration } = {
+     [APPS.PROTONACCOUNT]: {
+-        publicPath: '',
++        publicPath: '/account',
+         subdomain: 'account',
+         name: 'Proton Account',
+         bareName: 'Account',
+@@ -207,8 +215,8 @@ export const APPS_CONFIGURATION: { [key in APP_NAMES]: AppConfiguration } = {
+         product: Product.Pass,
+     },
+     [APPS.PROTONVPN_SETTINGS]: {
+-        publicPath: '',
+-        subdomain: '',
++        publicPath: 'account/vpn',
++        subdomain: 'account',
+         name: VPN_APP_NAME,
+         bareName: VPN_SHORT_APP_NAME,
+         clientID: 'web-vpn-settings',
+@@ -1026,11 +1034,11 @@ declare const WEBPACK_OPENPGP: {
+ export const OPENPGP =
+     typeof WEBPACK_OPENPGP === 'undefined'
+         ? {
+-              main: DUMMY_FILE,
+-              compat: DUMMY_FILE,
+-              elliptic: DUMMY_FILE,
+-              worker: DUMMY_FILE,
+-          }
++            main: DUMMY_FILE,
++            compat: DUMMY_FILE,
++            elliptic: DUMMY_FILE,
++            worker: DUMMY_FILE,
++        }
+         : WEBPACK_OPENPGP;
+ 
+ const PROTONPASS_EXTENSION_IDS = [
+--

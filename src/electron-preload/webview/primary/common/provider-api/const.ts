@@ -2,8 +2,8 @@ export const WEBVIEW_PRIMARY_INTERNALS_APP_TYPES = ["proton-mail", "proton-calen
 
 export const WEBVIEW_PRIMARY_INTERNALS_KEYS = {
     [WEBVIEW_PRIMARY_INTERNALS_APP_TYPES[0]]: {
-        key: "./src/app/containers/PageContainer.tsx",
-        handleObservableValue: {itemName: "PageParamsParser", itemCallResultTypeValidation: "object"},
+        key: "./src/app/components/layout/PrivateLayout.tsx",
+        handleObservableValue: {itemName: "PrivateLayout", itemCallResultTypeValidation: "object"},
     },
     [WEBVIEW_PRIMARY_INTERNALS_APP_TYPES[1]]: {
         key: "./src/app/containers/calendar/MainContainer.tsx",

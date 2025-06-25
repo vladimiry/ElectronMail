@@ -1,15 +1,44 @@
+diff --git a/package.json b/package.json
+index 0195dc8bea..a16225db6d 100644
+--- a/package.json
++++ b/package.json
+@@ -3,13 +3,9 @@
+     "private": true,
+     "license": "GPL-3.0",
+     "workspaces": [
+-        "applications/*",
+-        "applications/pass-desktop/native",
++        "applications/mail",
+         "packages/*",
+         "packages/wasm/*",
+-        "tests",
+-        "tests/mail-renderer",
+-        "tests/packages/*",
+         "utilities/*",
+         "vendor/*/*"
+     ],
+--
+
 diff --git a/applications/mail/package.json b/applications/mail/package.json
-index 2babdac1e9..374640c10d 100644
+index ef88d8efca..ab2bdb4af4 100644
 --- a/applications/mail/package.json
 +++ b/applications/mail/package.json
-@@ -6,7 +6,6 @@
-     "author": "",
+@@ -7,7 +7,6 @@
      "main": "index.js",
      "scripts": {
--        "build:web": "cross-env NODE_ENV=production WEBPACK_PARALLELISM=2 TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --webpackOnCaffeine --appMode=sso --logical",
+         "analyze": "yarn build:web --analyze",
+-        "build:web": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --configV2 --webpackOnCaffeine --appMode=sso --logical",
          "check-types": "tsc",
          "i18n:extract:web": "proton-i18n extract",
          "i18n:getlatest": "proton-i18n upgrade",
+@@ -101,4 +100,4 @@
+         "typescript": "^5.8.3",
+         "workbox-webpack-plugin": "^7.3.0"
+     }
+-}
++}
+\ No newline at end of file
+--
 
 diff --git a/applications/mail/src/app/index.tsx b/applications/mail/src/app/index.tsx
 index b4d841c7cd..96d2b5c9b4 100644
@@ -26,16 +55,16 @@ index b4d841c7cd..96d2b5c9b4 100644
  const container = document.querySelector('.app-root');
 
 diff --git a/applications/mail/webpack.config.ts b/applications/mail/webpack.config.ts
-index 72f0b86274..68abcf32f9 100644
+index c9a568c6ae..a315671a21 100644
 --- a/applications/mail/webpack.config.ts
 +++ b/applications/mail/webpack.config.ts
-@@ -41,14 +41,6 @@ const result = (env: any): Configuration => {
+@@ -48,14 +48,6 @@ const result = (opts: WebpackEnvArgumentsV2): Configuration => {
          );
          // }
-
+ 
 -        // The order is important so that the unsupported file is loaded after
 -        config.entry = mergeEntry(config.entry, {
--            eo: [path.resolve('./src/app/eo.tsx'), getSupportedEntry()],
+-            ['eo-index']: [path.resolve('./src/app/eo.tsx'), getSupportedEntry()],
 -        });
 -
 -        // @ts-ignore
@@ -44,16 +73,7 @@ index 72f0b86274..68abcf32f9 100644
          const htmlPlugin = config.plugins.find((plugin): plugin is HtmlWebpackPlugin => {
              return plugin instanceof HtmlWebpackPlugin;
          });
-@@ -57,7 +49,7 @@ const result = (env: any): Configuration => {
-         }
-         const htmlIndex = config.plugins.indexOf(htmlPlugin);
-
--        if (env.appMode === 'standalone') {
-+        if (env.appMode === 'bundle') { // making "login.html" page included in the root folder
-             addDevEntry(config);
-         }
-
-@@ -75,19 +67,6 @@ const result = (env: any): Configuration => {
+@@ -82,19 +74,6 @@ const result = (opts: WebpackEnvArgumentsV2): Configuration => {
                  inject: 'body',
              })
          );
@@ -66,11 +86,11 @@ index 72f0b86274..68abcf32f9 100644
 -                template: path.resolve('./src/eo.ejs'),
 -                templateParameters: htmlPlugin.userOptions.templateParameters,
 -                scriptLoading: 'defer',
--                chunks: getIndexChunks('eo'),
+-                chunks: getIndexChunks('eo-index'),
 -                inject: 'body',
 -            })
 -        );
-
+ 
          config.experiments = { asyncWebAssembly: true };
      });
 
@@ -89,30 +109,55 @@ index efbf28b89f..432f24b303 100644
          PersistentCookies: Number(persistent),
 
 diff --git a/packages/shared/lib/api/events.ts b/packages/shared/lib/api/events.ts
-index 9bf8da627c..476f8f581e 100644
+index 200c255f73..64f8e26c9a 100644
 --- a/packages/shared/lib/api/events.ts
 +++ b/packages/shared/lib/api/events.ts
-@@ -4,7 +4,11 @@ export const getLatestID = () => ({
- });
-
- export const getEvents = (eventID: string, params?: { ConversationCounts: 1 | 0; MessageCounts: 1 | 0 }) => ({
+@@ -10,7 +10,7 @@ export const getEvents = (
+         MessageCounts: 1 | 0;
+     }
+ ) => ({
 -    url: `core/v5/events/${eventID}`,
 +    url: `core/v5/events/${eventID}`, // url used by "buildEventsApiUrlTester" in src/electron-preload/webview/primary/provider-api/index.ts
      method: 'get',
--    params,
-+    params: {
-+        ...params,
-+        ConversationCounts: 1,
-+        MessageCounts: 1,
-+    },
+     params,
  });
 
+diff --git a/packages/mail/store/messages/messagesTypes.ts b/packages/mail/store/messages/messagesTypes.ts
+index 409ff52c4c..f8ea946a6a 100644
+--- a/packages/mail/store/messages/messagesTypes.ts
++++ b/packages/mail/store/messages/messagesTypes.ts
+@@ -20,12 +20,12 @@ export interface OutsideKey {
+ 
+ export interface PublicPrivateKey {
+     type: 'publicPrivate';
+-    decryptionKeys: PrivateKeyReference[];
++    /*<electron-mail-mark>*/decryptionKeys: PrivateKeyReference[];/*</electron-mail-mark>*/
+     encryptionKey: PrimaryAddressKeyForEncryption;
+     signingKeys: PrimaryAddressKeysForSigning;
+ }
+ 
+-export type MessageKeys = PublicPrivateKey | OutsideKey;
++/*<electron-mail-mark>*/export type MessageKeys = PublicPrivateKey | OutsideKey;/*</electron-mail-mark>*/
+ 
+ export interface MessageErrors {
+     network?: Error[];
+@@ -101,7 +101,7 @@ export interface MessageVerification {
+     /**
+      * Verifying keys, if any
+      */
+-    verifyingKeys: PublicKeyReference[] | undefined;
++    /*<electron-mail-mark>*/verifyingKeys: PublicKeyReference[] | undefined;/*</electron-mail-mark>*/
+ }
+ 
+ export interface AbstractMessageImage {
+--
+
 diff --git a/packages/shared/lib/api/messages.ts b/packages/shared/lib/api/messages.ts
-index aef6b86137..0593fd7ea1 100644
+index 6d76b8f635..d541b5b7d6 100644
 --- a/packages/shared/lib/api/messages.ts
 +++ b/packages/shared/lib/api/messages.ts
-@@ -42,7 +42,7 @@ export const queryMessageMetadata = ({
-     AnchorID,
+@@ -43,7 +43,7 @@ export const queryMessageMetadata = ({
+     NewsletterSubscriptionID,
  }: MailboxItemsQueryParams) => ({
      method: 'get',
 -    url: 'mail/v4/messages',
@@ -120,60 +165,73 @@ index aef6b86137..0593fd7ea1 100644
      params: {
          Location,
          Page,
-@@ -72,7 +72,7 @@ export const queryMessageMetadata = ({
-
+@@ -74,7 +74,7 @@ export const queryMessageMetadata = ({
+ 
  export const queryMessageCount = (AddressID?: string) => ({
      method: 'get',
 -    url: 'mail/v4/messages/count',
 +    url: 'mail/v4/messages/count', // url used by "buildMessagesCountApiUrlTester" in src/electron-preload/webview/primary/provider-api/index.ts
      params: { AddressID },
  });
-
+ 
 diff --git a/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx b/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx
-index 5be6a93078..aa37ede95c 100644
+index f3b94f1306..2704038939 100644
 --- a/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx
 +++ b/applications/mail/src/app/containers/mailbox/MailboxContainer.tsx
-@@ -486,6 +486,7 @@ const MailboxContainer = ({
+@@ -105,8 +105,8 @@ const MailboxContainer = ({ labelID: inputLabelID, mailSettings, userSettings, e
+     const { selectAll, setSelectAll } = useSelectAll({ labelID: inputLabelID });
+     const { setCheckAllRef } = useCheckAllRef();
+ 
+-    const labelDropdownToggleRef = useRef<() => void>(() => {});
+-    const moveDropdownToggleRef = useRef<() => void>(() => {});
++    const labelDropdownToggleRef = useRef<() => void>(() => { });
++    const moveDropdownToggleRef = useRef<() => void>(() => { });
+ 
+     const { enableResize, resetWidth, scrollBarWidth, isResizing } = useResizeMessageView(
+         mainAreaRef,
+@@ -551,6 +551,7 @@ const MailboxContainer = ({ labelID: inputLabelID, mailSettings, userSettings, e
                  tabIndex={-1}
                  className="flex-1 flex flex-column flex-nowrap outline-none"
                  data-testid="mailbox"
 +                electron-mail-mailbox-container-component
              >
                  <MailHeader
-                     breakpoints={breakpoints}
+                     elementID={elementID}
 
 diff --git a/applications/mail/src/app/helpers/attachment/attachmentLoader.ts b/applications/mail/src/app/helpers/attachment/attachmentLoader.ts
-index ed1a65d71f..f324ebf164 100644
+index 92c8a131f2..dd3593d6e9 100644
 --- a/applications/mail/src/app/helpers/attachment/attachmentLoader.ts
 +++ b/applications/mail/src/app/helpers/attachment/attachmentLoader.ts
-@@ -49,6 +49,7 @@ export const getRequest = ({ ID = '' }: Attachment = {}, api: Api, messageKeys:
+@@ -55,6 +55,7 @@ export const getRequest = ({ ID = '' }: Attachment = {}, api: Api, messageKeys:
      return api(getAttachment(ID));
  };
-
+ 
 +/* <electron-mail-mark> 1) track signature/args 2) track "verification" props use ("verifyingKeys" prop only at the moment) */
  export const getDecryptedAttachment = async (
      attachment: Attachment,
      verification: MessageVerification | undefined,
-@@ -66,10 +67,10 @@ export const getDecryptedAttachment = async (
+@@ -72,12 +73,12 @@ export const getDecryptedAttachment = async (
                  encryptedBinary,
                  sessionKey,
                  attachment.Signature,
 -                verification?.verifyingKeys
-+                verification?.verifyingKeys // track that only "verifyingKeys" prop is used from "verification"
++                verification?.verifyingKeys // tracking that only "verifyingKeys" prop is used from "verification"
              );
-
--            const verified = getVerificationStatusFromKeys(decryptedAttachment, verification?.verifyingKeys || []);
-+            const verified = getVerificationStatusFromKeys(decryptedAttachment, verification?.verifyingKeys || []);  // track that only "verifyingKeys" prop is used from "verification"
-
+ 
+             const verificationStatus = getVerificationStatusFromKeys(
+                 decryptedAttachment,
+-                verification?.verifyingKeys || []
++                verification?.verifyingKeys || [] // tracking that only "verifyingKeys" prop is used from "verification"
+             );
+ 
              return {
-                 ...decryptedAttachment,
-@@ -96,6 +97,7 @@ export const getDecryptedAttachment = async (
+@@ -116,6 +117,7 @@ export const getDecryptedAttachment = async (
          throw newError;
      }
  };
 +/* </electron-mail-mark> */
-
- export const getAndVerify = async (
+ 
+ export const getAndVerifyAttachment = async (
      attachment: Attachment = {},
 
 diff --git a/applications/mail/src/app/hooks/contact/useContacts.ts b/applications/mail/src/app/hooks/contact/useContacts.ts
@@ -192,25 +250,6 @@ index 18737e3e35..7f542185b7 100644
 
  export const useContactGroupsMap = () => {
      return useMailSelector(contactGroupsMap);
-
-diff --git a/applications/mail/src/app/store/messages/messagesTypes.ts b/applications/mail/src/app/store/messages/messagesTypes.ts
-index 328d40aeac..24bf9b7de0 100644
---- a/applications/mail/src/app/store/messages/messagesTypes.ts
-+++ b/applications/mail/src/app/store/messages/messagesTypes.ts
-@@ -95,10 +95,12 @@ export interface MessageVerification {
-      */
-     apiKeysErrors: string[] | undefined;
-
-+    /* <electron-mail-mark> */
-     /**
-      * Verifying keys, if any
-      */
--    verifyingKeys: PublicKeyReference[] | undefined;
-+    verifyingKeys: PublicKeyReference[] | undefined; // tracking used prop
-+    /* </electron-mail-mark> */
- }
-
- export interface AbstractMessageImage {
 
 diff --git a/packages/components/hooks/useGetVerificationPreferences.ts b/packages/components/hooks/useGetVerificationPreferences.ts
 index 8698fb0667..dc8a639795 100644
@@ -289,24 +328,18 @@ index 3c994a7fa3..87803c24fa 100644
   * Verify the extracted `signature` of a decryption result against its `decryptedRawContent`
 
 diff --git a/applications/mail/src/app/hooks/message/useGetMessageKeys.ts b/applications/mail/src/app/hooks/message/useGetMessageKeys.ts
-index 4c16c85b5..8b93c6084 100644
+index 6360a876f1..e0c9287e45 100644
 --- a/applications/mail/src/app/hooks/message/useGetMessageKeys.ts
 +++ b/applications/mail/src/app/hooks/message/useGetMessageKeys.ts
-@@ -10,7 +10,7 @@ export type UseGetMessageKeys = () => GetMessageKeys;
- /**
-  * Add user public and private keys to the MessageExtended if not already there
-  */
+@@ -7,7 +7,7 @@ import type { Message } from '@proton/shared/lib/interfaces/mail/Message';
+ export type GetMessageKeys = (message: Pick<Message, 'AddressID'>) => Promise<PublicPrivateKey>;
+ export type UseGetMessageKeys = () => GetMessageKeys;
+ 
 -export const useGetMessageKeys: UseGetMessageKeys = () => {
-+export const useGetMessageKeys: UseGetMessageKeys = () => { /* <electron-mail-mark> */
-     const getAddressKeys = useGetAddressKeys();
-
++export const useGetMessageKeys: UseGetMessageKeys = (/* <electron-mail-mark> signature tracking */) => {
+     const getAddressKeysByUsage = useGetAddressKeysByUsage();
+ 
      return useCallback(
-@@ -20,4 +20,4 @@ export const useGetMessageKeys: UseGetMessageKeys = () => {
-         },
-         [getAddressKeys]
-     );
--};
-+}; /* </electron-mail-mark> */
 
 diff --git a/packages/components/hooks/useApi.ts b/packages/components/hooks/useApi.ts
 index e2baface5..8b4317d5a 100644
@@ -415,21 +448,40 @@ index 2aaa779d3..487f54ff3 100644
  };
 
 diff --git a/applications/mail/src/app/components/drawer/MailQuickSettings.tsx b/applications/mail/src/app/components/drawer/MailQuickSettings.tsx
-index a0158185f3..c9f107441d 100644
+index ed5c2eb6bb..5b49a0d4d6 100644
 --- a/applications/mail/src/app/components/drawer/MailQuickSettings.tsx
 +++ b/applications/mail/src/app/components/drawer/MailQuickSettings.tsx
-@@ -51,7 +51,6 @@ import { useGetStartedChecklist } from 'proton-mail/containers/onboardingCheckli
+@@ -60,7 +60,6 @@ import { useCanReplayOnboarding } from 'proton-mail/hooks/useCanReplayOnboarding
  import useMailModel from 'proton-mail/hooks/useMailModel';
-
+ 
  import ClearBrowserDataModal from '../header/ClearBrowserDataModal';
 -import MailDefaultHandlerModal from '../header/MailDefaultHandlerModal';
- import { useMailOnboardingTelemetry } from '../onboarding/useMailOnboardingTelemetry';
-
+ 
  const { OFF, UNSET, SERVER_ONLY } = AI_ASSISTANT_ACCESS;
-@@ -417,7 +416,6 @@ const MailQuickSettings = () => {
-                 </Tooltip>
+ 
+@@ -178,12 +177,12 @@ const MailQuickSettings = () => {
+     const mailReminders: QuickSettingsReminders[] = useMemo(() => {
+         const ktReminder: QuickSettingsReminders | undefined = showKT
+             ? {
+-                  color: keyTransparencyNotification,
+-                  icon: keyTransparencyNotification ? 'exclamation-circle-filled' : undefined,
+-                  text: c('loc_nightly: Key transparency details').t`Key verification`,
+-                  callback: handleShowKeyTransparencyModal,
+-                  testID: 'key-verification',
+-              }
++                color: keyTransparencyNotification,
++                icon: keyTransparencyNotification ? 'exclamation-circle-filled' : undefined,
++                text: c('loc_nightly: Key transparency details').t`Key verification`,
++                callback: handleShowKeyTransparencyModal,
++                testID: 'key-verification',
++            }
+             : undefined;
+ 
+         return [ktReminder].filter(isTruthy);
+@@ -433,7 +432,6 @@ const MailQuickSettings = () => {
              </QuickSettingsButtonSection>
-
+ 
+             {ElectronDefaultAppPrompt}
 -            <MailDefaultHandlerModal {...mailDefaultHandlerProps} />
              <ClearBrowserDataModal {...clearBrowserDataProps} />
              <MailShortcutsModal {...mailShortcutsProps} />
@@ -485,40 +537,13 @@ index 0314390d7b..0000000000
 -export default MailDefaultHandlerModal;
 
 diff --git a/applications/mail/src/app/components/header/search/MailSearch.tsx b/applications/mail/src/app/components/header/search/MailSearch.tsx
-index 6d44d81808..26f396c202 100644
+index 549d453cdf..0ab53a557e 100644
 --- a/applications/mail/src/app/components/header/search/MailSearch.tsx
 +++ b/applications/mail/src/app/components/header/search/MailSearch.tsx
-@@ -3,16 +3,13 @@ import { useEffect, useState } from 'react';
- import type { Location } from 'history';
-
- import { useAddresses } from '@proton/account/addresses/hooks';
--import { useUser } from '@proton/account/user/hooks';
- import type { Breakpoints } from '@proton/components';
- import { TopNavbarListItemSearchButton, usePopperAnchor, useProgressiveRollout, useToggle } from '@proton/components';
--import { FeatureCode } from '@proton/features';
- import { useFolders, useLabels } from '@proton/mail';
- import generateUID from '@proton/utils/generateUID';
-
- import { ADVANCED_SEARCH_OVERLAY_CLOSE_EVENT } from '../../../constants';
- import { useEncryptedSearchContext } from '../../../containers/EncryptedSearchProvider';
--import { isEncryptedSearchAvailable } from '../../../helpers/encryptedSearch/esUtils';
- import { extractSearchParameters } from '../../../helpers/mailboxUrl';
- import { useClickMailContent } from '../../../hooks/useClickMailContent';
- import AdvancedSearch from './AdvancedSearch';
-@@ -30,17 +27,15 @@ interface Props {
-
- const MailSearch = ({ breakpoints, labelID, location, columnMode }: Props) => {
-     const [uid] = useState(generateUID('advanced-search-overlay'));
--    const isESUserInterfaceAvailable = useProgressiveRollout(FeatureCode.ESUserInterface);
-     const { anchorRef, isOpen, open, close } = usePopperAnchor<HTMLInputElement>();
-     const searchParams = extractSearchParameters(location);
-     const [searchInputValue, setSearchInputValue] = useState(searchParams.keyword || '');
--    const [user] = useUser();
-     const [, loadingLabels] = useLabels();
-     const [, loadingFolders] = useFolders();
+@@ -45,7 +45,7 @@ const MailSearch = ({ labelID, location, columnMode }: Props) => {
      const [, loadingAddresses] = useAddresses();
      const { esStatus, cacheIndexedDB, closeDropdown, esIndexingProgressState } = useEncryptedSearchContext();
-     const { dropdownOpened } = esStatus;
+     const { dropdownOpened, esEnabled } = esStatus;
 -    const showEncryptedSearch = isEncryptedSearchAvailable(user, isESUserInterfaceAvailable);
 +    const showEncryptedSearch = false;
      // Show more from inside AdvancedSearch to persist the state when the overlay is closed
@@ -539,15 +564,15 @@ index ebdf5ee22..28adf6c62 100644
      isSearching: false,
 
 diff --git a/applications/mail/src/app/hooks/useMailModel.ts b/applications/mail/src/app/hooks/useMailModel.ts
-index a585711c48..9df657f03c 100644
+index ec79fc3b4b..971d04ece1 100644
 --- a/applications/mail/src/app/hooks/useMailModel.ts
 +++ b/applications/mail/src/app/hooks/useMailModel.ts
 @@ -1,6 +1,6 @@
- import { useMailSettings } from '@proton/mail/mailSettings/hooks';
-
+ import { useMailSettings } from '@proton/mail/store/mailSettings/hooks';
+ 
 -type MailModel = 'MailSettings';
 +type MailModel = 'MailSettings'; // tracking "MailSettings" constant
-
+ 
  const useMailModel = (key: MailModel) => {
      const [mailSettings] = useMailSettings();
 
@@ -592,5 +617,6 @@ index 5a68c1fd67..2f392dea49 100644
 -    );
 +    return null;
  };
-
+ 
  export default AssistantIframe;
+--

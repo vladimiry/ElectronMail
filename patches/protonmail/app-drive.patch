@@ -1,29 +1,59 @@
+diff --git a/package.json b/package.json
+index 0195dc8bea..949d07c41e 100644
+--- a/package.json
++++ b/package.json
+@@ -3,7 +3,7 @@
+     "private": true,
+     "license": "GPL-3.0",
+     "workspaces": [
+-        "applications/*",
++        "applications/drive",
+         "applications/pass-desktop/native",
+         "packages/*",
+         "packages/wasm/*",
+@@ -60,4 +60,4 @@
+     "publishConfig": {
+         "registry": "https://nexus.protontech.ch/repository/web-npm/"
+     }
+-}
++}
+\ No newline at end of file
+--
+
 diff --git a/applications/drive/package.json b/applications/drive/package.json
-index c037e3ce53..e1655f0a06 100644
+index 0d537c5dda..976305cc4a 100644
 --- a/applications/drive/package.json
 +++ b/applications/drive/package.json
 @@ -7,7 +7,6 @@
      "main": "index.ts",
      "scripts": {
          "analyze": "yarn build:web --analyze",
--        "build:web": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --webpackOnCaffeine --appMode=sso",
+-        "build:web": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --configV2 --webpackOnCaffeine --appMode=sso --handleSupportAndErrors --optimizeAssets",
          "check-types": "tsc",
          "i18n:extract:local": "yarn workspace @proton/i18n build && yarn build:web && proton-i18n extract",
          "i18n:extract:web": "proton-i18n extract",
+@@ -96,4 +95,4 @@
+     "peerDependencies": {
+         "@openpgp/web-stream-tools": "^0.1.0"
+     }
+-}
++}
+\ No newline at end of file
+--
 
 diff --git a/applications/drive/src/app/index.tsx b/applications/drive/src/app/index.tsx
-index 7ca2da66f3..2a99b061bb 100644
+index 4d03c64db1..0e5766fcfe 100644
 --- a/applications/drive/src/app/index.tsx
 +++ b/applications/drive/src/app/index.tsx
-@@ -9,6 +9,8 @@ import { initializePerformanceMetrics } from './utils/performance';
-
- const isPublicUrl = window.location.pathname.startsWith('/urls');
-
+@@ -9,6 +9,8 @@ import App from './App';
+ import './style';
+ import { initializePerformanceMetrics } from './utils/performance';
+ 
 +window.sessionStorage.setItem("electron_mail:proton_app_name", "proton-drive");
 +
- initializePerformanceMetrics(isPublicUrl);
-
- ReactDOM.render(isPublicUrl ? <UrlsApp /> : <App />, document.querySelector('.app-root'));
+ initializePerformanceMetrics(false);
+ 
+ ReactDOM.render(<App />, document.querySelector('.app-root'));
 
 diff --git a/applications/drive/src/.htaccess b/applications/drive/src/.htaccess
 index b0b25a5fae..11d4e4af0f 100644
@@ -44,60 +74,82 @@ index b0b25a5fae..11d4e4af0f 100644
    AddOutputFilter INCLUDES;DEFLATE svg
 
 diff --git a/applications/drive/src/app/store/_downloads/fileSaver/download.ts b/applications/drive/src/app/store/_downloads/fileSaver/download.ts
-index e3a5bd4889..da2217e2f3 100644
+index 1db1b7ca29..a7e6e460fd 100644
 --- a/applications/drive/src/app/store/_downloads/fileSaver/download.ts
 +++ b/applications/drive/src/app/store/_downloads/fileSaver/download.ts
-@@ -1,6 +1,5 @@
- import { WritableStream } from 'web-streams-polyfill';
-
--import { isIos, isSafari } from '@proton/shared/lib/helpers/browser';
- import { stripLeadingAndTrailingSlash } from '@proton/shared/lib/helpers/string';
- import { PUBLIC_PATH } from '@proton/shared/lib/webpack.constants';
-
-@@ -15,17 +14,7 @@ let workerWakeupInterval: ReturnType<typeof setInterval>;
-  * IOS - forces all browsers to use webkit, so same problems as safari in all browsers.
-  * For them download is done in-memory using blob response.
-  */
--export const isUnsupported = () => {
--    /* TODO: To be removed after test DRVWEB-4375 */
--    if (typeof window !== 'undefined') {
--        const isSWForSafariEnabled = 'isSWForSafariEnabled' in window && window.isSWForSafariEnabled;
--        if (isSWForSafariEnabled) {
--            return !('serviceWorker' in navigator);
--        }
--    }
--    // Original
--    return !('serviceWorker' in navigator) || isSafari() || isIos();
--};
-+export const isUnsupported = () => !('serviceWorker' in navigator);
-
+@@ -5,9 +5,11 @@ import type { TransferMeta } from '../../../components/TransferManager/transfer'
+ 
+ let workerWakeupInterval: ReturnType<typeof setInterval>;
+ 
++// <electron-mail-mark>
+ export const isServiceWorkersUnsupported = () => {
+     return !('serviceWorker' in navigator);
+ };
++// </electron-mail-mark>
+ 
  // createDownloadIframe opens download URL created in service worker to
  // initialize the download in the browser. The response has headers to
-@@ -73,6 +62,7 @@ function serviceWorkerKeepAlive() {
+@@ -55,11 +57,12 @@ function serviceWorkerKeepAlive() {
      }, 10000);
  }
-
-+/* <electron-mail-mark> */
+ 
++// <electron-mail-mark>
  export async function initDownloadSW() {
-     if (isUnsupported()) {
-         throw new Error('Saving file via download is unsupported by this browser');
-@@ -81,7 +71,7 @@ export async function initDownloadSW() {
-     await navigator.serviceWorker
-         .register(
-             /* webpackChunkName: "downloadSW" */
--            new URL('./downloadSW', import.meta.url),
-+            new URL('./downloadSW', import.meta.url), // electron-mail-mark
-             {
-                 scope: `/${stripLeadingAndTrailingSlash(PUBLIC_PATH)}`,
-             }
-@@ -107,6 +97,7 @@ export async function initDownloadSW() {
-
+     // wait Service Worker is registered
+     await navigator.serviceWorker.register(
+         /* webpackChunkName: "downloadSW" */
+-        new URL('./downloadSW', import.meta.url),
++        new URL('./downloadSW', import.meta.url), // electron-mail-mark
+         {
+             scope: `/${stripLeadingAndTrailingSlash(PUBLIC_PATH)}`,
+         }
+@@ -77,6 +80,7 @@ export async function initDownloadSW() {
+ 
      serviceWorkerKeepAlive();
  }
-+/* </electron-mail-mark> */
-
++// </electron-mail-mark>
+ 
  /**
   * Opens download stream into service worker. Use abort signal when pipeTo can't close the download stream.
+diff --git a/packages/drive-store/store/_downloads/fileSaver/download.ts b/packages/drive-store/store/_downloads/fileSaver/download.ts
+index 1db1b7ca29..a7e6e460fd 100644
+--- a/packages/drive-store/store/_downloads/fileSaver/download.ts
++++ b/packages/drive-store/store/_downloads/fileSaver/download.ts
+@@ -5,9 +5,11 @@ import type { TransferMeta } from '../../../components/TransferManager/transfer'
+ 
+ let workerWakeupInterval: ReturnType<typeof setInterval>;
+ 
++// <electron-mail-mark>
+ export const isServiceWorkersUnsupported = () => {
+     return !('serviceWorker' in navigator);
+ };
++// </electron-mail-mark>
+ 
+ // createDownloadIframe opens download URL created in service worker to
+ // initialize the download in the browser. The response has headers to
+@@ -55,11 +57,12 @@ function serviceWorkerKeepAlive() {
+     }, 10000);
+ }
+ 
++// <electron-mail-mark>
+ export async function initDownloadSW() {
+     // wait Service Worker is registered
+     await navigator.serviceWorker.register(
+         /* webpackChunkName: "downloadSW" */
+-        new URL('./downloadSW', import.meta.url),
++        new URL('./downloadSW', import.meta.url), // electron-mail-mark
+         {
+             scope: `/${stripLeadingAndTrailingSlash(PUBLIC_PATH)}`,
+         }
+@@ -77,6 +80,7 @@ export async function initDownloadSW() {
+ 
+     serviceWorkerKeepAlive();
+ }
++// </electron-mail-mark>
+ 
+ /**
+  * Opens download stream into service worker. Use abort signal when pipeTo can't close the download stream.
+--
 
 diff --git a/applications/drive/src/app/store/_shares/shareUrl.ts b/applications/drive/src/app/store/_shares/shareUrl.ts
 index 1b76b8ea81..748ede869b 100644

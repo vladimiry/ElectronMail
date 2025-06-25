@@ -2,9 +2,11 @@
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "dprint.dprint",
   "files.exclude": {
-    "/app-dev/": true,
-    "/app/": true,
-    "/dist/": true,
-    "/output/": true
+    "**/.git": true,
+    "**/node_modules": true,
+    "app": true,
+    "app-dev": true,
+    "dist": true,
+    "output": true
   }
 }

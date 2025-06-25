@@ -21,19 +21,17 @@ export const generateGlobalTypescriptEnvDeclaration = (libDir: string, destFile:
 
     LIBS_TO_INCLUDE.forEach(addLibFile);
 
-    fs.writeFileSync(destFile, output.join("\n\n"), "utf-8");
+    fsExtra.ensureDirSync(path.dirname(destFile));
+    fs.writeFileSync(destFile, output.join("\n\n"));
 
     CONSOLE_LOG(`"${destFile}" created`);
 
-    function addLibFile(libName: string) {
+    function addLibFile(libName: string): void {
         const fileName = path.join(libDir, `lib.${libName}.d.ts`);
-        if (!fs.existsSync(fileName)) {
-            console.warn(`Lib file not found: ${fileName}`);
-            return;
-        }
+        if (!fs.existsSync(fileName)) throw new Error(`Lib file not found: ${fileName}`);
         if (visited.has(fileName)) return;
         visited.add(fileName);
 
-        output.push(`// ---- ${path.basename(fileName)} ----\n${fs.readFileSync(fileName)}`);
+        output.push(`// ---- ${path.basename(fileName)} ----\n${fs.readFileSync(fileName).toString()}`);
     }
 };

@@ -5,7 +5,7 @@ import {augmentRawMailWithFolders, resolveCachedQuickJSInstance} from "src/elect
 import {Context} from "src/electron-main/model";
 import {Folder, FsDbAccount, IndexableMailId, Mail, View} from "src/shared/model/database";
 import {IpcMainApiEndpoints} from "src/shared/api/main-process";
-import {ONE_SECOND_MS} from "src/shared/const";
+import {ONE_MINUTE_MS, ONE_SECOND_MS} from "src/shared/const";
 import {QUICK_JS_EVAL_CODE_VARIABLE_NAME} from "src/electron-main/api/const";
 import * as searchService from "src/electron-main/api/endpoints-builders/database/folders-view";
 import {walkConversationNodesTree} from "src/shared/util";
@@ -74,24 +74,29 @@ export const secondSearchStep = async (
     //  - improve performance (execute function on context with preset variables/functions)
     //  - process mails in batch mode vs per-email function calling)
     const codeFilterService = codeFilter && await (async () => {
-        const deadline = Date.now() + ONE_SECOND_MS;
         const runtime = (await resolveCachedQuickJSInstance()).newRuntime();
-        runtime.setInterruptHandler(shouldInterruptAfterDeadline(deadline));
+        runtime.setInterruptHandler(shouldInterruptAfterDeadline(Date.now() + ONE_SECOND_MS));
         const context = runtime.newContext();
-        const stubResult = context.evalCode(
-            `
-                globalThis.${QUICK_JS_EVAL_CODE_VARIABLE_NAME}__filter__ = undefined;
+        const stubName = `${QUICK_JS_EVAL_CODE_VARIABLE_NAME}__filter__`;
+        {
+            const stubNameFull = `globalThis.${stubName}`;
+            const stubResult = context.evalCode(
+                `
+                ${stubNameFull} = undefined;
                 function filterMessage(fn) {
-                    globalThis.${QUICK_JS_EVAL_CODE_VARIABLE_NAME}__filter__ = fn;
+                    ${stubNameFull} = fn;
                 }
-            `,
-        );
-        if (stubResult.error) throw new Error("Failed to inject stub");
-        stubResult.dispose();
-        const userResult = context.evalCode(codeFilter);
-        if (userResult.error) throw new Error("User code failed");
-        userResult.dispose();
-        const filterFnHandle = context.getProp(context.global, `${QUICK_JS_EVAL_CODE_VARIABLE_NAME}__filter__`);
+                `,
+            );
+            if (stubResult.error) throw new Error(`Failed to inject "${stubNameFull}" stub`);
+            stubResult.dispose();
+        }
+        {
+            const userResult = context.evalCode(codeFilter);
+            if (userResult.error) throw new Error("User code failed");
+            userResult.dispose();
+        }
+        const filterFnHandle = context.getProp(context.global, stubName);
         if (context.typeof(filterFnHandle) !== "function") {
             throw new Error("User code did not provide a valid filter function");
         }
@@ -121,17 +126,26 @@ export const secondSearchStep = async (
             }
             return context.newString(String(value));
         }
+        runtime.setInterruptHandler(shouldInterruptAfterDeadline(Date.now() + ONE_MINUTE_MS * 10));
         return {
             filter(mail: ReturnType<typeof augmentRawMailWithFolders>): boolean {
-                runtime.setInterruptHandler(shouldInterruptAfterDeadline(deadline));
                 const mailHandle = injectValue(mail);
                 const resultHandle = context.callFunction(filterFnHandle, context.undefined, mailHandle);
                 mailHandle.dispose();
                 if (resultHandle.error) {
-                    const errorValue = resultHandle.error;
-                    const errorMessage = context.dump(errorValue); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-                    errorValue.dispose();
-                    throw new Error(`Filter execution failed: ${errorMessage}`);
+                    const errorHandle = resultHandle.error;
+                    const messageHandle = context.getProp(errorHandle, "message");
+                    const stackHandle = context.getProp(errorHandle, "stack");
+                    const message = context.dump(messageHandle); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+                    const stack = context.dump(stackHandle); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+                    // eslint-disable-next-line no-console
+                    console.error(__filename, `"${nameof(codeFilter)}" execution error message:`, message);
+                    // eslint-disable-next-line no-console
+                    console.error(__filename, `"${nameof(codeFilter)}" execution error stack trace:`, stack);
+                    messageHandle.dispose();
+                    stackHandle.dispose();
+                    errorHandle.dispose();
+                    throw new Error(`Code filter execution failed: ${message}`);
                 }
                 const result = context.dump(resultHandle.value); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
                 resultHandle.dispose();

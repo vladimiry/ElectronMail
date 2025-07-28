@@ -66,10 +66,14 @@ export async function execShell(
     } = {},
 ): Promise<Unpacked<ReturnType<typeof spawnAsync>>> {
     {
-        const stringifiedOptions = JSON.stringify({
-            ...(options && omit(options, ["env"])),
-            ...(options?.env && printEnvWhitelist?.length ? {whitelistedEnv: pick(options.env, [...printEnvWhitelist])} : undefined),
-        });
+        const stringifiedOptions = JSON.stringify(
+            {
+                ...(options && omit(options, ["env"])),
+                ...(options?.env && printEnvWhitelist?.length ? {whitelistedEnv: pick(options.env, [...printEnvWhitelist])} : undefined),
+            },
+            null,
+            2,
+        );
         const optionsPart = stringifiedOptions !== "{}"
             ? ` (options: ${stringifiedOptions})`
             : "";

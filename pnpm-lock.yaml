@@ -33,15 +33,21 @@ patchedDependencies:
   class-transformer-validator@0.9.1:
     hash: bd032f8dd6c17f7031221fa87b022328522ceddfb59e80942d9963b71c87c106
     path: patches/class-transformer-validator@0.9.1.patch
+  keytar:
+    hash: 265563dc1338f65dfdcc8872767eb2a252e3fb557fac2279689a75de1a1c55eb
+    path: patches/keytar.patch
   monaco-editor@0.36.1:
     hash: 63e65b67b2c5bc4e3b5402522e53a945a93dc080b6aa84599d1d200415b0d780
     path: patches/monaco-editor@0.36.1.patch
   msgpackr-extract:
-    hash: cdc5fc66369622050027558aa9646aa72a543b57501aeb8b20f305938b68bd08
+    hash: e4adc21c6447526de6bd533b9fcdc39910ba395ab7e371b026ef2cfe024b4c30
     path: patches/msgpackr-extract.patch
   os-locale@6.0.2:
     hash: fa46c991a85d8885ad57086f5047c4943098ae8af36d57ae8d7835b2f5774d4b
     path: patches/os-locale@6.0.2.patch
+  sodium-native:
+    hash: 4dc470c1a76dacc8e7ea44204a616d539586bdbfff5284649e6a5248de49558c
+    path: patches/sodium-native.patch
   tough-cookie-web-storage-store@1.0.0:
     hash: 8eb463690c0286ad04978175786f9201a1b65d218024ddf3fe3929743b48ea37
     path: patches/tough-cookie-web-storage-store@1.0.0.patch
@@ -61,7 +67,7 @@ importers:
         version: 4.0.0
       keytar:
         specifier: 7.9.0
-        version: 7.9.0
+        version: 7.9.0(patch_hash=265563dc1338f65dfdcc8872767eb2a252e3fb557fac2279689a75de1a1c55eb)
       msgpackr:
         specifier: 1.11.5
         version: 1.11.5
@@ -221,7 +227,7 @@ importers:
         version: 7.13.1(eslint@8.57.0)(typescript@5.8.3)
       app-builder-lib:
         specifier: ^26.0.19
-        version: 26.0.19(patch_hash=674bd218089253dd938c2f9278e8c0927835c8d24f235ee7b539563a81569861)(dmg-builder@26.0.18)(electron-builder-squirrel-windows@26.0.19)
+        version: 26.0.19(patch_hash=27cbc6425874733dc2ac6f21a71b50e0b6ecb7cded4e53b7b52a8a20fa86a5ae)(dmg-builder@26.0.18)(electron-builder-squirrel-windows@26.0.19)
       archiver:
         specifier: 7.0.1
         version: 7.0.1
@@ -6634,7 +6640,7 @@ snapshots:
 
   app-builder-bin@5.0.0-alpha.12: {}
 
-  app-builder-lib@26.0.19(patch_hash=674bd218089253dd938c2f9278e8c0927835c8d24f235ee7b539563a81569861)(dmg-builder@26.0.18)(electron-builder-squirrel-windows@26.0.19):
+  app-builder-lib@26.0.19(patch_hash=27cbc6425874733dc2ac6f21a71b50e0b6ecb7cded4e53b7b52a8a20fa86a5ae)(dmg-builder@26.0.18)(electron-builder-squirrel-windows@26.0.19):
     dependencies:
       '@develar/schema-utils': 2.6.5
       '@electron/asar': 3.4.1
@@ -7591,7 +7597,7 @@ snapshots:
 
   dmg-builder@26.0.18(electron-builder-squirrel-windows@26.0.19):
     dependencies:
-      app-builder-lib: 26.0.19(patch_hash=674bd218089253dd938c2f9278e8c0927835c8d24f235ee7b539563a81569861)(dmg-builder@26.0.18)(electron-builder-squirrel-windows@26.0.19)
+      app-builder-lib: 26.0.19(patch_hash=27cbc6425874733dc2ac6f21a71b50e0b6ecb7cded4e53b7b52a8a20fa86a5ae)(dmg-builder@26.0.18)(electron-builder-squirrel-windows@26.0.19)
       builder-util: 26.0.17
       fs-extra: 10.1.0
       iconv-lite: 0.6.3
@@ -7702,7 +7708,7 @@ snapshots:
 
   electron-builder-squirrel-windows@26.0.19(dmg-builder@26.0.18):
     dependencies:
-      app-builder-lib: 26.0.19(patch_hash=674bd218089253dd938c2f9278e8c0927835c8d24f235ee7b539563a81569861)(dmg-builder@26.0.18)(electron-builder-squirrel-windows@26.0.19)
+      app-builder-lib: 26.0.19(patch_hash=27cbc6425874733dc2ac6f21a71b50e0b6ecb7cded4e53b7b52a8a20fa86a5ae)(dmg-builder@26.0.18)(electron-builder-squirrel-windows@26.0.19)
       builder-util: 26.0.19
       electron-winstaller: 5.4.0
     transitivePeerDependencies:
@@ -7712,7 +7718,7 @@ snapshots:
 
   electron-builder@26.0.18(electron-builder-squirrel-windows@26.0.19):
     dependencies:
-      app-builder-lib: 26.0.19(patch_hash=674bd218089253dd938c2f9278e8c0927835c8d24f235ee7b539563a81569861)(dmg-builder@26.0.18)(electron-builder-squirrel-windows@26.0.19)
+      app-builder-lib: 26.0.19(patch_hash=27cbc6425874733dc2ac6f21a71b50e0b6ecb7cded4e53b7b52a8a20fa86a5ae)(dmg-builder@26.0.18)(electron-builder-squirrel-windows@26.0.19)
       builder-util: 26.0.17
       builder-util-runtime: 9.3.3
       chalk: 4.1.2
@@ -8281,7 +8287,7 @@ snapshots:
     dependencies:
       '@hscmap/cache-map': 1.2.0
       make-error-cause: 2.3.0
-      sodium-native: 5.0.6
+      sodium-native: 5.0.6(patch_hash=4dc470c1a76dacc8e7ea44204a616d539586bdbfff5284649e6a5248de49558c)
       tslib: 2.8.1
 
   fs-json-store@8.0.1:
@@ -8915,7 +8921,7 @@ snapshots:
     optionalDependencies:
       graceful-fs: 4.2.11
 
-  keytar@7.9.0:
+  keytar@7.9.0(patch_hash=265563dc1338f65dfdcc8872767eb2a252e3fb557fac2279689a75de1a1c55eb):
     dependencies:
       node-addon-api: 4.3.0
       prebuild-install: 7.1.3
@@ -9270,7 +9276,7 @@ snapshots:
 
   ms@2.1.3: {}
 
-  msgpackr-extract@3.0.3(patch_hash=cdc5fc66369622050027558aa9646aa72a543b57501aeb8b20f305938b68bd08):
+  msgpackr-extract@3.0.3(patch_hash=e4adc21c6447526de6bd533b9fcdc39910ba395ab7e371b026ef2cfe024b4c30):
     dependencies:
       node-gyp-build-optional-packages: 5.2.2
     optionalDependencies:
@@ -9284,7 +9290,7 @@ snapshots:
 
   msgpackr@1.11.5:
     optionalDependencies:
-      msgpackr-extract: 3.0.3(patch_hash=cdc5fc66369622050027558aa9646aa72a543b57501aeb8b20f305938b68bd08)
+      msgpackr-extract: 3.0.3(patch_hash=e4adc21c6447526de6bd533b9fcdc39910ba395ab7e371b026ef2cfe024b4c30)
 
   nano-spawn@1.0.2: {}
 
@@ -10298,7 +10304,7 @@ snapshots:
       ip-address: 9.0.5
       smart-buffer: 4.2.0
 
-  sodium-native@5.0.6:
+  sodium-native@5.0.6(patch_hash=4dc470c1a76dacc8e7ea44204a616d539586bdbfff5284649e6a5248de49558c):
     dependencies:
       require-addon: 1.1.0
       which-runtime: 1.3.0

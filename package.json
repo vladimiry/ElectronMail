@@ -56,7 +56,7 @@
     "clean:app": "rimraf ./app",
     "clean:app-dev": "rimraf ./app-dev",
     "clean:output": "rimraf ./output",
-    "clean:prebuilds": "rimraf --glob \"./node_modules/{keytar,sodium-native,msgpackr-extract}/{bin,build,prebuilds}\" \"./node_modules/@msgpackr-extract/\" \"./node_modules/sodium-native/deps/**/!(bin.js)\"",
+    "clean:prebuilds": "rimraf --glob \"./node_modules/{keytar,sodium-native,msgpackr-extract,@msgpackr-extract}/**/*.{node,bare}\" \"./node_modules/@msgpackr-extract/\"",
     "assets": "npm-run-all assets:copy assets:webclient",
     "assets:dev": "npm-run-all assets:copy:dev assets:webclient:dev",
     "assets:copy": "cpx \"./src/assets/dist/**/*\" ./app/assets",
@@ -264,10 +264,12 @@
       "app-builder-lib": "patches/app-builder-lib.patch",
       "class-transformer-validator@0.9.1": "patches/class-transformer-validator@0.9.1.patch",
       "monaco-editor@0.36.1": "patches/monaco-editor@0.36.1.patch",
-      "msgpackr-extract": "patches/msgpackr-extract.patch",
       "os-locale@6.0.2": "patches/os-locale@6.0.2.patch",
       "tough-cookie-web-storage-store@1.0.0": "patches/tough-cookie-web-storage-store@1.0.0.patch",
-      "ts-node@10.9.2": "patches/ts-node@10.9.2.patch"
+      "ts-node@10.9.2": "patches/ts-node@10.9.2.patch",
+      "keytar": "patches/keytar.patch",
+      "msgpackr-extract": "patches/msgpackr-extract.patch",
+      "sodium-native": "patches/sodium-native.patch"
     },
     "ignoredBuiltDependencies": [
       "@parcel/watcher",

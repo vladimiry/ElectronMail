@@ -1,0 +1,13 @@
+diff --git a/binding.gyp b/binding.gyp
+index 9be3dcb490b10937416a72a60e1d4290f9c04519..399ea04ff16a3ab30e03695c945d5e089d5ec09c 100644
+--- a/binding.gyp
++++ b/binding.gyp
+@@ -12,7 +12,7 @@
+         'MACOSX_DEPLOYMENT_TARGET': '10.7',
+       },
+       'msvs_settings': {
+-        'VCCLCompilerTool': { 'ExceptionHandling': 1 },
++        'VCCLCompilerTool': { 'ExceptionHandling': 1, "PlatformToolset": "v142" },
+       },
+       'include_dirs': ["<!(node -p \"require('node-addon-api').include_dir\")"],
+       'sources': [

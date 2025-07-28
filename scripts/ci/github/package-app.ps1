@@ -1,30 +1,50 @@
-$ErrorActionPreference = 'Stop'
+. "$PSScriptRoot\package-app.include.ps1"
 
-function Run($cmd) {
-    Write-Host "Running: $cmd"
-    Invoke-Expression $cmd
-    if ($LASTEXITCODE -ne 0) {
-        Write-Error "❌ Command failed: $cmd"
-        exit $LASTEXITCODE
-    }
-}
+$vsInstallRoot = "C:\Program Files (x86)\Microsoft Visual Studio\2019"
+
+echo "::group::resolve vs2019"
+$vcVarsPath = Resolve-VcVarsPath -vsInstallRoot $vsInstallRoot
+echo "::endgroup::"
 
 echo "::group::compile native modules"
-Run 'pnpm run prepare-native-deps'
+$cmd = "`"$vcVarsPath`" x64 -vcvars_ver=14.2 && pnpm run prepare-native-deps"
+Run -cmd $cmd
+echo "::endgroup::"
+
+echo "::group::scan *.node files"
+$stringsExe = Resolve-StringsExe
+$dumpbinExe = Resolve-DumpbinExe -vsInstallRoot $vsInstallRoot
+$targetModules = @("keytar", "msgpackr-extract", "sodium-native")
+$basePath = Join-Path (Get-Location) "node_modules"
+foreach ($module in $targetModules) {
+    $searchPath = Join-Path $basePath $module
+    Get-ChildItem -Path $searchPath -Recurse -Filter *.node -ErrorAction SilentlyContinue | ForEach-Object {
+        $nodeFile = "`"$($_.FullName)`""
+        Write-Host "${nodeFile} [NAPI + linker] info:"
+        $scanners = @(
+            @{ exe = "`"$stringsExe`""; args = ""; pattern = "napi_register_module" },
+            @{ exe = "`"$dumpbinExe`""; args = "/headers"; pattern = "linker" }
+        )
+        foreach ($scanner in $scanners) {
+            $cmd = "$($scanner.exe) $($scanner.args) $nodeFile"
+            $rawOutput = RunWithCollectedOutput -cmd $cmd -SilentCmd -AllowFailure
+            $rawOutput | Select-String $($scanner.pattern)
+        }
+        Write-Host "-----------------------------"
+    }
+}
 echo "::endgroup::"
 
 echo "::group::test e2e"
-# TODO enable e2e test running on Windows
-# currently "playwright._electron.launch" call ends up with error on Windows: "electron.launch: Process failed to launch!"
-# Run 'pnpm run test:e2e'
+Run -cmd "pnpm run test:e2e"
 echo "::endgroup::"
 
 echo "::group::package"
-Run 'pnpm run build:electron-builder-hooks'
-Run 'pnpm run electron-builder:dist'
+Run -cmd "pnpm run build:electron-builder-hooks"
+Run -cmd "pnpm run electron-builder:dist"
 echo "::endgroup::"
 
 echo "::group::hash & upload"
-Run 'pnpm run scripts/dist-packages/print-hashes'
-Run 'pnpm run scripts/dist-packages/upload'
+Run -cmd "pnpm run scripts/dist-packages/print-hashes"
+Run -cmd "pnpm run scripts/dist-packages/upload"
 echo "::endgroup::"

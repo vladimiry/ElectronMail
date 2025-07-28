@@ -15,7 +15,6 @@ jobs:
       - { uses: actions/checkout@v4 }
       - { uses: pnpm/action-setup@v4, with: { version: 'latest' } }
       - { uses: actions/setup-node@v4, with: { node-version: '${{ env.ELECTRON_MAIL_NODE_VERSION }}', cache: 'pnpm' } }
-      - { name: system setup, if: runner.os == 'Linux', run: ./scripts/ci/github/system-setup-linux.sh }
       - { uses: actions/setup-python@v5, with: { python-version: '3.9' } }
       - { name: envinfo, run: npx envinfo }
       - { name: install node modules, run: 'pnpm install --frozen-lockfile --reporter=append-only' }
@@ -44,7 +43,6 @@ jobs:
       - { uses: actions/checkout@v4 }
       - { uses: pnpm/action-setup@v4, with: { version: 'latest' } }
       - { uses: actions/setup-node@v4, with: { node-version: '${{ env.ELECTRON_MAIL_NODE_VERSION }}', cache: 'pnpm' } }
-      - { name: system setup, if: runner.os == 'Linux', run: ./scripts/ci/github/system-setup-linux.sh }
       - { uses: actions/setup-python@v5, with: { python-version: '3.9' } }
       - { name: envinfo, run: npx envinfo }
       - { name: install node modules, run: 'pnpm install --frozen-lockfile --reporter=append-only' }
@@ -66,7 +64,6 @@ jobs:
       - { uses: actions/checkout@v4 }
       - { uses: pnpm/action-setup@v4, with: { version: 'latest' } }
       - { uses: actions/setup-node@v4, with: { node-version: '${{ env.ELECTRON_MAIL_NODE_VERSION }}', cache: 'pnpm' } }
-      - { name: system setup, if: runner.os == 'Linux', run: ./scripts/ci/github/system-setup-linux.sh }
       - { uses: actions/setup-python@v5, with: { python-version: '3.9' } }
       - { name: envinfo, run: npx envinfo }
       - { name: install node modules, run: 'pnpm install --frozen-lockfile --reporter=append-only' }
@@ -77,6 +74,18 @@ jobs:
       - { name: assets, run: 'yarn assets', env: { ELECTRON_MAIL_SHOULD_FAIL_ON_BUILD: 'true' } }
       - { name: print ./app files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./app }
       - { name: build, if: runner.os == 'Windows', run: ./scripts/ci/github/package-app.ps1 }
+      - name: build native deps in ubuntu:20.04
+        if: runner.os == 'Linux'
+        run: |
+          set -e
+          pnpm run clean:prebuilds
+          docker run --rm \
+            -v ${{ github.workspace }}:/host \
+            -w /tmp \
+            -e ELECTRON_MAIL_NODE_VERSION=${{ env.ELECTRON_MAIL_NODE_VERSION }} \
+            -e GITHUB_REPOSITORY=${{ github.repository }} \
+            -e GITHUB_SHA=${{ github.sha }} \
+            ubuntu:20.04 bash -c "/host/scripts/ci/github/prepare-native-deps-docker.sh"
       - { name: build, if: runner.os == 'Linux', run: ./scripts/ci/github/package-app-linux.sh }
       - {
           name: build,

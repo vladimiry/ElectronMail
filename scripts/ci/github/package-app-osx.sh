@@ -18,6 +18,18 @@ echo "::group::compile native modules"
 pnpm run prepare-native-deps
 echo "::endgroup::"
 
+echo "::group::scan *.node files"
+for module in keytar msgpackr-extract sodium-native; do
+  find "node_modules/$module" -type f -name '*.node' -exec sh -c '
+    echo "$1 [NAPI] info:"
+    nm -gU "$1" | grep napi_register_module
+    echo "$1 [otool] info:"
+    otool -l "$1" | grep -A6 "LC_VERSION_MIN_MACOSX\|LC_BUILD_VERSION"
+    echo "-----------------------------"
+  ' _ {} \;
+done
+echo "::endgroup::"
+
 echo "::group::test e2e"
 pnpm run test:e2e
 echo "::endgroup::"

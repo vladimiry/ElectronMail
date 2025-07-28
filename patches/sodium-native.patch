@@ -1,0 +1,20 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index b6611d03ae41d76aedec4ebc2727297a59a53df9..342e93affc7dacbca5abfc0eb53f01f7afe472bd 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,3 +1,15 @@
++# Compatibility settings for Windows 10 and newer
++if(WIN32)
++  # Target Windows 10
++  add_definitions(-D_WIN32_WINNT=0x0A00)
++  # Use Windows SDK 10.0.18362.0 (adjust if needed)
++  set(CMAKE_SYSTEM_VERSION "10.0.18362.0")
++  # Restrict instruction set to AVX (or SSE2 for broader compatibility)
++  if(MSVC OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
++    add_compile_options(/arch:AVX /Zc:__cplusplus /fallback)
++  endif()
++endif()
++
+ cmake_minimum_required(VERSION 3.25)
+ 
+ find_package(cmake-bare REQUIRED PATHS node_modules/cmake-bare)

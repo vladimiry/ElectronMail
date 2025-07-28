@@ -4,36 +4,20 @@ set -ev
 
 echo "::group::tweak the system"
 sudo apt-get update
-# <purpose: native modules compiling>
-sudo apt-get install --yes --no-install-recommends libtool automake gcc-10 g++-10
-sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 100 --slave /usr/bin/g++ g++ /usr/bin/g++-10 --slave /usr/bin/gcov gcov /usr/bin/gcov-10
-# purpose: compiling "desktop-idle" native module (issue: No package 'xscrnsaver' found)
-sudo apt-get install --yes --no-install-recommends libxss-dev
-# purpose: tweaking snap package ("unsquashfs" binary)
-sudo apt-get install --yes --no-install-recommends snapcraft squashfs-tools
-# purpose: compiling "node-keytar" native module and keychain initialization
-sudo apt-get install --yes --no-install-recommends libsecret-1-dev
-# purpose: pacman build fails also due missing "bsdtar", see https://github.com/jordansissel/fpm/issues/1453#issuecomment-356138549
-sudo apt-get install --yes --no-install-recommends libarchive-tools
-# purpose: AppImage re-packaging
-sudo apt-get install --yes --no-install-recommends desktop-file-utils
-# </purpose: native modules compiling>
-export CC=gcc-10
-export CXX=g++-10
+# - snapcraft: for snap tweaking
+# - squashfs-tools: for snap tweaking
+# - libarchive-tools: includes bsdtar for pacman builds
+# - desktop-file-utils: needed for AppImage packaging
+sudo apt-get install --yes --no-install-recommends \
+  snapcraft \
+  squashfs-tools \
+  libarchive-tools \
+  desktop-file-utils
 echo "::endgroup::"
 
-# assuming that "ubuntu-22.04" image comes with glibc v2.31, see https://github.com/vladimiry/ElectronMail/issues/389#issuecomment-812071591
-GLIBC_INFO_EXPECTED_SUB="release version 2.35"
-GLIBC_INFO=$(lsof -p $$ | grep libc | awk ' { print $NF" --version"; } ' | sh)
-echo $GLIBC_INFO
-if [[ "$GLIBC_INFO" != *"$GLIBC_INFO_EXPECTED_SUB"* ]]; then
-    echo >&2 "unexpected glibc version detected"
-    exit 1
-fi
-
-echo "::group::compile native modules"
-pnpm run prepare-native-deps
-echo "::endgroup::"
+# echo "::group::compile native modules"
+# pnpm run prepare-native-deps # moved to "./scripts/ci/github/prepare-native-deps-docker.sh"
+# echo "::endgroup::"
 
 echo "::group::test e2e setup"
 echo "initializing xvfb stuff..."
@@ -57,6 +41,18 @@ echo -n "secret-tool-password-1" | secret-tool store --label=secret-tool-label-1
 # sudo sysctl kernel.unprivileged_userns_clone=0
 # enable user namespaces so the suid/fallback sandbox doesn't take place
 sudo sysctl kernel.unprivileged_userns_clone=1
+echo "::endgroup::"
+
+echo "::group::scan *.node files"
+for module in keytar msgpackr-extract sodium-native; do
+  find "node_modules/$module" -type f -name '*.node' -exec sh -c '
+    echo "$1 [NAPI] info:"
+    strings "$1" | grep napi_register_module | sort | uniq
+    echo "$1 [GLIBC] info:"
+    strings "$1" | grep GLIBC_ | sort | uniq
+    echo "-----------------------------"
+  ' _ {} \;
+done
 echo "::endgroup::"
 
 echo "::group::test e2e"

@@ -207,6 +207,17 @@ async function executeBuildFlow(
             } else {
                 await execShell(["yarn", ["install"], {cwd: repoDir}], {printStdOut: false});
             }
+
+            for (
+                const patchFileName of // eslint-disable-next-line import/no-relative-parent-imports
+                (await import("../../patches/protonmail/after_node_modules_installed/meta.json", {with: {type: "json"}}))
+                    .default[repoType]
+            ) {
+                await applyPatch({
+                    patchFile: path.join(CWD_ABSOLUTE_DIR, "./patches/protonmail/after_node_modules_installed", patchFileName),
+                    cwd: repoDir,
+                });
+            }
         },
     };
 

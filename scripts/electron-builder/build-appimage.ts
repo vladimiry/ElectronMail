@@ -2,7 +2,7 @@ import path from "path";
 
 import {addCommandLineArgs, build, DISABLE_SANDBOX_ARGS_LINE, ensureFileHasNoSuidBit} from "scripts/electron-builder/lib";
 import {assertPathIsInCwd, catchTopLeventAsync, execShell, resolveExecutable} from "scripts/lib";
-import {PRODUCT_NAME} from "src/shared/const";
+import {BINARY_NAME} from "src/shared/const";
 
 // TODO pass destination directory instead of hardcoding it ("--appimage-extract" doesn't support destination parameter at the moment)
 const extractedImageFolderName = "squashfs-root";
@@ -58,7 +58,7 @@ async function postProcess({packageFile}: {packageFile: string}): Promise<void> 
         searchValue,
         replaceWith: `${searchValue} ${DISABLE_SANDBOX_ARGS_LINE}`,
     });
-    ensureFileHasNoSuidBit(path.join(packageDir, PRODUCT_NAME));
+    ensureFileHasNoSuidBit(path.join(packageDir, BINARY_NAME));
     await packAndCleanup({packageDir, packageFile});
 }
 

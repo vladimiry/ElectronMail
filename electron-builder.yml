@@ -1,6 +1,7 @@
 appId: 'github.com/vladimiry/ElectronMail'
 artifactName: ${name}-${version}-${os}-${arch}.${ext}
 productName: 'ElectronMail'
+executableName: 'electron-mail'
 publish: null
 forceCodeSigning: false
 

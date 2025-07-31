@@ -67,3 +67,118 @@ index fa2cdf02e9..991e8d78f2 100644
  
  export const getDateHeader = (headers: Headers) => {
      const dateHeader = headers?.get?.('date');
+
+diff --git a/packages/shared/lib/api.js b/packages/shared/lib/api.js
+index 58455de854..650cab8de8 100644
+--- a/packages/shared/lib/api.js
++++ b/packages/shared/lib/api.js
+@@ -30,6 +30,99 @@ export default ({
+         ...otherDefaultHeaders,
+     };
+ 
++    const processResponse = (() => {
++        const rewriteUrlProps = (() => {
++            const rewriteUrl = (() => {
++                // this "BASE_API_URL" comes with "drive-api" base subdomain for Drive app/page, "mail-api" for Mail app/page, and so on
++                const BASE_API_URL = new URL("___ELECTRON_MAIL_PROTON_API_ENTRY_URL_PLACEHOLDER___");
++                const getFirstSubdomain = (hostname) => {
++                    const parts = hostname.split(".");
++                    return parts.length > 2 ? parts[0] : null;
++                };
++                const getBaseDomain = (hostname) => {
++                    const parts = hostname.split(".");
++                    return parts.slice(1).join(".");
++                };
++                // TODO should we just keep the "drive-api" base subdomain here
++                //      instead of keeping the original base subdomain (like "zsh-storage")?
++                return (url) => {
++                    const sourceUrl = new URL(url);
++                    const sourceSubdomain = getFirstSubdomain(sourceUrl.hostname);
++                    const targetBaseDomain = getBaseDomain(BASE_API_URL.hostname);
++                    const newHost = sourceSubdomain ? `${sourceSubdomain}.${targetBaseDomain}` : targetBaseDomain;
++                    const targetProtocol = BASE_API_URL.protocol;
++                    const targetPort = BASE_API_URL.port ? `:${BASE_API_URL.port}` : "";
++                    return `${targetProtocol}//${newHost}${targetPort}${sourceUrl.pathname}${sourceUrl.search}`;
++                };
++            })();
++            const PROPS = {
++                common: ["BareURL", "URL"],
++                thumbnail: ["ThumbnailLink", "ThumbnailBareURL"],
++                thumbnailDownload: ["ThumbnailDownloadUrl"],
++            };
++            const rewrite = (item, props) => {
++                for (const prop of props) {
++                    if (String(item[prop]).startsWith("https://")) {
++                        item[prop] = rewriteUrl(item[prop]);
++                    }
++                }
++            };
++            return {
++                common: (item) => rewrite(item, PROPS.common),
++                thumbnail: (item) => rewrite(item, PROPS.thumbnail),
++                thumbnailDownload: (item) => rewrite(item, PROPS.thumbnailDownload),
++            };
++        })();
++        const TRANSFORMERS = [
++            {
++                match: (pathname) => pathname === "/drive/blocks",
++                transform: (json) => {
++                    for (const links of [json.UploadLinks, json.ThumbnailLinks]) {
++                        Array.isArray(links) && links.forEach(rewriteUrlProps.common);
++                    }
++                },
++            },
++            {
++                match: (pathname) => pathname.startsWith("/drive/shares/"),
++                transform: (json) => {
++                    Array.isArray(Object(json.Revision).Blocks) && json.Revision.Blocks.forEach(rewriteUrlProps.common);
++                    rewriteUrlProps.thumbnail(json);
++                    for (const item of Array.isArray(json.Links) ? json.Links : []) {
++                        const activeRevision = item?.FileProperties?.ActiveRevision;
++                        if (typeof activeRevision !== "object") continue;
++                        rewriteUrlProps.thumbnailDownload(activeRevision);
++                        if (typeof activeRevision.ThumbnailURLInfo == "object") {
++                            rewriteUrlProps.common(activeRevision.ThumbnailURLInfo);
++                        }
++                    }
++                },
++            },
++        ];
++        const TEXT_ENCODER = new TextEncoder();
++        return async (response) => {
++            const pathname = new URL(response.url).pathname;
++            const transformer = TRANSFORMERS.find((item) => item.match(pathname));
++            if (!transformer || !response.headers.get("content-type")?.includes("application/json")) {
++                return response;
++            }
++            const json = await response.json();
++            transformer.transform(json);
++            return new Response(
++                new ReadableStream({
++                    start(controller) {
++                        controller.enqueue(TEXT_ENCODER.encode(JSON.stringify(json)));
++                        controller.close();
++                    }
++                }),
++                {
++                    headers: new Headers(response.headers),
++                    status: response.status,
++                    statusText: response.statusText
++                },
++            );
++        };
++    })();
++
+     const cb = ({ url, data, headers, ...rest }) => {
+         // Special case for the admin panel
+         const dataWithClientSecret =
+@@ -43,7 +136,7 @@ export default ({
+                 ...headers,
+             },
+             ...rest,
+-        });
++        }).then(processResponse);
+     };
+ 
+     Object.defineProperties(cb, {
+--

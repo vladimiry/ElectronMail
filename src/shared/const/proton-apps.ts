@@ -54,14 +54,15 @@ export const PROVIDER_REPO_MAP = {
         basePath: "account",
         apiSubdomain: "account-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-account@5.0.270.1",
+        // current live is proton-account@5.0.272.0, but it's not published at https://github.com/ProtonMail/WebClients/tags
+        tag: "proton-account@5.0.271.0",
         protonPack: {},
     },
     [PROVIDER_APP_NAMES[2]]: {
         basePath: "calendar",
         apiSubdomain: "calendar-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-calendar@5.0.57.4",
+        tag: "proton-calendar@5.0.58.3",
         protonPack: {
             webpackIndexEntryItems: [
                 // immediate
@@ -74,7 +75,7 @@ export const PROVIDER_REPO_MAP = {
         basePath: "drive",
         apiSubdomain: "drive-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-drive@5.2.0+b872ff17",
+        tag: "proton-drive@5.2.0+52b3ce56",
         protonPack: {
             webpackIndexEntryItems: [
                 // immediate
@@ -87,7 +88,8 @@ export const PROVIDER_REPO_MAP = {
         basePath: "account/vpn",
         apiSubdomain: "account-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-vpn-settings@5.0.232.0",
+        // current live is proton-vpn-settings@5.0.234.0, but it's not published at https://github.com/ProtonMail/WebClients/tags
+        tag: "proton-vpn-settings@5.0.233.0",
         protonPack: {},
     },
 } as const;

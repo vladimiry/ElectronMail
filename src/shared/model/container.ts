@@ -32,7 +32,7 @@ export type AccountConfigCreateUpdatePatch = NoExtraProps<
         | "database"
         | "localStoreViewByDefault"
         | "entryUrl"
-        | "blockNonEntryUrlBasedRequests"
+        | "blockNonEntryUrlBasedRequests2"
         | "externalContentProxyUrlPattern"
         | "enableExternalContentProxy"
         | "login"

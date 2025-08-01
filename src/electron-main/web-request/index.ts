@@ -88,29 +88,39 @@ const resolveWebRequestUrl = (
 export function initWebRequestListenersByAccount(
     {
         login,
-        entryUrl: accountEntryUrl,
+        entryUrl, // accountEntryUrl
         externalContentProxyUrlPattern,
         enableExternalContentProxy,
-        blockNonEntryUrlBasedRequests,
+        blockNonEntryUrlBasedRequests2,
         customUserAgent,
     }: DeepReadonly<AccountConfig>,
 ): void {
-    const session = resolveInitializedAccountSession({login, entryUrl: accountEntryUrl});
+    const session = resolveInitializedAccountSession({login, entryUrl});
+    const accountEntryUrl = new URL(entryUrl);
+    const accountEntryUrlPrimaryDomainName = resolvePrimaryDomainNameFromUrlHostname(accountEntryUrl.hostname);
     const resolveAllowedOrigins = (url: Exclude<ReturnType<typeof resolveWebRequestUrl>, null>): readonly string[] => {
         return reduceDuplicateItemsFromArray([
             ...[
                 ...STATIC_ALLOWED_ORIGINS,
-                ...PROTON_API_SUBDOMAINS.map((subdomain) => resolveProtonApiOrigin({accountEntryUrl, subdomain})),
+                ...PROTON_API_SUBDOMAINS.map((subdomain) => resolveProtonApiOrigin({accountEntryUrl: entryUrl, subdomain})),
+                // allowing: "protocol://{storage,*-storage}.API_URL_HOSTNAME" origins
                 ...(() => {
                     // - it has been noticed the at least "fra-storage/zrh-storage/storage" subdomains used by Proton for Drive service
                     // - interesting thing is that those subdomains are not hardcoded in the https://github.com/ProtonMail/WebClients code
                     //     but likely dynamically received form the request to the server
                     // - so whitelisting all the subdomains of such kind
                     // https://github.com/vladimiry/ElectronMail/issues/508
-                    const firstUrlSubdomain = String(url.href.split(".").shift()?.split("://").pop());
-                    const isStorageSubdomain = (firstUrlSubdomain === "storage" || firstUrlSubdomain.endsWith("-storage"))
-                        && url.primaryDomainName === resolvePrimaryDomainNameFromUrlHostname(new URL(accountEntryUrl).hostname);
-                    return isStorageSubdomain ? [url.origin] : [];
+                    const baseSubdomain = url.hostname.split(".").shift();
+                    const allowed = url.primaryDomainName === accountEntryUrlPrimaryDomainName // same primary domain
+                        && url.hostname.length > url.primaryDomainName.length // subdomain exists
+                        && (baseSubdomain === "storage" || baseSubdomain?.endsWith("-storage")); // base/first subdomain value test
+                    return allowed ? [url.origin] : [];
+                })(),
+                // allowing: "protocol://API_URL_HOSTNAME/download/*/version.json" request address pattern
+                ...(() => {
+                    const allowed = url.primaryDomainName === accountEntryUrlPrimaryDomainName // same primary domain
+                        && (url.pathname.startsWith("/download/") && url.pathname.endsWith("/version.json")); // pathname test
+                    return allowed ? [url.origin] : [];
                 })(),
             ].map(parseUrlOriginWithNullishCheck),
         ]);
@@ -142,7 +152,6 @@ export function initWebRequestListenersByAccount(
             // resources served from "allowed origins" should not be proxified as those
             // are local resources (proton's static resource & API, devtools, etc)
             && !allowedOrigins.includes(url.origin)
-            // TODO consider proxyfying only images with http/https schemes
             // local resource
             && url.scheme !== "chrome-extension"
         ) {
@@ -165,7 +174,7 @@ export function initWebRequestListenersByAccount(
             return;
         }
 
-        if (!blockNonEntryUrlBasedRequests) {
+        if (!blockNonEntryUrlBasedRequests2) {
             allowRequest();
             return;
         }
@@ -192,7 +201,7 @@ export function initWebRequestListenersByAccount(
         setTimeout(() => { // can be asynchronous (speeds up callback resolving)
             const message = [
                 `Access to the "${details.resourceType}" resource with "${url.href}" URL has been forbidden. \n\n${bannedUrlAccessMsg}`,
-                ` \n\nThis error message is related to the disabled by default "Block non 'API entry point'-based network requests" `,
+                ` \n\nThis error message is related to the disabled by default 'block non-"Proton API" requests'" `,
                 `feature, see https://github.com/vladimiry/ElectronMail/issues/312#issuecomment-709650619 for details.`,
             ].join("");
             logger.error(message);

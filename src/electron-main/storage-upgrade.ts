@@ -522,6 +522,16 @@ export const upgradeSettings: upgradeSettingsType = ((): upgradeSettingsType => 
                     if (!account.entryProtonApp) account.entryProtonApp = "proton-mail";
                 }
             },
+            "5.3.2": (settings): void => {
+                settings.accounts.forEach((account_) => {
+                    const account = account_ as (typeof account_ & {blockNonEntryUrlBasedRequests?: boolean});
+                    // let's not remove the previous value, as user might want to downgrade app version and keep the previous value/logic
+                    // delete account.blockNonEntryUrlBasedRequests;
+                    if (typeof account.blockNonEntryUrlBasedRequests2 !== "boolean") {
+                        account.blockNonEntryUrlBasedRequests2 = true;
+                    }
+                });
+            },
             // last updater
             "100.0.0": (settings): void => {
                 settings.accounts.forEach((account, index) => {

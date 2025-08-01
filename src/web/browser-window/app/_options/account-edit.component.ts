@@ -50,7 +50,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
             | "persistentSession"
             | "customUserAgent"
             | "entryUrl"
-            | "blockNonEntryUrlBasedRequests"
+            | "blockNonEntryUrlBasedRequests2"
             | "externalContentProxyUrlPattern"
             | "enableExternalContentProxy"
             | "loginDelayUntilSelected"
@@ -66,7 +66,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
         notificationShellExec: new FormControl(false),
         notificationShellExecCode: new FormControl(null),
         customCSS: new FormControl(null),
-        blockNonEntryUrlBasedRequests: new FormControl(null),
+        blockNonEntryUrlBasedRequests2: new FormControl(true),
         externalContentProxyUrlPattern: new FormControl(
             null,
             (): null | {errorMsg: string} => {
@@ -247,7 +247,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
                         "persistentSession",
                         "customUserAgent",
                         "entryUrl",
-                        "blockNonEntryUrlBasedRequests",
+                        "blockNonEntryUrlBasedRequests2",
                         "externalContentProxyUrlPattern",
                         "enableExternalContentProxy",
                         "entryProtonApp",
@@ -317,7 +317,7 @@ export class AccountEditComponent implements OnInit, OnDestroy {
             notificationShellExecCode: controls.notificationShellExecCode.value,
             customCSS: controls.customCSS.value,
             entryUrl: controls.entryUrl.value,
-            blockNonEntryUrlBasedRequests: Boolean(controls.blockNonEntryUrlBasedRequests.value),
+            blockNonEntryUrlBasedRequests2: Boolean(controls.blockNonEntryUrlBasedRequests2.value),
             externalContentProxyUrlPattern: controls.externalContentProxyUrlPattern.value,
             enableExternalContentProxy: Boolean(controls.enableExternalContentProxy.value),
             database: Boolean(controls.database.value),

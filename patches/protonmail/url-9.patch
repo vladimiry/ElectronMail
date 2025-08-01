@@ -1,5 +1,6 @@
+
 diff --git a/packages/shared/lib/helpers/url.ts b/packages/shared/lib/helpers/url.ts
-index 3d6091e844..e1f1ceb165 100644
+index 17d4080dbd..7eea01f246 100644
 --- a/packages/shared/lib/helpers/url.ts
 +++ b/packages/shared/lib/helpers/url.ts
 @@ -191,13 +191,6 @@ export const getSecondLevelDomain = (hostname: string) => {
@@ -46,6 +47,21 @@ index 3d6091e844..e1f1ceb165 100644
      url.pathname = pathname;
      return url;
  };
+@@ -318,7 +291,13 @@ export const getShopURL = () => {
+ };
+ 
+ export const getDownloadUrl = (path: string) => {
+-    return `https://proton.me/download${path}`;
++    const origin = ((): string => {
++        const parsed = new URL("___ELECTRON_MAIL_PROTON_API_ENTRY_URL_PLACEHOLDER___");
++        const hostParts = parsed.hostname.split(".");
++        const newHost = hostParts.length > 2 ? hostParts.slice(1).join(".") : parsed.hostname;
++        return `${parsed.protocol}//${newHost}`; // ${parsed.pathname}${parsed.search}${parsed.hash}
++    })();
++    return `${origin}/download${path}`;
+ };
+ 
+ export const getSupportContactURL = (params: { [key: string]: string | string[] | undefined }) => {
 
 diff --git a/packages/shared/lib/fetch/helpers.ts b/packages/shared/lib/fetch/helpers.ts
 index fa2cdf02e9..991e8d78f2 100644

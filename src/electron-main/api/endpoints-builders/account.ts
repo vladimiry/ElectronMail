@@ -44,7 +44,7 @@ export async function buildEndpoints(
                 customCSS,
                 title,
                 entryUrl,
-                blockNonEntryUrlBasedRequests,
+                blockNonEntryUrlBasedRequests2,
                 externalContentProxyUrlPattern,
                 enableExternalContentProxy,
                 database,
@@ -70,7 +70,7 @@ export async function buildEndpoints(
                 customCSS,
                 title,
                 entryUrl,
-                blockNonEntryUrlBasedRequests,
+                blockNonEntryUrlBasedRequests2,
                 externalContentProxyUrlPattern,
                 enableExternalContentProxy,
                 database,
@@ -105,7 +105,7 @@ export async function buildEndpoints(
                 customCSS,
                 title,
                 entryUrl,
-                blockNonEntryUrlBasedRequests,
+                blockNonEntryUrlBasedRequests2,
                 externalContentProxyUrlPattern,
                 enableExternalContentProxy,
                 database,
@@ -131,7 +131,7 @@ export async function buildEndpoints(
                 const account = pickAccountStrict(settings.accounts, {login});
                 const shouldConfigureSession = account.entryUrl !== entryUrl
                     || !isDeepEqual(account.proxy, proxy)
-                    || account.blockNonEntryUrlBasedRequests !== blockNonEntryUrlBasedRequests
+                    || account.blockNonEntryUrlBasedRequests2 !== blockNonEntryUrlBasedRequests2
                     || account.externalContentProxyUrlPattern !== externalContentProxyUrlPattern
                     || account.enableExternalContentProxy !== enableExternalContentProxy
                     || account.customUserAgent !== customUserAgent;
@@ -148,7 +148,7 @@ export async function buildEndpoints(
                 account.persistentSession = persistentSession;
                 account.customUserAgent = customUserAgent;
                 account.entryUrl = entryUrl;
-                account.blockNonEntryUrlBasedRequests = blockNonEntryUrlBasedRequests;
+                account.blockNonEntryUrlBasedRequests2 = blockNonEntryUrlBasedRequests2;
                 account.externalContentProxyUrlPattern = externalContentProxyUrlPattern;
                 account.enableExternalContentProxy = enableExternalContentProxy;
                 account.proxy = proxy;

@@ -6,7 +6,7 @@ export type AccountConfig = NoExtraProps<{
     login: string;
     title?: string;
     entryUrl: string;
-    blockNonEntryUrlBasedRequests?: boolean;
+    blockNonEntryUrlBasedRequests2: boolean;
     externalContentProxyUrlPattern?: string;
     enableExternalContentProxy?: boolean;
     database?: boolean; // TODO proton-v4: rename AccountConfig.database => AccountConfig.localStore

@@ -213,8 +213,19 @@ export const buildWorkflow = (testContext: TestContext) => {
                 await testContext.firstWindowPage.fill("[formControlName=twoFactorCode]", account.twoFactorCode);
             }
 
-            const expectedAccountsCount = await workflow.accountsCount() + 1;
+            // verify that "block non-'Proton API' requests" is enabled (by default)
+            {
+                // make collapsed "Advanced Options" block visible first
+                await testContext.firstWindowPage.click(`accordion-group[heading="Advanced Options"] [role="button"]`);
+                // resolve checkbox and verify the "checked" status
+                const checkbox = await testContext.firstWindowPage.waitForSelector("#blockNonEntryUrlBasedRequests2Checkbox");
+                expect(await checkbox.isChecked()).toBe(true);
+                // collapse it back
+                await testContext.firstWindowPage.click(`accordion-group[heading="Advanced Options"] [role="button"]`);
+            }
 
+            // submitting the form
+            const accountsCountBeforeSubmit = await workflow.accountsCount();
             await testContext.firstWindowPage.click(`.modal-body button[type="submit"]`);
 
             // account got added to the settings modal account list
@@ -225,8 +236,8 @@ export const buildWorkflow = (testContext: TestContext) => {
 
             await workflow.closeSettingsModal("addAccount");
 
+            const expectedAccountsCount = accountsCountBeforeSubmit + 1;
             expect(expectedAccountsCount).toStrictEqual(await workflow.accountsCount());
-
             await workflow.selectAccount(expectedAccountsCount - 1);
 
             // make sure webview api got initialized (page loaded and login auto-filled)

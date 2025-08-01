@@ -1,0 +1,27 @@
+diff --git a/types/bitmap.d.ts b/types/bitmap.d.ts
+index 61acebf58c4daa2b945898a4c44e18e919180b28..7800cca976e8267189f785326e13d7712f57583d 100644
+--- a/types/bitmap.d.ts
++++ b/types/bitmap.d.ts
+@@ -10,7 +10,7 @@ import { Context } from './context.js';
+ export class Bitmap {
+     width: number;
+     height: number;
+-    data: ArrayBuffer;
++    data: Buffer<ArrayBuffer>;
+ 
+     /**
+      * Creates an instance of Bitmap.
+@@ -88,11 +88,11 @@ export class Bitmap {
+      *
+      * @ignore
+      *
+-     * @returns {ArrayBuffer}
++     * @returns {Buffer<ArrayBuffer>}
+      *
+      * @memberof Bitmap
+      */
+-    getPixelRGBA_separate(x: number, y: number): ArrayBuffer;
++    getPixelRGBA_separate(x: number, y: number): Buffer<ArrayBuffer>;
+ 
+     /**
+      * {@link Context} factory. Creates a new {@link Context} instance object for the current bitmap object

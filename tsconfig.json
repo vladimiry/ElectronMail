@@ -68,5 +68,8 @@
     "scripts/**/*",
     "src/**/*",
     "webpack-configs/**/*"
-  ]
+  ],
+  "angularCompilerOptions": {
+    "strictTemplates": true
+  }
 }

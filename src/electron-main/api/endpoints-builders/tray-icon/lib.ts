@@ -1,3 +1,4 @@
+import type {Bitmap} from "pureimage/types/bitmap";
 import {createReadStream} from "fs";
 import {decodePNGFromStream, encodePNGToStream, make, registerFont} from "pureimage";
 import {hslToRgb, rgbToHsl, toHsl} from "color-fns";
@@ -8,8 +9,6 @@ import {PassThrough} from "stream";
 import {BaseConfig} from "src/shared/model/options";
 import {CircleConfig, ImageBundle} from "./model";
 import {PLATFORM} from "src/electron-main/constants";
-
-type Bitmap = ReturnType<typeof make>;
 
 // TODO explore https://github.com/vonderheide/mono-bitmap as a potential "pureimage" replacement
 

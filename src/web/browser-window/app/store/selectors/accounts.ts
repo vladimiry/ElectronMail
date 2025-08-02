@@ -29,9 +29,16 @@ export const ACCOUNTS = {
     },
     loggedInAndUnreadSummary: createSelector(accountsSelector, (accounts) => {
         return accounts.reduce(
-            (accumulator, {notifications}) => {
+            (accumulator, {notifications, webviewSrcValues}) => {
+                const accountMounted = (Object.keys(webviewSrcValues) as Array<keyof typeof webviewSrcValues>)
+                    .some((key) => !!webviewSrcValues[key]);
                 accumulator.unread += notifications.unread;
-                if (!notifications.loggedIn) {
+                if (
+                    // taking into the account only "mounted" accounts (those Proton App "webview" for which mounted)
+                    // otherwise "yellow dot" tray indicator doesn't make much sense since "unloaded" account state got introduced
+                    accountMounted
+                    && !notifications.loggedIn
+                ) {
                     accumulator.hasLoggedOut = true;
                 }
                 return accumulator;

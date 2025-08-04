@@ -1,6 +1,6 @@
-# TODO use YAML anchors or custom "composing GitHub action" to avoid code duplication (none of these options currently supported), see:
-# - https://github.com/actions/runner/issues/438
-# - https://github.com/actions/runner/issues/646
+# TODO: reuse common steps using YAML anchors
+# partial YAML anchors support got added in early Aug 2025, see https://github.com/actions/runner/issues/1182
+# but defining a block of steps under a single anchor is still not supported
 
 name: 'GitHub Actions CI'
 on: { push: { branches: [master] }, pull_request: { branches: [master] } }
@@ -11,14 +11,23 @@ jobs:
     strategy: { matrix: { os: [ubuntu-22.04] }, fail-fast: false }
     runs-on: ${{ matrix.os }}
     steps:
-      # <common> TODO use YAML anchors feature when it gets supported
-      - { uses: actions/checkout@v4 }
-      - { uses: pnpm/action-setup@v4, with: { version: 'latest' } }
-      - { uses: actions/setup-node@v4, with: { node-version: '${{ env.ELECTRON_MAIL_NODE_VERSION }}', cache: 'pnpm' } }
-      - { uses: actions/setup-python@v5, with: { python-version: '3.9' } }
-      - { name: envinfo, run: npx envinfo }
-      - { name: install node modules, run: 'pnpm install --frozen-lockfile --reporter=append-only' }
-      # </common>
+      - &common-step_checkout
+        uses: actions/checkout@v4
+      - &common-step_setup-pnpm
+        uses: pnpm/action-setup@v4
+        with: { version: 'latest' }
+      - &common-step_setup-node
+        uses: actions/setup-node@v4
+        with: { node-version: '${{ env.ELECTRON_MAIL_NODE_VERSION }}', cache: 'pnpm' }
+      - &common-step_setup-python
+        uses: actions/setup-python@v5
+        with: { python-version: '3.9' }
+      - &common-step_envinfo
+        name: envinfo
+        run: npx envinfo
+      - &common-step_install-node-modules
+        name: install node modules
+        run: 'pnpm install --frozen-lockfile --reporter=append-only'
       - name: cache artifact
         uses: actions/cache@v4
         with:
@@ -30,44 +39,34 @@ jobs:
       - { name: build, run: ./scripts/ci/prepare-webclients.sh }
       - { name: print ./output/git/backup files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./output/git/backup }
       - { name: tar artifact, run: tar -cvf proton-clients-artifact.tar ./output/git/backup ./app/assets/db-search-monaco-editor }
-      - {
-          name: upload artifact,
-          uses: actions/upload-artifact@v4,
-          with: { name: proton-clients-artifact, path: ./proton-clients-artifact.tar, if-no-files-found: error },
-        }
+      - uses: actions/upload-artifact@v4
+        with: { name: proton-clients-artifact, path: ./proton-clients-artifact.tar, if-no-files-found: error }
   build-app:
     strategy: { matrix: { os: [ubuntu-22.04, windows-2022, macos-latest] }, fail-fast: false }
     runs-on: ${{ matrix.os }}
     steps:
-      # <common> TODO use YAML anchors feature when it gets supported
-      - { uses: actions/checkout@v4 }
-      - { uses: pnpm/action-setup@v4, with: { version: 'latest' } }
-      - { uses: actions/setup-node@v4, with: { node-version: '${{ env.ELECTRON_MAIL_NODE_VERSION }}', cache: 'pnpm' } }
-      - { uses: actions/setup-python@v5, with: { python-version: '3.9' } }
-      - { name: envinfo, run: npx envinfo }
-      - { name: install node modules, run: 'pnpm install --frozen-lockfile --reporter=append-only' }
-      # </common>
+      - *common-step_checkout
+      - *common-step_setup-pnpm
+      - *common-step_setup-node
+      - *common-step_setup-python
+      - *common-step_envinfo
+      - *common-step_install-node-modules
       - { name: build, run: 'npm exec --package=npm-run-all -- npm-run-all lint build' }
       - { name: print ./app files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./app }
-      - {
-          name: upload artifact,
-          uses: actions/upload-artifact@v4,
-          with: { name: 'app-artifact-${{ runner.os }}', path: ./app, if-no-files-found: error },
-        }
+      - uses: actions/upload-artifact@v4
+        with: { name: 'app-artifact-${{ runner.os }}', path: ./app, if-no-files-found: error }
   package-app:
     if: github.event_name == 'push'
     needs: [build-proton-clients, build-app]
     strategy: { matrix: { os: [ubuntu-22.04, windows-2022, macos-13, macos-latest] }, fail-fast: false }
     runs-on: ${{ matrix.os }}
     steps:
-      # <common> TODO use YAML anchors feature when it gets supported
-      - { uses: actions/checkout@v4 }
-      - { uses: pnpm/action-setup@v4, with: { version: 'latest' } }
-      - { uses: actions/setup-node@v4, with: { node-version: '${{ env.ELECTRON_MAIL_NODE_VERSION }}', cache: 'pnpm' } }
-      - { uses: actions/setup-python@v5, with: { python-version: '3.9' } }
-      - { name: envinfo, run: npx envinfo }
-      - { name: install node modules, run: 'pnpm install --frozen-lockfile --reporter=append-only' }
-      # </common>
+      - *common-step_checkout
+      - *common-step_setup-pnpm
+      - *common-step_setup-node
+      - *common-step_setup-python
+      - *common-step_envinfo
+      - *common-step_install-node-modules
       - { name: download proton clients artifact, uses: actions/download-artifact@v4, with: { name: proton-clients-artifact } }
       - { name: unpack proton clients artifact, shell: bash, run: tar -xvf ./proton-clients-artifact.tar }
       - { name: download app artifact, uses: actions/download-artifact@v4, with: { name: 'app-artifact-${{ runner.os }}', path: ./app } }
@@ -87,18 +86,14 @@ jobs:
             -e GITHUB_SHA=${{ github.sha }} \
             ubuntu:20.04 bash -c "/host/scripts/ci/github/prepare-native-deps-docker.sh"
       - { name: build, if: runner.os == 'Linux', run: ./scripts/ci/github/package-app-linux.sh }
-      - {
-          name: build,
-          if: matrix.os == 'macos-13',
-          run: ./scripts/ci/github/package-app-osx.sh,
-          env: { ELECTRON_MAIL_NODE_DEST_ARCH: 'x64' },
-        }
-      - {
-          name: build,
-          if: matrix.os == 'macos-latest',
-          run: ./scripts/ci/github/package-app-osx.sh,
-          env: { ELECTRON_MAIL_NODE_DEST_ARCH: 'arm64' },
-        }
+      - name: build
+        if: matrix.os == 'macos-13'
+        run: ./scripts/ci/github/package-app-osx.sh
+        env: { ELECTRON_MAIL_NODE_DEST_ARCH: 'x64' }
+      - name: build
+        if: matrix.os == 'macos-latest'
+        run: ./scripts/ci/github/package-app-osx.sh
+        env: { ELECTRON_MAIL_NODE_DEST_ARCH: 'arm64' }
       - name: upload e2e/spectron output
         if: ${{ always() }}
         uses: actions/upload-artifact@v4

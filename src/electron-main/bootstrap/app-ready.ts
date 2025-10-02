@@ -11,6 +11,7 @@ import {initTray} from "src/electron-main/tray";
 import {initWebContentsCreatingHandlers} from "src/electron-main/web-contents";
 import {registerWebFolderFileProtocol} from "src/electron-main/protocol";
 import {resolveDefaultAppSession} from "src/electron-main/util";
+import {RUNTIME_ENV_ALLOW_MULTIPLE_INSTANCES} from "src/shared/const";
 import {setUpPowerMonitorNotification} from "src/electron-main/power-monitor";
 
 export async function appReadyHandler(ctx: Context): Promise<void> {
@@ -48,7 +49,10 @@ export async function appReadyHandler(ctx: Context): Promise<void> {
 
     setUpPowerMonitorNotification();
 
-    app.on("second-instance", async () => (await uiContextDependentEndpoints).activateBrowserWindow());
+    if (!process.env[RUNTIME_ENV_ALLOW_MULTIPLE_INSTANCES]) {
+        app.on("second-instance", async () => (await uiContextDependentEndpoints).activateBrowserWindow());
+    }
+
     app.on("activate", async () => (await uiContextDependentEndpoints).activateBrowserWindow());
 
     await (await uiContextDependentEndpoints).updateOverlayIcon({hasLoggedOut: false, unread: 0});

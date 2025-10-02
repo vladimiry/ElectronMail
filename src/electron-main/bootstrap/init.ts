@@ -3,7 +3,7 @@ import electronUnhandled from "electron-unhandled";
 import logger from "electron-log";
 
 import {PLATFORM} from "src/electron-main/constants";
-import {REPOSITORY_NAME} from "src/shared/const";
+import {REPOSITORY_NAME, RUNTIME_ENV_ALLOW_MULTIPLE_INSTANCES} from "src/shared/const";
 
 // WARN needs to be called before app is ready, function is synchronous
 export function bootstrapInit(): void {
@@ -14,7 +14,7 @@ export function bootstrapInit(): void {
         app.setAppUserModelId(`github.com/vladimiry/${REPOSITORY_NAME}`);
     }
 
-    if (!app.requestSingleInstanceLock()) {
+    if (!process.env[RUNTIME_ENV_ALLOW_MULTIPLE_INSTANCES] && !app.requestSingleInstanceLock()) {
         // calling app.exit() instead of app.quit() in order to prevent "Error: Cannot find module ..." error happening
         // https://github.com/electron/electron/issues/8862
         app.exit();

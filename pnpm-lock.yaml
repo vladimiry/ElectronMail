@@ -64,7 +64,7 @@ importers:
     dependencies:
       electron-rpc-api:
         specifier: 11.0.0
-        version: 11.0.0(electron@38.0.0)
+        version: 11.0.0(electron@38.2.1)
       fs-json-store-encryption-adapter:
         specifier: 4.0.0
         version: 4.0.0
@@ -280,8 +280,8 @@ importers:
         specifier: 0.50.1
         version: 0.50.1
       electron:
-        specifier: 38.0.0
-        version: 38.0.0
+        specifier: 38.2.1
+        version: 38.2.1
       electron-builder:
         specifier: 26.0.20
         version: 26.0.20(electron-builder-squirrel-windows@26.0.20)
@@ -2522,8 +2522,8 @@ packages:
     resolution: {integrity: sha512-bO3y10YikuUwUuDUQRM4KfwNkKhnpVO7IPdbsrejwN9/AABJzzTQ4GeHwyzNSrVO+tEH3/Np255a3sVZpZDjvg==}
     engines: {node: '>=8.0.0'}
 
-  electron@38.0.0:
-    resolution: {integrity: sha512-egljptiPJqbL/oamFCEY+g3RNeONWTVxZSGeyLqzK8xq106JhzuxnhJZ3sxt4DzJFaofbGyGJA37Oe9d+gVzYw==}
+  electron@38.2.1:
+    resolution: {integrity: sha512-P4pE2RpRg3kM8IeOK+heg6iAxR5wcXnNHrbVchn7M3GBnYAhjfJRkROusdOro5PlKzdtfKjesbbqaG4MqQXccg==}
     engines: {node: '>= 12.20.55'}
     hasBin: true
 
@@ -7729,9 +7729,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  electron-rpc-api@11.0.0(electron@38.0.0):
+  electron-rpc-api@11.0.0(electron@38.2.1):
     dependencies:
-      electron: 38.0.0
+      electron: 38.2.1
       pubsub-to-rpc-api: 9.0.0
       pure-uuid: 1.8.1
       rxjs: 7.8.2
@@ -7759,7 +7759,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  electron@38.0.0:
+  electron@38.2.1:
     dependencies:
       '@electron/get': 2.0.3
       '@types/node': 22.18.0

@@ -116,16 +116,18 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
         app.on(...appBeforeQuitEventArgs);
     }
 
+    browserWindow.once("show", async () => {
+        // needs to be called after the "browserWindow.setBounds" call
+        // since we don't want "setBounds" call to trigger the move/resize events handlers (leads to "maixmized" value loosing)
+        await keepBrowserWindowState(ctx, browserWindow);
+    });
+
     browserWindow.once("ready-to-show", async () => {
         const boundsToRestore = await resolveBoundsToRestore(ctx, browserWindow.getBounds());
 
         logger.verbose(nameof(initMainBrowserWindow), JSON.stringify({boundsToRestore}));
 
         browserWindow.setBounds(boundsToRestore);
-
-        // needs to be called after the "browserWindow.setBounds" call
-        // since we don't want "setBounds" call to trigger the move/resize events handlers (leads to "maixmized" value loosing)
-        await keepBrowserWindowState(ctx, browserWindow);
 
         if (
             BUILD_DISABLE_START_HIDDEN_FEATURE

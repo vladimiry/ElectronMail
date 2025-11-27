@@ -2,15 +2,45 @@
 
 set -ev
 
+ARCH=$(uname -m)
+echo "Building on $(uname -m) architecture"
+
 : "${ELECTRON_MAIL_NODE_VERSION:?Missing ELECTRON_MAIL_NODE_VERSION}"
 : "${GITHUB_REPOSITORY:?Missing GITHUB_REPOSITORY}"
 : "${GITHUB_SHA:?Missing GITHUB_SHA}"
 
 export DEBIAN_FRONTEND=noninteractive
 
+echo "::group::setup system packages"
 apt-get update
+# libsecret-1-dev: for "keytar" compiling
+apt-get install --yes --no-install-recommends \
+  wget lsb-release build-essential python3 git libtool automake \
+  libsecret-1-dev
+echo "::endgroup::"
 
-echo "::group::isntall nodejs & pnpm"
+echo "::group::setup gcc12"
+apt-get install --yes --no-install-recommends software-properties-common gnupg2
+add-apt-repository ppa:ubuntu-toolchain-r/test -y
+apt-get update -o Acquire::Languages=none
+if apt-get install --yes --no-install-recommends gcc-12 g++-12 >/dev/null 2>&1; then
+  update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 120 --slave /usr/bin/g++ g++ /usr/bin/g++-12
+  echo "GCC 12 installed and set as default"
+else
+  apt-get install --yes --no-install-recommends gcc-11 g++-11
+  update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 110 --slave /usr/bin/g++ g++ /usr/bin/g++-11
+  echo "GCC 12 unavailable; using GCC 11 (still C++20-capable for <source_location>)"
+fi
+echo "::endgroup::"
+
+echo "::group::setup clang/ldd"
+wget https://apt.llvm.org/llvm.sh
+chmod +x llvm.sh
+./llvm.sh 20
+rm llvm.sh
+echo "::endgroup::"
+
+echo "::group::setup nodejs & pnpm"
 apt-get install --yes --no-install-recommends ca-certificates curl gnupg
 mkdir -p /etc/apt/keyrings
 curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
@@ -18,32 +48,12 @@ curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
 echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${ELECTRON_MAIL_NODE_VERSION}.x nodistro main" \
   | tee /etc/apt/sources.list.d/nodesource.list
 apt update
-apt-get install --yes nodejs
+apt-get install --yes --no-install-recommends nodejs
 node -v
 npm -v
 corepack enable
 corepack prepare pnpm@latest --activate
 pnpm -v
-echo "::endgroup::"
-
-echo "::group::install system packages"
-apt-get install --yes --no-install-recommends wget lsb-release software-properties-common build-essential python3 git
-echo "::endgroup::"
-
-echo "::group::install clang/ldd setup"
-wget https://apt.llvm.org/llvm.sh
-chmod +x llvm.sh
-./llvm.sh 20
-rm llvm.sh
-echo "::endgroup::"
-
-# picket form "./scripts/ci/github/package-app-linux.sh" of v5.3.0 release (when it still used "ubuntu-20.04" GH CI image)
-echo "::group::install and configure compiling tools"
-apt-get install --yes --no-install-recommends \
-  libtool automake gcc-10 g++-10 libsecret-1-dev
-update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 100 \
-  --slave /usr/bin/g++ g++ /usr/bin/g++-10 \
-  --slave /usr/bin/gcov gcov /usr/bin/gcov-10
 echo "::endgroup::"
 
 echo "::group::clone project & install node modules"
@@ -54,8 +64,6 @@ pnpm install --frozen-lockfile
 echo "::endgroup::"
 
 echo "::group::compile native modules"
-export _MY_GH_CI_NODE_GYP___CC="gcc-10"
-export _MY_GH_CI_NODE_GYP___CXX="g++-10"
 export _MY_GH_CI_CLANG___CC="clang-20"
 export _MY_GH_CI_CLANG___CXX="clang++-20"
 pnpm run prepare-native-deps
@@ -63,7 +71,7 @@ echo "::endgroup::"
 
 echo "::group::print GLIBC info && copy compiled .node files back to host"
 find node_modules -name '*.node' -exec sh -c '
-  echo "$1 [GLIBC] info:"
+  echo "$1 [$ARCH GLIBC] info:"
   strings "$1" | grep GLIBC_ | sort | uniq
   echo "$1 Copying..."
   cp --parents "$1" /host/

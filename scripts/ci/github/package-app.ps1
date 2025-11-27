@@ -1,14 +1,27 @@
+$arch = $env:PROCESSOR_ARCHITECTURE
+Write-Host "Building on $arch architecture"
+
 . "$PSScriptRoot\package-app.include.ps1"
 
-$vsInstallRoot = "C:\Program Files (x86)\Microsoft Visual Studio\2019"
+# ARM_BUILD_TWEAK
+if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') {
+    $vsInstallRoot = "C:\Program Files\Microsoft Visual Studio\2022"
+} else {
+    $vsInstallRoot = "C:\Program Files (x86)\Microsoft Visual Studio\2019"
+}
 
-echo "::group::resolve vs2019"
+echo "::group::resolve VS Build Tools"
 $vcVarsPath = Resolve-VcVarsPath -vsInstallRoot $vsInstallRoot
 echo "::endgroup::"
 
 echo "::group::compile native modules"
-$cmd = "`"$vcVarsPath`" x64 -vcvars_ver=14.2 && pnpm run prepare-native-deps"
-Run -cmd $cmd
+function Invoke-NativePrepare {
+    # ARM_BUILD_TWEAK
+    $arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { 'arm64' } else { 'x64' }
+    $vcVarsVer = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { '' } else { '-vcvars_ver=14.2' }
+    Run -cmd "`"$vcVarsPath`" $arch $vcVarsVer && pnpm run prepare-native-deps"
+}
+Invoke-NativePrepare
 echo "::endgroup::"
 
 echo "::group::scan *.node files"

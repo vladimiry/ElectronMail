@@ -18,40 +18,43 @@ const IS_CROSS_PLATFORM_COMPILATION = DEST_ARCH !== os.arch();
 
 const MSVS_HEADERS_ON_GITHUB_ACTIONS: ReadonlyArray<string> = process.env.GITHUB_ACTIONS && os.platform() === "win32"
     ? [
-        "INCLUDE",
-        "LIB",
-        "LIBPATH",
-        "VCINSTALLDIR",
-        "VCToolsInstallDir",
-        "VCToolsVersion",
-        "VSINSTALLDIR",
         "DevEnvDir",
-        "UniversalCRTSdkDir",
-        "UCRTVersion",
-        "WindowsSdkDir",
-        "WindowsSDKVersion",
-        "WindowsSDKLibVersion",
-        "WindowsSdkBinPath",
-        "WindowsSdkVerBinPath",
-        "WindowsLibPath",
-        "NETFXSDKDir",
         "FrameworkDir",
         "FrameworkDir64",
         "FrameworkVersion",
+        "INCLUDE",
+        "LIB",
+        "LIBPATH",
+        "NETFXSDKDir",
         "Platform",
+        "UCRTVersion",
+        "UniversalCRTSdkDir",
+        "VCINSTALLDIR",
+        "VCToolsInstallDir",
+        "VCToolsVersion",
         "VSCMD_ARG_HOST_ARCH",
         "VSCMD_ARG_TGT_ARCH",
         "VSCMD_VER",
+        "VSINSTALLDIR",
+        "WindowsLibPath",
+        "WindowsSdkBinPath",
+        "WindowsSdkDir",
+        "WindowsSDKLibVersion",
+        "WindowsSdkVerBinPath",
+        "WindowsSDKVersion",
     ].filter((name): name is string => process.env[name] !== undefined)
     : [];
 
 const resolvePlatformEnvVars = ((): () => NodeJS.ProcessEnv => {
     const resolvers: Readonly<Partial<Record<NodeJS.Platform, () => NodeJS.ProcessEnv>>> = {
-        win32: () => ({
-            GYP_MSVS_VERSION: "2019",
-            GYP_DEFINES: "win_target=0x0A00 msvs_runtime_static=true msvs_version=2019",
-            CL: "/D_WIN32_WINNT=0x0A00",
-        }),
+        win32: () => {
+            const msvs_version = DEST_ARCH === "x64" ? "2019" : "2022";
+            return {
+                GYP_MSVS_VERSION: msvs_version,
+                GYP_DEFINES: `win_target=0x0A00 msvs_runtime_static=true msvs_version=${msvs_version}`, // # ARM_BUILD_TWEAK
+                CL: "/D_WIN32_WINNT=0x0A00",
+            };
+        },
         darwin: () => {
             // https://developer.apple.com/documentation/apple-silicon/building-a-universal-macos-binary
             const versionMin = DEST_ARCH === "x64" ? "10.12" : "11";
@@ -88,8 +91,6 @@ const compileRegularNativeDeps = async (): Promise<void> => {
         const baseEnvVars = resolvePlatformEnvVars();
         const extraEnvVars = {
             ...baseEnvVars,
-            ...(process.env._MY_GH_CI_NODE_GYP___CC ? {CC: process.env._MY_GH_CI_NODE_GYP___CC} : undefined),
-            ...(process.env._MY_GH_CI_NODE_GYP___CXX ? {CXX: process.env._MY_GH_CI_NODE_GYP___CXX} : undefined),
             ...(moduleName === "msgpackr-extract" // "msgpackr-extract" compiling requires C++20
                 ? os.platform() === "win32"
                     ? {CL: `${baseEnvVars.CL ?? ""} /FS /Zc:__cplusplus /std:c++20`}

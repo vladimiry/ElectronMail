@@ -13,6 +13,10 @@ sudo apt-get install --yes --no-install-recommends \
   squashfs-tools \
   libarchive-tools \
   desktop-file-utils
+if [ "$(uname -m)" != "x86_64" ]; then
+  # QEMU for running x64 "ffsend" binary
+  sudo apt-get install --yes --no-install-recommends qemu-user-static qemu-user binfmt-support
+fi
 echo "::endgroup::"
 
 # echo "::group::compile native modules"
@@ -61,10 +65,15 @@ echo "::endgroup::"
 
 echo "::group::package"
 pnpm run build:electron-builder-hooks
-for PACKAGE_TYPE in "pacman" "snap" "appimage" "deb" "rpm" "freebsd"; do
-    pnpm run "electron-builder:dist:linux:${PACKAGE_TYPE}"
-    rm -rf ./dist/linux-unpacked
-    rm -rf ./dist/*.yaml
+if [ "$(uname -m)" != "x86_64" ]; then
+  PACKAGE_TYPES="pacman deb rpm"
+else
+  PACKAGE_TYPES="pacman snap appimage deb rpm freebsd"
+fi
+for PACKAGE_TYPE in $PACKAGE_TYPES; do
+  pnpm run "electron-builder:dist:linux:${PACKAGE_TYPE}"
+  rm -rf ./dist/linux-unpacked
+  rm -rf ./dist/*.yaml
 done
 echo "::endgroup::"
 

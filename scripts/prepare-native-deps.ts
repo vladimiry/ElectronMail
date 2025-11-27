@@ -47,11 +47,14 @@ const MSVS_HEADERS_ON_GITHUB_ACTIONS: ReadonlyArray<string> = process.env.GITHUB
 
 const resolvePlatformEnvVars = ((): () => NodeJS.ProcessEnv => {
     const resolvers: Readonly<Partial<Record<NodeJS.Platform, () => NodeJS.ProcessEnv>>> = {
-        win32: () => ({
-            GYP_MSVS_VERSION: "2019",
-            GYP_DEFINES: "win_target=0x0A00 msvs_runtime_static=true msvs_version=2019",
-            CL: "/D_WIN32_WINNT=0x0A00",
-        }),
+        win32: () => {
+            const msvs_version = DEST_ARCH === "x64" ? "2019" : "2022";
+            return {
+                GYP_MSVS_VERSION: msvs_version,
+                GYP_DEFINES: `win_target=0x0A00 msvs_runtime_static=true msvs_version=${msvs_version}`, // # ARM_BUILD_TWEAK
+                CL: "/D_WIN32_WINNT=0x0A00",
+            };
+        },
         darwin: () => {
             // https://developer.apple.com/documentation/apple-silicon/building-a-universal-macos-binary
             const versionMin = DEST_ARCH === "x64" ? "10.12" : "11";

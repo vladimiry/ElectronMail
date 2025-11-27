@@ -1,13 +1,16 @@
 diff --git a/binding.gyp b/binding.gyp
-index 7ff7a52602e3d6a3d2cd2a2d4ed10e0268358eb5..d1cd8b7213d99aac25e123a6dd9ac4a2254960d4 100644
+index 7ff7a52602e3d6a3d2cd2a2d4ed10e0268358eb5..f096d183879574f337ed200be78465f0b6c8acbd 100644
 --- a/binding.gyp
 +++ b/binding.gyp
-@@ -24,6 +24,9 @@
+@@ -24,6 +24,12 @@
          "src/extract.cpp",
        ],
        "defines": [ "NAPI_DISABLE_CPP_EXCEPTIONS" ],
 +      'msvs_settings': {
-+        'VCCLCompilerTool': { "PlatformToolset": "v142" },
++        'VCCLCompilerTool': {
++          # ARM_BUILD_TWEAK: use default toolset on ARM64, fall back to v142 otherwise
++          'PlatformToolset': '<!(node -p "process.arch === \'arm64\' ? \'\' : \'v142\'")'
++        }
 +      },
        "conditions": [
          ["OS=='linux'", {

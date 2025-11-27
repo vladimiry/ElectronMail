@@ -61,10 +61,15 @@ echo "::endgroup::"
 
 echo "::group::package"
 pnpm run build:electron-builder-hooks
-for PACKAGE_TYPE in "pacman" "snap" "appimage" "deb" "rpm" "freebsd"; do
-    pnpm run "electron-builder:dist:linux:${PACKAGE_TYPE}"
-    rm -rf ./dist/linux-unpacked
-    rm -rf ./dist/*.yaml
+if [ "$(uname -m)" != "x86_64" ]; then
+  PACKAGE_TYPES="pacman deb rpm"
+else
+  PACKAGE_TYPES="pacman snap appimage deb rpm freebsd"
+fi
+for PACKAGE_TYPE in $PACKAGE_TYPES; do
+  pnpm run "electron-builder:dist:linux:${PACKAGE_TYPE}"
+  rm -rf ./dist/linux-unpacked
+  rm -rf ./dist/*.yaml
 done
 echo "::endgroup::"
 

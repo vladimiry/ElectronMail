@@ -2,6 +2,9 @@
 
 set -ev
 
+ARCH=$(uname -m)
+echo "Building on $(uname -m) architecture"
+
 : "${ELECTRON_MAIL_NODE_VERSION:?Missing ELECTRON_MAIL_NODE_VERSION}"
 : "${GITHUB_REPOSITORY:?Missing GITHUB_REPOSITORY}"
 : "${GITHUB_SHA:?Missing GITHUB_SHA}"
@@ -63,7 +66,7 @@ echo "::endgroup::"
 
 echo "::group::print GLIBC info && copy compiled .node files back to host"
 find node_modules -name '*.node' -exec sh -c '
-  echo "$1 [GLIBC] info:"
+  echo "$1 [$ARCH GLIBC] info:"
   strings "$1" | grep GLIBC_ | sort | uniq
   echo "$1 Copying..."
   cp --parents "$1" /host/

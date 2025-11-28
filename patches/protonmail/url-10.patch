@@ -1,0 +1,201 @@
+
+diff --git a/packages/shared/lib/helpers/url.ts b/packages/shared/lib/helpers/url.ts
+index 17d4080dbd..7eea01f246 100644
+--- a/packages/shared/lib/helpers/url.ts
++++ b/packages/shared/lib/helpers/url.ts
+@@ -191,13 +191,6 @@ export const getSecondLevelDomain = (hostname: string) => {
+     return hostname.slice(hostname.indexOf('.') + 1);
+ };
+ 
+-export const getRelativeApiHostname = (hostname: string) => {
+-    const idx = hostname.indexOf('.');
+-    const first = hostname.slice(0, idx);
+-    const second = hostname.slice(idx + 1);
+-    return `${first}-api.${second}`;
+-};
+-
+ export const getIsDohDomain = (origin: string) => {
+     return DOH_DOMAINS.some((dohDomain) => origin.endsWith(dohDomain));
+ };
+@@ -226,28 +219,8 @@ export const getIsConvertHostname = (hostname: string) => {
+     return hostname === 'join.protonvpn.com';
+ };
+ 
+-const doesHostnameLookLikeIP = (hostname: string) => {
+-    // Quick helper function to tells us if hostname string seems to be IP address or DNS name.
+-    // Relies on a fact, that no TLD ever will probably end with a digit. So if last char is
+-    // a digit, it's probably an IP.
+-    // IPv6 addresses can end with a letter, so there's additional colon check also.
+-    // Probably no need ever to use slow & complicated IP regexes here, but feel free to change
+-    // whenever we have such util functions available.
+-    // Note: only works on hostnames (no port), not origins (can include port and protocol).
+-    return /\d$/.test(hostname) || hostname.includes(':');
+-};
+-
+ export const getApiSubdomainUrl = (pathname: string, origin: string) => {
+-    const url = new URL('', origin);
+-
+-    const usePathPrefix =
+-        url.hostname === 'localhost' || getIsDohDomain(url.origin) || doesHostnameLookLikeIP(url.hostname);
+-    if (usePathPrefix) {
+-        url.pathname = `/api${pathname}`;
+-        return url;
+-    }
+-
+-    url.hostname = getRelativeApiHostname(url.hostname);
++    const url = new URL('/', '___ELECTRON_MAIL_PROTON_API_ENTRY_URL_PLACEHOLDER___');
+     url.pathname = pathname;
+     return url;
+ };
+@@ -318,7 +291,13 @@ export const getShopURL = () => {
+ };
+ 
+ export const getDownloadUrl = (path: string) => {
+-    return `https://proton.me/download${path}`;
++    const origin = ((): string => {
++        const parsed = new URL("___ELECTRON_MAIL_PROTON_API_ENTRY_URL_PLACEHOLDER___");
++        const hostParts = parsed.hostname.split(".");
++        const newHost = hostParts.length > 2 ? hostParts.slice(1).join(".") : parsed.hostname;
++        return `${parsed.protocol}//${newHost}`; // ${parsed.pathname}${parsed.search}${parsed.hash}
++    })();
++    return `${origin}/download${path}`;
+ };
+ 
+ export const getSupportContactURL = (params: { [key: string]: string | string[] | undefined }) => {
+
+diff --git a/packages/shared/lib/fetch/helpers.ts b/packages/shared/lib/fetch/helpers.ts
+index e4089d876a..d4a820f06f 100644
+--- a/packages/shared/lib/fetch/helpers.ts
++++ b/packages/shared/lib/fetch/helpers.ts
+@@ -23,6 +23,7 @@ const appendQueryParams = (url: URL, params: { [key: string]: any }) => {
+     });
+ };
+ 
++// <electron-mail-mark>
+ export const createUrl = (urlString: string, params: { [key: string]: any } = {}, origin?: string) => {
+     let url: URL;
+     if (origin) {
+@@ -33,6 +34,7 @@ export const createUrl = (urlString: string, params: { [key: string]: any } = {}
+     appendQueryParams(url, params);
+     return url;
+ };
++// </electron-mail-mark>
+ 
+ export const getDateHeader = (headers?: Headers) => {
+     const dateHeader = headers?.get?.('date');
+--
+
+diff --git a/packages/shared/lib/api.js b/packages/shared/lib/api.js
+index 58455de854..650cab8de8 100644
+--- a/packages/shared/lib/api.js
++++ b/packages/shared/lib/api.js
+@@ -30,6 +30,99 @@ export default ({
+         ...otherDefaultHeaders,
+     };
+ 
++    const processResponse = (() => {
++        const rewriteUrlProps = (() => {
++            const rewriteUrl = (() => {
++                // this "BASE_API_URL" comes with "drive-api" base subdomain for Drive app/page, "mail-api" for Mail app/page, and so on
++                const BASE_API_URL = new URL("___ELECTRON_MAIL_PROTON_API_ENTRY_URL_PLACEHOLDER___");
++                const getFirstSubdomain = (hostname) => {
++                    const parts = hostname.split(".");
++                    return parts.length > 2 ? parts[0] : null;
++                };
++                const getBaseDomain = (hostname) => {
++                    const parts = hostname.split(".");
++                    return parts.slice(1).join(".");
++                };
++                // TODO should we just keep the "drive-api" base subdomain here
++                //      instead of keeping the original base subdomain (like "zsh-storage")?
++                return (url) => {
++                    const sourceUrl = new URL(url);
++                    const sourceSubdomain = getFirstSubdomain(sourceUrl.hostname);
++                    const targetBaseDomain = getBaseDomain(BASE_API_URL.hostname);
++                    const newHost = sourceSubdomain ? `${sourceSubdomain}.${targetBaseDomain}` : targetBaseDomain;
++                    const targetProtocol = BASE_API_URL.protocol;
++                    const targetPort = BASE_API_URL.port ? `:${BASE_API_URL.port}` : "";
++                    return `${targetProtocol}//${newHost}${targetPort}${sourceUrl.pathname}${sourceUrl.search}`;
++                };
++            })();
++            const PROPS = {
++                common: ["BareURL", "URL"],
++                thumbnail: ["ThumbnailLink", "ThumbnailBareURL"],
++                thumbnailDownload: ["ThumbnailDownloadUrl"],
++            };
++            const rewrite = (item, props) => {
++                for (const prop of props) {
++                    if (String(item[prop]).startsWith("https://")) {
++                        item[prop] = rewriteUrl(item[prop]);
++                    }
++                }
++            };
++            return {
++                common: (item) => rewrite(item, PROPS.common),
++                thumbnail: (item) => rewrite(item, PROPS.thumbnail),
++                thumbnailDownload: (item) => rewrite(item, PROPS.thumbnailDownload),
++            };
++        })();
++        const TRANSFORMERS = [
++            {
++                match: (pathname) => pathname === "/drive/blocks",
++                transform: (json) => {
++                    for (const links of [json.UploadLinks, json.ThumbnailLinks]) {
++                        Array.isArray(links) && links.forEach(rewriteUrlProps.common);
++                    }
++                },
++            },
++            {
++                match: (pathname) => pathname.startsWith("/drive/shares/"),
++                transform: (json) => {
++                    Array.isArray(Object(json.Revision).Blocks) && json.Revision.Blocks.forEach(rewriteUrlProps.common);
++                    rewriteUrlProps.thumbnail(json);
++                    for (const item of Array.isArray(json.Links) ? json.Links : []) {
++                        const activeRevision = item?.FileProperties?.ActiveRevision;
++                        if (typeof activeRevision !== "object") continue;
++                        rewriteUrlProps.thumbnailDownload(activeRevision);
++                        if (typeof activeRevision.ThumbnailURLInfo == "object") {
++                            rewriteUrlProps.common(activeRevision.ThumbnailURLInfo);
++                        }
++                    }
++                },
++            },
++        ];
++        const TEXT_ENCODER = new TextEncoder();
++        return async (response) => {
++            const pathname = new URL(response.url).pathname;
++            const transformer = TRANSFORMERS.find((item) => item.match(pathname));
++            if (!transformer || !response.headers.get("content-type")?.includes("application/json")) {
++                return response;
++            }
++            const json = await response.json();
++            transformer.transform(json);
++            return new Response(
++                new ReadableStream({
++                    start(controller) {
++                        controller.enqueue(TEXT_ENCODER.encode(JSON.stringify(json)));
++                        controller.close();
++                    }
++                }),
++                {
++                    headers: new Headers(response.headers),
++                    status: response.status,
++                    statusText: response.statusText
++                },
++            );
++        };
++    })();
++
+     const cb = ({ url, data, headers, ...rest }) => {
+         // Special case for the admin panel
+         const dataWithClientSecret =
+@@ -43,7 +136,7 @@ export default ({
+                 ...headers,
+             },
+             ...rest,
+-        });
++        }).then(processResponse);
+     };
+ 
+     Object.defineProperties(cb, {
+--

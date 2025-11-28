@@ -92,8 +92,8 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                 },
             },
             message: {
-                async queryMessageCount() {
-                    return (await resolveHttpApi())(internals["../../packages/shared/lib/api/messages.ts"].value.queryMessageCount());
+                async queryMessageCount(arg) {
+                    return (await resolveHttpApi())(internals["../../packages/shared/lib/api/messages.ts"].value.queryMessageCount(arg));
                 },
                 async getMessage(id) {
                     return (await resolveHttpApi())(internals["../../packages/shared/lib/api/messages.ts"].value.getMessage(id));

@@ -280,7 +280,6 @@ async function executeBuildFlow(
                         "--no-sri",
                         `--api=${PROTON_API_URL_PLACEHOLDER}`,
                         `--appMode=standalone`,
-                        "--webpackOnCaffeine",
                         ...(repoType == "proton-drive" ? ["--handleSupportAndErrors", "--optimizeAssets"] : ["--logical"]),
                     ], {
                         cwd: repoDir,

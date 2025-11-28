@@ -60,10 +60,10 @@ export const buildEndpoints = async (
 
             if (accessTokens.length > 1 || refreshTokens.length > 1) {
                 const message = [
-                    `The app refuses to save more than one "proton-session" cookies records set `,
+                    `The app attempts to save more than one "proton-session" cookies records set `,
                     `(${nameof(accessTokens)} count: ${accessTokens.length}, ${nameof(refreshTokens)} count: ${refreshTokens.length}).`,
                 ].join("");
-                logger.error(nameof.full(endpoints.saveProtonSession), message);
+                logger.warn(nameof.full(endpoints.saveProtonSession), message);
             }
 
             await ctx.sessionStorage.saveSession(dataToSave);

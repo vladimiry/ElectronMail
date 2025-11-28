@@ -1,18 +1,18 @@
 diff --git a/packages/shared/lib/helpers/sentry.ts b/packages/shared/lib/helpers/sentry.ts
-index 779bd5f2f5..8e1b339173 100644
+index 6bf5243bcf..94592de113 100644
 --- a/packages/shared/lib/helpers/sentry.ts
 +++ b/packages/shared/lib/helpers/sentry.ts
-@@ -184,120 +184,7 @@ function main({
-     ignore = ({ host }) => isLocalhost(host),
-     denyUrls = getDefaultDenyUrls(),
-     ignoreErrors = getDefaultIgnoreErrors(),
+@@ -187,124 +187,7 @@ function main({
+     UID,
+     beforeSendIgnore,
+     setupIgnore = ({ host }) => isLocalhost(host),
 -}: SentryOptions) {
 -    const { SENTRY_DSN, SENTRY_DESKTOP_DSN, APP_VERSION } = config;
 -    const sentryDSN = isElectronApp ? SENTRY_DESKTOP_DSN || SENTRY_DSN : SENTRY_DSN;
 -    const { host, release, environment } = sentryConfig;
 -
 -    // No need to configure it if we don't load the DSN
--    if (!sentryDSN || ignore(sentryConfig)) {
+-    if (!sentryDSN || setupIgnore(sentryConfig)) {
 -        return;
 -    }
 -
@@ -39,6 +39,10 @@ index 779bd5f2f5..8e1b339173 100644
 -        // Unfortunately Sentry does not use the custom transport for those, and thus fails to add the headers the API requires.
 -        sendClientReports: false,
 -        beforeSend(event, hint) {
+-            if (beforeSendIgnore?.(event, hint)) {
+-                return null;
+-            }
+-
 -            const error = hint?.originalException as any;
 -            const stack = typeof error === 'string' ? error : error?.stack;
 -            // Filter out broken ferdi errors
@@ -120,11 +124,11 @@ index 779bd5f2f5..8e1b339173 100644
 -        scope.setTag('appVersion', APP_VERSION);
 -    });
 -}
-+}: SentryOptions) { }
++}: SentryOptions) {}
  
  export const setSentryTags = (tags: Record<string, any>) => {
      configureScope((scope) => {
-@@ -352,15 +239,7 @@ type CaptureExceptionArgs = Parameters<typeof captureException>;
+@@ -359,15 +242,7 @@ type CaptureExceptionArgs = Parameters<typeof captureException>;
   * @param initiative
   * @param error
   */
@@ -141,7 +145,7 @@ index 779bd5f2f5..8e1b339173 100644
  
  /**
   * Capture message with an additional initiative tag
-@@ -370,12 +249,6 @@ export const traceInitiativeError = (initiative: SentryInitiative, error: Captur
+@@ -377,12 +252,6 @@ export const traceInitiativeError = (initiative: SentryInitiative, error: Captur
  export const captureInitiativeMessage: (initiative: SentryInitiative, message: string) => void = (
      initiative,
      message
@@ -155,4 +159,4 @@ index 779bd5f2f5..8e1b339173 100644
 +) => console.log(initiative, message);
  
  export default main;
--- 
+--

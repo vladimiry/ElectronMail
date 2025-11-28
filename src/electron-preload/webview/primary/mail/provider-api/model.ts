@@ -92,7 +92,7 @@ export type ProviderInternals = AddInitializedProp<
         }
         & {
             [K in StrictExtract<ImmediateKeys, "../../packages/shared/lib/api/messages.ts">]: {
-                readonly queryMessageCount: () => HttpApiArg;
+                readonly queryMessageCount: (arg: {AddressID?: string; OnlyInInboxForCategories?: boolean}) => HttpApiArg;
                 readonly getMessage: (id: RestModel.Message["ID"]) => HttpApiArg;
                 readonly queryMessageMetadata: (
                     params?: RestModel.QueryParams & {LabelID?: Unpacked<RestModel.Message["LabelIDs"]>},

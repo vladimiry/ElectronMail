@@ -96,7 +96,7 @@ export const bootstrapDbPatch = (
                 )({login});
 
                 const {Total: totalMessagesCount} = await (async () => {
-                    const {Counts} = await providerApi.message.queryMessageCount();
+                    const {Counts} = await providerApi.message.queryMessageCount({});
                     const count = Counts.find((value) => value.LabelID === labelId);
                     if (typeof count !== "object") {
                         throw new Error(`Unexpected "${nameof(providerApi.message.queryMessageCount)}" result value received`);

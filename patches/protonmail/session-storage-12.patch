@@ -20,66 +20,48 @@ index d0c59411c4..dcacdd9f59 100644
      document.querySelector('.app-root-loader')?.classList.add('hidden');
 
 diff --git a/packages/shared/lib/authentication/createSecureSessionStorage.ts b/packages/shared/lib/authentication/createSecureSessionStorage.ts
-index 2477711b00..a7d3fde58d 100644
+index 94efa0bf8d..7e9daf350e 100644
 --- a/packages/shared/lib/authentication/createSecureSessionStorage.ts
 +++ b/packages/shared/lib/authentication/createSecureSessionStorage.ts
-@@ -1,8 +1,14 @@
-+/* <electron-mail-mark> */
+@@ -3,6 +3,7 @@ import debounce from 'lodash/debounce';
  import { load, save } from '../helpers/secureSessionStorage';
  import createStore from '../helpers/store';
  
++// <electron-mail-mark>
  const createSecureSessionStorage = () => {
      const store = createStore(load());
-+    const saveStateDo = () => {
-+        save(store.getState());
-+    };
+     const returnValue = {
+@@ -10,6 +11,10 @@ const createSecureSessionStorage = () => {
+         flush: () => {},
+     };
+ 
++    window.addEventListener("electron-mail:packages/shared/lib/authentication/createSecureSessionStorage.ts:unloadLike", () => {
++        save(store.getState())?.();
++    });
 +
-+    window.addEventListener("electron-mail:packages/shared/lib/authentication/createSecureSessionStorage.ts:unloadLike", saveStateDo);
- 
      if ('onpagehide' in window) {
-         const handlePageShow = () => {
-@@ -10,20 +16,12 @@ const createSecureSessionStorage = () => {
-             load();
-         };
- 
--        const handlePageHide = () => {
--            // Cannot use !event.persisted because Safari 13.1 does not send that when you are navigating on the same domain
--            save(store.getState());
--        };
--
-         window.addEventListener('pageshow', handlePageShow, true);
--        window.addEventListener('pagehide', handlePageHide, true);
-+        window.addEventListener('pagehide', saveStateDo, true);
-     } else {
--        const handleUnload = () => {
--            save(store.getState());
--        };
-         // This gets narrowed to never because of the onpagehide
-         // @ts-ignore
--        window.addEventListener('unload', handleUnload, true);
-+        window.addEventListener('unload', saveStateDo, true);
-     }
- 
-     return store;
-@@ -32,3 +30,4 @@ const createSecureSessionStorage = () => {
+         let finalize: (() => void) | undefined;
+         const handleSave = () => {
+@@ -46,3 +51,4 @@ const createSecureSessionStorage = () => {
  export type SecureSessionStorage = ReturnType<typeof createSecureSessionStorage>;
  
  export default createSecureSessionStorage;
-+/* </electron-mail-mark> */
++// </electron-mail-mark>
+--
 
 diff --git a/packages/shared/lib/helpers/secureSessionStorage.ts b/packages/shared/lib/helpers/secureSessionStorage.ts
-index f24616faf9..6c05699766 100644
+index 93faa0d916..9697e2dc88 100644
 --- a/packages/shared/lib/helpers/secureSessionStorage.ts
 +++ b/packages/shared/lib/helpers/secureSessionStorage.ts
 @@ -119,6 +119,7 @@ export const separateParts = (data: any) =>
          { share1: {}, share2: {} }
      );
-
+ 
 +/* <electron-mail-mark> */
  const SESSION_STORAGE_KEY = 'proton:storage';
  export const save = (data: any) => {
      if (!hasSessionStorage()) {
-@@ -133,6 +134,34 @@ export const load = () => {
+@@ -140,6 +141,34 @@ export const load = () => {
      if (!hasSessionStorage()) {
          return {};
      }
@@ -110,15 +92,17 @@ index f24616faf9..6c05699766 100644
 +            };
 +            return load([MAILBOX_PASSWORD_KEY, UID_KEY]);
 +        }
-+    }
++    }    
      try {
-         const share1 = deserialize(window.name);
-         const share2 = window.sessionStorage.getItem(SESSION_STORAGE_KEY) || '';
-@@ -148,3 +177,4 @@ export const load = () => {
+         const serializedShare1 = window.name;
+         if (!serializedShare1) {
+@@ -159,3 +188,4 @@ export const load = () => {
          return {};
      }
  };
 +/* </electron-mail-mark> */
+\ No newline at end of file
+--
 
 diff --git a/packages/shared/lib/authentication/createAuthenticationStore.ts b/packages/shared/lib/authentication/createAuthenticationStore.ts
 index 97adf87394..63a65a0b7c 100644

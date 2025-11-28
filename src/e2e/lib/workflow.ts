@@ -302,14 +302,18 @@ export const buildWorkflow = (testContext: TestContext) => {
         async logout(options?: {hiddenWindow?: boolean}): Promise<void> {
             await testContext.firstWindowPage.click("electron-mail-accounts .controls .dropdown-toggle");
             await asyncDelay(CONF.timeouts.transition);
-            await testContext.firstWindowPage.click("#logoutMenuItem");
+            await testContext.firstWindowPage.waitForSelector("#logoutMenuItem", {state: "visible"});
+            await testContext.firstWindowPage.evaluate(() => {
+                document.querySelector("#logoutMenuItem")?.dispatchEvent(new MouseEvent("click", {bubbles: true}));
+            });
             try {
                 await testContext.firstWindowPage.waitForSelector("#loginFormPasswordControl", {
                     state: "visible",
                     timeout: CONF.timeouts.logout,
                 });
-            } catch {
+            } catch (e) {
                 await workflow.saveScreenshot();
+                throw e;
             }
             await workflow.loginPageUrlTest("logout: login page url", options);
             await asyncDelay(CONF.timeouts.transition);

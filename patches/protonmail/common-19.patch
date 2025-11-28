@@ -1,45 +1,25 @@
 diff --git a/packages/shared/lib/helpers/desktop.ts b/packages/shared/lib/helpers/desktop.ts
-index 23850e082c..e96178c368 100644
+index 46e37be189..6b61a03912 100644
 --- a/packages/shared/lib/helpers/desktop.ts
 +++ b/packages/shared/lib/helpers/desktop.ts
-@@ -1,15 +1,14 @@
--import UAParser from 'ua-parser-js';
--
- import type { APP_NAMES } from '../constants';
- import { APPS } from '../constants';
--import { isLinux, isMac, isWindows } from './browser';
--
--const uaParser = new UAParser();
--const ua = uaParser.getResult();
-+import {
-+  isLinux,
-+  isMac,
-+  isWindows,
-+} from './browser';
-
- export const SUPPORTED_ELECTRON_APP: APP_NAMES[] = [APPS.PROTONACCOUNT, APPS.PROTONCALENDAR, APPS.PROTONMAIL];
-
+@@ -14,7 +14,7 @@ export const SUPPORTED_ELECTRON_APP: APP_NAMES[] = [
+     APPS.PROTONMEET,
+ ];
+ 
 -export const isElectronApp = /electron/i.test(ua.ua);
 +export const isElectronApp = false;
  export const isElectronOnMac = isElectronApp && isMac();
  export const isElectronOnWindows = isElectronApp && isWindows();
  export const isElectronOnLinux = isElectronApp && isLinux();
-@@ -24,12 +23,11 @@ export const isElectronOnInboxApps = (app: APP_NAMES) => {
-
- /* Electron apps built with Electron Forge will inject the `productName` and
-  * `version` properties of the app's package.json in the user-agent. */
--export const isElectronMail = isElectronApp && /ProtonMail/i.test(ua.ua);
--export const isElectronPass = isElectronApp && /ProtonPass/i.test(ua.ua);
-+export const isElectronMail = isElectronApp;
-+export const isElectronPass = isElectronApp;
-
- /*
+@@ -37,6 +37,4 @@ export const isElectronMeet = isElectronApp && /ProtonMeet/i.test(ua.ua);
   * The version of the application is injected in the user-agent by Electron Forge.
   * This method works if the version uses the following format: `x.y.z`.
   */
--export const electronAppVersion = ua.ua.match(/((ProtonMail|ProtonPass)\/)(?<version>([0-9][.]).{3})/i)?.groups
--    ?.version;
+-export const electronAppVersion = ua.ua.match(
+-    /((ProtonMail|ProtonPass|ProtonMeet)\/)(?<version>[0-9]\.[0-9]{1,2}\.[0-9]{1,2})/i
+-)?.groups?.version;
 +export const electronAppVersion = undefined;
+--
 
 diff --git a/packages/shared/lib/helpers/browser.ts b/packages/shared/lib/helpers/browser.ts
 index 5a82fb1e2c..6bc1d54ca6 100644
@@ -158,28 +138,28 @@ index 69e6172ef0..a032bc484b 100644
 --
 
 diff --git a/packages/components/containers/login/MinimalLoginContainer.tsx b/packages/components/containers/login/MinimalLoginContainer.tsx
-index 4fc08ba6e4..a07d4241f3 100644
+index 8562025c49..55cbbd7842 100644
 --- a/packages/components/containers/login/MinimalLoginContainer.tsx
 +++ b/packages/components/containers/login/MinimalLoginContainer.tsx
-@@ -4,8 +4,6 @@ import { useEffect, useRef, useState } from 'react';
- import { c } from 'ttag';
+@@ -5,8 +5,6 @@ import { c } from 'ttag';
  
- import { Button, CircleLoader } from '@proton/atoms';
+ import { Button } from '@proton/atoms/Button/Button';
+ import { CircleLoader } from '@proton/atoms/CircleLoader/CircleLoader';
 -import Checkbox from '@proton/components/components/input/Checkbox';
 -import Label from '@proton/components/components/label/Label';
  import InputFieldTwo from '@proton/components/components/v2/field/InputField';
  import PasswordInputTwo from '@proton/components/components/v2/input/PasswordInput';
  import useFormErrors from '@proton/components/components/v2/useFormErrors';
-@@ -188,7 +186,7 @@ const LoginForm = ({
+@@ -301,7 +299,7 @@ const LoginForm = ({
      const [loading, withLoading] = useLoading();
      const [username, setUsername] = useState('');
      const [password, setPassword] = useState('');
 -    const [persistent, setPersistent] = useLocalState(true, 'default-persistent');
-+    const [persistent] = useLocalState(false, 'default-persistent');
++    const [persistent] = useLocalState(true, 'default-persistent');
      const challengeRefLogin = useRef<ChallengeRef>();
      const usernameRef = useRef<HTMLInputElement>(null);
      const [challengeLoading, setChallengeLoading] = useState(hasChallenge);
-@@ -216,7 +214,7 @@ const LoginForm = ({
+@@ -329,7 +327,7 @@ const LoginForm = ({
                  </div>
              )}
              <form
@@ -188,7 +168,7 @@ index 4fc08ba6e4..a07d4241f3 100644
                  className={challengeLoading ? 'hidden' : undefined}
                  onSubmit={(event) => {
                      event.preventDefault();
-@@ -248,7 +246,7 @@ const LoginForm = ({
+@@ -361,7 +359,7 @@ const LoginForm = ({
                      />
                  )}
                  <InputFieldTwo
@@ -197,7 +177,7 @@ index 4fc08ba6e4..a07d4241f3 100644
                      bigger
                      label={c('Label').t`Email or username`}
                      error={validator([requiredValidator(username)])}
-@@ -268,17 +266,6 @@ const LoginForm = ({
+@@ -381,17 +379,6 @@ const LoginForm = ({
                      onValue={setPassword}
                      rootClassName="mt-2"
                  />
@@ -373,18 +353,18 @@ index 988ad7b79f..0000000000
 -export default DesktopNotificationTopBanner;
 
 diff --git a/packages/components/containers/topBanners/TopBanners.tsx b/packages/components/containers/topBanners/TopBanners.tsx
-index 7bba894be7..8ab664741c 100644
+index ccc208fae7..4757ffbd9a 100644
 --- a/packages/components/containers/topBanners/TopBanners.tsx
 +++ b/packages/components/containers/topBanners/TopBanners.tsx
 @@ -5,7 +5,6 @@ import type { APP_NAMES } from '@proton/shared/lib/constants';
+ import ErrorBoundary from '../app/ErrorBoundary';
  import AccessTypeTopBanner from './AccessTypeTopBanner';
  import BadAppVersionBanner from './BadAppVersionBanner';
- import DelinquentTopBanner from './DelinquentTopBanner';
 -import DesktopNotificationTopBanner from './DesktopNotificationTopBanner';
  import OnlineTopBanner from './OnlineTopBanner';
  import PendingInvitationTopBanner from './PendingInvitationTopBanner';
  import SessionRecoveryBanners from './SessionRecoveryBanners';
-@@ -29,7 +28,6 @@ const TopBanners = ({ children, app }: Props) => {
+@@ -30,7 +29,6 @@ const TopBanners = ({ children, app }: Props) => {
              <StorageLimitTopBanner app={app} />
              <BadAppVersionBanner />
              <AccessTypeTopBanner />

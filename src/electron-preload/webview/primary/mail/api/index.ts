@@ -1,5 +1,5 @@
 import {buffer, concatMap, debounceTime, distinctUntilChanged, filter, map, mergeMap, tap} from "rxjs/operators";
-import {EMPTY, from, merge, Observable} from "rxjs";
+import {EMPTY, from, merge, Observable, of} from "rxjs";
 import {ipcRenderer} from "electron";
 import {pick} from "remeda";
 import {serializeError} from "serialize-error";
@@ -155,6 +155,10 @@ export function registerApi(
             logger.info();
 
             const observables = [
+                // stub "unread" update signal, makes "notification" signal something to prevent timeout
+                of({unread: 0}),
+
+                // "unread" update signal
                 (() => {
                     const responseListeners = [{
                         tester: {test: providerApi._custom_.buildMessagesCountApiUrlTester({entryApiUrl})},
@@ -199,6 +203,7 @@ export function registerApi(
                     );
                 })(),
 
+                // batch entity updates signal
                 (() => {
                     const innerLogger = curryFunctionMembers(logger, `[entity update notification]`);
                     const isEventsApiUrl = providerApi._custom_.buildEventsApiUrlTester({entryApiUrl});

@@ -138,10 +138,10 @@ index f72d934842..86bf52cd1b 100644
              <TopBanner
 
 diff --git a/applications/mail/src/app/components/list/tip/useTips.tsx b/applications/mail/src/app/components/list/tip/useTips.tsx
-index 9ef794f6ff..040b1e6fbb 100644
+index 87c6a8fdb6..f8bd29907d 100644
 --- a/applications/mail/src/app/components/list/tip/useTips.tsx
 +++ b/applications/mail/src/app/components/list/tip/useTips.tsx
-@@ -247,7 +247,7 @@ const useTips = () => {
+@@ -245,7 +245,7 @@ const useTips = () => {
                  ),
                  action: TipActionType.EnableDarkWebMonitoring,
              },
@@ -150,7 +150,7 @@ index 9ef794f6ff..040b1e6fbb 100644
                  id: 10,
                  icon: 'brand-proton-drive',
                  message: c('Info')
-@@ -264,8 +264,8 @@ const useTips = () => {
+@@ -262,8 +262,8 @@ const useTips = () => {
                      </Href>
                  ),
                  action: TipActionType.OpenProtonDrive,
@@ -161,7 +161,7 @@ index 9ef794f6ff..040b1e6fbb 100644
                  id: 11,
                  icon: 'brand-proton-pass',
                  message: c('Info')
-@@ -282,8 +282,8 @@ const useTips = () => {
+@@ -280,8 +280,8 @@ const useTips = () => {
                      </Href>
                  ),
                  action: TipActionType.OpenProtonPass,
@@ -172,15 +172,16 @@ index 9ef794f6ff..040b1e6fbb 100644
                  id: 12,
                  icon: 'brand-proton-vpn',
                  message: c('Info')
-@@ -300,7 +300,7 @@ const useTips = () => {
+@@ -298,7 +298,7 @@ const useTips = () => {
                      </Href>
                  ),
                  action: TipActionType.DownloadProtonVPN,
 -            },
 +            }]),
          ],
+         // eslint-disable-next-line react-hooks/exhaustive-deps -- autofix-eslint-49AB53
          []
-     );
+--
 
 diff --git a/packages/components/components/drawer/drawerAppButtons/VPNDrawerAppButton.tsx b/packages/components/components/drawer/drawerAppButtons/VPNDrawerAppButton.tsx
 index f3df722c46..c353629215 100644

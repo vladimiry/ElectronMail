@@ -1,7 +1,7 @@
-import type {CdkDragDrop} from "@angular/cdk/drag-drop";
+import {CdkDragDrop, moveItemInArray} from "@angular/cdk/drag-drop";
 import {Component, HostBinding, inject} from "@angular/core";
 import {map, withLatestFrom} from "rxjs/operators";
-import {Observable, Subject, Subscription} from "rxjs";
+import {Observable, Subscription} from "rxjs";
 import type {OnDestroy} from "@angular/core";
 import {Store} from "@ngrx/store";
 
@@ -28,8 +28,6 @@ export class AccountsListComponent implements OnDestroy {
     @HostBinding("class.reordering-disabled")
     reorderingDisabled = true;
 
-    private cdkDrop$: Subject<CdkDragDrop<LoginFieldContainer>> = new Subject();
-
     private subscription = new Subscription();
 
     constructor() {
@@ -48,33 +46,21 @@ export class AccountsListComponent implements OnDestroy {
                     this.reorderingDisabled = changingAccountOrder || length < 2;
                 }),
         );
-
-        this.subscription.add(
-            this.cdkDrop$.subscribe(({item, container, previousIndex, currentIndex}) => {
-                const {nativeElement: itemEl} = item.element;
-                const {nativeElement: containerEl} = container.element;
-                const movedDown = currentIndex > previousIndex;
-
-                this.store.dispatch(
-                    OPTIONS_ACTIONS.ChangeAccountOrderRequest({
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                        login: item.data.login,
-                        index: currentIndex,
-                    }),
-                );
-
-                containerEl.insertBefore(
-                    itemEl,
-                    containerEl
-                        .querySelectorAll(".cdk-drag")
-                        .item(currentIndex + Number(movedDown)),
-                );
-            }),
-        );
     }
 
-    cdkDrop(event: CdkDragDrop<LoginFieldContainer>): void {
-        this.cdkDrop$.next(event);
+    cdkDrop(event: CdkDragDrop<LoginFieldContainer[]>): void {
+        const {item, container, previousIndex, currentIndex} = event;
+
+        this.store.dispatch(
+            OPTIONS_ACTIONS.ChangeAccountOrderRequest({
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                login: item.data.login,
+                index: currentIndex,
+            }),
+        );
+
+        // This now safely reorders the real array that the drop list is bound to
+        moveItemInArray(container.data, previousIndex, currentIndex);
     }
 
     toggleAccountDisabling(login: AccountConfig["login"]): void {

@@ -4,7 +4,7 @@
     /*
     resolving & capabilities
     */
-    "moduleResolution": "node",
+    "moduleResolution": "Bundler",
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "experimentalDecorators": true,
@@ -31,21 +31,11 @@
     "outDir": "./app",
     "baseUrl": ".",
     "paths": {
-      "patches/*": [
-        "./patches/*"
-      ],
-      "scripts/*": [
-        "./scripts/*"
-      ],
-      "src/*": [
-        "./src/*"
-      ],
-      "webpack-configs/*": [
-        "./webpack-configs/*"
-      ],
-      "package.json": [
-        "package.json"
-      ]
+      "patches/*": ["./patches/*"],
+      "scripts/*": ["./scripts/*"],
+      "src/*": ["./src/*"],
+      "webpack-configs/*": ["./webpack-configs/*"],
+      "package.json": ["package.json"]
     },
     "typeRoots": [
       "./node_modules/@types",

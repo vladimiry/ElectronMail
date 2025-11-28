@@ -1,7 +1,6 @@
 import {AngularWebpackPlugin, AngularWebpackPluginOptions} from "@ngtools/webpack";
-import {LegacyNgcOptions, TypeCheckingOptions} from "@angular/compiler-cli/src/ngtsc/core/api";
+import {CompilerOptions, readConfiguration} from "@angular/compiler-cli";
 import linkerPlugin from "@angular/compiler-cli/linker/babel";
-import {readConfiguration} from "@angular/compiler-cli";
 
 import {browserWindowAppPath, browserWindowPath, buildBaseWebConfig, cssRuleSetRules, sassLoaderRuleSetRules} from "./lib";
 import {BuildAngularCompilationFlags, BuildEnvVars} from "webpack-configs/model";
@@ -85,7 +84,7 @@ const config = buildBaseWebConfig({
     resolve: {alias: {images: rootRelativePath("images")}},
     plugins: [(() => {
         const typeCheckingOptions: NoExtraProps<
-            Pick<NoExtraProps<Required<TypeCheckingOptions>>, "strictTemplates">
+            Pick<NoExtraProps<Required<CompilerOptions>>, "strictTemplates">
         > = {
             // Unless otherwise commented, each "TypeCheckingOptions" option is set to the value for "strictTemplates" ("true" when
             // "strictTemplates" is "true" and conversely, the other way around).
@@ -93,7 +92,7 @@ const config = buildBaseWebConfig({
             strictTemplates: angularCompilationFlags.ivy,
         };
 
-        const legacyNgcOptions: NoExtraProps<Required<Pick<LegacyNgcOptions, "fullTemplateTypeCheck" | "strictInjectionParameters">>> = {
+        const legacyNgcOptions: NoExtraProps<Required<Pick<CompilerOptions, "fullTemplateTypeCheck" | "strictInjectionParameters">>> = {
             fullTemplateTypeCheck: angularCompilationFlags.aot || angularCompilationFlags.ivy,
             strictInjectionParameters: true,
         };

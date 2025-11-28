@@ -1,8 +1,21 @@
+diff --git a/out/targets/FpmTarget.js b/out/targets/FpmTarget.js
+index 9d30824f8821097d3e180841dbcbce348436f3bf..7d322cc289d1b22859548f0c1fcb75766453a3c5 100644
+--- a/out/targets/FpmTarget.js
++++ b/out/targets/FpmTarget.js
+@@ -299,7 +299,7 @@ class FpmTarget extends core_1.Target {
+                     "(libuuid or libuuid1)" /* since 4.0.0 */,
+                 ];
+             case "pacman":
+-                return ["c-ares", "ffmpeg", "gtk3", "http-parser", "libevent", "libvpx", "libxslt", "libxss", "minizip", "nss", "re2", "snappy", "libnotify", "libappindicator-gtk3"];
++                return ["c-ares", "ffmpeg", "gtk3", "llhttp", "libevent", "libvpx", "libxslt", "libxss", "minizip", "nss", "re2", "snappy", "libnotify", "libappindicator-gtk3"];
+             default:
+                 return [];
+         }
 diff --git a/templates/nsis/include/installer.nsh b/templates/nsis/include/installer.nsh
-index 34e91dfe82fdbb2e929820f2e8deb771b7f7893c..ee0bfba79aafb8ab8d89d91b6cd79a9d2a789580 100644
+index 300ef3dd699d0f5a081b1934fcc22dbe12025bdb..4dd7a4f79c62689125b60184482b67ce74f51c3b 100644
 --- a/templates/nsis/include/installer.nsh
 +++ b/templates/nsis/include/installer.nsh
-@@ -174,7 +174,7 @@
+@@ -194,7 +194,7 @@
        !insertmacro cleanupOldMenuDirectory
        !insertmacro createMenuDirectory
  
@@ -11,7 +24,7 @@ index 34e91dfe82fdbb2e929820f2e8deb771b7f7893c..ee0bfba79aafb8ab8d89d91b6cd79a9d
        # clear error (if shortcut already exists)
        ClearErrors
        WinShell::SetLnkAUMI "$newStartMenuLink" "${APP_ID}"
-@@ -200,7 +200,7 @@
+@@ -220,7 +220,7 @@
        # The keepShortcuts mechanism is NOT enabled.
        # Shortcuts will be recreated.
        ${if} $keepShortcuts == "false"
@@ -20,7 +33,7 @@ index 34e91dfe82fdbb2e929820f2e8deb771b7f7893c..ee0bfba79aafb8ab8d89d91b6cd79a9d
          ClearErrors
          WinShell::SetLnkAUMI "$newDesktopLink" "${APP_ID}"
        # The keepShortcuts mechanism IS enabled.
-@@ -215,7 +215,7 @@
+@@ -235,7 +235,7 @@
        ${elseif} $oldDesktopLink != $newDesktopLink
        ${orIfNot} ${FileExists} "$oldDesktopLink"
          ${ifNot} ${isUpdated}

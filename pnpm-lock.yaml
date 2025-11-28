@@ -28,7 +28,7 @@ patchedDependencies:
     hash: bf30492e7668ad866bf7cfdf1ad799a1720340f2df4093c3ea7a6e05c7e68a49
     path: patches/@ts-nameof__transforms-ts@4.2.1.patch
   app-builder-lib:
-    hash: 27cbc6425874733dc2ac6f21a71b50e0b6ecb7cded4e53b7b52a8a20fa86a5ae
+    hash: 84ab4b32b0ba8d6f12ef66621b0c30e0e99328c53865dde5214c66e9fa8a9fa0
     path: patches/app-builder-lib.patch
   class-transformer-validator@0.9.1:
     hash: bd032f8dd6c17f7031221fa87b022328522ceddfb59e80942d9963b71c87c106
@@ -230,7 +230,7 @@ importers:
         version: 7.13.1(eslint@8.57.0)(typescript@5.9.3)
       app-builder-lib:
         specifier: ^26.3.2
-        version: 26.3.3(patch_hash=27cbc6425874733dc2ac6f21a71b50e0b6ecb7cded4e53b7b52a8a20fa86a5ae)(dmg-builder@26.3.2)(electron-builder-squirrel-windows@26.3.3)
+        version: 26.3.3(patch_hash=84ab4b32b0ba8d6f12ef66621b0c30e0e99328c53865dde5214c66e9fa8a9fa0)(dmg-builder@26.3.2)(electron-builder-squirrel-windows@26.3.3)
       archiver:
         specifier: 7.0.1
         version: 7.0.1
@@ -6492,7 +6492,7 @@ snapshots:
 
   app-builder-bin@5.0.0-alpha.12: {}
 
-  app-builder-lib@26.3.3(patch_hash=27cbc6425874733dc2ac6f21a71b50e0b6ecb7cded4e53b7b52a8a20fa86a5ae)(dmg-builder@26.3.2)(electron-builder-squirrel-windows@26.3.3):
+  app-builder-lib@26.3.3(patch_hash=84ab4b32b0ba8d6f12ef66621b0c30e0e99328c53865dde5214c66e9fa8a9fa0)(dmg-builder@26.3.2)(electron-builder-squirrel-windows@26.3.3):
     dependencies:
       '@develar/schema-utils': 2.6.5
       '@electron/asar': 3.4.1
@@ -7445,7 +7445,7 @@ snapshots:
 
   dmg-builder@26.3.2(electron-builder-squirrel-windows@26.3.3):
     dependencies:
-      app-builder-lib: 26.3.3(patch_hash=27cbc6425874733dc2ac6f21a71b50e0b6ecb7cded4e53b7b52a8a20fa86a5ae)(dmg-builder@26.3.2)(electron-builder-squirrel-windows@26.3.3)
+      app-builder-lib: 26.3.3(patch_hash=84ab4b32b0ba8d6f12ef66621b0c30e0e99328c53865dde5214c66e9fa8a9fa0)(dmg-builder@26.3.2)(electron-builder-squirrel-windows@26.3.3)
       builder-util: 26.3.1
       fs-extra: 10.1.0
       iconv-lite: 0.6.3
@@ -7555,7 +7555,7 @@ snapshots:
 
   electron-builder-squirrel-windows@26.3.3(dmg-builder@26.3.2):
     dependencies:
-      app-builder-lib: 26.3.3(patch_hash=27cbc6425874733dc2ac6f21a71b50e0b6ecb7cded4e53b7b52a8a20fa86a5ae)(dmg-builder@26.3.2)(electron-builder-squirrel-windows@26.3.3)
+      app-builder-lib: 26.3.3(patch_hash=84ab4b32b0ba8d6f12ef66621b0c30e0e99328c53865dde5214c66e9fa8a9fa0)(dmg-builder@26.3.2)(electron-builder-squirrel-windows@26.3.3)
       builder-util: 26.3.1
       electron-winstaller: 5.4.0
     transitivePeerDependencies:
@@ -7564,7 +7564,7 @@ snapshots:
 
   electron-builder@26.3.2(electron-builder-squirrel-windows@26.3.3):
     dependencies:
-      app-builder-lib: 26.3.3(patch_hash=27cbc6425874733dc2ac6f21a71b50e0b6ecb7cded4e53b7b52a8a20fa86a5ae)(dmg-builder@26.3.2)(electron-builder-squirrel-windows@26.3.3)
+      app-builder-lib: 26.3.3(patch_hash=84ab4b32b0ba8d6f12ef66621b0c30e0e99328c53865dde5214c66e9fa8a9fa0)(dmg-builder@26.3.2)(electron-builder-squirrel-windows@26.3.3)
       builder-util: 26.3.1
       builder-util-runtime: 9.5.1
       chalk: 4.1.2

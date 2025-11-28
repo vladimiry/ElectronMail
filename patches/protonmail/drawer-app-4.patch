@@ -50,15 +50,16 @@ index d75566be1e..c0ccd916a7 100644
                                  onCompose={onCompose}
 
 diff --git a/applications/mail/src/app/hooks/drawer/useMailDrawer.tsx b/applications/mail/src/app/hooks/drawer/useMailDrawer.tsx
-index 59b10664cb..521b12cbd1 100644
+index e0f0f003c7..4cec802a98 100644
 --- a/applications/mail/src/app/hooks/drawer/useMailDrawer.tsx
 +++ b/applications/mail/src/app/hooks/drawer/useMailDrawer.tsx
-@@ -1,14 +1,10 @@
+@@ -1,5 +1,4 @@
  import {
 -    CalendarDrawerAppButton,
      ContactDrawerAppButton,
+     ReferralAppButton,
      SecurityCenterDrawerAppButton,
-     VPNDrawerAppButton,
+@@ -7,9 +6,6 @@ import {
      useDrawer,
  } from '@proton/components';
  import useDisplayFeatureTourDrawerButton from '@proton/components/components/featureTour/useDisplayFeatureTourDrawerButton';
@@ -68,7 +69,7 @@ index 59b10664cb..521b12cbd1 100644
  import { isAppInView } from '@proton/shared/lib/drawer/helpers';
  import { DRAWER_NATIVE_APPS } from '@proton/shared/lib/drawer/interfaces';
  import isTruthy from '@proton/utils/isTruthy';
-@@ -19,20 +15,14 @@ const useMailDrawer = () => {
+@@ -20,21 +16,15 @@ const useMailDrawer = () => {
      const { appInView, showDrawerSidebar } = useDrawer();
      const canShowFeatureTourDrawerButton = useDisplayFeatureTourDrawerButton();
  
@@ -85,23 +86,26 @@ index 59b10664cb..521b12cbd1 100644
 -        ),
          <SecurityCenterDrawerAppButton aria-expanded={isAppInView(DRAWER_NATIVE_APPS.SECURITY_CENTER, appInView)} />,
          <VPNDrawerAppButton aria-expanded={isAppInView(DRAWER_NATIVE_APPS.VPN, appInView)} />,
+         <ReferralAppButton aria-expanded={isAppInView(DRAWER_NATIVE_APPS.REFERRAL, appInView)} />,
          canShowFeatureTourDrawerButton && <FeatureTourDrawerButton />,
      ].filter(isTruthy);
 +    // </electron-mail-mark>
  
      return { drawerSidebarButtons, showDrawerSidebar };
  };
+--
 
 diff --git a/packages/components/components/drawer/drawerAppButtons/CalendarDrawerAppButton.tsx b/packages/components/components/drawer/drawerAppButtons/CalendarDrawerAppButton.tsx
 deleted file mode 100644
-index e63dcbdfd7..0000000000
+index 31e9628923..0000000000
 --- a/packages/components/components/drawer/drawerAppButtons/CalendarDrawerAppButton.tsx
 +++ /dev/null
-@@ -1,61 +0,0 @@
+@@ -1,63 +0,0 @@
 -import { c } from 'ttag';
 -
 -import { useAddresses } from '@proton/account/addresses/hooks';
 -import BYOEClaimProtonAddressModal from '@proton/activation/src/components/Modals/BYOEClaimProtonAddressModal/BYOEClaimProtonAddressModal';
+-import { BYOE_CLAIM_PROTON_ADDRESS_SOURCE } from '@proton/activation/src/constants';
 -import type { Props } from '@proton/components/components/drawer/drawerAppButtons/DrawerAppButton';
 -import DrawerAppButton from '@proton/components/components/drawer/drawerAppButtons/DrawerAppButton';
 -import useDynamicMonthDay from '@proton/components/hooks/useDynamicMonthDay';
@@ -151,6 +155,7 @@ index e63dcbdfd7..0000000000
 -                    title={c('Title').t`Get full access to ${CALENDAR_APP_NAME}`}
 -                    description={c('Info')
 -                        .t`${CALENDAR_APP_NAME} requires a ${BRAND_NAME} address for secure event sync and encryption. Claim your free ${MAIL_APP_NAME} address now.`}
+-                    source={BYOE_CLAIM_PROTON_ADDRESS_SOURCE.CALENDAR_DRAWER}
 -                    {...claimProtonAddressModalProps}
 -                />
 -            )}
@@ -159,6 +164,7 @@ index e63dcbdfd7..0000000000
 -};
 -
 -export default CalendarDrawerAppButton;
+--
 
 diff --git a/packages/components/index.ts b/packages/components/index.ts
 index 560ee8e6e2..61f0113370 100644

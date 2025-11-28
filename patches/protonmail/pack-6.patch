@@ -1,28 +1,28 @@
 diff --git a/packages/pack/webpack/plugins.js b/packages/pack/webpack/plugins.js
-index 0aa94377cc..a2c33d89f1 100644
+index 42e640f277..ed28032558 100644
 --- a/packages/pack/webpack/plugins.js
 +++ b/packages/pack/webpack/plugins.js
-@@ -38,12 +38,6 @@ module.exports = ({
-     analyze,
-     defineWebpackConfig,
+@@ -42,11 +42,6 @@ module.exports = ({
  }) => {
--    let WebpackCollectMetricsPlugin;
--
+     let WebpackCollectMetricsPlugin;
+ 
 -    if (CI) {
+-        // eslint-disable-next-line import/no-extraneous-dependencies
 -        WebpackCollectMetricsPlugin = require('@proton/collect-metrics').WebpackCollectMetricsPlugin;
 -    }
 -
      return [
          ...(isProduction
              ? []
-@@ -240,7 +234,5 @@ module.exports = ({
-             new BundleAnalyzerPlugin({
+@@ -244,7 +239,6 @@ module.exports = ({
                  excludeAssets: `assets/static/locales`,
              }),
--
+ 
 -        CI && new WebpackCollectMetricsPlugin(buildData),
+         benchmarkBuild && new WebpackInvalidationPlugin(),
      ].filter(Boolean);
  };
+--
 
 diff --git a/packages/pack/scripts/validate.sh b/packages/pack/scripts/validate.sh
 index 1a2ea64..bae388c 100755
@@ -38,10 +38,10 @@ index 1a2ea64..bae388c 100755
    fi;
 
 diff --git a/packages/pack/bin/protonPack.js b/packages/pack/bin/protonPack.js
-index 1fcd305dc4..481ca8bdd1 100755
+index b2609db4df..b26003fcff 100755
 --- a/packages/pack/bin/protonPack.js
 +++ b/packages/pack/bin/protonPack.js
-@@ -8,13 +8,6 @@ const chalk = require('chalk');
+@@ -8,13 +8,6 @@ const { styleText } = require('node:util');
  
  const program = new Command();
  
@@ -55,25 +55,16 @@ index 1fcd305dc4..481ca8bdd1 100755
  const getPort = (basePort) => {
      portfinder.basePort = basePort;
      return portfinder.getPortPromise();
-@@ -26,7 +19,7 @@ const addGlobalOptions = (program) => {
-         .option('--analyze', '')
+@@ -27,7 +20,7 @@ const addGlobalOptions = (program) => {
          .option('--optimizeAssets', '')
+         .option('--babelLoader', '')
          .option('--featureFlags <featureFlags>', '')
 -        .option('--api <api>', '', (api) => getApi(api), '')
 +        .option('--api <api>', '')
          .option('--sso <sso>', '')
          .option('--no-api-proxy', '')
          .option('--inline-icons', false)
-@@ -58,7 +51,7 @@ const commandWithLog = (...args) => {
- 
- addGlobalOptions(program.command('build').description('create an optimized production build'))
-     .option('--no-sri', 'disable sri')
--    .action(async (options, env) => {
-+    .action(async (options, env) => {
-         console.log(chalk.magenta('Creating a production build...\n'));
- 
-         const webpackArgs = getWebpackArgs(options, env);
-@@ -66,7 +59,7 @@ addGlobalOptions(program.command('build').description('create an optimized produ
+@@ -69,7 +62,7 @@ addGlobalOptions(program.command('build').description('create an optimized produ
          const outputPath = path.resolve('./dist');
          await commandWithLog(`rm -rf ${outputPath}`);
          await commandWithLog(
@@ -82,6 +73,7 @@ index 1fcd305dc4..481ca8bdd1 100755
              {
                  stdio: 'inherit',
              }
+--
 
 diff --git a/packages/pack/webpack/entries.ts b/packages/pack/webpack/entries.ts
 index cb4e29cb41..42527cbae1 100644

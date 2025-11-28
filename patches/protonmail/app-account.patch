@@ -21,17 +21,18 @@ index 0195dc8bea..949d07c41e 100644
 --
 
 diff --git a/applications/account/package.json b/applications/account/package.json
-index 32e9d36ddd..7b219b6eec 100644
+index 933aea9c20..9d46936f26 100644
 --- a/applications/account/package.json
 +++ b/applications/account/package.json
 @@ -6,7 +6,6 @@
      "author": "",
      "main": "index.js",
      "scripts": {
--        "build:web": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --webpackOnCaffeine --appMode=sso --logical",
+-        "build:web": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --appMode=sso --logical",
          "check-types": "tsc",
          "i18n:extract:web": "proton-i18n extract",
          "i18n:upgrade": "proton-i18n extract --verbose && proton-i18n crowdin --verbose",
+--
 
 diff --git a/applications/account/webpack.config.ts b/applications/account/webpack.config.ts
 index 2582067a9e..890f8a6b93 100644

@@ -78,12 +78,11 @@ index 0ca90fbfb8..1aa925bc32 100644
          if (this._batch === undefined) {
 
 diff --git a/packages/shared/lib/helpers/metrics.ts b/packages/shared/lib/helpers/metrics.ts
-index a02281be7d..7ea1abec03 100644
+index 91ef095046..7ec5994058 100644
 --- a/packages/shared/lib/helpers/metrics.ts
 +++ b/packages/shared/lib/helpers/metrics.ts
-@@ -1,22 +1,12 @@
--import { type Subscription, isFreeSubscription } from '@proton/payments';
--import { getIsB2BAudienceFromSubscription, getPlanName } from '@proton/payments';
+@@ -1,21 +1,12 @@
+-import { type Subscription, getIsB2BAudienceFromSubscription, getPlanName, isFreeSubscription } from '@proton/payments';
 -import { getSilentApi } from '@proton/shared/lib/api/helpers/customConfig';
 +import { type Subscription } from '@proton/payments';
  import type { UserModel, UserSettings } from '@proton/shared/lib/interfaces';
@@ -105,7 +104,7 @@ index a02281be7d..7ea1abec03 100644
  /**
   * Delay an operation by a random number of seconds between 1 second and the specified
   * number of seconds. If none is provided, the default is 180 seconds, i.e. 3 minutes
-@@ -28,17 +18,7 @@ export const randomDelay = async (delayInSeconds: number = 180) => {
+@@ -27,17 +18,7 @@ export const randomDelay = async (delayInSeconds: number = 180) => {
  /**
   * Send metrics report (/metrics endpoint)
   */
@@ -120,11 +119,11 @@ index a02281be7d..7ea1abec03 100644
 -    await randomDelay();
 -    void api(metrics({ Log, Title, Data }));
 -};
-+export const sendMetricsReport = async (api: Api, Log: METRICS_LOG, Title?: string, Data?: any) => { };
++export const sendMetricsReport = async (api: Api, Log: METRICS_LOG, Title?: string, Data?: any) => {};
  
  interface SendTelemetryReportArgs extends TelemetryReport {
      api: Api;
-@@ -62,34 +42,7 @@ export const sendTelemetryReport = async ({
+@@ -61,34 +42,7 @@ export const sendTelemetryReport = async ({
      dimensions,
      silence = true,
      delay,
@@ -156,11 +155,11 @@ index a02281be7d..7ea1abec03 100644
 -        // fail silently
 -    }
 -};
-+}: SendTelemetryReportArgs) => { };
++}: SendTelemetryReportArgs) => {};
  
  interface SendTelemetryReportWithBaseDimensionArgs extends SendTelemetryReportArgs {
      api: Api;
-@@ -118,34 +71,7 @@ export const sendTelemetryReportWithBaseDimensions = async ({
+@@ -117,34 +71,7 @@ export const sendTelemetryReportWithBaseDimensions = async ({
      dimensions,
      delay,
      silence = true,
@@ -192,11 +191,11 @@ index a02281be7d..7ea1abec03 100644
 -        delay,
 -    });
 -};
-+}: SendTelemetryReportWithBaseDimensionArgs) => { };
++}: SendTelemetryReportWithBaseDimensionArgs) => {};
  
  interface SendMultipleTelemetryReportsArgs {
      api: Api;
-@@ -160,20 +86,8 @@ export const sendMultipleTelemetryReports = async ({
+@@ -159,20 +86,6 @@ export const sendMultipleTelemetryReports = async ({
      api,
      reports,
      silence = true,
@@ -206,17 +205,19 @@ index a02281be7d..7ea1abec03 100644
 -    if (!metricsEnabled) {
 -        return;
 -    }
--
++}: SendMultipleTelemetryReportsArgs) => {};
+ 
 -    try {
 -        void (await possiblySilentApi(sendMultipleTelemetryData({ reports })));
 -    } catch {
 -        // fail silently
 -    }
 -};
-+}: SendMultipleTelemetryReportsArgs) => { };
- 
- export const setMetricsEnabled = (enabled: boolean) => {
+-
+-export const setMetricsEnabled = (enabled: boolean) => {
 -    metricsEnabled = enabled;
-+    // metricsEnabled = enabled;
- };
---
+-};
++export const setMetricsEnabled = (enabled: boolean) => {};
+-- 
+2.52.0
+

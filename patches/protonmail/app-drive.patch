@@ -21,17 +21,18 @@ index 0195dc8bea..949d07c41e 100644
 --
 
 diff --git a/applications/drive/package.json b/applications/drive/package.json
-index bd3022cc9d..921ca7e9f5 100644
+index 09bd512da4..4a3147638c 100644
 --- a/applications/drive/package.json
 +++ b/applications/drive/package.json
 @@ -7,7 +7,6 @@
      "main": "index.ts",
      "scripts": {
          "analyze": "yarn build:web --analyze",
--        "build:web": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --webpackOnCaffeine --appMode=sso --handleSupportAndErrors --optimizeAssets",
+-        "build:web": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --appMode=sso --handleSupportAndErrors --optimizeAssets",
          "check-types": "tsc",
          "i18n:extract:local": "yarn workspace @proton/i18n build && yarn build:web && proton-i18n extract",
          "i18n:extract:web": "proton-i18n extract",
+--
 
 diff --git a/applications/drive/src/app/index.tsx b/applications/drive/src/app/index.tsx
 index 4d03c64db1..0e5766fcfe 100644

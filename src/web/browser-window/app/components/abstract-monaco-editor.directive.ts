@@ -1,16 +1,48 @@
 import {Directive, ElementRef, EventEmitter, inject, Injector, Input, NgZone, Output} from "@angular/core";
 import {filter, take, takeUntil} from "rxjs/operators";
 import {fromEvent, Observable, of, Subscription} from "rxjs";
-import {editor as monacoEditor, languages as monacoLanguages, Selection as MonacoSelection} from "monaco-editor";
 import type {OnDestroy, OnInit} from "@angular/core";
 import {select, Store} from "@ngrx/store";
 
 import {AccountConfig} from "src/shared/model/account";
 import {LABEL_TYPE, View} from "src/shared/model/database";
+import {MONACO_EDITOR_LAZY_CHUNK_NAME} from "src/shared/const/webpack";
 import {NgChangesObservableDirective} from "src/web/browser-window/app/components/ng-changes-observable.directive";
 import {ONE_SECOND_MS} from "src/shared/const";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {State} from "src/web/browser-window/app/store/reducers/root";
+
+void MONACO_EDITOR_LAZY_CHUNK_NAME;
+
+type MonacoModule = typeof import("monaco-editor");
+
+const resolveMonacoModule = async (): Promise<MonacoModule> => {
+    const monaco = await import(/* webpackChunkName: MONACO_EDITOR_LAZY_CHUNK_NAME */ "monaco-editor");
+    return monaco;
+};
+
+// TODO load minimal monaco+typescript only, not the entire library
+// const resolveMonacoModule = ((): () => Promise<MonacoModule> => {
+//     let fn: () => Promise<MonacoModule> = async () => {
+//         const monaco = await import(
+//             /* webpackChunkName: MONACO_EDITOR_LAZY_CHUNK_NAME */ "monaco-editor/esm/vs/editor/editor.api"
+//         );
+//         const tsLanguage = await import(
+//             /* webpackChunkName: MONACO_TS_LAZY_CHUNK_NAME */ "monaco-editor/esm/vs/basic-languages/typescript/typescript"
+//         );
+//         monaco.languages.register({id: "typescript"});
+//         monaco.languages.setMonarchTokensProvider("typescript", tsLanguage.language);
+//         monaco.languages.setLanguageConfiguration("typescript", tsLanguage.conf);
+//         // TODO link "languages" to "monaco"
+//         await import(
+//             /* webpackChunkName: MONACO_TS_CONTRIB_LAZY_CHUNK_NAME */
+//             "monaco-editor/esm/vs/language/typescript/monaco.contribution"
+//         );
+//         fn = async () => Promise.resolve(monaco);
+//         return monaco;
+//     };
+//     return fn;
+// })();
 
 @Directive()
 // so weird not single-purpose directive huh, https://github.com/angular/angular/issues/30080#issuecomment-539194668
@@ -29,7 +61,7 @@ export abstract class AbstractMonacoEditorDirective extends NgChangesObservableD
 
     folders$: Observable<Array<Pick<View.Folder, "id" | "unread" | "type" | "name">>> = of([]);
 
-    editorInstance?: ReturnType<typeof monacoEditor.create>;
+    editorInstance?: ReturnType<MonacoModule["editor"]["create"]>;
 
     protected editable$: Observable<boolean> = of(true);
 
@@ -47,7 +79,7 @@ export abstract class AbstractMonacoEditorDirective extends NgChangesObservableD
                 take(1),
                 takeUntil(this.ngOnDestroy$),
             )
-            .subscribe((items) => this.initializeEditor(items));
+            .subscribe(async (items) => this.initializeEditor(items));
 
         // TODO drop "unhandledrejection" event handling when the following fix gets released:
         //      https://github.com/microsoft/vscode/commit/49cad9a1c0d9ef01d66eef60b261c7ebcffcef23
@@ -69,9 +101,9 @@ export abstract class AbstractMonacoEditorDirective extends NgChangesObservableD
                 select(OptionsSelectors.FEATURED.shouldUseDarkColors),
                 takeUntil(this.ngOnDestroy$),
             )
-            .subscribe((shouldUseDarkColors) => {
-                const builtInTheme: Parameters<typeof monacoEditor.defineTheme>[1]["base"] = shouldUseDarkColors ? "vs-dark" : "vs";
-                monacoEditor.setTheme(builtInTheme);
+            .subscribe(async (shouldUseDarkColors) => {
+                const builtInTheme: Parameters<MonacoModule["editor"]["defineTheme"]>[1]["base"] = shouldUseDarkColors ? "vs-dark" : "vs";
+                (await resolveMonacoModule()).editor.setTheme(builtInTheme);
             });
     }
 
@@ -203,13 +235,15 @@ export abstract class AbstractMonacoEditorDirective extends NgChangesObservableD
         ].join("");
     }
 
-    private initializeEditor(folders: Unpacked<typeof AbstractMonacoEditorDirective.prototype.folders$>): void {
-        monacoLanguages.typescript.typescriptDefaults.setCompilerOptions({
+    private async initializeEditor(folders: Unpacked<typeof AbstractMonacoEditorDirective.prototype.folders$>): Promise<void> {
+        const {typescript} = await resolveMonacoModule();
+
+        typescript.typescriptDefaults.setCompilerOptions({
             allowNonTsExtensions: true,
-            target: monacoLanguages.typescript.ScriptTarget.ESNext,
+            target: typescript.ScriptTarget.ESNext,
         });
 
-        monacoLanguages.typescript.typescriptDefaults.setExtraLibs(
+        typescript.typescriptDefaults.setExtraLibs(
             (["system", "protonMessage"] as const).map((key) => {
                 const footerContent = key === "protonMessage"
                     ? (() => {
@@ -239,17 +273,20 @@ export abstract class AbstractMonacoEditorDirective extends NgChangesObservableD
                         `;
                     })()
                     : "";
-                const [content, filePath] = __METADATA__.monacoEditorExtraLibArgs[key];
-
-                return {content: content + footerContent, filePath};
+                const [content /*, filePath*/] = __METADATA__.monacoEditorExtraLibArgs[key];
+                return {content: content + footerContent, filePath: `${key}.d.ts`};
             }),
         );
 
-        this.zone.runOutsideAngular(this.initializeEditorInstance.bind(this));
+        await this.zone.runOutsideAngular(async () => {
+            await this.initializeEditorInstance();
+        });
     }
 
-    private initializeEditorInstance(): void {
-        this.editorInstance = monacoEditor.create(
+    private async initializeEditorInstance(): Promise<void> {
+        const {editor, Selection} = await resolveMonacoModule();
+
+        this.editorInstance = editor.create(
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
             this.elementRef.nativeElement.querySelector(".editor-block") as HTMLElement,
             {
@@ -291,7 +328,7 @@ export abstract class AbstractMonacoEditorDirective extends NgChangesObservableD
         this.propagateEditorContent();
 
         setTimeout(() => {
-            this.editorInstance?.setSelection(new MonacoSelection(1, 2, 1, 2));
+            this.editorInstance?.setSelection(new Selection(1, 2, 1, 2));
             this.editorInstance?.focus();
         }, ONE_SECOND_MS / 4);
     }

@@ -58,7 +58,8 @@ jobs:
   package-app:
     if: github.event_name == 'push'
     needs: [build-proton-clients, build-app]
-    strategy: { matrix: { os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, windows-11-arm, macos-13, macos-latest] }, fail-fast: false }
+    strategy:
+      { matrix: { os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, windows-11-arm, macos-15-intel, macos-latest] }, fail-fast: false }
     runs-on: ${{ matrix.os }}
     steps:
       - *common-step_checkout
@@ -87,7 +88,7 @@ jobs:
             ubuntu:20.04 bash -c "/host/scripts/ci/github/prepare-native-deps-docker.sh"
       - { name: build, if: runner.os == 'Linux', run: ./scripts/ci/github/package-app-linux.sh }
       - name: build
-        if: matrix.os == 'macos-13'
+        if: matrix.os == 'macos-15-intel'
         run: ./scripts/ci/github/package-app-osx.sh
         env: { ELECTRON_MAIL_NODE_DEST_ARCH: 'x64' }
       - name: build

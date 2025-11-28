@@ -1,9 +1,9 @@
 import {app, dialog, nativeTheme, shell} from "electron";
 import {compareVersions} from "compare-versions";
+import {concatMap, first, map, startWith, switchMap} from "rxjs/operators";
 import electronLog from "electron-log";
 import fetch from "electron-fetch";
-import {first, map, startWith, switchMap} from "rxjs/operators";
-import {from, lastValueFrom, merge, of, throwError} from "rxjs";
+import {from, lastValueFrom, merge, of, race, throwError, timer} from "rxjs";
 import {inspect} from "util";
 import {isDeepEqual} from "remeda";
 import {isWebUri} from "valid-url";
@@ -15,7 +15,7 @@ import {curryFunctionMembers} from "src/shared/util";
 import {IPC_MAIN_API_NOTIFICATION$} from "src/electron-main/api/const";
 import {IPC_MAIN_API_NOTIFICATION_ACTIONS} from "src/shared/api/main-process/actions";
 import {IpcMainApiEndpoints, IpcMainServiceScan} from "src/shared/api/main-process";
-import {PACKAGE_GITHUB_PROJECT_URL, PACKAGE_VERSION, UPDATE_CHECK_FETCH_TIMEOUT} from "src/shared/const";
+import {ONE_SECOND_MS, PACKAGE_GITHUB_PROJECT_URL, PACKAGE_VERSION, UPDATE_CHECK_FETCH_TIMEOUT} from "src/shared/const";
 import {PLATFORM} from "src/electron-main/constants";
 import {resolveUiContextStrict} from "src/electron-main/util";
 import {showAboutBrowserWindow} from "src/electron-main/window/about";
@@ -61,11 +61,29 @@ export async function buildEndpoints(
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async openSettingsFolder() {
-            const errorMessage = await shell.openPath(ctx.locations.userDataDir);
-
-            if (errorMessage) {
-                throw new Error(errorMessage);
-            }
+            const timeoutMs = ONE_SECOND_MS * 2;
+            // TODO get back plaing "await shell.openPath" call vs calling via "race"
+            //      "race" use added during the upgrade to Electron v39 because "await shell.openPath"
+            //      started hanging when triggered from the UI (but not when triggered from the tray)
+            await lastValueFrom(
+                race(
+                    from(
+                        shell.openPath(ctx.locations.userDataDir).then((errorMessage) => {
+                            if (errorMessage) {
+                                throw new Error(errorMessage);
+                            }
+                        }),
+                    ),
+                    timer(timeoutMs).pipe(
+                        concatMap(() => {
+                            // eslint-disable-next-line @typescript-eslint/unbound-method
+                            const errorMsg = `The "${nameof.full(shell.openPath)}" failed to complete in ${timeoutMs}ms`;
+                            logger.error(errorMsg);
+                            return of(undefined); // no need to show error like: return throwError(() => new Error(errorMsg))
+                        }),
+                    ),
+                ),
+            );
         },
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types

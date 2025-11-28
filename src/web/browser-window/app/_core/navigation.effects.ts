@@ -10,6 +10,7 @@ import {ElectronService} from "src/web/browser-window/app/_core/electron.service
 import {getWebLogger} from "src/web/browser-window/util";
 import {NAVIGATION_ACTIONS} from "src/web/browser-window/app/store/actions";
 import {ofType} from "src/shared/util/ngrx-of-type";
+import {ONE_SECOND_MS} from "src/shared/const";
 
 const _logger = getWebLogger(__filename);
 
@@ -84,11 +85,11 @@ export class NavigationEffects {
         () =>
             this.actions$.pipe(
                 ofType(NAVIGATION_ACTIONS.OpenSettingsFolder),
-                concatMap(() =>
-                    from(this.electronService.ipcMainClient()("openSettingsFolder")()).pipe(
+                mergeMap(() => {
+                    return from(this.electronService.ipcMainClient()("openSettingsFolder", {timeoutMs: ONE_SECOND_MS * 3})()).pipe(
                         mergeMap(() => EMPTY),
-                    )
-                ),
+                    );
+                }),
             ),
         {dispatch: false},
     );

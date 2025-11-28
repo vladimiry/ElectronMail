@@ -2,7 +2,7 @@
 <div *ngIf="initialized$ | async" [attr.class]="'wrapper layout-mode-' + (layoutMode$ | async)">
     <div *ngIf="accounts$ | async; let accounts" [ngClass]="{'d-none': hideControls$ | async}" class="accounts-block px-2 pt-2">
         <div class="controls">
-            <div class="btn-group" container="body" dropdown>
+            <div class="btn-group" dropdown>
                 <button (click)="openSettingsView()" class="btn btn-sm btn-secondary" id="optionsMenuItem" title="Options" type="button">
                     <i class="fa fa-cog"></i>
                 </button>

@@ -126,7 +126,7 @@ export function initWebRequestListenersByAccount(
         ]);
     };
 
-    session.webRequest.onBeforeRequest({urls: []}, (details, callback) => {
+    session.webRequest.onBeforeRequest({urls: ["<all_urls>"]}, (details, callback) => {
         const allowRequest = (): void => callback({});
         const banRequest = (): void => callback({cancel: true});
         const url = resolveWebRequestUrl(details.url);
@@ -213,7 +213,7 @@ export function initWebRequestListenersByAccount(
         banRequest();
     });
 
-    session.webRequest.onBeforeSendHeaders({urls: []}, (details, callback) => {
+    session.webRequest.onBeforeSendHeaders({urls: ["<all_urls>"]}, (details, callback) => {
         const {requestHeaders} = details;
         const url = resolveWebRequestUrl(details.url);
         const corsProxy = url && resolveCorsProxy(details, resolveAllowedOrigins(url));

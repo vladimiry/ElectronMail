@@ -23,7 +23,7 @@ import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/const/webpack";
 const logger = curryFunctionMembers(_logger, __filename);
 
 const resolveContent = async (ctx: Context): Promise<Unpacked<ReturnType<typeof injectVendorsAppCssIntoHtmlFile>>> => {
-    const {commit, shortCommit} = await import("./about.json", {assert: {type: "json"}});
+    const {commit, shortCommit} = (await import("./about.json", {with: {type: "json"}})).default;
     const htmlInjection: string = [
         sanitizeHtml(
             `

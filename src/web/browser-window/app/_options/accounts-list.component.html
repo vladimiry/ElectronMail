@@ -8,7 +8,7 @@
         Add Account
     </button>
     <ul
-        (cdkDropListDropped)="cdkDrop($event)"
+        (cdkDropListDropped)="cdkDrop($any($event))"
         [cdkDropListDisabled]="reorderingDisabled"
         [cdkDropListLockAxis]="'y'"
         [cdkDropListOrientation]="'vertical'"

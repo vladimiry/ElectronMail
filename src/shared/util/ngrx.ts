@@ -1,6 +1,5 @@
 import type {ActionCreator, ActionCreatorProps, Creator} from "@ngrx/store";
 import {mapKeys} from "remeda";
-import type {NotAllowedInPropsCheck} from "@ngrx/store/src/models";
 import type {ValueOf} from "ts-essentials";
 
 type MatchPropName = "match";
@@ -38,11 +37,13 @@ type Match<P extends PropsRecord> = <A>(
         | Partial<Cases<UnionOfRecord<P>, A>> & {default: (variant: UnionOf<ActionsRecord<P>>) => A},
 ) => A;
 
+// not using "props" from "@ngrx/store" as it's shared with main process where and original "props" pulls too much angular-specific stuff
 // picked from https://github.com/ngrx/platform/blob/fb78f7394765608ecf4718bba6a3df16a43e8913/modules/store/src/action_creator.ts#L128
 // TODO enable automatic picking
-export const props = <P extends SafeProps, SafeProps = NotAllowedInPropsCheck<P>>(): ActionCreatorProps<P> => {
-    return {_as: "props", _p: undefined!}; // eslint-disable-line @typescript-eslint/no-non-null-assertion
-};
+export const props: typeof import("@ngrx/store/src/action_creator").props = () => ({
+    _as: "props" as const,
+    _p: undefined!,
+});
 
 const defineType = <T extends string>(type: TypedAction<T>["type"], creator: Creator): ActionCreator<T> => {
     return Object.defineProperty(creator, "type", {value: type, writable: false}) as ActionCreator<T>;

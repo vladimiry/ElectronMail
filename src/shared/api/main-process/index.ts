@@ -133,7 +133,7 @@ export const ENDPOINTS_DEFINITION = {
             electronLocations: ElectronContextLocations;
             monacoEditorExtraLibArgs: Record<
                 "system" | "protonMessage",
-                Parameters<typeof import("monaco-editor")["languages"]["typescript"]["typescriptDefaults"]["addExtraLib"]>
+                Parameters<typeof import("monaco-editor")["typescript"]["typescriptDefaults"]["addExtraLib"]>
             >;
             os: {platform: NodeJS.Platform};
         }

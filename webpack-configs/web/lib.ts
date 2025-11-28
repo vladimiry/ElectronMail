@@ -8,6 +8,22 @@ import {buildBaseConfig, ENVIRONMENT, ENVIRONMENT_STATE, outputRelativePath, src
 import {BuildEnvVars} from "webpack-configs/model";
 import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/const/webpack";
 
+export const cssRuleSetRules = (): RuleSetRule[] => {
+    return [
+        {
+            loader: "css-loader",
+            options: {url: true},
+        },
+        {
+            loader: "postcss-loader",
+            options: {
+                sourceMap: false, // TODO handle sourceMap
+                postcssOptions: {plugins: ["postcss-url"]},
+            },
+        },
+    ];
+};
+
 export const sassLoaderRuleSetRules: RuleSetRule[] = [{
     loader: "sass-loader",
     options: {
@@ -28,16 +44,6 @@ export const browserWindowAppPath = (...value: string[]): string => {
     return browserWindowPath("./app", ...value);
 };
 
-export function cssRuleSetRules(): RuleSetRule[] {
-    return [{loader: "css-loader"}, {
-        loader: "postcss-loader",
-        options: {
-            sourceMap: false, // TODO handle sourceMap
-            postcssOptions: {plugins: ["postcss-url"]},
-        },
-    }];
-}
-
 export function buildMinimalWebConfig(
     configPatch: Configuration,
     options: {chunkName: keyof typeof WEBPACK_WEB_CHUNK_NAMES},
@@ -53,17 +59,32 @@ export function buildMinimalWebConfig(
             output: {path: outputRelativePath("./web", options.chunkName), publicPath: "auto", libraryTarget: "module"},
             experiments: {outputModule: true},
             module: {
-                rules: [{test: /\.html$/, use: [{loader: "html-loader", options: {minimize: false}}]}, {
-                    test: /\.css$/,
-                    use: [MiniCssExtractPlugin.loader, ...cssRuleSetRules()],
-                }, {
-                    test: /\.scss$/,
-                    use: [MiniCssExtractPlugin.loader, ...cssRuleSetRules(), ...sassLoaderRuleSetRules],
-                    exclude: [browserWindowAppPath("/")],
-                }, {test: /\.(eot|ttf|otf|woff|woff2|ico|gif|png|jpe?g|svg)$/i, type: "asset"}],
+                rules: [
+                    {
+                        test: /\.html$/,
+                        use: [{loader: "html-loader", options: {minimize: false}}],
+                    },
+                    {
+                        test: /\.css$/,
+                        use: [MiniCssExtractPlugin.loader, ...cssRuleSetRules()],
+                    },
+                    {
+                        test: /\.scss$/,
+                        use: [MiniCssExtractPlugin.loader, ...cssRuleSetRules(), ...sassLoaderRuleSetRules],
+                        exclude: [browserWindowAppPath("/")],
+                    },
+                    {
+                        test: /\.(eot|ttf|otf|woff|woff2|ico|gif|png|jpe?g|svg)$/i,
+                        type: "asset",
+                    },
+                ],
             },
-            resolve: {fallback: {"path": false, "fs": false}},
-            plugins: [new MiniCssExtractPlugin()],
+            resolve: {
+                fallback: {"path": false, "fs": false},
+            },
+            plugins: [
+                new MiniCssExtractPlugin(),
+            ],
         }),
         configPatch,
     );

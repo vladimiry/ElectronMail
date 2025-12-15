@@ -116,6 +116,19 @@ export class AccountsComponent implements OnInit, OnDestroy {
         event.stopPropagation();
     }
 
+    // TODO remove hack: forcing dropdown menu position recalculation
+    onDropdownShown(): void {
+        setTimeout(
+            () => {
+                // force the dropdown/PositioningService to recalc position
+                // eslint-disable-next-line max-len
+                // see https://github.com/valor-software/ngx-bootstrap/blob/0357a3a7231945a53593d8c795669df460073c99/src/positioning/positioning.service.ts#L60-L65
+                window.dispatchEvent(new Event("scroll")); // or "resize"
+            },
+            0,
+        );
+    }
+
     ngOnDestroy(): void {
         this.subscription.unsubscribe();
     }

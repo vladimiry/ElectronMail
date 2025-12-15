@@ -66,7 +66,7 @@ export const initProviderApi = async (): Promise<ProviderApi> => {
                 },
                 buildMessagesCountApiUrlTester(/*{entryApiUrl}*/) {
                     const substr = "/mail/v4/messages/count";
-                    return (url) => url.endsWith(substr);
+                    return (url) => url.endsWith(substr) || url.includes(`${substr}?`);
                 },
                 async decryptMessage(message) {
                     const privateApi = await resolvePrivateApi();

@@ -3,11 +3,7 @@ import {PasswordBasedPreset} from "fs-json-store-encryption-adapter";
 
 import type {AccountConfig, AccountSessionStoragePatchBundle} from "src/shared/model/account";
 import {
-    AccountConfigCreateUpdatePatch,
-    ApiEndpointOriginFieldContainer,
-    LoginFieldContainer,
-    NewPasswordFieldContainer,
-    PasswordFieldContainer,
+    AccountConfigCreateUpdatePatch, ApiEndpointOriginFieldContainer, LoginFieldContainer, NewPasswordFieldContainer, PasswordFieldContainer,
 } from "src/shared/model/container";
 import {BaseConfig, Config, Settings} from "src/shared/model/options";
 import * as DbModel from "src/shared/model/database";
@@ -15,9 +11,7 @@ import {DbPatch} from "src/shared/api/common";
 import {ElectronContextLocations} from "src/shared/model/electron";
 import {FsDbAccount} from "src/shared/model/database";
 import {
-    IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS,
-    IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS,
-    IPC_MAIN_API_NOTIFICATION_ACTIONS,
+    IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS, IPC_MAIN_API_DB_INDEXER_RESPONSE_ACTIONS, IPC_MAIN_API_NOTIFICATION_ACTIONS,
 } from "src/shared/api/main-process/actions";
 import {PACKAGE_NAME} from "src/shared/const";
 import {ProtonAttachmentHeadersProp, ProtonClientSession} from "src/shared/model/proton";
@@ -189,8 +183,6 @@ export const ENDPOINTS_DEFINITION = {
     toggleControls: ActionType.Promise<Pick<Required<Config>, "hideControls"> | void, void>(),
 
     toggleLocalDbMailsListViewMode: ActionType.Promise<void, Config>(),
-
-    generateTOTPToken: ActionType.Promise<{secret: string}, {token: string}>(),
 
     resolveSavedProtonClientSession: ActionType.Promise<
         LoginFieldContainer & ApiEndpointOriginFieldContainer,

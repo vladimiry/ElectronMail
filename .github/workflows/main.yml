@@ -4,7 +4,7 @@
 
 name: 'GitHub Actions CI'
 on: { push: { branches: [master] }, pull_request: { branches: [master] } }
-env: { ELECTRON_MAIL_NODE_VERSION: 22, PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 }
+env: { ELECTRON_MAIL_NODE_VERSION: 24, PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 }
 jobs:
   build-proton-clients:
     if: github.event_name == 'push'
@@ -19,9 +19,6 @@ jobs:
       - &common-step_setup-node
         uses: actions/setup-node@v4
         with: { node-version: '${{ env.ELECTRON_MAIL_NODE_VERSION }}', cache: 'pnpm' }
-      - &common-step_setup-python
-        uses: actions/setup-python@v5
-        with: { python-version: '3.14.0' }
       - &common-step_envinfo
         name: envinfo
         run: npx envinfo
@@ -48,7 +45,6 @@ jobs:
       - *common-step_checkout
       - *common-step_setup-pnpm
       - *common-step_setup-node
-      - *common-step_setup-python
       - *common-step_envinfo
       - *common-step_install-node-modules
       - { name: build, run: 'npm exec --package=npm-run-all -- npm-run-all lint build' }
@@ -65,7 +61,6 @@ jobs:
       - *common-step_checkout
       - *common-step_setup-pnpm
       - *common-step_setup-node
-      - *common-step_setup-python
       - *common-step_envinfo
       - *common-step_install-node-modules
       - { name: download proton clients artifact, uses: actions/download-artifact@v4, with: { name: proton-clients-artifact } }

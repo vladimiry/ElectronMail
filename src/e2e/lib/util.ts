@@ -12,9 +12,13 @@ export const mainProcessEvaluationFunctions = {
                 throw new Error(`Invalid "${String(options.resolveFocusedWindow)}" property type: ${JSON.stringify({actual, expected})}`);
             }
         }
-        const window = options.resolveFocusedWindow
-            ? BrowserWindow.getFocusedWindow()
-            : BrowserWindow.getAllWindows().pop();
+        // TODO get rid of e2e workaround: stopped resolving focused window in macOS/ARM system ("macos-latest" GH Actions runner)
+        const isMacArm = process.platform === "darwin" && process.arch === "arm64";
+        const window = isMacArm
+            ? BrowserWindow.getAllWindows().shift()
+            : (options.resolveFocusedWindow
+                ? BrowserWindow.getFocusedWindow()
+                : BrowserWindow.getAllWindows().shift());
         if (!window) {
             throw new Error(`Failed to resolve focused window`);
         }

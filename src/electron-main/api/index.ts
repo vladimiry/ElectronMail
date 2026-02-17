@@ -1,4 +1,3 @@
-import {authenticator} from "otplib";
 import {doNothing} from "remeda";
 import electronLog from "electron-log";
 import {first} from "rxjs/operators";
@@ -361,11 +360,6 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async settingsExists() {
             return ctx.settingsStore.readable();
-        },
-
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-        async generateTOTPToken({secret}) {
-            return {token: authenticator.generate(secret)};
         },
     };
 

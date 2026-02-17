@@ -44,8 +44,8 @@
     "/output"
   ],
   "plugins": [
-    "https://plugins.dprint.dev/json-0.21.0.wasm",
-    "https://plugins.dprint.dev/prettier-0.59.0.json@5915a8348a24a85b5ae45df39fb8d234b0ab9695f112d38a83baa3c7e7cce987",
-    "https://plugins.dprint.dev/typescript-0.95.13.wasm"
+    "https://plugins.dprint.dev/json-0.21.1.wasm",
+    "https://plugins.dprint.dev/prettier-0.62.0.json@80fefd1450bfd3f469590cc6a3f40f6ace26974f948b9602124f486036fbdfab",
+    "https://plugins.dprint.dev/typescript-0.95.15.wasm"
   ]
 }

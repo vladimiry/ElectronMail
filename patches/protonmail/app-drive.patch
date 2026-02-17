@@ -67,7 +67,7 @@ index b0b25a5fae..11d4e4af0f 100644
    AddOutputFilter INCLUDES;DEFLATE svg
 
 diff --git a/applications/drive/src/app/store/_downloads/fileSaver/download.ts b/applications/drive/src/app/store/_downloads/fileSaver/download.ts
-index f09b5a83bb..e0de2cb455 100644
+index 0fedb5f076..fb9d1efefb 100644
 --- a/applications/drive/src/app/store/_downloads/fileSaver/download.ts
 +++ b/applications/drive/src/app/store/_downloads/fileSaver/download.ts
 @@ -6,9 +6,11 @@ import type { TransferMeta } from '../../../components/TransferManager/transfer'
@@ -82,7 +82,7 @@ index f09b5a83bb..e0de2cb455 100644
  
  export const isOPFSSupported = async () => {
      // Get the OPFS root directory
-@@ -72,11 +74,12 @@ function serviceWorkerKeepAlive() {
+@@ -72,12 +74,13 @@ function serviceWorkerKeepAlive() {
      }, 10000);
  }
  
@@ -91,13 +91,14 @@ index f09b5a83bb..e0de2cb455 100644
      // wait Service Worker is registered
      await navigator.serviceWorker.register(
 -        /* webpackChunkName: "downloadSW" */
--        new URL('./downloadSW', import.meta.url),
 +        /* webpackChunkName: "downloadSW" */ // electron-mail-mark
-+        new URL('./downloadSW', import.meta.url), // electron-mail-mark
+ 
+-        new URL('../../../managers/fileSaver/downloadSW.ts', import.meta.url),
++        new URL('../../../managers/fileSaver/downloadSW.ts', import.meta.url), // electron-mail-mark
          {
              scope: `/${stripLeadingAndTrailingSlash(PUBLIC_PATH)}`,
          }
-@@ -94,6 +97,7 @@ export async function initDownloadSW() {
+@@ -95,6 +98,7 @@ export async function initDownloadSW() {
  
      serviceWorkerKeepAlive();
  }
@@ -105,6 +106,7 @@ index f09b5a83bb..e0de2cb455 100644
  
  /**
   * Opens download stream into service worker. Use abort signal when pipeTo can't close the download stream.
+--
 
 diff --git a/packages/drive-store/store/_downloads/fileSaver/download.ts b/packages/drive-store/store/_downloads/fileSaver/download.ts
 index 1db1b7ca29..a7e6e460fd 100644

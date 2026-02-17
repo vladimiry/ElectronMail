@@ -103,11 +103,11 @@ index efbf28b89f..432f24b303 100644
          PersistentCookies: Number(persistent),
 
 diff --git a/packages/shared/lib/api/events.ts b/packages/shared/lib/api/events.ts
-index bf62df2268..ca005bf855 100644
+index 6213af01e0..456adeefe3 100644
 --- a/packages/shared/lib/api/events.ts
 +++ b/packages/shared/lib/api/events.ts
 @@ -11,7 +11,7 @@ export const getEvents = (
-         OnlyInInboxForCategories: 1 | 0;
+         OnlyInInboxForCategoriesCounts: 1 | 0;
      }
  ) => ({
 -    url: `core/v5/events/${eventID}`,
@@ -175,7 +175,7 @@ index 50a1bd0b27..af00b9eed3 100644
 --
 
 diff --git a/packages/shared/lib/api/interface.ts b/packages/shared/lib/api/interface.ts
-index a0a582ad73..efc88c5440 100644
+index 3da116f255..918d5bde86 100644
 --- a/packages/shared/lib/api/interface.ts
 +++ b/packages/shared/lib/api/interface.ts
 @@ -3,7 +3,9 @@ export interface PaginationParams {
@@ -184,14 +184,15 @@ index a0a582ad73..efc88c5440 100644
  
 -export interface CountParams {
 -    AddressID?: string;
--    OnlyInInboxForCategories?: boolean;
+-    OnlyInInboxForCategories: 1 | 0 | undefined;
 -}
 +// <electron-mail-mark>
 +export interface CountParams { // track
 +    AddressID?: string; // track
-+    OnlyInInboxForCategories?: boolean; // track
++    OnlyInInboxForCategories: 1 | 0 | undefined; // track
 +} // track
 +// </electron-mail-mark>
+--
  
 diff --git a/applications/mail/src/app/router/RouterLabelContainer.tsx b/applications/mail/src/app/router/RouterLabelContainer.tsx
 index 5c6bcc4537..c2702a8b5d 100644
@@ -542,18 +543,18 @@ index 3037dfe782..06a6ff849c 100644
 --
 
 diff --git a/applications/mail/src/app/components/header/search/AdvancedSearch.tsx b/applications/mail/src/app/components/header/search/AdvancedSearch.tsx
-index ed985b46f5..b8ffd2581c 100644
+index 001007076f..5c81d6169e 100644
 --- a/applications/mail/src/app/components/header/search/AdvancedSearch.tsx
 +++ b/applications/mail/src/app/components/header/search/AdvancedSearch.tsx
 @@ -28,7 +28,6 @@ import AddressInput from 'proton-mail/components/composer/addresses/AddressInput
  import { useEncryptedSearchContext } from '../../../containers/EncryptedSearchProvider';
- import { extractSearchParameters, keywordToString } from '../../../helpers/mailboxUrl';
+ import { extractSearchParameters, filterFromUrl, keywordToString, setFilterInUrl } from '../../../helpers/mailboxUrl';
  import AddressesInput from '../../composer/addresses/AddressesInput';
 -import EncryptedSearchField from './AdvancedSearchFields/EncryptedSearchField';
  import LocationField from './AdvancedSearchFields/LocationField';
  import SearchField from './AdvancedSearchFields/SearchField';
  
-@@ -240,7 +239,6 @@ const AdvancedSearch = ({
+@@ -253,7 +252,6 @@ const AdvancedSearch = ({
                  />
              </div>
              <div className="pt-4 px-5 pb-0">
@@ -561,6 +562,7 @@ index ed985b46f5..b8ffd2581c 100644
                  <div>
                      <LocationField
                          value={model.labelID}
+--
 
 diff --git a/applications/mail/src/app/components/header/search/AdvancedSearchFields/EncryptedSearchField.tsx b/applications/mail/src/app/components/header/search/AdvancedSearchFields/EncryptedSearchField.tsx
 deleted file mode 100644

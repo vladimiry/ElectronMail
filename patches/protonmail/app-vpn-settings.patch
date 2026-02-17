@@ -62,11 +62,11 @@ index 2cd919188c..5ef859b4c9 100644
 --
 
 diff --git a/applications/vpn-settings/src/app/App.tsx b/applications/vpn-settings/src/app/App.tsx
-index 46a7c60c85..7822a8e193 100644
+index 641bd5ad29..9061e4b46f 100644
 --- a/applications/vpn-settings/src/app/App.tsx
 +++ b/applications/vpn-settings/src/app/App.tsx
-@@ -3,12 +3,10 @@ import { Router } from 'react-router-dom';
- import { createBrowserHistory as createHistory } from 'history';
+@@ -4,12 +4,10 @@ import { createBrowserHistory as createHistory } from 'history';
+ import { PublicAppThemeProvider } from 'proton-account/src/app/content/theme/PublicAppThemeProvider';
  
  import * as bootstrap from '@proton/account/bootstrap';
 -import { initStandaloneSession } from '@proton/account/bootstrap/standaloneSession';
@@ -78,7 +78,15 @@ index 46a7c60c85..7822a8e193 100644
  import { handleLogoutFromURL } from '@proton/shared/lib/authentication/handleLogoutFromURL';
  import { getLoginPath } from '@proton/shared/lib/authentication/loginPath';
  import { replaceUrl } from '@proton/shared/lib/helpers/browser';
-@@ -32,20 +30,8 @@ const bootstrapApp = () => {
+@@ -18,7 +16,6 @@ import initLogicalProperties from '@proton/shared/lib/logical/logical';
+ import { telemetry } from '@proton/shared/lib/telemetry';
+ 
+ import PrivateApp from './PrivateApp';
+-import PublicApp, { publicRoutes } from './PublicApp';
+ import config from './config';
+ import locales from './locales';
+ import { extendStore, setupStore } from './store/store';
+@@ -33,20 +30,8 @@ const bootstrapApp = () => {
      initLogicalProperties();
      initSafariFontFixClassnames();
      extendStore({ authentication, api, history, config });

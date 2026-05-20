@@ -3,11 +3,11 @@
   "compilerOptions": {
     "target": "ES2021"
   },
-  "include": [
-    "../../../src/@types/**/*",
-    "../../../src/web/@types/index.d.ts",
-    "../../../src/web/@types/electron-exposure.d.ts",
-    "./**/*"
+  "typeRoots": [
+    "../../../node_modules/@types",
+    "../../../src/@types",
+    "../../../src/web/@types",
+    "./@types"
   ],
   "exclude": [
     "./**/*.spec.ts"

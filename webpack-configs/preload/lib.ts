@@ -3,7 +3,9 @@ import webpack, {Configuration} from "webpack";
 import {merge as webpackMerge} from "webpack-merge";
 
 import {browserWindowAppPath, sassLoaderRuleSetRules} from "webpack-configs/web/lib";
-import {buildBaseConfig, ENVIRONMENT_STATE, outputRelativePath, srcRelativePath, typescriptLoaderRule} from "webpack-configs/lib";
+import {
+    buildBaseConfig, ENVIRONMENT_STATE, outputRelativePath, rootRelativePath, srcRelativePath, typescriptLoaderRule,
+} from "webpack-configs/lib";
 
 const build = (configPatch: Configuration, tsConfigFile: string): Configuration => {
     const hoveredHrefHighlighterSassFile = srcRelativePath("./electron-preload/lib/hovered-href-highlighter/index.scss");
@@ -41,5 +43,5 @@ export const buildRendererConfig = (subDir: string): Configuration => {
     return build({
         entry: {[ENVIRONMENT_STATE.e2e ? "index-e2e" : "index"]: srcRelativePath(subDir, "index.ts")},
         output: {path: outputRelativePath(subDir)},
-    }, srcRelativePath(subDir, "tsconfig.json"));
+    }, rootRelativePath("tsconfig.json"));
 };

@@ -3,11 +3,11 @@ import packageJSON from "package.json" with {type: "json"};
 import path from "path";
 import webpack from "webpack";
 
-import {buildBaseConfig, ENVIRONMENT_STATE, outputRelativePath, srcRelativePath, typescriptLoaderRule} from "./lib";
+import {buildBaseConfig, ENVIRONMENT_STATE, outputRelativePath, rootRelativePath, srcRelativePath, typescriptLoaderRule} from "./lib";
 
 const baseEntryName = "electron-main";
 const src = (value: string): string => path.join(srcRelativePath(baseEntryName), value);
-const tsConfigFile = src("./tsconfig.json");
+const tsConfigFile = rootRelativePath("./tsconfig.json");
 
 export default buildBaseConfig({
     target: "electron-main",

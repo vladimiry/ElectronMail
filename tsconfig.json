@@ -1,16 +1,12 @@
 {
   "extends": "./tsconfig.checks.json",
   "compilerOptions": {
-    /*
-    resolving & capabilities
-    */
+    // resolving & capabilities
     "moduleResolution": "Bundler",
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "experimentalDecorators": true,
-    /*
-    emitting
-    */
+    // emitting
     "target": "ESNext",
     "module": "ESNext",
     "declaration": false,
@@ -18,9 +14,24 @@
     "importHelpers": true,
     "noEmitOnError": true,
     "sourceMap": true,
-    /*
-    paths
-    */
+    // paths
+    "rootDir": ".",
+    "outDir": "./app",
+    "paths": {
+      "patches/*": ["./patches/*"],
+      "scripts/*": ["./scripts/*"],
+      "src/*": ["./src/*"],
+      "webpack-configs/*": ["./webpack-configs/*"],
+      "package.json": ["./package.json"]
+    },
+    // types & libs
+    "types": [
+      "*" // TODO TS=>6/7: explicilty list "compilerOptions.types" items
+    ],
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/@types"
+    ],
     "lib": [
       "es2015",
       "es2017.object",
@@ -28,26 +39,15 @@
       "es2016.array.include",
       "dom"
     ],
-    "outDir": "./app",
-    "baseUrl": ".",
-    "paths": {
-      "patches/*": ["./patches/*"],
-      "scripts/*": ["./scripts/*"],
-      "src/*": ["./src/*"],
-      "webpack-configs/*": ["./webpack-configs/*"],
-      "package.json": ["package.json"]
-    },
-    "typeRoots": [
-      "./node_modules/@types",
-      "./src/@types"
-    ],
     "plugins": [
       {
         "transform": "typescript-transform-paths"
       },
       {
-        "transform": "ts-nameof",
-        "type": "raw"
+        "name": "@typescript-nameof/nameof"
+      },
+      {
+        "transform": "@typescript-nameof/nameof"
       },
       {
         "transform": "ts-transformer-keys/transformer"
@@ -58,8 +58,5 @@
     "scripts/**/*",
     "src/**/*",
     "webpack-configs/**/*"
-  ],
-  "angularCompilerOptions": {
-    "strictTemplates": true
-  }
+  ]
 }

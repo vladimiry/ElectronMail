@@ -56,7 +56,9 @@ const definePluginValue = mapValues({
 
 CONSOLE_LOG("Injected environment variables:", definePluginValue);
 
-export function buildBaseConfig(...[config]: readonly [Configuration] | readonly [Configuration, {tsConfigFile?: string}]): Configuration {
+export function buildBaseConfig(
+    ...[webpackConfig, extraConfig]: readonly [Configuration] | readonly [Configuration, {tsConfigFile?: string}]
+): Configuration {
     return webpackMerge({
         watch: Boolean(Number(process.env.WEBPACK_ENV_WATCH)),
         mode: "production",
@@ -64,6 +66,7 @@ export function buildBaseConfig(...[config]: readonly [Configuration] | readonly
         output: {path: outputRelativePath()},
         plugins: [new webpack.DefinePlugin(definePluginValue)],
         resolve: {
+            tsconfig: extraConfig?.tsConfigFile, // https://webpack.js.org/guides/typescript/#typescript-path-aliases
             extensions: ["*", ".js", ".ts"],
             alias: {"src": srcRelativePath(), "package.json": rootRelativePath("package.json")},
             fallback: {
@@ -77,7 +80,7 @@ export function buildBaseConfig(...[config]: readonly [Configuration] | readonly
             moduleIds: "named",
             minimize: true,
             minimizer: [
-                // intentionally configured to only remove dead code (tree-shaking) and beautify it, not for the compression
+                // intentionally contsconfig.jsonfigured to only remove dead code (tree-shaking) and beautify it, not for the compression
                 new TerserPlugin({
                     terserOptions: {
                         // ecma: 2020,
@@ -89,10 +92,23 @@ export function buildBaseConfig(...[config]: readonly [Configuration] | readonly
             ],
         },
         node: {__filename: true},
-    }, config);
+    }, webpackConfig);
 }
 
 export function typescriptLoaderRule({tsConfigFile}: {tsConfigFile: string}): RuleSetRule {
-    const options: Partial<TsLoaderOptions> = {configFile: tsConfigFile};
-    return {test: /\.ts$/, use: {loader: "ts-loader", options}};
+    const options: Partial<TsLoaderOptions> = {
+        configFile: tsConfigFile,
+        // getCustomTransformers: () => {
+        //     return {
+        //         before: [require("@typescript-nameof/nameof")],
+        //     };
+        // },
+    };
+    return {
+        test: /\.ts$/,
+        use: {
+            loader: "ts-loader",
+            options,
+        },
+    };
 }

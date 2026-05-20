@@ -12,11 +12,10 @@ import {ONE_SECOND_MS} from "src/shared/const";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
 import {State} from "src/web/browser-window/app/store/reducers/root";
 
-void MONACO_EDITOR_LAZY_CHUNK_NAME;
-
 type MonacoModule = typeof import("monaco-editor");
 
 const resolveMonacoModule = async (): Promise<MonacoModule> => {
+    Object(MONACO_EDITOR_LAZY_CHUNK_NAME); // preserve import from being tree-shaked as "webpackChunkName" needs it
     const monaco = await import(/* webpackChunkName: MONACO_EDITOR_LAZY_CHUNK_NAME */ "monaco-editor");
     return monaco;
 };

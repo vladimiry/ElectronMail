@@ -1,0 +1,36 @@
+nodeLinker: hoisted
+resolutionMode: highest
+strictPeerDependencies: false
+patchedDependencies:
+  '@electron/rebuild': patches/@electron__rebuild.patch
+  '@ghostery/url-parser': patches/@ghostery__url-parser.patch
+  'app-builder-lib': patches/app-builder-lib.patch
+  'class-transformer-validator': patches/class-transformer-validator.patch
+  'keytar': patches/keytar.patch
+  'msgpackr-extract': patches/msgpackr-extract.patch
+  'pureimage': patches/pureimage.patch
+  'sodium-native': patches/sodium-native.patch
+  'tough-cookie-web-storage-store': patches/tough-cookie-web-storage-store.patch
+allowBuilds:
+  '@parcel/watcher': false
+  'dprint': true
+  'electron': true
+  'electron-winstaller': true
+  'esbuild': true
+  'keytar': false
+  'msgpackr-extract': false
+updateConfig:
+  ignoreDependencies:
+    - '@types/node'
+    - '@types/react'
+    - '@typescript-eslint/eslint-plugin'
+    - '@typescript-eslint/parser'
+    - 'bootstrap'
+    - 'eslint'
+    - 'eslint-plugin-import'
+    - 'eslint-plugin-sonarjs'
+    - 'font-awesome'
+    - 'ndx'
+    - 'ndx-query'
+    - 'ngx-bootstrap'
+    - 'pureimage'

@@ -4,11 +4,7 @@ import {pick} from "remeda";
 
 import {BaseConfig, Config} from "src/shared/model/options";
 import {
-    DEFAULT_API_CALL_TIMEOUT,
-    DEFAULT_MESSAGES_STORE_PORTION_SIZE,
-    ONE_MINUTE_MS,
-    ONE_SECOND_MS,
-    ZOOM_FACTOR_DEFAULT,
+    DEFAULT_API_CALL_TIMEOUT, DEFAULT_MESSAGES_STORE_PORTION_SIZE, ONE_MINUTE_MS, ONE_SECOND_MS, ZOOM_FACTOR_DEFAULT,
 } from "src/shared/const";
 
 export function initialConfig(): Config {
@@ -31,7 +27,9 @@ export function initialConfig(): Config {
             fetching: {
                 rateLimit: {
                     intervalMs: ONE_MINUTE_MS,
-                    maxInInterval: 300, // gave ~80 loaded messages per minute on ~6k messages account
+                    // 300 value gave ~80 loaded messages per minute on ~6k messages account
+                    // at some point in May 2026, Proton API rate limit changed to "220 requests"; using 200 as a safe gap
+                    maxInInterval2: 200,
                 },
                 messagesStorePortionSize: DEFAULT_MESSAGES_STORE_PORTION_SIZE,
             },

@@ -17,7 +17,7 @@ export const attachRateLimiting = async (api: ProviderApi, logger_: Logger): Pro
     const consumeRateLimiting = await (async () => {
         const {fetching: {rateLimit: rateLimitConfig}} = await resolveCachedConfig(logger);
         const limiter = new RateLimiterMemory({
-            points: rateLimitConfig.maxInInterval,
+            points: rateLimitConfig.maxInInterval2,
             duration: rateLimitConfig.intervalMs / ONE_SECOND_MS, // seconds value
         });
         const repoType: typeof PROVIDER_APP_NAMES[0] = "proton-mail";

@@ -340,13 +340,6 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
                 config[key] = INITIAL_STORES.config()[key];
             }
         }
-        try {
-            if (config.fetching.rateLimit.maxInInterval === 275) {
-                config.fetching.rateLimit.maxInInterval = INITIAL_STORES.config().fetching.rateLimit.maxInInterval;
-            }
-        } catch {
-            // NOOP
-        }
     },
     "5.1.1": (config) => {
         delete (config.timeouts as {dbBootstrapping?: unknown}).dbBootstrapping;
@@ -362,6 +355,16 @@ const CONFIG_UPGRADES: Record<string, (config: Config) => void> = {
     },
     "5.2.4": (config) => {
         delete (config as {calendarNotification?: unknown}).calendarNotification;
+    },
+    "5.3.7": (config) => {
+        const {rateLimit} = config.fetching;
+        if (typeof rateLimit.maxInInterval2 !== "number") {
+            const oldKey = "maxInInterval";
+            rateLimit.maxInInterval2 = Math.min(
+                oldKey in rateLimit && !isNaN(Number(rateLimit[oldKey])) ? Number(rateLimit[oldKey]) : Number.MAX_VALUE,
+                INITIAL_STORES.config().fetching.rateLimit.maxInInterval2,
+            );
+        }
     },
     // last updater
     "100.0.0": (config) => {

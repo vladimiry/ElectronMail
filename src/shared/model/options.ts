@@ -11,7 +11,7 @@ export interface Config extends BaseConfig, Partial<StoreModel.StoreEntity> {
     spellcheckLanguages: string[];
     encryptionPreset: PasswordBasedPreset;
     window: {maximized?: boolean; bounds: {x?: number; y?: number; width: number; height: number}};
-    fetching: {rateLimit: {intervalMs: number; maxInInterval: number}; messagesStorePortionSize: number};
+    fetching: {rateLimit: {intervalMs: number; maxInInterval2: number}; messagesStorePortionSize: number};
     timeouts: {
         databaseLoading: number;
         webViewApiPing: number;

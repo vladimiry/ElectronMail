@@ -1,6 +1,23 @@
 import {disableBrowserNotificationFeature} from "src/electron-preload/webview/lib/util";
-import {WEBVIEW_PRIMARY_INTERNALS_APP_TYPES} from "./common/provider-api/const";
+import {PRODUCT_NAME} from "src/shared/const";
 import {PROTON_APP_MAIL_LOGIN_PATHNAME} from "src/shared/const/proton-url";
+import {WEBVIEW_PRIMARY_INTERNALS_APP_TYPES} from "./common/provider-api/const";
+
+// This is supposed to disable browser-specific storage capabalities used by Proton's features like the following:
+//   - Encrypted search in mail
+//   - Encrypted search in drive
+//   - Lumo/llm/AI-something
+//   - Who knows what else they come up with next time
+// The following Proton sources also get patched:
+//   - "detectStorageCapabilities" fn in "packages/shared/lib/helpers/browser.ts"
+//   - "hasESDB" fn in "packages/encrypted-search/lib/esIDB/indexedDB.ts"
+// Some reasoning for having browser-specific storages disabled or used in "in-memory mode only" listed in:
+//   - https://github.com/vladimiry/ElectronMail/issues/750#issuecomment-3401025527
+Object.defineProperty(window, "indexedDB", {
+    get: () => {
+        throw new Error(`IndexedDB is explicitly disabled by ${PRODUCT_NAME} app`);
+    },
+});
 
 const main = async (): Promise<void> => {
     const [

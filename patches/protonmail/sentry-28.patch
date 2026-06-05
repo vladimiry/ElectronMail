@@ -1,8 +1,58 @@
 diff --git a/packages/shared/lib/helpers/sentry.ts b/packages/shared/lib/helpers/sentry.ts
-index d3a63c20f9..2ff6f9dc7b 100644
+index 8b6a27111d..96055ca4f6 100644
 --- a/packages/shared/lib/helpers/sentry.ts
 +++ b/packages/shared/lib/helpers/sentry.ts
-@@ -191,124 +191,7 @@ function main({
+@@ -1,27 +1,17 @@
+ import type { BrowserOptions, SeverityLevel, Span } from '@sentry/browser';
+ import {
+-    Integrations as SentryIntegrations,
+-    addBreadcrumb,
+     captureException,
+     configureScope,
+-    init,
+-    makeFetchTransport,
+     captureMessage as sentryCaptureMessage,
+-    startInactiveSpan as sentryStartInactiveSpan,
+ } from '@sentry/browser';
+-import type { BrowserTransportOptions } from '@sentry/browser/types/transports/types';
+ import type { Breadcrumb } from '@sentry/types/types/breadcrumb';
+ import type { ErrorEvent, EventHint } from '@sentry/types/types/event';
+
+-import { Availability, AvailabilityTypes } from '@proton/utils/availability';
+-
+ import { getApiError, getIsConnectionIssue } from '../api/helpers/apiErrorHelper';
+ import { VPN_HOSTNAME } from '../constants';
+-import { SHARE_GENERATED_PASSWORD_LENGTH } from '../drive/constants';
+ import { ApiError } from '../fetch/ApiError';
+ import { getUIDHeaders } from '../fetch/headers';
+ import type { ProtonConfig } from '../interfaces';
+-import { isElectronApp } from './desktop';
+
+ export { spanToJSON } from '@sentry/core';
+ export type { Span, SeverityLevel } from '@sentry/browser';
+@@ -82,21 +72,6 @@ export const getContentTypeHeaders = (input: FirstFetchParameter): HeadersInit =
+     return {};
+ };
+
+-const sentryFetch: typeof fetch = (input, init?) => {
+-    return globalThis.fetch(input, {
+-        ...init,
+-        headers: {
+-            ...init?.headers,
+-            ...getContentTypeHeaders(input),
+-            ...context.authHeaders,
+-        },
+-    });
+-};
+-
+-const makeProtonFetchTransport = (options: BrowserTransportOptions) => {
+-    return makeFetchTransport(options, sentryFetch);
+-};
+-
+ const isLocalhost = (host: string) => host.startsWith('localhost');
+ export const isProduction = (host: string) =>
+     host.endsWith('.proton.me') || host.endsWith('.protonvpn.com') || host === VPN_HOSTNAME;
+@@ -194,133 +169,7 @@ function main({
      UID,
      beforeSendIgnore,
      setupIgnore = ({ host }) => isLocalhost(host),
@@ -112,6 +162,15 @@ index d3a63c20f9..2ff6f9dc7b 100644
 -                });
 -            }
 -
+-            // This should help provide more context for Promise rejections that throw an Event object instead of an Error object.
+-            if (hint && hint.originalException instanceof Event) {
+-                event.extra = event.extra || {};
+-                event.extra.originalEvent = {
+-                    type: hint.originalException.type,
+-                    target: String(hint.originalException.target),
+-                };
+-            }
+-
 -            return event;
 -        },
 -        // Some ignoreErrors and denyUrls are taken from this gist: https://gist.github.com/Chocksy/e9b2cdd4afc2aadc7989762c4b8b495a
@@ -125,39 +184,72 @@ index d3a63c20f9..2ff6f9dc7b 100644
 -    });
 -}
 +}: SentryOptions) {}
- 
+
  export const setSentryTags = (tags: Record<string, any>) => {
      configureScope((scope) => {
-@@ -370,15 +253,7 @@ type CaptureExceptionArgs = Parameters<typeof captureException>;
-  * @param initiative
-  * @param error
-  */
--export const traceInitiativeError = (initiative: SentryInitiative, error: CaptureExceptionArgs[0]) => {
--    if (!isLocalhost(window.location.host)) {
+@@ -330,25 +179,11 @@ export const setSentryTags = (tags: Record<string, any>) => {
+     });
+ };
+
+-export const traceError = (...args: Parameters<typeof captureException>) => {
+-    if (!isLocalhost(self.location.host)) {
+-        captureException(...args);
+-        Availability.mark(AvailabilityTypes.SENTRY);
+-    }
+-};
++export const traceError = (...args: Parameters<typeof captureException>) => {};
+
+-export const addSentryBreadcrumb = (breadcrumb: Breadcrumb): void => {
+-    if (typeof self === 'undefined' || isLocalhost(self.location.host)) {
+-        return;
+-    }
+-    addBreadcrumb(breadcrumb);
+-};
++export const addSentryBreadcrumb = (breadcrumb: Breadcrumb): void => {};
+
+-export const captureMessage = (...args: Parameters<typeof sentryCaptureMessage>) => {
+-    if (!isLocalhost(self.location.host)) {
+-        sentryCaptureMessage(...args);
+-    }
+-};
++export const captureMessage = (...args: Parameters<typeof sentryCaptureMessage>) => {};
+
+ export const getSentryError = (error: any): any => {
+     if (error instanceof ApiError) {
+@@ -421,17 +256,7 @@ export const traceInitiativeError = (
+     initiative: SentryInitiative,
+     error: CaptureExceptionArgs[0],
+     context?: InitiativeContext
+-) => {
+-    if (!isLocalhost(self.location.host)) {
 -        captureException(error, {
+-            ...context,
 -            tags: {
+-                ...context?.tags,
 -                initiative,
 -            },
 -        });
 -    }
 -};
-+export const traceInitiativeError = (initiative: SentryInitiative, error: CaptureExceptionArgs[0]) => console.error(initiative, error);
- 
++) => console.error(initiative, error);
+
  /**
   * Capture message with an additional initiative tag
-@@ -388,24 +263,12 @@ export const traceInitiativeError = (initiative: SentryInitiative, error: Captur
- export const captureInitiativeMessage: (initiative: SentryInitiative, message: string) => void = (
-     initiative,
-     message
+@@ -440,26 +265,12 @@ export const captureInitiativeMessage = (
+     initiative: SentryInitiative,
+     message: string,
+     context?: InitiativeContext
 -) => {
 -    captureMessage(message, {
+-        ...context,
 -        tags: {
+-            ...context?.tags,
 -            initiative,
 -        },
 -    });
 -};
 +) => console.log(initiative, message);
- 
+
  export const startInactiveSpan = (
      name: string,
      initiative: SentryInitiative,
@@ -170,6 +262,6 @@ index d3a63c20f9..2ff6f9dc7b 100644
 -    });
 -};
 +): Span | undefined => console.log(name, initiative, tags);
- 
+
  export default main;
 --

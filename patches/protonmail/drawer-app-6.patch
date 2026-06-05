@@ -1,16 +1,34 @@
-diff --git a/applications/drive/src/app/components/layout/DriveWindow.tsx b/applications/drive/src/app/components/layout/DriveWindow.tsx
-index 2af2405ffe..82b49eafa0 100644
---- a/applications/drive/src/app/components/layout/DriveWindow.tsx
-+++ b/applications/drive/src/app/components/layout/DriveWindow.tsx
+diff --git a/applications/drive/src/app/legacy/components/layout/DriveWindow.tsx b/applications/drive/src/app/legacy/components/layout/DriveWindow.tsx
+index f3f895a370..113c8cda2d 100644
+--- a/applications/drive/src/app/legacy/components/layout/DriveWindow.tsx
++++ b/applications/drive/src/app/legacy/components/layout/DriveWindow.tsx
 @@ -3,7 +3,6 @@ import { useLocation } from 'react-router-dom-v5-compat';
- 
+
  import { useUser } from '@proton/account/user/hooks';
  import {
 -    CalendarDrawerAppButton,
      ContactDrawerAppButton,
      DrawerSidebar,
      DrawerVisibilityButton,
-@@ -73,12 +72,6 @@ const DriveWindow = ({ children }: { children: ReactNode }) => {
+@@ -17,8 +16,6 @@ import {
+     useToggle,
+ } from '@proton/components';
+ import DrawerApp from '@proton/components/components/drawer/DrawerApp';
+-import useAllowedProducts from '@proton/components/containers/organization/accessControl/useAllowedProducts';
+-import { Product } from '@proton/shared/lib/ProductEnum';
+ import { APPS } from '@proton/shared/lib/constants';
+ import { isAppInView } from '@proton/shared/lib/drawer/helpers';
+ import { DRAWER_NATIVE_APPS } from '@proton/shared/lib/drawer/interfaces';
+@@ -41,8 +38,6 @@ const DriveWindow = ({ children }: { children: ReactNode }) => {
+     useOpenDrawerOnLoad();
+     const { appInView, showDrawerSidebar } = useDrawer();
+
+-    const [allowedProducts, loadingAllowedProducts] = useAllowedProducts();
+-
+     const fileRecoveryBanner = recoveryBannerVisible ? (
+         <FileRecoveryBanner
+             onClose={() => {
+@@ -70,12 +65,6 @@ const DriveWindow = ({ children }: { children: ReactNode }) => {
          permissions.contacts && (
              <ContactDrawerAppButton aria-expanded={isAppInView(DRAWER_NATIVE_APPS.CONTACTS, appInView)} />
          ),
@@ -22,7 +40,7 @@ index 2af2405ffe..82b49eafa0 100644
 -        ),
          <ReferralAppButton aria-expanded={isAppInView(DRAWER_NATIVE_APPS.REFERRAL, appInView)} />,
      ].filter(isTruthy);
- 
+
 --
 
 diff --git a/packages/components/components/drawer/DrawerApp.tsx b/packages/components/components/drawer/DrawerApp.tsx
@@ -51,32 +69,29 @@ index d75566be1e..c0ccd916a7 100644
                                  onCompose={onCompose}
 
 diff --git a/applications/mail/src/app/hooks/drawer/useMailDrawer.tsx b/applications/mail/src/app/hooks/drawer/useMailDrawer.tsx
-index e0f0f003c7..4cec802a98 100644
+index 0b9ecb9403..037cb50cb1 100644
 --- a/applications/mail/src/app/hooks/drawer/useMailDrawer.tsx
 +++ b/applications/mail/src/app/hooks/drawer/useMailDrawer.tsx
-@@ -1,5 +1,4 @@
- import {
--    CalendarDrawerAppButton,
-     ContactDrawerAppButton,
-     ReferralAppButton,
-     SecurityCenterDrawerAppButton,
-@@ -7,9 +6,6 @@ import {
-     useDrawer,
- } from '@proton/components';
+@@ -1,13 +1,9 @@
+-import CalendarDrawerAppButton from '@proton/components/components/drawer/drawerAppButtons/CalendarDrawerAppButton';
+ import ContactDrawerAppButton from '@proton/components/components/drawer/drawerAppButtons/ContactDrawerAppButton';
+ import ReferralAppButton from '@proton/components/components/drawer/drawerAppButtons/ReferralAppButton';
+ import SecurityCenterDrawerAppButton from '@proton/components/components/drawer/drawerAppButtons/SecurityCenterDrawerAppButton';
+ import VPNDrawerAppButton from '@proton/components/components/drawer/drawerAppButtons/VPNDrawerAppButton';
  import useDisplayFeatureTourDrawerButton from '@proton/components/components/featureTour/useDisplayFeatureTourDrawerButton';
 -import useAllowedProducts from '@proton/components/containers/organization/accessControl/useAllowedProducts';
+ import useDrawer from '@proton/components/hooks/drawer/useDrawer';
 -import { Product } from '@proton/shared/lib/ProductEnum';
 -import { APPS } from '@proton/shared/lib/constants';
  import { isAppInView } from '@proton/shared/lib/drawer/helpers';
  import { DRAWER_NATIVE_APPS } from '@proton/shared/lib/drawer/interfaces';
  import isTruthy from '@proton/utils/isTruthy';
-@@ -20,21 +16,15 @@ const useMailDrawer = () => {
+@@ -18,16 +14,8 @@ const useMailDrawer = () => {
      const { appInView, showDrawerSidebar } = useDrawer();
      const canShowFeatureTourDrawerButton = useDisplayFeatureTourDrawerButton();
- 
+
 -    const [allowedProducts, loadingAllowedProducts] = useAllowedProducts();
 -
-+    // <electron-mail-mark>
      const drawerSidebarButtons = [
          <ContactDrawerAppButton aria-expanded={isAppInView(DRAWER_NATIVE_APPS.CONTACTS, appInView)} />,
 -        allowedProducts.has(Product.Calendar) && (
@@ -88,12 +103,6 @@ index e0f0f003c7..4cec802a98 100644
          <SecurityCenterDrawerAppButton aria-expanded={isAppInView(DRAWER_NATIVE_APPS.SECURITY_CENTER, appInView)} />,
          <VPNDrawerAppButton aria-expanded={isAppInView(DRAWER_NATIVE_APPS.VPN, appInView)} />,
          <ReferralAppButton aria-expanded={isAppInView(DRAWER_NATIVE_APPS.REFERRAL, appInView)} />,
-         canShowFeatureTourDrawerButton && <FeatureTourDrawerButton />,
-     ].filter(isTruthy);
-+    // </electron-mail-mark>
- 
-     return { drawerSidebarButtons, showDrawerSidebar };
- };
 --
 
 diff --git a/packages/components/components/drawer/drawerAppButtons/CalendarDrawerAppButton.tsx b/packages/components/components/drawer/drawerAppButtons/CalendarDrawerAppButton.tsx

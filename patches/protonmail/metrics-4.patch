@@ -1,8 +1,8 @@
 diff --git a/packages/shared/lib/helpers/metrics.ts b/packages/shared/lib/helpers/metrics.ts
-index d15c8b3dd8..c85ea4a7c6 100644
+index 20811ea415..0166e8d8dd 100644
 --- a/packages/shared/lib/helpers/metrics.ts
 +++ b/packages/shared/lib/helpers/metrics.ts
-@@ -28,17 +28,7 @@ export const randomDelay = async (delayInSeconds: number = 180) => {
+@@ -29,17 +29,7 @@ export const randomDelay = async (delayInSeconds: number = 180) => {
  /**
   * Send metrics report (/metrics endpoint)
   */
@@ -18,10 +18,10 @@ index d15c8b3dd8..c85ea4a7c6 100644
 -    void api(metrics({ Log, Title, Data }));
 -};
 +export const sendMetricsReport = async (api: Api, Log: METRICS_LOG, Title?: string, Data?: any) => {};
- 
+
  interface SendTelemetryReportArgs extends TelemetryReport {
      api: Api;
-@@ -67,39 +57,7 @@ export const sendTelemetryReport = async ({
+@@ -68,39 +58,7 @@ export const sendTelemetryReport = async ({
      dimensions,
      silence = true,
      delay,
@@ -59,10 +59,10 @@ index d15c8b3dd8..c85ea4a7c6 100644
 -    }
 -};
 +}: SendTelemetryReportArgs) => {};
- 
+
  interface SendTelemetryReportWithBaseDimensionArgs extends SendTelemetryReportArgs {
      api: Api;
-@@ -128,34 +86,7 @@ export const sendTelemetryReportWithBaseDimensions = async ({
+@@ -130,35 +88,7 @@ export const sendTelemetryReportWithBaseDimensions = async ({
      dimensions,
      delay,
      silence = true,
@@ -90,15 +90,16 @@ index d15c8b3dd8..c85ea4a7c6 100644
 -            subscription: String(subscriptionName),
 -            audience,
 -            isFree: subscriptionName === 'free' ? 'true' : 'false',
+-            cycle: getCycleForDimension(subscription?.Cycle),
 -        },
 -        delay,
 -    });
 -};
 +}: SendTelemetryReportWithBaseDimensionArgs) => {};
- 
+
  interface SendMultipleTelemetryReportsArgs {
      api: Api;
-@@ -170,20 +101,6 @@ export const sendMultipleTelemetryReports = async ({
+@@ -173,20 +103,6 @@ export const sendMultipleTelemetryReports = async ({
      api,
      reports,
      silence = true,
@@ -109,7 +110,7 @@ index d15c8b3dd8..c85ea4a7c6 100644
 -        return;
 -    }
 +}: SendMultipleTelemetryReportsArgs) => {};
- 
+
 -    try {
 -        void (await possiblySilentApi(sendMultipleTelemetryData({ reports })));
 -    } catch {

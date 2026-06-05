@@ -117,6 +117,9 @@ export const initAppWithTestContext = async (
                             || line.includes(`Fetch API cannot load ${LOCAL_WEBCLIENT_ORIGIN}/assets/static/sprite-icons.`)
                             || line.includes(`Fetch API cannot load ${LOCAL_WEBCLIENT_ORIGIN}/assets/static/file-icons.`)
                             || line.includes("https://<wiped-out>/challenge/")
+                            || line.includes("useFlagContext() must be used within a FlagProvider")
+                            || line.includes("Error parsing 'integrity' attribute ('__sri_generate__:assets/static/")
+                            || line.includes("Unleash: unable to fetch feature toggles StatusCodeError")
                         ) {
                             return;
                         }

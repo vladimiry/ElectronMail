@@ -1,11 +1,20 @@
 diff --git a/packages/pack/webpack/plugins.js b/packages/pack/webpack/plugins.js
-index 42e640f277..ed28032558 100644
+index 1ce1fbc057..63daa8ebc4 100644
 --- a/packages/pack/webpack/plugins.js
 +++ b/packages/pack/webpack/plugins.js
-@@ -42,11 +42,6 @@ module.exports = ({
+@@ -15,7 +15,7 @@ const PostCssLogicalWebpackPlugin = require('./postcss-logical-webpack-plugin').
+ const WriteWebpackPlugin = require('./write-webpack-plugin').default;
+ const HtmlEditWebpackPlugin = require('./html-edit-webpack-plugin').default;
+ const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+-const SriWebpackPlugin = require('./sri-webpack-plugin').default;
++// const SriWebpackPlugin = require('./sri-webpack-plugin').default;
+ const WebpackInvalidationPlugin = require('./benchmark-apps-build/WebpackInvalidation').WebpackInvalidation;
+
+ const defaultFaviconConfig = require('./favicon.config');
+@@ -44,11 +44,6 @@ module.exports = ({
  }) => {
      let WebpackCollectMetricsPlugin;
- 
+
 -    if (CI) {
 -        // eslint-disable-next-line import/no-extraneous-dependencies
 -        WebpackCollectMetricsPlugin = require('@proton/collect-metrics').WebpackCollectMetricsPlugin;
@@ -14,10 +23,19 @@ index 42e640f277..ed28032558 100644
      return [
          ...(isProduction
              ? []
-@@ -244,7 +239,6 @@ module.exports = ({
+@@ -212,7 +207,7 @@ module.exports = ({
+               ]
+             : []),
+
+-        new SriWebpackPlugin(),
++        // new SriWebpackPlugin(),
+
+         new HtmlEditWebpackPlugin((tag) => {
+             // Remove the favicon.ico tag that the FaviconsWebpackPlugin generates because:
+@@ -263,7 +258,6 @@ module.exports = ({
                  excludeAssets: `assets/static/locales`,
              }),
- 
+
 -        CI && new WebpackCollectMetricsPlugin(buildData),
          benchmarkBuild && new WebpackInvalidationPlugin(),
      ].filter(Boolean);
@@ -42,9 +60,9 @@ index b2609db4df..b26003fcff 100755
 --- a/packages/pack/bin/protonPack.js
 +++ b/packages/pack/bin/protonPack.js
 @@ -8,13 +8,6 @@ const { styleText } = require('node:util');
- 
+
  const program = new Command();
- 
+
 -const getApi = (value) => {
 -    if (value.startsWith('http') || value.startsWith('/api')) {
 -        return value;
@@ -81,7 +99,7 @@ index cb4e29cb41..42527cbae1 100644
 +++ b/packages/pack/webpack/entries.ts
 @@ -49,24 +49,14 @@ export const mergeEntry = (originalEntry: any, entry: any) => {
  };
- 
+
  export const addDevEntry = (config: any) => {
 -    if (config.mode === 'production') {
 -        return;
@@ -112,16 +130,16 @@ index 9ae8dd8722..58810332b5 100644
 --- a/packages/pack/lib/config.ts
 +++ b/packages/pack/lib/config.ts
 @@ -76,6 +76,13 @@ export const getWebpackOptions = (envArguments: WebpackEnvArguments, extra: Extr
- 
+
      const protonPackOptions: Partial<ProtonPackOptions> = JSON.parse(envArguments.protonPackOptions);
- 
+
 +    if (protonPackOptions.api !== "___ELECTRON_MAIL_PROTON_API_ENTRY_URL_PLACEHOLDER___") {
 +        throw new Error(`Unexpected "protonPackOptions.api" value: ${JSON.stringify(protonPackOptions.api)}`);
 +    }
 +    if (protonPackOptions.apiProxy) {
 +        throw new Error(`Unexpected "protonPackOptions.apiProxy" value: ${JSON.stringify(protonPackOptions.apiProxy)}`);
 +    }
-+    
++
      const appData: WebpackOptions['appData'] = {
          api: protonPackOptions.api || `https://${appName.replaceAll(/proton-|-settings/g, '')}.proton.black`,
          apiProxy: protonPackOptions.apiProxy || false,
@@ -138,7 +156,7 @@ index 1ce199ef4f..faaca2d068 100644
 @@ -21,7 +22,22 @@ export const getConfig = (webpackOptions: WebpackOptions): Configuration => {
      // a long-term storage
      const assetsFolder = 'assets/static';
- 
+
 -    return {
 +    const postConfigFn: (value: Configuration) => Configuration = (() => {
 +        const file = path.resolve("./proton.config.js");
@@ -172,7 +190,7 @@ index 1ce199ef4f..faaca2d068 100644
 -    };
 +    });
  };
- 
+
  export default getConfig;
 
 diff --git a/packages/shared/lib/webpack.constants.ts b/packages/shared/lib/webpack.constants.ts
@@ -180,7 +198,7 @@ index 585466a9bc..caf6bf358b 100644
 --- a/packages/shared/lib/webpack.constants.ts
 +++ b/packages/shared/lib/webpack.constants.ts
 @@ -7,6 +7,8 @@ export const APP_MODE = typeof WEBPACK_APP_MODE === 'undefined' ? '' : WEBPACK_A
- 
+
  export type AppMode = 'sso' | 'standalone';
  export const appMode: AppMode = APP_MODE === 'sso' ? 'sso' : 'standalone';
 -

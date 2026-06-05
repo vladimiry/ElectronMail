@@ -1,52 +1,102 @@
 diff --git a/package.json b/package.json
-index 0195dc8bea..949d07c41e 100644
+index cb439a93b1..2f7931e464 100644
 --- a/package.json
 +++ b/package.json
-@@ -3,7 +3,7 @@
+@@ -3,15 +3,11 @@
      "private": true,
      "license": "GPL-3.0",
      "workspaces": [
 -        "applications/*",
 +        "applications/drive",
-         "applications/pass-desktop/native",
+         "applications/lumo/src/app/lib/lumo-api-client",
+-        "applications/pass-desktop/native",
          "packages/*",
          "packages/wasm/*",
-@@ -60,4 +60,4 @@
-     "publishConfig": {
-         "registry": "https://nexus.protontech.ch/repository/web-npm/"
-     }
--}
-+}
-\ No newline at end of file
+         "packages/pass/docs/starlight",
+-        "tests",
+-        "tests/mail-renderer",
+-        "tests/packages/*",
+         "utilities/*",
+         "vendor/*/*"
+     ],
+--
+
+diff --git a/yarn.lock b/yarn.lock
+index 2fa43fadf7..f709268556 100644
+--- a/yarn.lock
++++ b/yarn.lock
+@@ -11454,13 +11454,6 @@ __metadata:
+   languageName: unknown
+   linkType: soft
+
+-"@proton/proton-foundation-search@npm:2.0.0-preview2-job33841442":
+-  version: 2.0.0-preview2-job33841442
+-  resolution: "@proton/proton-foundation-search@npm:2.0.0-preview2-job33841442"
+-  checksum: 10/7c51182275c959fd526f34c160f69af5d115e9e4a390f66984045feca3ef70a36aedfbc40e393dab5552bae69d82fa758de5d880b5902b615af6838c86f7b3e5
+-  languageName: node
+-  linkType: hard
+-
+ "@proton/proton-foundation-search@npm:^1.1.2":
+   version: 1.1.2
+   resolution: "@proton/proton-foundation-search@npm:1.1.2"
+@@ -41856,7 +41849,6 @@ __metadata:
+     "@proton/pack": "workspace:^"
+     "@proton/payments": "workspace:^"
+     "@proton/polyfill": "workspace:^"
+-    "@proton/proton-foundation-search": "npm:2.0.0-preview2-job33841442"
+     "@proton/raw-images": "workspace:^"
+     "@proton/react-redux-store": "workspace:^"
+     "@proton/redux-shared-store": "workspace:^"
 --
 
 diff --git a/applications/drive/package.json b/applications/drive/package.json
-index 09bd512da4..4a3147638c 100644
+index 35b3bfa0f2..c4e9f67131 100644
 --- a/applications/drive/package.json
 +++ b/applications/drive/package.json
 @@ -7,7 +7,6 @@
      "main": "index.ts",
      "scripts": {
          "analyze": "yarn build:web --analyze",
--        "build:web": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --appMode=sso --handleSupportAndErrors --optimizeAssets",
+-        "build:web": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --appMode=sso --handleSupportAndErrors --optimizeAssets --noLogicalScss",
          "check-types": "tsc",
          "i18n:extract:local": "yarn workspace @proton/i18n build && yarn build:web && proton-i18n extract",
          "i18n:extract:web": "proton-i18n extract",
+@@ -44,7 +43,6 @@
+         "@proton/pack": "workspace:^",
+         "@proton/payments": "workspace:^",
+         "@proton/polyfill": "workspace:^",
+-        "@proton/proton-foundation-search": "2.0.0-preview2-job33841442",
+         "@proton/raw-images": "workspace:^",
+         "@proton/react-redux-store": "workspace:^",
+         "@proton/redux-shared-store": "workspace:^",
+
+diff --git a/packages/drive/modules/flags/internal/useFlagsDriveFoundationSearch.ts b/packages/drive/modules/flags/internal/useFlagsDriveFoundationSearch.ts
+index 30244e7176..0621735420 100644
+--- a/packages/drive/modules/flags/internal/useFlagsDriveFoundationSearch.ts
++++ b/packages/drive/modules/flags/internal/useFlagsDriveFoundationSearch.ts
+@@ -1,5 +1,3 @@
+-import { useFlag } from '@proton/unleash/useFlag';
+-
+ export function useFlagsDriveFoundationSearch() {
+-    return useFlag('DriveWebSearchFoundation');
++    return false;
+ }
 --
 
 diff --git a/applications/drive/src/app/index.tsx b/applications/drive/src/app/index.tsx
-index 4d03c64db1..0e5766fcfe 100644
+index 0a9d3cf8bf..a60e5a30b5 100644
 --- a/applications/drive/src/app/index.tsx
 +++ b/applications/drive/src/app/index.tsx
-@@ -9,6 +9,8 @@ import App from './App';
+@@ -9,6 +9,8 @@ import '@proton/polyfill';
+ import App from './App';
  import './style';
- import { initializePerformanceMetrics } from './utils/performance';
- 
+
 +window.sessionStorage.setItem("electron_mail:proton_app_name", "proton-drive");
 +
- initializePerformanceMetrics(false);
- 
+ initDriveWebVitalsReporting(false);
+
  ReactDOM.render(<App />, document.querySelector('.app-root'));
+--
 
 diff --git a/applications/drive/src/.htaccess b/applications/drive/src/.htaccess
 index b0b25a5fae..11d4e4af0f 100644
@@ -66,93 +116,43 @@ index b0b25a5fae..11d4e4af0f 100644
  <IfModule mod_deflate.c>
    AddOutputFilter INCLUDES;DEFLATE svg
 
-diff --git a/applications/drive/src/app/store/_downloads/fileSaver/download.ts b/applications/drive/src/app/store/_downloads/fileSaver/download.ts
-index 0fedb5f076..fb9d1efefb 100644
---- a/applications/drive/src/app/store/_downloads/fileSaver/download.ts
-+++ b/applications/drive/src/app/store/_downloads/fileSaver/download.ts
-@@ -6,9 +6,11 @@ import type { TransferMeta } from '../../../components/TransferManager/transfer'
- 
- let workerWakeupInterval: ReturnType<typeof setInterval>;
- 
-+// <electron-mail-mark>
- export const isServiceWorkersSupported = () => {
-     return 'serviceWorker' in navigator;
- };
-+// </electron-mail-mark>
- 
- export const isOPFSSupported = async () => {
-     // Get the OPFS root directory
-@@ -72,12 +74,13 @@ function serviceWorkerKeepAlive() {
-     }, 10000);
- }
- 
-+// <electron-mail-mark>
+diff --git a/applications/drive/src/app/modules/fileSaver/download.ts b/applications/drive/src/app/modules/fileSaver/download.ts
+index 54148fdd45..3208238f77 100644
+--- a/applications/drive/src/app/modules/fileSaver/download.ts
++++ b/applications/drive/src/app/modules/fileSaver/download.ts
+@@ -75,8 +75,8 @@ function serviceWorkerKeepAlive() {
  export async function initDownloadSW() {
      // wait Service Worker is registered
      await navigator.serviceWorker.register(
 -        /* webpackChunkName: "downloadSW" */
-+        /* webpackChunkName: "downloadSW" */ // electron-mail-mark
- 
--        new URL('../../../managers/fileSaver/downloadSW.ts', import.meta.url),
-+        new URL('../../../managers/fileSaver/downloadSW.ts', import.meta.url), // electron-mail-mark
-         {
-             scope: `/${stripLeadingAndTrailingSlash(PUBLIC_PATH)}`,
-         }
-@@ -95,6 +98,7 @@ export async function initDownloadSW() {
- 
-     serviceWorkerKeepAlive();
- }
-+// </electron-mail-mark>
- 
- /**
-  * Opens download stream into service worker. Use abort signal when pipeTo can't close the download stream.
---
-
-diff --git a/packages/drive-store/store/_downloads/fileSaver/download.ts b/packages/drive-store/store/_downloads/fileSaver/download.ts
-index 1db1b7ca29..a7e6e460fd 100644
---- a/packages/drive-store/store/_downloads/fileSaver/download.ts
-+++ b/packages/drive-store/store/_downloads/fileSaver/download.ts
-@@ -5,9 +5,11 @@ import type { TransferMeta } from '../../../components/TransferManager/transfer'
- 
- let workerWakeupInterval: ReturnType<typeof setInterval>;
- 
-+// <electron-mail-mark>
- export const isServiceWorkersUnsupported = () => {
-     return !('serviceWorker' in navigator);
- };
-+// </electron-mail-mark>
- 
- // createDownloadIframe opens download URL created in service worker to
- // initialize the download in the browser. The response has headers to
-@@ -55,11 +57,12 @@ function serviceWorkerKeepAlive() {
-     }, 10000);
- }
- 
-+// <electron-mail-mark>
- export async function initDownloadSW() {
-     // wait Service Worker is registered
-     await navigator.serviceWorker.register(
-         /* webpackChunkName: "downloadSW" */
 -        new URL('./downloadSW', import.meta.url),
++        /* webpackChunkName: "downloadSW" */ // electron-mail-mark
 +        new URL('./downloadSW', import.meta.url), // electron-mail-mark
          {
              scope: `/${stripLeadingAndTrailingSlash(PUBLIC_PATH)}`,
          }
-@@ -77,6 +80,7 @@ export async function initDownloadSW() {
- 
-     serviceWorkerKeepAlive();
- }
-+// </electron-mail-mark>
- 
- /**
-  * Opens download stream into service worker. Use abort signal when pipeTo can't close the download stream.
+diff --git a/packages/drive-store/store/_downloads/fileSaver/download.ts b/packages/drive-store/store/_downloads/fileSaver/download.ts
+index 8fa1b3e64e..acc0b2ec4b 100644
+--- a/packages/drive-store/store/_downloads/fileSaver/download.ts
++++ b/packages/drive-store/store/_downloads/fileSaver/download.ts
+@@ -58,8 +58,8 @@ function serviceWorkerKeepAlive() {
+ export async function initDownloadSW() {
+     // wait Service Worker is registered
+     await navigator.serviceWorker.register(
+-        /* webpackChunkName: "downloadSW" */
+-        new URL('./downloadSW', import.meta.url),
++        /* webpackChunkName: "downloadSW" */ // electron-mail-mark
++        new URL('./downloadSW', import.meta.url), // electron-mail-mark
+         {
+             scope: `/${stripLeadingAndTrailingSlash(PUBLIC_PATH)}`,
+         }
 --
 
-diff --git a/applications/drive/src/app/store/_shares/shareUrl.ts b/applications/drive/src/app/store/_shares/shareUrl.ts
-index 1b76b8ea81..748ede869b 100644
---- a/applications/drive/src/app/store/_shares/shareUrl.ts
-+++ b/applications/drive/src/app/store/_shares/shareUrl.ts
-@@ -43,5 +43,9 @@ export const getSharedLink = (sharedURL?: {
+diff --git a/applications/drive/src/app/legacy/store/_shares/shareUrl.ts b/applications/drive/src/app/legacy/store/_shares/shareUrl.ts
+index 2ec6be2a3b..dcad75b593 100644
+--- a/applications/drive/src/app/legacy/store/_shares/shareUrl.ts
++++ b/applications/drive/src/app/legacy/store/_shares/shareUrl.ts
+@@ -46,5 +46,9 @@ export const getSharedLink = (sharedURL?: {
      const url = sharedURL.publicUrl
          ? replaceLocalURL(sharedURL.publicUrl)
          : getAppHref(`/urls/${sharedURL.token}`, APPS.PROTONDRIVE);
@@ -163,4 +163,71 @@ index 1b76b8ea81..748ede869b 100644
 +        "https://drive.proton.me",
 +    ).toString();
  };
+ diff --git a/packages/drive-store/store/_shares/shareUrl.ts b/packages/drive-store/store/_shares/shareUrl.ts
+index 717f393fbe..5b432576aa 100644
+--- a/packages/drive-store/store/_shares/shareUrl.ts
++++ b/packages/drive-store/store/_shares/shareUrl.ts
+@@ -46,5 +46,9 @@ export const getSharedLink = (sharedURL?: {
+     const url = sharedURL.publicUrl
+         ? replaceLocalURL(sharedURL.publicUrl)
+         : getAppHref(`/urls/${sharedURL.token}`, APPS.PROTONDRIVE);
+-    return `${url}${generatedPassword !== '' ? `#${generatedPassword}` : ''}`;
++    const resultUrl = `${url}${generatedPassword !== '' ? `#${generatedPassword}` : ''}`;
++    return new URL(
++        new URL(resultUrl).href.substring(new URL(resultUrl).origin.length),
++        "https://drive.proton.me",
++    ).toString();
+ };
+
+diff --git a/applications/drive/src/app/modules/search/internal/mainThread/SearchModule.ts b/applications/drive/src/app/modules/search/internal/mainThread/SearchModule.ts
+index e5c1a520a9..31de1eb84b 100644
+--- a/applications/drive/src/app/modules/search/internal/mainThread/SearchModule.ts
++++ b/applications/drive/src/app/modules/search/internal/mainThread/SearchModule.ts
+@@ -241,45 +241,7 @@ export class SearchModule {
+     // TODO: Return a discriminated type instead of true/false to propagate the reason of uncomatibitly
+     // TODO: Add some UI to explain better why search is not enabled.
+     static isEnvironmentCompatible(): boolean {
+-        if (isMobile()) {
+-            Logger.info('Bad env: Mobile detected');
+-            recordEnvironmentIncompatibilityOnce('mobile');
+-            return false;
+-        }
+-
+-        // Old Safari (<17) has several issues.
+-        // One: it is throttling a lot. First tens of items are done fast but
+-        // after ~ 500 items it goes very slowly and after ~ 2500 items it
+-        // basically stops without any progress.
+-        // Second: in some cases even if indexing finishes, sometimes search
+-        // doesnt work. Probably index is not created correctly. Its just few
+-        // reported cases and we haven't found the issue yet.
+-        // Because of that, its better to not allow search on Safari at all
+-        // until we find some way around it.
+-        if (isSafari()) {
+-            const browser = getBrowser();
+-            if (!browser?.version || !new Version(browser.version).isGreaterThanOrEqual('17')) {
+-                Logger.info('Bad env: Obsolete safari unsupported');
+-                recordEnvironmentIncompatibilityOnce('safari_too_old');
+-                return false;
+-            }
+-        }
+-
+-        if (typeof SharedWorker === 'undefined') {
+-            Logger.info('Bad env: SharedWorker unsupported');
+-            recordEnvironmentIncompatibilityOnce('shared_worker_unsupported');
+-            return false;
+-        }
+-
+-        if (typeof indexedDB === 'undefined') {
+-            Logger.info('Bad env: IndexedDB unsupported');
+-            recordEnvironmentIncompatibilityOnce('indexed_db_unsupported');
+-            return false;
+-        }
+-
+-        // TODO: Check for indexedDB real availability by creating/deleting a real dummy DB.
+-
+-        return true;
++        return false;
+     }
+
+     /** @internal Reset singleton state — only for use in tests. */
 --

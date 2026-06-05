@@ -1,0 +1,1774 @@
+diff --git a/applications/drive/src/app/modules/search/internal/worker/SharedWorkerAPI.ts b/applications/drive/src/app/modules/search/internal/worker/SharedWorkerAPI.ts
+deleted file mode 100644
+index 4e612efb65..0000000000
+--- a/applications/drive/src/app/modules/search/internal/worker/SharedWorkerAPI.ts
++++ /dev/null
+@@ -1,300 +0,0 @@
+-import type { Entry } from '@proton/proton-foundation-search';
+-
+-import type { MainThreadBridge } from '../mainThread/MainThreadBridge';
+-import { Logger } from '../shared/Logger';
+-import { SearchDB } from '../shared/SearchDB';
+-import { type SearchMetrics, startSearchTimer } from '../shared/searchMetrics';
+-import type { SearchModuleStateUpdateChannel } from '../shared/searchModuleStateUpdateChannel';
+-import { createSearchModuleStateUpdateChannel } from '../shared/searchModuleStateUpdateChannel';
+-import type {
+-    ClientId,
+-    IndexKind,
+-    SearchQuery,
+-    SerializedAttributeValue,
+-    SerializedIndexEntry,
+-    UserId,
+-    WorkerIndexExportEvent,
+-    WorkerSearchResultEvent,
+-} from '../shared/types';
+-import type { ClientContext } from './ClientCoordinator';
+-import { ClientCoordinator } from './ClientCoordinator';
+-import { SearchIndexKeyManager } from './SearchIndexKeyManager';
+-import { IndexRegistry } from './index/IndexRegistry';
+-import { exportEntries, removeDocumentIds } from './index/indexEntriesUtils';
+-import type { IndexerState } from './indexer/IndexerTaskQueue';
+-import { DEFAULT_INDEXER_STATE, IndexerTaskQueue } from './indexer/IndexerTaskQueue';
+-import { TreeSubscriptionRegistry } from './indexer/TreeSubscriptionRegistry';
+-import { SearchQueryExecutor } from './searcher/SearchQueryExecutor';
+-import { createBridgedSearchMetrics } from './workerSearchMetrics';
+-
+-/**
+- * SharedWorker API exposed via Comlink.
+- * Manages a single IndexerTaskQueue (no orchestrator). Coordinates clients across tabs.
+- */
+-export class SharedWorkerAPI {
+-    // Bound late: ClientCoordinator emits metrics through whichever bridge is currently
+-    // active (set in `onClientAvailable`). When no client is connected, metrics are dropped.
+-    private clientsCoordinator = new ClientCoordinator(() => this.searchMetrics);
+-    private indexRegistry: IndexRegistry | null = null;
+-    private db: SearchDB | null = null;
+-    private indexer: IndexerTaskQueue | null = null;
+-    private searcher: SearchQueryExecutor | null = null;
+-    private stateChannel: SearchModuleStateUpdateChannel | null = null;
+-    private searchMetrics: SearchMetrics | null = null;
+-
+-    constructor() {
+-        this.clientsCoordinator.subscribeClientChanged(this.handleActiveClientChanged.bind(this));
+-    }
+-
+-    private async getDb(userId: string) {
+-        if (!this.db) {
+-            this.db = await SearchDB.open(userId);
+-        }
+-        return this.db;
+-    }
+-
+-    async registerClient(userId: UserId, clientId: ClientId, bridge: MainThreadBridge): Promise<void> {
+-        this.clientsCoordinator.register(userId, clientId, bridge);
+-    }
+-
+-    heartbeatClient(clientId: ClientId, isForeground: boolean): { isClientRegistered: boolean } {
+-        return this.clientsCoordinator.heartbeat(clientId, isForeground);
+-    }
+-
+-    disconnectClient(clientId: ClientId): void {
+-        this.clientsCoordinator.disconnect(clientId);
+-    }
+-
+-    /** Return the current indexer state. Can be called before any client registers. */
+-    async queryIndexerState(): Promise<IndexerState> {
+-        return this.indexer?.getState() ?? DEFAULT_INDEXER_STATE;
+-    }
+-
+-    /** Clear all search data and restart indexing from scratch. */
+-    async reset(): Promise<void> {
+-        Logger.info('SharedWorkerAPI: resetting search data');
+-        this.indexer?.stop();
+-        this.indexer = null;
+-        this.searcher = null;
+-
+-        this.indexRegistry?.disposeAll();
+-
+-        if (this.db) {
+-            await this.db.clear();
+-        }
+-
+-        // Notify all tabs that search has been deactivated.
+-        this.stateChannel?.postMessage({
+-            isUserOptIn: false,
+-            isInitialIndexing: false,
+-            isIndexing: false,
+-            isSearchable: false,
+-            permanentError: null,
+-            indexPopulatorStatuses: [],
+-        });
+-
+-        // Clear active client so the next start() → registerClient triggers onClientAvailable.
+-        this.clientsCoordinator.clearActiveClient();
+-    }
+-
+-    /**
+-     * Wipe the index and re-index from scratch while preserving the user's opt-in
+-     * preference and encryption key. Used to recover from permanent indexing errors.
+-     */
+-    async rebuild(): Promise<void> {
+-        Logger.info('SharedWorkerAPI: rebuilding search index');
+-        this.indexer?.stop();
+-        this.indexer = null;
+-        this.searcher = null;
+-
+-        this.indexRegistry?.disposeAll();
+-
+-        if (this.db) {
+-            await this.db.clearIndex();
+-        }
+-
+-        this.stateChannel?.postMessage({
+-            isInitialIndexing: false,
+-            isIndexing: false,
+-            isSearchable: false,
+-            permanentError: null,
+-            indexPopulatorStatuses: [],
+-        });
+-
+-        this.clientsCoordinator.clearActiveClient();
+-    }
+-
+-    async reindexPopulator(uid: string): Promise<void> {
+-        if (!this.indexer) {
+-            Logger.warn('SharedWorkerAPI: reindexPopulator called but no indexer available');
+-            return;
+-        }
+-        await this.indexer.reindexPopulator(uid);
+-    }
+-
+-    async search(query: SearchQuery, onEvent?: (event: WorkerSearchResultEvent) => void): Promise<void> {
+-        const stopTimer = startSearchTimer();
+-
+-        if (!this.searcher) {
+-            this.searchMetrics?.markSearchQueryFailed({
+-                error: new Error('No searcher available'),
+-            });
+-            onEvent?.({ type: 'done' });
+-            return;
+-        }
+-        try {
+-            for await (const item of this.searcher.performSearch(query)) {
+-                onEvent?.({ type: 'item', ...item });
+-            }
+-            this.searchMetrics?.markSearchQuerySucceeded({ durationInSeconds: stopTimer() });
+-        } catch (error) {
+-            this.searchMetrics?.markSearchQueryFailed({ error });
+-            throw error;
+-        } finally {
+-            onEvent?.({ type: 'done' });
+-        }
+-    }
+-
+-    /**
+-     * Stream every entry of a given index to the caller. Emits one event per
+-     * entry, followed by a single `done` event. Diagnostics-only.
+-     */
+-    async exportIndexEntries(kind: IndexKind, onEvent?: (event: WorkerIndexExportEvent) => void): Promise<void> {
+-        if (!this.indexRegistry || !this.db) {
+-            Logger.warn('SharedWorkerAPI: exportIndexEntries called before indexer was available');
+-            onEvent?.({ type: 'done' });
+-            return;
+-        }
+-        const instance = await this.indexRegistry.get(kind, this.db);
+-        const controller = new AbortController();
+-        try {
+-            for await (const entry of exportEntries(instance, controller.signal)) {
+-                onEvent?.({ type: 'entry', ...serializeEntry(entry) });
+-            }
+-        } finally {
+-            onEvent?.({ type: 'done' });
+-        }
+-    }
+-
+-    /** Sum of encrypted blob byte lengths for the given index. Diagnostics-only. */
+-    async getIndexByteSize(kind: IndexKind): Promise<number> {
+-        if (!this.db) {
+-            Logger.warn('SharedWorkerAPI: getIndexByteSize called before DB was available');
+-            return 0;
+-        }
+-        return this.db.getIndexBlobsByteSize(kind);
+-    }
+-
+-    /** Remove a single document by identifier from the given index. Diagnostics-only. */
+-    async removeIndexEntry(kind: IndexKind, identifier: string): Promise<void> {
+-        if (!this.indexRegistry || !this.db) {
+-            Logger.warn('SharedWorkerAPI: removeIndexEntry called before indexer was available');
+-            return;
+-        }
+-        const instance = await this.indexRegistry.get(kind, this.db);
+-        await removeDocumentIds(instance, [identifier], new AbortController().signal);
+-    }
+-
+-    private handleActiveClientChanged(newClientContext: ClientContext | null) {
+-        if (newClientContext) {
+-            void this.onClientAvailable(newClientContext);
+-        } else {
+-            this.disposeInternals();
+-        }
+-    }
+-
+-    private disposeInternals() {
+-        this.indexer?.stop();
+-        this.indexer = null;
+-        this.searcher = null;
+-        this.stateChannel?.close();
+-        this.stateChannel = null;
+-        this.indexRegistry?.disposeAll();
+-        this.indexRegistry = null;
+-        this.searchMetrics = null;
+-    }
+-
+-    /**
+-     * Lazily creates the IndexRegistry, resolving the crypto key on first call.
+-     */
+-    private async getRegistry(db: SearchDB, bridge: MainThreadBridge): Promise<IndexRegistry> {
+-        if (this.indexRegistry) {
+-            return this.indexRegistry;
+-        }
+-
+-        const { cryptoKey } = await SearchIndexKeyManager.getOrCreateKey(db, bridge);
+-
+-        this.indexRegistry = new IndexRegistry(cryptoKey);
+-        return this.indexRegistry;
+-    }
+-
+-    private async onClientAvailable(clientContext: ClientContext): Promise<void> {
+-        this.disposeInternals();
+-
+-        try {
+-            const db = await this.getDb(clientContext.userId);
+-            const indexRegistry = await this.getRegistry(db, clientContext.bridge);
+-
+-            // Build a metrics proxy bound to the active tab's bridge. Forwards every mark*
+-            // call to the main thread so metrics flow through the bootstrap-initialized
+-            // `@proton/metrics` singleton (with current auth + version headers).
+-            this.searchMetrics = createBridgedSearchMetrics(clientContext.bridge);
+-
+-            const treeSubscriptionRegistry = await TreeSubscriptionRegistry.create(clientContext.bridge, db);
+-            this.searcher = new SearchQueryExecutor(indexRegistry, db);
+-            this.indexer = new IndexerTaskQueue(
+-                clientContext.userId,
+-                indexRegistry,
+-                clientContext.bridge,
+-                db,
+-                treeSubscriptionRegistry,
+-                this.searchMetrics
+-            );
+-
+-            this.stateChannel = createSearchModuleStateUpdateChannel(clientContext.userId);
+-
+-            // Broadcast initial indexer state so late-joining tabs don't stay at defaults.
+-            this.stateChannel.postMessage(this.indexer.getState());
+-            this.indexer.onStateChange((state) => {
+-                this.stateChannel?.postMessage({
+-                    isInitialIndexing: state.isInitialIndexing,
+-                    isIndexing: state.isIndexing,
+-                    isSearchable: state.isSearchable,
+-                    permanentError: state.permanentError,
+-                    indexPopulatorStatuses: state.indexPopulatorStatuses,
+-                });
+-            });
+-
+-            await this.indexer.start();
+-        } catch (error) {
+-            Logger.error('SharedWorkerAPI: failed to start indexer', error);
+-            throw error;
+-        }
+-    }
+-}
+-
+-function serializeEntry(entry: Entry): SerializedIndexEntry {
+-    const attributes: Record<string, SerializedAttributeValue[]> = {};
+-    for (const name of entry.attributes()) {
+-        const values = entry.attribute(name);
+-        attributes[name] = values.map((v) => {
+-            const raw = v.value();
+-            v.free();
+-            return toSerializedAttributeValue(raw, name);
+-        });
+-    }
+-    return { identifier: entry.identifier(), attributes };
+-}
+-
+-function toSerializedAttributeValue(raw: unknown, attributeName: string): SerializedAttributeValue {
+-    if (typeof raw === 'string' || typeof raw === 'number' || typeof raw === 'bigint' || typeof raw === 'boolean') {
+-        return raw;
+-    }
+-    if (raw !== null && typeof raw === 'object') {
+-        try {
+-            return JSON.stringify(raw);
+-        } catch {}
+-    }
+-    Logger.warn(`serializeEntry: unexpected attribute value for <${attributeName}>: type=${typeof raw}`);
+-    return String(raw);
+-}
+diff --git a/applications/drive/src/app/modules/search/internal/worker/index/IndexBlobStore.ts b/applications/drive/src/app/modules/search/internal/worker/index/IndexBlobStore.ts
+deleted file mode 100644
+index a5a0e9d66b..0000000000
+--- a/applications/drive/src/app/modules/search/internal/worker/index/IndexBlobStore.ts
++++ /dev/null
+@@ -1,91 +0,0 @@
+-import type { Cached, CleanupEvent, ExportEvent, QueryEvent, WriteEvent } from '@proton/proton-foundation-search';
+-import { SerDes } from '@proton/proton-foundation-search';
+-
+-import { Logger } from '../../shared/Logger';
+-import { decryptBlob, encryptBlob } from '../../shared/SearchCrypto';
+-import type { SearchDB } from '../../shared/SearchDB';
+-import { SearchLibraryError, createQuotaExceededErrorMessage, isQuotaExceededError } from '../../shared/errors';
+-import type { IndexKind } from './IndexRegistry';
+-
+-/**
+- * Blob store backed by IndexedDB with a cache for WASM Cached objects.
+- * Namespaced by IndexKind to isolate blobs between engines.
+- *
+- * Handles WASM engine blob events (load/save/release) and manages
+- * the cache + DB persistence.
+- */
+-export class IndexBlobStore {
+-    // TODO: Big indexes might not fit in memory and we might not just rely in a infinitely big
+-    //   cache. Monitor and replace by a sized scope cache (LRU).
+-    private cache = new Map<string, Cached>();
+-
+-    constructor(
+-        private readonly indexKind: IndexKind,
+-        private readonly db: SearchDB,
+-        private readonly cryptoKey: CryptoKey
+-    ) {}
+-
+-    private dbKey(blobName: string): [string, string] {
+-        return [this.indexKind, blobName];
+-    }
+-
+-    async loadEvent(event: QueryEvent | WriteEvent | CleanupEvent | ExportEvent): Promise<void> {
+-        try {
+-            const blobName = event.id().toString();
+-            const cached = this.cache.get(blobName);
+-
+-            if (cached) {
+-                event.sendCached(cached);
+-                return;
+-            }
+-
+-            // TODO: Instrument and exception handling hardening for failed decryptions.
+-            const decrypted = await this.db.getDecryptedIndexBlob(this.dbKey(blobName), async (ciphertext) => {
+-                const result = await decryptBlob(this.cryptoKey, ciphertext, this.indexKind, blobName);
+-                return result.buffer;
+-            });
+-            if (decrypted !== undefined) {
+-                event.send(SerDes.Cbor, new Uint8Array(decrypted));
+-            } else {
+-                event.sendEmpty();
+-            }
+-        } catch (e) {
+-            throw new SearchLibraryError('Failed to load blob', e);
+-        }
+-    }
+-
+-    async saveEvent(event: WriteEvent | CleanupEvent): Promise<void> {
+-        try {
+-            const blobName = event.id().toString();
+-            const cached = event.recv();
+-            const serialized = cached.serialize(SerDes.Cbor);
+-            // TODO: Instrument and exception handling hardening for failed encryptions.
+-            await this.db.putEncryptedIndexBlob(this.dbKey(blobName), new Uint8Array(serialized).buffer, (plaintext) =>
+-                encryptBlob(this.cryptoKey, new Uint8Array(plaintext), this.indexKind, blobName)
+-            );
+-            this.cache.set(blobName, cached);
+-        } catch (e) {
+-            if (isQuotaExceededError(e)) {
+-                const msg = await createQuotaExceededErrorMessage();
+-                Logger.error(`IndexBlobStore: Quota exceeded error <${msg}>`);
+-                throw e;
+-            }
+-            throw new SearchLibraryError('Failed to save blob', e);
+-        }
+-    }
+-
+-    async releaseEvent(event: CleanupEvent): Promise<void> {
+-        const blobName = event.id().toString();
+-        this.cache.delete(blobName);
+-        await this.db.deleteIndexBlob(this.dbKey(blobName));
+-    }
+-
+-    async flushToStorage(): Promise<void> {
+-        /**
+-         * TODO: Once encryption is added, save/release will enqueue async
+-         * encrypt+write operations instead of awaiting them inline. This method
+-         * will await all pending writes, ensuring blobs are persisted properly
+-         * before various subscription cursors are saved.
+-         */
+-    }
+-}
+diff --git a/applications/drive/src/app/modules/search/internal/worker/index/IndexReader.ts b/applications/drive/src/app/modules/search/internal/worker/index/IndexReader.ts
+deleted file mode 100644
+index 13a630c167..0000000000
+--- a/applications/drive/src/app/modules/search/internal/worker/index/IndexReader.ts
++++ /dev/null
+@@ -1,58 +0,0 @@
+-import type { Engine, Query, QueryEvent } from '@proton/proton-foundation-search';
+-import { QueryEventKind } from '@proton/proton-foundation-search';
+-
+-import type { IndexBlobStore } from './IndexBlobStore';
+-
+-export type ReadResult = {
+-    identifier: string;
+-    score: number;
+-};
+-
+-/**
+- * Issues read queries against a single WASM search engine.
+- * Symmetric counterpart to IndexWriter.
+- *
+- * WASM supports concurrent read handles while a write is in progress.
+- */
+-export class IndexReader {
+-    constructor(
+-        private readonly engine: Engine,
+-        private readonly blobStore: IndexBlobStore
+-    ) {}
+-
+-    /**
+-     * Execute a query built by the caller and yield matching results.
+-     */
+-    async *execute(configureQuery: (query: Query) => Query): AsyncGenerator<ReadResult> {
+-        const search = configureQuery(this.engine.query()).search();
+-
+-        try {
+-            let event: QueryEvent | undefined;
+-            while ((event = search.next()) !== undefined) {
+-                switch (event.kind()) {
+-                    case QueryEventKind.Load:
+-                        await this.blobStore.loadEvent(event);
+-                        break;
+-                    case QueryEventKind.Found: {
+-                        const found = event.found();
+-                        if (found) {
+-                            const score = found.score();
+-                            // TODO: Add matches to the yield ReadResult when available from foundation team.
+-                            // https://gitlab.protontech.ch/backend-team/foundation-team/search/-/merge_requests/364
+-                            yield { identifier: found.identifier(), score: score.value() };
+-                            score.free();
+-                            found.free();
+-                        }
+-                        break;
+-                    }
+-                    case QueryEventKind.Stats:
+-                    default:
+-                        event.free();
+-                        break;
+-                }
+-            }
+-        } finally {
+-            search.free();
+-        }
+-    }
+-}
+diff --git a/applications/drive/src/app/modules/search/internal/worker/index/IndexRegistry.ts b/applications/drive/src/app/modules/search/internal/worker/index/IndexRegistry.ts
+deleted file mode 100644
+index a88c34debf..0000000000
+--- a/applications/drive/src/app/modules/search/internal/worker/index/IndexRegistry.ts
++++ /dev/null
+@@ -1,69 +0,0 @@
+-import type { Engine, InitOutput } from '@proton/proton-foundation-search';
+-import init, { ProcessorConfig, Engine as SearchLibraryWasmEngine } from '@proton/proton-foundation-search';
+-
+-import type { SearchDB } from '../../shared/SearchDB';
+-import { MAX_SEARCHABLE_FILENAME_LENGTH } from '../../shared/config';
+-import type { IndexKind } from '../../shared/types';
+-import { IndexBlobStore } from './IndexBlobStore';
+-import { IndexReader } from './IndexReader';
+-import { IndexWriter } from './IndexWriter';
+-
+-export { IndexKind } from '../../shared/types';
+-
+-export interface IndexInstance {
+-    indexKind: IndexKind;
+-    engine: Engine;
+-    blobStore: IndexBlobStore;
+-    indexWriter: IndexWriter;
+-    indexReader: IndexReader;
+-}
+-
+-let wasmInit: Promise<InitOutput> | undefined;
+-
+-/**
+- * Creates and stores WASM search engine instances paired with their blob store.
+- * Each IndexKind maps to one index (engine + blob store).
+- */
+-export class IndexRegistry {
+-    private readonly instances = new Map<IndexKind, IndexInstance>();
+-
+-    constructor(private readonly cryptoKey: CryptoKey) {}
+-
+-    /**
+-     * Return the engine instance for the given kind, creating it if it doesn't exist yet.
+-     */
+-    async get(kind: IndexKind, db: SearchDB): Promise<IndexInstance> {
+-        const existing = this.instances.get(kind);
+-        if (existing) {
+-            return existing;
+-        }
+-        await (wasmInit ??= init());
+-
+-        const config = new ProcessorConfig().withMaxLength(MAX_SEARCHABLE_FILENAME_LENGTH);
+-        const engine = SearchLibraryWasmEngine.builder().withBuiltinProcessor(config).build();
+-        const blobStore = new IndexBlobStore(kind, db, this.cryptoKey);
+-        const indexWriter = new IndexWriter(engine, blobStore);
+-        const indexReader = new IndexReader(engine, blobStore);
+-        const instance: IndexInstance = { indexKind: kind, engine, blobStore, indexWriter, indexReader };
+-        this.instances.set(kind, instance);
+-        return instance;
+-    }
+-
+-    getAll(): IterableIterator<IndexInstance> {
+-        return this.instances.values();
+-    }
+-
+-    dispose(kind: IndexKind): void {
+-        const instance = this.instances.get(kind);
+-        if (instance) {
+-            instance.engine.free();
+-            this.instances.delete(kind);
+-        }
+-    }
+-
+-    disposeAll(): void {
+-        for (const kind of this.instances.keys()) {
+-            this.dispose(kind);
+-        }
+-    }
+-}
+diff --git a/applications/drive/src/app/modules/search/internal/worker/index/IndexWriter.ts b/applications/drive/src/app/modules/search/internal/worker/index/IndexWriter.ts
+deleted file mode 100644
+index e5c22abfef..0000000000
+--- a/applications/drive/src/app/modules/search/internal/worker/index/IndexWriter.ts
++++ /dev/null
+@@ -1,150 +0,0 @@
+-import type { Engine, Execution, Write } from '@proton/proton-foundation-search';
+-import { Document, Value, WriteEventKind } from '@proton/proton-foundation-search';
+-
+-import { InvalidIndexerState, SearchLibraryError, sendErrorReportForSearch } from '../../shared/errors';
+-import type { AttributeValue, IndexEntry } from '../indexer/indexEntry';
+-import type { IndexBlobStore } from './IndexBlobStore';
+-
+-/**
+- * An exclusive write session acquired from IndexWriter.startWriteSession().
+- *
+- * Holds a Write handle from the search library WASM. Callers chain insert/remove
+- * calls then await commit() to flush. Uses IndexBlobStore as the blob store.
+- */
+-export class WriteSession {
+-    private writer: Write | null;
+-
+-    constructor(
+-        writer: Write,
+-        private readonly blobStore: IndexBlobStore,
+-        private readonly release: () => void
+-    ) {
+-        this.writer = writer;
+-    }
+-
+-    insert(entry: IndexEntry): this {
+-        if (this.writer === null) {
+-            throw new InvalidIndexerState("WriteSession: can't insert, session already released");
+-        }
+-        try {
+-            const doc = new Document(entry.documentId);
+-            for (const attr of entry.attributes) {
+-                doc.addAttribute(attr.name, toValue(attr.value));
+-            }
+-            this.writer.insert(doc);
+-            return this;
+-        } catch (e) {
+-            this.writer.free();
+-            this.writer = null;
+-            this.release();
+-            throw new SearchLibraryError('Search library WASM failed during insert', e);
+-        }
+-    }
+-
+-    remove(documentId: string): this {
+-        if (this.writer === null) {
+-            throw new InvalidIndexerState("WriteSession: can't remove, session already released");
+-        }
+-        try {
+-            this.writer.remove(documentId);
+-            return this;
+-        } catch (e) {
+-            this.writer.free();
+-            this.writer = null;
+-            this.release();
+-            throw new SearchLibraryError('Search library WASM failed during remove', e);
+-        }
+-    }
+-
+-    dispose(): void {
+-        if (this.writer === null) {
+-            return;
+-        }
+-        this.writer.free();
+-        this.writer = null;
+-        this.release();
+-    }
+-
+-    async commit(): Promise<void> {
+-        if (this.writer === null) {
+-            throw new InvalidIndexerState("WriteSession: can't commit, session already released");
+-        }
+-        let execution: Execution;
+-        try {
+-            execution = this.writer.commit();
+-            // Commit consumer the writer, no need to free.
+-            this.writer = null;
+-        } catch (e) {
+-            this.writer?.free();
+-            this.writer = null;
+-            this.release();
+-            throw new SearchLibraryError('Search library WASM failed to commit', e);
+-        }
+-
+-        try {
+-            let event;
+-            while ((event = execution.next()) !== undefined) {
+-                switch (event.kind()) {
+-                    case WriteEventKind.Load:
+-                        await this.blobStore.loadEvent(event);
+-                        break;
+-                    case WriteEventKind.Save:
+-                        await this.blobStore.saveEvent(event);
+-                        break;
+-                    case WriteEventKind.Stats:
+-                        event.free();
+-                        break;
+-                    default:
+-                        const error = new Error(`WriteSession: unexpected Write event kind <${event.kind()}>`);
+-                        sendErrorReportForSearch(error.message, error);
+-
+-                        event.free();
+-                        break;
+-                }
+-            }
+-        } finally {
+-            execution?.free();
+-            this.release();
+-        }
+-    }
+-}
+-
+-/**
+- * Issues exclusive WriteSession handles for a single WASM search engine.
+- * Only one WriteSession may be active at a time.
+- */
+-export class IndexWriter {
+-    private active = false;
+-
+-    constructor(
+-        private readonly searchFoundationEngine: Engine,
+-        private readonly blobStore: IndexBlobStore
+-    ) {}
+-
+-    startWriteSession(): WriteSession {
+-        if (this.active) {
+-            throw new InvalidIndexerState('IndexWriter: a write session is already in progress');
+-        }
+-        const writer = this.searchFoundationEngine.write();
+-        if (!writer) {
+-            throw new InvalidIndexerState('IndexWriter: Unable to get a write handle from an unactive write session');
+-        }
+-        this.active = true;
+-        return new WriteSession(writer, this.blobStore, () => {
+-            this.active = false;
+-        });
+-    }
+-}
+-
+-function toValue(attr: AttributeValue): Value {
+-    switch (attr.kind) {
+-        case 'tag':
+-            return Value.tag(attr.value);
+-        case 'text':
+-            return Value.text(attr.value);
+-        case 'boolean':
+-            return Value.bool(attr.value);
+-        case 'integer':
+-            return Value.int(attr.value);
+-    }
+-}
+diff --git a/applications/drive/src/app/modules/search/internal/worker/index/indexEntriesUtils.ts b/applications/drive/src/app/modules/search/internal/worker/index/indexEntriesUtils.ts
+deleted file mode 100644
+index ae99f9978d..0000000000
+--- a/applications/drive/src/app/modules/search/internal/worker/index/indexEntriesUtils.ts
++++ /dev/null
+@@ -1,73 +0,0 @@
+-import type { Entry } from '@proton/proton-foundation-search';
+-import { ExportEventKind } from '@proton/proton-foundation-search';
+-
+-import type { IndexInstance } from './IndexRegistry';
+-
+-/**
+- * Default number of ids processed per write session in `removeDocumentIds`.
+- * Keeps any single WASM write session bounded.
+- */
+-export const DEFAULT_BATCH_SIZE = 50;
+-
+-/**
+- * Stream every entry in the engine via `engine.export()`. The Entry is
+- * freed automatically when the consumer's `for await` loop moves on, so
+- * callers must NOT hold an Entry reference across yields.
+- */
+-export async function* exportEntries(instance: IndexInstance, signal: AbortSignal): AsyncGenerator<Entry> {
+-    signal.throwIfAborted();
+-    const exp = instance.engine.export();
+-    try {
+-        for (let event = exp.next(); event !== undefined; event = exp.next()) {
+-            signal.throwIfAborted();
+-            switch (event.kind()) {
+-                case ExportEventKind.Load:
+-                    await instance.blobStore.loadEvent(event);
+-                    break;
+-                case ExportEventKind.Entry: {
+-                    const entry = event.entry();
+-                    if (!entry) {
+-                        break;
+-                    }
+-                    try {
+-                        yield entry;
+-                    } finally {
+-                        entry.free();
+-                    }
+-                    break;
+-                }
+-            }
+-        }
+-    } finally {
+-        exp.free();
+-    }
+-}
+-
+-/**
+- * Open a write session, remove every given id, commit.
+- * Returns the number of removed ids.
+- */
+-export async function removeDocumentIds(
+-    instance: IndexInstance,
+-    idsToRemove: Iterable<string>,
+-    signal: AbortSignal
+-): Promise<number> {
+-    signal.throwIfAborted();
+-    const ids = [...idsToRemove];
+-    if (ids.length === 0) {
+-        return 0;
+-    }
+-
+-    const session = instance.indexWriter.startWriteSession();
+-    try {
+-        for (const id of ids) {
+-            signal.throwIfAborted();
+-            session.remove(id);
+-        }
+-        await session.commit();
+-    } catch (e) {
+-        session.dispose();
+-        throw e;
+-    }
+-    return ids.length;
+-}
+diff --git a/applications/drive/src/app/modules/search/internal/worker/indexer/indexPopulators/IndexPopulator.ts b/applications/drive/src/app/modules/search/internal/worker/indexer/indexPopulators/IndexPopulator.ts
+deleted file mode 100644
+index ec86e01b6b..0000000000
+--- a/applications/drive/src/app/modules/search/internal/worker/indexer/indexPopulators/IndexPopulator.ts
++++ /dev/null
+@@ -1,499 +0,0 @@
+-import type { DriveEvent, MaybeNode, NodeEvent } from '@protontech/drive-sdk';
+-
+-import type { NodeEntity } from '@proton/drive';
+-import { NodeType } from '@proton/drive';
+-import { getNodeEntity } from '@proton/drive/legacy/sdkUtils/getNodeEntity';
+-import { Expression, Func, TermValue } from '@proton/proton-foundation-search';
+-
+-import { Logger } from '../../../shared/Logger';
+-import type { IndexPopulatorState, SearchDB } from '../../../shared/SearchDB';
+-import { SearchLibraryError } from '../../../shared/errors';
+-import type { IndexPopulatorStatus, IndexingProgress, TreeEventScopeId } from '../../../shared/types';
+-import type { IndexReader } from '../../index/IndexReader';
+-import type { IndexKind } from '../../index/IndexRegistry';
+-import type { IndexEntry } from '../indexEntry';
+-import { createIndexEntry, toCoreNodeFields } from '../indexEntry';
+-import type { TaskContext } from '../tasks/BaseTask';
+-import { CleanUpStaleIndexEntryTask } from '../tasks/CleanUpTasks/CleanUpStaleIndexEntryTask';
+-import { IndexPopulatorTask } from '../tasks/CoreTasks/IndexPopulatorTask';
+-import { RemoveTreeEventScopeIdTask } from '../tasks/CoreTasks/RemoveTreeEventScopeIdTask';
+-
+-/**
+- * Domain logic for populating and maintaining a search index.
+- */
+-export abstract class IndexPopulator {
+-    constructor(
+-        // Subscription scope for incremental updates after initial indexing.
+-        readonly treeEventScopeId: TreeEventScopeId,
+-
+-        // Target index for entries produced by this populator.
+-        // This is how multi-index writes are made possible.
+-        readonly indexKind: IndexKind,
+-
+-        // Discriminator for this IndexPopulator type, e.g. "myfiles", "photos", "shared-with-me".
+-        readonly indexPopulatorKind: string,
+-
+-        // Schema version of this populator's output. Bumped when the shape of
+-        // indexed attributes changes, so stale entries can be detected and re-indexed.
+-        readonly version: number
+-    ) {}
+-
+-    // In memory indexing progress, only persisted in indexeddb when the
+-    // indexing is completely done.
+-    // TODO(DRVWEB-5185): Persist partial progress in DB when resumal indexing is being implemented.
+-    private progress: IndexingProgress = { files: 0, folders: 0, albums: 0, photos: 0 };
+-
+-    async getStatus(db: SearchDB): Promise<IndexPopulatorStatus> {
+-        const state = await this.ensureState(db);
+-
+-        if (state.done) {
+-            return {
+-                done: true,
+-                // Indexing already done, return the persisted progress
+-                progress: state.progress,
+-            };
+-        }
+-
+-        return {
+-            done: false,
+-            // Return in memory progress.
+-            progress: this.progress,
+-        };
+-    }
+-
+-    private trackNodeIndexed(nodeType: NodeType): void {
+-        switch (nodeType) {
+-            case NodeType.File:
+-                this.progress.files++;
+-                break;
+-            case NodeType.Folder:
+-                this.progress.folders++;
+-                break;
+-            case NodeType.Album:
+-                this.progress.albums++;
+-                break;
+-            case NodeType.Photo:
+-                this.progress.photos++;
+-                break;
+-        }
+-    }
+-
+-    static buildUid(indexPopulatorKind: string, treeEventScopeId: TreeEventScopeId): string {
+-        return `${indexPopulatorKind}:${treeEventScopeId}`;
+-    }
+-
+-    private async ensureState(db: SearchDB): Promise<IndexPopulatorState> {
+-        const state = await db.getPopulatorState(this.getUid());
+-        if (!state) {
+-            const newState: IndexPopulatorState = {
+-                uid: this.getUid(),
+-                indexKind: this.indexKind,
+-                indexPopulatorKind: this.indexPopulatorKind,
+-                treeEventScopeId: this.treeEventScopeId,
+-                done: false,
+-                generation: 1,
+-                version: this.version,
+-                progress: { files: 0, folders: 0, albums: 0, photos: 0 },
+-            };
+-            await db.putPopulatorState(newState);
+-            return newState;
+-        }
+-        return state;
+-    }
+-
+-    getUid(): string {
+-        return IndexPopulator.buildUid(this.indexPopulatorKind, this.treeEventScopeId);
+-    }
+-
+-    getVersion(): number {
+-        return this.version;
+-    }
+-
+-    // Generation counter. Bumped each time we make the populator dirty (e.g. not done) and reindex itself.
+-    // It's used to GC leftover entries from the index by previous generations.
+-    // Example:
+-    //  — Tree refresh (we mark the whole index dirty for this index populator)
+-    //  - If the user change the configuration of a given indexpopulator (e.g. deactivate file content from indexing, disable
+-    //    an index populator, etc)
+-    async getGeneration(db: SearchDB): Promise<number> {
+-        const state = await this.ensureState(db);
+-        return state.generation;
+-    }
+-
+-    async hasUpToDateVersion(db: SearchDB): Promise<boolean> {
+-        const state = await this.ensureState(db);
+-        return state.version === this.version;
+-    }
+-
+-    async isDone(db: SearchDB): Promise<boolean> {
+-        const state = await this.ensureState(db);
+-        return state.done === true;
+-    }
+-
+-    async markAsNotDone(db: SearchDB): Promise<void> {
+-        const state = await this.ensureState(db);
+-        const nextGeneration = state.generation + 1;
+-        await db.putPopulatorState({
+-            ...state,
+-            done: false,
+-            generation: nextGeneration,
+-            progress: { files: 0, folders: 0, albums: 0, photos: 0 },
+-        });
+-
+-        // Reset in memory progress.
+-        this.progress = { files: 0, folders: 0, albums: 0, photos: 0 };
+-    }
+-
+-    async markAsDone(db: SearchDB): Promise<void> {
+-        const state = await this.ensureState(db);
+-        await db.putPopulatorState({ ...state, done: true, version: this.version, progress: this.progress });
+-    }
+-
+-    abstract visitAndProduceIndexEntries(ctx: TaskContext): AsyncIterableIterator<IndexEntry>;
+-
+-    /**
+-     * Process incremental events. Returns the number of events successfully processed.
+-     * On failure, remaining events are left unprocessed so the caller can commit only
+-     * the successfully handled prefix.
+-     */
+-    async processIncrementalUpdates(events: DriveEvent[], ctx: TaskContext): Promise<number> {
+-        Logger.info(`${this.getUid()}: processing ${events.length} incremental events`);
+-
+-        let processed = 0;
+-
+-        for (const event of events) {
+-            switch (event.type) {
+-                case 'node_created':
+-                case 'node_updated':
+-                case 'node_deleted':
+-                    // Throws on failure — remaining events (including the failing one) will be
+-                    // retried in the next incremental update. The update might be stuck on this
+-                    // event but we have no choice since DriveEvents must be processed in order.
+-                    await this.processNodeMutation(event, ctx);
+-                    break;
+-
+-                case 'fast_forward':
+-                    // NOTE: Update to latest event ID - this is already the default behavior. This fires
+-                    // when the cursor is idle for too long (no relevant events, or events for scopes we don't
+-                    // have access to), preventing the old event ID from being garbage-collected server-side.
+-                    break;
+-
+-                case 'tree_refresh':
+-                    Logger.info(
+-                        `${this.getUid()}: TreeRefresh, marking index populator as not done to request new indexing.`
+-                    );
+-                    await this.markAsNotDone(ctx.db);
+-                    ctx.enqueueOnce(new IndexPopulatorTask(this, false /* isBootstrap */));
+-                    // Re-index will bump the generation; entries from the previous
+-                    // generation that aren't revisited become stale.
+-                    ctx.enqueueOnce(new CleanUpStaleIndexEntryTask());
+-                    // Return early to give a chance to the above task to be processed first.
+-                    // Remaining events will be processed in next incremental update.
+-                    return processed + 1;
+-
+-                case 'tree_remove':
+-                    Logger.info(`${this.getUid()}: TreeRemove, scope cleanup needed`);
+-                    ctx.enqueueOnce(new RemoveTreeEventScopeIdTask(this.treeEventScopeId));
+-                    // Return early to give a chance to the above task to be processed first.
+-                    // Remaining events will be processed in next incremental update.
+-                    return processed + 1;
+-
+-                case 'shared_with_me_updated':
+-                    // TODO: Shared volumes changed — may need to add/remove scope subscriptions.
+-                    // Not implemented yet but the idea will be:
+-                    //  - For additions: enqueue a new SharedWithMeIndexPopulator (make sure it fetch and compare new shared tree event scopes)
+-                    //  - For removals: enqueue a CleanUpTreeEventScopeIdTask
+-                    Logger.info(`${this.getUid()}: SharedWithMeUpdated`);
+-                    break;
+-            }
+-
+-            processed++;
+-        }
+-
+-        return processed;
+-    }
+-
+-    async processNodeMutation(event: NodeEvent, ctx: TaskContext): Promise<void> {
+-        Logger.info(`${this.getUid()}: processNodeMutation ${event.type} for node ${event.nodeUid}`);
+-        const generation = await this.getGeneration(ctx.db);
+-
+-        switch (event.type) {
+-            case 'node_created':
+-                await this.handleNodeCreated(event, ctx, generation);
+-                break;
+-
+-            case 'node_updated':
+-                await this.handleNodeUpdated(event, ctx, generation);
+-                break;
+-
+-            case 'node_deleted':
+-                await this.handleNodeDeleted(event, ctx);
+-                break;
+-        }
+-    }
+-
+-    private async handleNodeCreated(
+-        event: Extract<NodeEvent, { isTrashed: boolean }>,
+-        ctx: TaskContext,
+-        generation: number
+-    ): Promise<void> {
+-        const maybeNode = await ctx.bridge.driveSdk.getNode(event.nodeUid);
+-        // getNodeEntity backfills undecryptable names with a placeholder,
+-        // so the node is always indexable even if the filename couldn't be decrypted.
+-        const { node } = getNodeEntity(maybeNode);
+-        this.maybeWarnForUndecryptableNodeName(maybeNode, event.nodeUid);
+-
+-        const parentPathResult = await this.resolveParentPath(event.parentNodeUid, ctx);
+-        if (!parentPathResult.ok) {
+-            Logger.info(`${this.getUid()}: dropping node_created for ${event.nodeUid}, could not resolve parentPath`);
+-            throw parentPathResult.error;
+-        }
+-
+-        const entry = this.createEntryForNode(node, parentPathResult.parentPath, generation);
+-
+-        const { indexWriter } = await ctx.indexRegistry.get(this.indexKind, ctx.db);
+-        const session = indexWriter.startWriteSession();
+-        try {
+-            session.insert(entry);
+-            await session.commit();
+-        } catch (e) {
+-            session.dispose();
+-            throw new SearchLibraryError('Unable to create node', e);
+-        }
+-    }
+-
+-    private async handleNodeUpdated(
+-        event: Extract<NodeEvent, { isTrashed: boolean }>,
+-        ctx: TaskContext,
+-        generation: number
+-    ): Promise<void> {
+-        const maybeNode = await ctx.bridge.driveSdk.getNode(event.nodeUid);
+-        const { node } = getNodeEntity(maybeNode);
+-        this.maybeWarnForUndecryptableNodeName(maybeNode, event.nodeUid);
+-
+-        const parentPathResult = await this.resolveParentPath(event.parentNodeUid, ctx);
+-        if (!parentPathResult.ok) {
+-            Logger.info(`${this.getUid()}: dropping node_updated for ${event.nodeUid}, could not resolve parentPath`);
+-            throw parentPathResult.error;
+-        }
+-
+-        const entry = this.createEntryForNode(node, parentPathResult.parentPath, generation);
+-
+-        // Remove old entry + descendants, then insert the updated entry and
+-        // re-index the subtree (if folder) — all in a single write session.
+-        const { indexWriter, indexReader } = await ctx.indexRegistry.get(this.indexKind, ctx.db);
+-
+-        // TODO: This might explode for gigantic folders with 100k of items since we accumulate them
+-        // in the session before commiting the whole write session. Consider adding some chunking here.
+-        const session = indexWriter.startWriteSession();
+-        try {
+-            session.remove(event.nodeUid);
+-            for await (const id of this.findIndexedDescendants(event.nodeUid, indexReader)) {
+-                session.remove(id);
+-            }
+-            session.insert(entry);
+-
+-            // Re-index the entire subtree from SDK if this is a non-trashed folder.
+-            // Handles moved folders (stale paths) and un-trashed folders (descendants
+-            // weren't in the index). A trashed folder has no indexable descendants —
+-            // we keep the folder itself but stop there.
+-            // TODO(DRVWEB-5396): Classify diffs by whether they require a full descendant tree refresh.
+-            //  - Structural changes (untrashing, path changes) should trigger a full subtree refresh;
+-            //  - Non-structural updates (rename, revisions, etc.) should not.
+-            if (!event.isTrashed && node.type === NodeType.Folder) {
+-                const subtreeEntries = this.walkFolderTreeFromSdk(
+-                    event.nodeUid,
+-                    `${parentPathResult.parentPath}/${event.nodeUid}`,
+-                    ctx,
+-                    generation
+-                );
+-                for await (const subtreeEntry of subtreeEntries) {
+-                    session.insert(subtreeEntry);
+-                }
+-            }
+-
+-            await session.commit();
+-        } catch (e) {
+-            session.dispose();
+-            throw new SearchLibraryError('Unable to update node and descendant tree', e);
+-        }
+-    }
+-
+-    private async handleNodeDeleted(
+-        event: Extract<NodeEvent, { type: 'node_deleted' }>,
+-        ctx: TaskContext
+-    ): Promise<void> {
+-        await this.removeNodeAndDescendants(event.nodeUid, ctx);
+-    }
+-
+-    /**
+-     * Remove a node and all its descendants from the index.
+-     * Descendants are found by matching entries whose path contains the nodeUid.
+-     */
+-    protected async removeNodeAndDescendants(nodeUid: string, ctx: TaskContext): Promise<void> {
+-        const { indexWriter, indexReader } = await ctx.indexRegistry.get(this.indexKind, ctx.db);
+-
+-        const session = indexWriter.startWriteSession();
+-        let descendantCount = 0;
+-        try {
+-            session.remove(nodeUid);
+-            for await (const descendantId of this.findIndexedDescendants(nodeUid, indexReader)) {
+-                session.remove(descendantId);
+-                descendantCount++;
+-            }
+-            await session.commit();
+-        } catch (e) {
+-            session.dispose();
+-            throw new SearchLibraryError('Unable to remove node and descendant tree', e);
+-        }
+-
+-        Logger.info(`${this.getUid()}: removed node ${nodeUid} and ${descendantCount} descendants`);
+-    }
+-
+-    protected createEntryForNode(node: NodeEntity, parentPath: string, generation: number): IndexEntry {
+-        this.trackNodeIndexed(node.type);
+-        return createIndexEntry({
+-            node: toCoreNodeFields(node),
+-            treeEventScopeId: this.treeEventScopeId,
+-            parentPath,
+-            indexPopulatorKind: this.indexPopulatorKind,
+-            indexPopulatorVersion: this.version,
+-            indexPopulatorGeneration: generation,
+-        });
+-    }
+-
+-    protected maybeWarnForUndecryptableNodeName(maybeNode: MaybeNode, nodeUid: string): void {
+-        const hasIndexableFilename = maybeNode.ok || (maybeNode.error.name && maybeNode.error.name.ok);
+-        if (!hasIndexableFilename) {
+-            Logger.warn(`${this.getUid()}: using fallback name for ${nodeUid}, no indexable filename`);
+-            // TODO: The name was not decryptable and a fallback name (⚠️ Undecryptable name) will be used, we
+-            // might want to add this node to a "repair name" service.
+-        }
+-    }
+-
+-    /**
+-     * Find all descendant document IDs whose path contains /{nodeUid}.
+-     */
+-    private async *findIndexedDescendants(nodeUid: string, indexReader: IndexReader): AsyncIterableIterator<string> {
+-        const descendantExpr = Expression.attr(
+-            'path',
+-            Func.Matches,
+-            TermValue.wild()
+-                .then('/' + nodeUid)
+-                .wildcard()
+-        );
+-        for await (const result of indexReader.execute((q) => q.withStructuredExpression(descendantExpr))) {
+-            yield result.identifier;
+-        }
+-    }
+-
+-    /**
+-     * BFS-walk a folder tree from the SDK, yielding an IndexEntry for each non-trashed node.
+-     */
+-    protected async *walkFolderTreeFromSdk(
+-        rootFolderUid: string,
+-        rootParentPath: string,
+-        ctx: TaskContext,
+-        generation: number
+-    ): AsyncIterableIterator<IndexEntry> {
+-        const queue: { folderUid: string; parentPath: string }[] = [
+-            { folderUid: rootFolderUid, parentPath: rootParentPath },
+-        ];
+-
+-        while (queue.length > 0) {
+-            ctx.signal.throwIfAborted();
+-
+-            const item = queue.shift();
+-            if (!item) {
+-                break;
+-            }
+-
+-            // TODO: Check for AbortError here.
+-            // TODO: Catch thrown decryption errors and either:
+-            //         - mark them as needing to be repaired/preprocessed (e.g. when used during initial indexing)
+-            //         - (maybe) fail hard and retry all (when used during incremental update)
+-            const children = await ctx.bridge.driveSdk.iterateFolderChildren(item.folderUid);
+-
+-            for (const child of children) {
+-                const { node } = getNodeEntity(child);
+-                this.maybeWarnForUndecryptableNodeName(child, node.uid);
+-
+-                if (node.trashTime) {
+-                    Logger.warn('Unexpected trashed node found while visiting folders');
+-
+-                    // Skip trashed nodes and descendants.
+-                    continue;
+-                }
+-
+-                yield this.createEntryForNode(node, item.parentPath, generation);
+-
+-                if (node.type === NodeType.Folder) {
+-                    queue.push({ folderUid: node.uid, parentPath: `${item.parentPath}/${node.uid}` });
+-                }
+-            }
+-        }
+-    }
+-
+-    /**
+-     * Resolve the parentPath for a node given its parentNodeUid.
+-     * Tries the index first, then falls back to the SDK. Never throws — returns
+-     * a Result so callers can decide how to handle failures.
+-     */
+-    protected async resolveParentPath(
+-        parentNodeUid: string | undefined,
+-        ctx: TaskContext
+-    ): Promise<{ ok: true; parentPath: string } | { ok: false; error: unknown }> {
+-        if (!parentNodeUid) {
+-            return { ok: true, parentPath: '' };
+-        }
+-
+-        try {
+-            const indexResult = await this.resolveParentPathFromIndex(parentNodeUid, ctx);
+-            if (indexResult.ok) {
+-                return indexResult;
+-            }
+-
+-            const parentPath = await this.resolveParentPathFromSdk(parentNodeUid, ctx);
+-            return { ok: true, parentPath };
+-        } catch (error) {
+-            Logger.error(`${this.getUid()}: failed to resolve parentPath for parent ${parentNodeUid}`, error);
+-            return { ok: false, error };
+-        }
+-    }
+-
+-    // TODO: Resolve parentPath by reading the parent's path attribute from the index.
+-    // This avoids SDK round-trips when the parent is already indexed.
+-    // Needs https://gitlab.protontech.ch/backend-team/foundation-team/search/-/merge_requests/364
+-    // to match path from the index and use it.
+-    private async resolveParentPathFromIndex(
+-        _parentNodeUid: string,
+-        _ctx: TaskContext
+-    ): Promise<{ ok: true; parentPath: string } | { ok: false }> {
+-        return { ok: false };
+-    }
+-
+-    /**
+-     * Build the full ancestor-UID path by walking up the tree via the SDK.
+-     * Returns a path like "/grandparent-uid/parent-uid" for the given nodeUid,
+-     * or '' if the node is a direct child of the root.
+-     */
+-    private async resolveParentPathFromSdk(parentNodeUid: string, ctx: TaskContext): Promise<string> {
+-        const segments: string[] = [];
+-        let currentUid: string | undefined = parentNodeUid;
+-
+-        while (currentUid) {
+-            const maybeNode = await ctx.bridge.driveSdk.getNode(currentUid);
+-            const { node } = getNodeEntity(maybeNode);
+-
+-            // If the node has no parentUid it is the root — don't include it in the path.
+-            if (!node.parentUid) {
+-                break;
+-            }
+-
+-            segments.unshift(currentUid);
+-            currentUid = node.parentUid;
+-        }
+-
+-        return segments.length > 0 ? `/${segments.join('/')}` : '';
+-    }
+-}
+diff --git a/applications/drive/src/app/modules/search/internal/worker/indexer/tasks/CleanUpTasks/CleanUpStaleBlobsTask.ts b/applications/drive/src/app/modules/search/internal/worker/indexer/tasks/CleanUpTasks/CleanUpStaleBlobsTask.ts
+deleted file mode 100644
+index b958f9328d..0000000000
+--- a/applications/drive/src/app/modules/search/internal/worker/indexer/tasks/CleanUpTasks/CleanUpStaleBlobsTask.ts
++++ /dev/null
+@@ -1,125 +0,0 @@
+-import type { Cleanup } from '@proton/proton-foundation-search';
+-import { CleanupEventKind } from '@proton/proton-foundation-search';
+-
+-import { Logger } from '../../../../shared/Logger';
+-import { sendErrorReportForSearch } from '../../../../shared/errors';
+-import type { IndexBlobStore } from '../../../index/IndexBlobStore';
+-import type { IndexInstance, IndexKind } from '../../../index/IndexRegistry';
+-import type { IndexerTaskKind, TaskContext } from '../BaseTask';
+-import { BaseTask } from '../BaseTask';
+-
+-// Remove blobs from IndexedDB that are no longer referenced by any engine using the
+-// CleanUp API from search library.
+-//
+-// Clean-up removes unused blobs in two ways:
+-//  1. Obsolete blobs: The engine knows about blobs it no longer needs (e.g. after data is
+-//     removed or modified) and explicitly requests their deletion via Release events.
+-//  2. Orphan blobs: If an exception occurs mid-operation, blobs may be written to IndexedDB
+-//     without the manifest being updated, leaving blobs the engine doesn't know about.
+-//     Using Tracked events, we collect all blob names the engine considers active and delete
+-//     any remaining blobs in IndexedDB that aren't in that set.
+-export class CleanUpStaleBlobsTask extends BaseTask {
+-    getUid(): string {
+-        return this.getKind();
+-    }
+-
+-    getKind(): IndexerTaskKind {
+-        return 'cleanup-stale-blobs-task';
+-    }
+-
+-    async execute(ctx: TaskContext): Promise<void> {
+-        Logger.info(`Running: ${this.getUid()}`);
+-        for (const instance of ctx.indexRegistry.getAll()) {
+-            try {
+-                await this.cleanUpInstance(instance, ctx);
+-            } catch (e) {
+-                // Non-critical: log and continue to the next engine.
+-                sendErrorReportForSearch(`CleanUpStaleBlobsTask: failed for engine <${instance.indexKind}>`, e, {
+-                    tags: { indexKind: instance.indexKind },
+-                });
+-                continue;
+-            }
+-        }
+-    }
+-
+-    private async cleanUpInstance(instance: IndexInstance, ctx: TaskContext): Promise<void> {
+-        const { engine, blobStore, indexKind } = instance;
+-
+-        const cleanup = engine.cleanup();
+-        if (!cleanup) {
+-            const error = new Error(`CleanUpStaleBlobsTask: skipping engine <${indexKind}> (write lock busy)`);
+-            sendErrorReportForSearch(error.message, error);
+-            return;
+-        }
+-
+-        let releasedCount = 0;
+-        let orphanCount = 0;
+-        try {
+-            const result = await this.driveCleanupIterator(cleanup, blobStore);
+-            releasedCount = result.releasedCount;
+-            orphanCount = await this.deleteOrphanBlobs(indexKind, result.trackedBlobNames, ctx);
+-        } finally {
+-            cleanup.free();
+-        }
+-
+-        ctx.searchMetrics.markBlobsCleanup({ removedBlobsCount: releasedCount + orphanCount });
+-    }
+-
+-    private async driveCleanupIterator(
+-        cleanup: Cleanup,
+-        blobStore: IndexBlobStore
+-    ): Promise<{ trackedBlobNames: Set<string>; releasedCount: number }> {
+-        const trackedBlobNames = new Set<string>();
+-        let releasedCount = 0;
+-
+-        for (let event = cleanup.next(); event !== undefined; event = cleanup.next()) {
+-            switch (event.kind()) {
+-                case CleanupEventKind.Load:
+-                    await blobStore.loadEvent(event);
+-                    break;
+-                case CleanupEventKind.Save:
+-                    await blobStore.saveEvent(event);
+-                    break;
+-                case CleanupEventKind.Release:
+-                    // Clean-up obsolete blob
+-                    await blobStore.releaseEvent(event);
+-                    releasedCount++;
+-                    break;
+-                case CleanupEventKind.Tracked:
+-                    // Track active blobs (to allow deleting non-active/orphan ones later)
+-                    trackedBlobNames.add(event.id().toString());
+-                    break;
+-            }
+-        }
+-
+-        return { trackedBlobNames, releasedCount };
+-    }
+-
+-    private async deleteOrphanBlobs(
+-        indexKind: IndexKind,
+-        trackedBlobNames: Set<string>,
+-        ctx: TaskContext
+-    ): Promise<number> {
+-        const allKeys = await ctx.db.getAllIndexBlobKeys();
+-
+-        let orphanCount = 0;
+-        for (const key of allKeys) {
+-            const [kind, blobName] = key;
+-            if (kind !== indexKind) {
+-                continue;
+-            }
+-            if (trackedBlobNames.has(blobName)) {
+-                continue;
+-            }
+-            Logger.info(`deleting blob ${blobName}`);
+-            await ctx.db.deleteIndexBlob(key);
+-            orphanCount++;
+-        }
+-
+-        if (orphanCount > 0) {
+-            Logger.info(`${this.getUid()}: deleted ${orphanCount} orphan blob(s) for index "${indexKind}"`);
+-        }
+-
+-        return orphanCount;
+-    }
+-}
+diff --git a/applications/drive/src/app/modules/search/internal/worker/indexer/tasks/CleanUpTasks/CleanUpStaleIndexEntryTask.ts b/applications/drive/src/app/modules/search/internal/worker/indexer/tasks/CleanUpTasks/CleanUpStaleIndexEntryTask.ts
+deleted file mode 100644
+index d396195bda..0000000000
+--- a/applications/drive/src/app/modules/search/internal/worker/indexer/tasks/CleanUpTasks/CleanUpStaleIndexEntryTask.ts
++++ /dev/null
+@@ -1,188 +0,0 @@
+-import type { Entry } from '@proton/proton-foundation-search';
+-
+-import { Logger } from '../../../../shared/Logger';
+-import type { IndexPopulatorState } from '../../../../shared/SearchDB';
+-import { sendErrorReportForSearch } from '../../../../shared/errors';
+-import { yieldToEventLoop } from '../../../../shared/yieldToEventLoop';
+-import type { IndexInstance } from '../../../index/IndexRegistry';
+-import { DEFAULT_BATCH_SIZE, exportEntries, removeDocumentIds } from '../../../index/indexEntriesUtils';
+-import type { IndexerTaskKind, TaskContext } from '../BaseTask';
+-import { BaseTask } from '../BaseTask';
+-
+-// Hand the worker event loop back to pending `postMessage`s (search queries) every
+-// this many processed entries. The number is low enough to make sure
+-// the event loop can take over every ~ dozen of ms.
+-const YIELD_EVENT_LOOP_EVERY = 200;
+-
+-/**
+- * Removes stale entries from every IndexInstance.
+- *
+- * Policy: an entry is kept iff its (indexPopulatorKind, treeEventScopeId, version,
+- * generation) tuple matches a populator state, AND both its populator kind and
+- * tree-event-scope id are still in `ctx.activePopulatorKinds` /
+- * `ctx.activeTreeEventScopeIds`. Entries are deleted when they:
+- *  - come from a previous generation / version,
+- *  - have no matching populator state (orphan),
+- *  - belong to a populator kind that is no longer active (removed, disabled, unregistered),
+- *  - belong to a tree-event-scope that is no longer active (volume unshared, etc.),
+- *  - are missing one or more of the core classification attributes (unclassifiable).
+- */
+-export class CleanUpStaleIndexEntryTask extends BaseTask {
+-    getUid(): string {
+-        return this.getKind();
+-    }
+-
+-    getKind(): IndexerTaskKind {
+-        return 'cleanup-stale-index-entries-task';
+-    }
+-
+-    async execute(ctx: TaskContext): Promise<void> {
+-        Logger.info(`Running: ${this.getUid()}`);
+-
+-        const allStates = await ctx.db.getAllPopulatorStates();
+-        const activePopulatorKinds = new Set(ctx.activeIndexPopulators.map((p) => p.indexPopulatorKind));
+-        const activeTreeEventScopeIds = new Set(ctx.activeIndexPopulators.map((p) => p.treeEventScopeId));
+-
+-        for (const instance of ctx.indexRegistry.getAll()) {
+-            try {
+-                await this.cleanupInstance(
+-                    instance,
+-                    allStates,
+-                    activePopulatorKinds,
+-                    activeTreeEventScopeIds,
+-                    ctx.signal
+-                );
+-            } catch (e) {
+-                sendErrorReportForSearch(`${this.getUid()}: failed for engine <${instance.indexKind}>`, e, {
+-                    tags: { indexKind: instance.indexKind },
+-                });
+-                continue;
+-            }
+-        }
+-    }
+-
+-    private async cleanupInstance(
+-        instance: IndexInstance,
+-        allStates: IndexPopulatorState[],
+-        activePopulatorKinds: Set<string>,
+-        activeTreeEventScopeIds: Set<string>,
+-        signal: AbortSignal
+-    ): Promise<void> {
+-        // Index states by uid ("populatorKind:treeEventScopeId") for O(1) lookup per exported entry.
+-        const stateByUid = new Map<string, IndexPopulatorState>();
+-        for (const state of allStates) {
+-            stateByUid.set(state.uid, state);
+-        }
+-
+-        let totalRemoved = 0;
+-        let pending: string[] = [];
+-        const removePendingStaleIndexEntries = async () => {
+-            if (pending.length === 0) {
+-                return;
+-            }
+-            const ids = pending;
+-            pending = [];
+-            totalRemoved += await removeDocumentIds(instance, ids, signal);
+-        };
+-
+-        let processedSinceYield = 0;
+-        for await (const entry of exportEntries(instance, signal)) {
+-            if (isEntryStale(entry, stateByUid, activePopulatorKinds, activeTreeEventScopeIds)) {
+-                pending.push(entry.identifier());
+-            }
+-            if (pending.length >= DEFAULT_BATCH_SIZE) {
+-                await removePendingStaleIndexEntries();
+-                processedSinceYield = 0; // removeDocumentIds already relinquished the thread
+-                continue;
+-            }
+-            if (++processedSinceYield >= YIELD_EVENT_LOOP_EVERY) {
+-                await yieldToEventLoop();
+-                processedSinceYield = 0;
+-            }
+-        }
+-        await removePendingStaleIndexEntries();
+-
+-        if (totalRemoved > 0) {
+-            Logger.info(`${this.getUid()}: removed ${totalRemoved} stale entries for <${instance.indexKind}>`);
+-        }
+-    }
+-}
+-
+-function isEntryStale(
+-    entry: Entry,
+-    stateByUid: Map<string, IndexPopulatorState>,
+-    activePopulatorKinds: Set<string>,
+-    activeTreeEventScopeIds: Set<string>
+-): boolean {
+-    const populatorKind = readSearchLibraryTagAttribute(entry, 'indexPopulatorKind');
+-    const treeEventScopeId = readSearchLibraryTagAttribute(entry, 'treeEventScopeId');
+-    const version = readSearchLibraryIntegerAttribute(entry, 'indexPopulatorVersion');
+-    const generation = readSearchLibraryIntegerAttribute(entry, 'indexPopulatorGeneration');
+-
+-    if (
+-        populatorKind === undefined ||
+-        treeEventScopeId === undefined ||
+-        version === undefined ||
+-        generation === undefined
+-    ) {
+-        // Malformed index entry: we can't classify it, so we mark it as stale.
+-        Logger.warn(
+-            `Malformed index entry ${entry.identifier()}: ` +
+-                `indexPopulatorKind=${populatorKind}, treeEventScopeId=${treeEventScopeId}, ` +
+-                `indexPopulatorVersion=${version}, indexPopulatorGeneration=${generation}`
+-        );
+-        return true;
+-    }
+-
+-    const state = stateByUid.get(`${populatorKind}:${treeEventScopeId}`);
+-    if (!state) {
+-        // Orphan: no state for this (populatorKind, treeEventScopeId). Mark as stale.
+-        return true;
+-    }
+-
+-    if (!activePopulatorKinds.has(populatorKind)) {
+-        return true;
+-    }
+-    // Remove entries from untracked treeEventScopeId (volume unshared, recovery volume, ...)
+-    if (!activeTreeEventScopeIds.has(treeEventScopeId)) {
+-        return true;
+-    }
+-    // Remove entries from previous versions or generations.
+-    return state.version !== version || state.generation !== generation;
+-}
+-
+-function readSearchLibraryTagAttribute(entry: Entry, name: string): string | undefined {
+-    const values = entry.attribute(name);
+-    let found: string | undefined;
+-    for (const ev of values) {
+-        if (found === undefined) {
+-            const raw = ev.value();
+-            if (typeof raw === 'string') {
+-                found = raw;
+-            }
+-        }
+-        ev.free();
+-    }
+-    return found;
+-}
+-
+-function readSearchLibraryIntegerAttribute(entry: Entry, name: string): number | undefined {
+-    const values = entry.attribute(name);
+-    let found: number | undefined;
+-    for (const ev of values) {
+-        if (found === undefined) {
+-            const raw = ev.value();
+-            // WASM returns integer attributes as plain `number` on export, even though
+-            // they were written via `Value.int(bigint)`. Values always originate from
+-            // `BigInt(…)` wrapping a `number` in `createIndexEntry`, so the round-trip
+-            // to a plain `number` is lossless for our use.
+-            if (typeof raw === 'number') {
+-                found = raw;
+-            } else if (typeof raw === 'bigint') {
+-                found = Number(raw);
+-            }
+-        }
+-        ev.free();
+-    }
+-    return found;
+-}
+diff --git a/applications/drive/src/app/modules/search/internal/worker/searcher/SearchQueryExecutor.ts b/applications/drive/src/app/modules/search/internal/worker/searcher/SearchQueryExecutor.ts
+deleted file mode 100644
+index 146cd6b91b..0000000000
+--- a/applications/drive/src/app/modules/search/internal/worker/searcher/SearchQueryExecutor.ts
++++ /dev/null
+@@ -1,102 +0,0 @@
+-import type { Query } from '@proton/proton-foundation-search';
+-import { Expression, Func, TermValue } from '@proton/proton-foundation-search';
+-
+-import type { SearchDB } from '../../shared/SearchDB';
+-import type { SearchQuery, SearchResultItem } from '../../shared/types';
+-import { IndexKind, type IndexRegistry } from '../index/IndexRegistry';
+-import { normalizedFilenameForTag } from '../indexer/indexEntry';
+-
+-// TODO: Rename to indices instead of engines.
+-let activeEngines: IndexKind[] = [IndexKind.MAIN];
+-
+-/** Exposed for tests only. */
+-export function setActiveEnginesForTests(engines: IndexKind[]) {
+-    activeEngines = engines;
+-}
+-
+-/**
+- * Searches across all active engines in parallel, yielding results as they arrive.
+- *
+- * Search bypasses the task queue entirely — Search library WASM supports concurrent read
+- * handles while a write is in progress.
+- */
+-export class SearchQueryExecutor {
+-    constructor(
+-        private readonly indexRegistry: IndexRegistry,
+-        private readonly db: SearchDB
+-    ) {}
+-
+-    async *performSearch(query: SearchQuery): AsyncGenerator<SearchResultItem> {
+-        // TODO: When adding more engines, consider running and yielding searches in parallel.
+-        for (const kind of activeEngines) {
+-            yield* this.searchEngine(kind, query);
+-        }
+-    }
+-
+-    private async *searchEngine(kind: IndexKind, query: SearchQuery): AsyncGenerator<SearchResultItem> {
+-        const { indexReader } = await this.indexRegistry.get(kind, this.db);
+-        for await (const result of indexReader.execute((q) => this.buildFilenameSearchQuery(query, q))) {
+-            yield { nodeUid: result.identifier, score: result.score, indexKind: kind };
+-        }
+-    }
+-
+-    /**
+-     * Build a wildcard match on the "filename" attribute, optionally ANDed with exact-match
+-     * attribute filters (e.g. nodeType, indexPopulatorGeneration).
+-     * Excludes trashed files.
+-     */
+-    private buildFilenameSearchQuery(query: SearchQuery, wasmQuery: Query): Query {
+-        // Normalize query the same way we normalized at index time:
+-        // strip all non-alphanumeric characters and lowercase.
+-        const normalized = normalizedFilenameForTag(query.filename);
+-        const hasFilename = normalized.length > 0;
+-        const hasFilters = query.filters && Object.keys(query.filters).length > 0;
+-
+-        // Guard: a pure-special-char query (e.g. "#") with no filters normalizes
+-        // to empty. Returning an unfiltered query would match everything — return
+-        // nothing instead.
+-        if (!hasFilename && !hasFilters) {
+-            return wasmQuery;
+-        }
+-
+-        const filenameExpr = this.buildFilenameExpression(normalized);
+-        const filterExprs = this.buildFilterExpressions(query.filters);
+-        const trashExclusionExpr = Expression.attr('trashTime', Func.Equals, TermValue.int(0n));
+-        const allExprs = [filenameExpr, ...filterExprs, trashExclusionExpr].filter(
+-            (e): e is Expression => e !== undefined
+-        );
+-
+-        const expr = allExprs.reduce((acc, e) => acc.and(e));
+-        return wasmQuery.withStructuredExpression(expr);
+-    }
+-
+-    private buildFilenameExpression(normalized: string): Expression | undefined {
+-        if (normalized.length === 0) {
+-            return undefined;
+-        }
+-        // Substring match on the normalized tag (*query*) — works for any length
+-        // including short (< 3 char) queries, special chars, and mixed case.
+-        const tagMatch = Expression.attr('filename', Func.Matches, TermValue.wild().then(normalized).wildcard());
+-        // Fuzzy trigram match on the stripped text (query*) — adds relevance scoring
+-        // for longer queries via the text processor.
+-        const textMatch = Expression.attr('filenameText', Func.Matches, TermValue.text(normalized).wildcard());
+-        return textMatch.or(tagMatch);
+-    }
+-
+-    private buildFilterExpressions(filters: SearchQuery['filters']): Expression[] {
+-        if (!filters) {
+-            return [];
+-        }
+-        return Object.entries(filters).map(([name, value]) => {
+-            let term: TermValue;
+-            if (typeof value === 'string') {
+-                term = TermValue.text(value);
+-            } else if (typeof value === 'bigint') {
+-                term = TermValue.int(value);
+-            } else {
+-                term = TermValue.bool(value);
+-            }
+-            return Expression.attr(name, Func.Equals, term);
+-        });
+-    }
+-}
+
+diff --git a/applications/drive/src/app/modules/search/internal/worker/SharedWorkerAPI.integration.test.ts b/applications/drive/src/app/modules/search/internal/worker/SharedWorkerAPI.integration.test.ts
+index 18fa671a16..6d14a6b72f 100644
+--- a/applications/drive/src/app/modules/search/internal/worker/SharedWorkerAPI.integration.test.ts
++++ b/applications/drive/src/app/modules/search/internal/worker/SharedWorkerAPI.integration.test.ts
+@@ -18,7 +18,6 @@ import { IndexKind } from '../shared/types';
+ import { FakeBroadcastChannel } from '../testing/FakeBroadcastChannel';
+ import { FakeMainThreadBridge } from '../testing/FakeMainThreadBridge';
+ import { setupRealSearchLibraryWasm } from '../testing/setupRealSearchLibraryWasm';
+-import { SharedWorkerAPI } from './SharedWorkerAPI';
+
+ setupRealSearchLibraryWasm();
+
+@@ -187,17 +186,11 @@ function expectState(actual: StateMessage, expected: StateMessage) {
+ // --- Search helper ---
+
+ async function search(
+-    api: SharedWorkerAPI,
++    api: unknown,
+     query: string,
+     filters?: Record<string, string | bigint | boolean>
+ ): Promise<SearchResultItem[]> {
+-    const results: SearchResultItem[] = [];
+-    await api.search({ filename: query, filters }, (event: WorkerSearchResultEvent) => {
+-        if (event.type === 'item') {
+-            results.push(event);
+-        }
+-    });
+-    return results;
++    throw new Error("ElectronMail triggered error: this code not supposed to be reachable (SharedWorkerAPI use: search)")
+ }
+
+ async function getAllIndexedItemsForGeneration(api: SharedWorkerAPI, generation: number): Promise<SearchResultItem[]> {
+diff --git a/applications/drive/src/app/modules/search/internal/worker/search.worker.ts b/applications/drive/src/app/modules/search/internal/worker/search.worker.ts
+index 1cdf106d36..bf9a812d52 100644
+--- a/applications/drive/src/app/modules/search/internal/worker/search.worker.ts
++++ b/applications/drive/src/app/modules/search/internal/worker/search.worker.ts
+@@ -4,19 +4,15 @@ import 'core-js/proposals/array-buffer-base64';
+ import 'core-js/stable';
+
+ import { registerComlinkErrorTransferHandler } from '../shared/comlinkErrorTransferHandler';
+-import { SharedWorkerAPI } from './SharedWorkerAPI';
+
+ // Set-up comlink to propagate errors properly.
+ // This must be called on both the main thread and the worker thread
+ // so that custom error types survive serialization across the comlink boundary.
+ registerComlinkErrorTransferHandler();
+
+-const api = new SharedWorkerAPI();
+-
+ // SharedWorker entry point
+ declare const self: SharedWorkerGlobalScope;
+
+ self.onconnect = (event: MessageEvent) => {
+-    const port = event.ports[0];
+-    Comlink.expose(api, port);
++    throw new Error("ElectronMail triggered error: this code not supposed to be reachable (SharedWorkerAPI use: self.onconnect)")
+ };
+--

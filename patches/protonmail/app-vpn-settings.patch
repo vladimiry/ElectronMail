@@ -1,40 +1,39 @@
 diff --git a/package.json b/package.json
-index 4b2e5d76c3..4f36d35d34 100644
+index cb439a93b1..d0d444b31f 100644
 --- a/package.json
 +++ b/package.json
-@@ -3,8 +3,8 @@
+@@ -3,15 +3,12 @@
      "private": true,
      "license": "GPL-3.0",
      "workspaces": [
 -        "applications/*",
--        "applications/pass-desktop/native",
-+        "applications/account",
 +        "applications/vpn-settings",
++        "applications/account",
+         "applications/lumo/src/app/lib/lumo-api-client",
+-        "applications/pass-desktop/native",
          "packages/*",
          "packages/wasm/*",
-         "tests",
-@@ -60,4 +60,4 @@
-     "publishConfig": {
-         "registry": "https://nexus.protontech.ch/repository/web-npm/"
-     }
--}
-+}
-\ No newline at end of file
+         "packages/pass/docs/starlight",
+-        "tests",
+-        "tests/mail-renderer",
+-        "tests/packages/*",
+         "utilities/*",
+         "vendor/*/*"
+     ],
 --
 
 diff --git a/applications/vpn-settings/package.json b/applications/vpn-settings/package.json
-index 46b8092ecf..3a983f0b52 100644
+index 541da774d3..704a1b87bd 100644
 --- a/applications/vpn-settings/package.json
 +++ b/applications/vpn-settings/package.json
 @@ -6,7 +6,6 @@
      "author": "",
      "main": "index.js",
      "scripts": {
--        "build:web": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --appMode=standalone --logical",
+-        "build:web": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --appMode=standalone",
          "check-types": "tsc",
          "i18n:extract:web": "proton-i18n extract",
          "i18n:upgrade": "proton-i18n extract --verbose && proton-i18n crowdin --verbose",
---
 
 diff --git a/applications/vpn-settings/webpack.config.ts b/applications/vpn-settings/webpack.config.ts
 index 2cd919188c..5ef859b4c9 100644
@@ -43,15 +42,15 @@ index 2cd919188c..5ef859b4c9 100644
 @@ -52,18 +52,10 @@ const result = async (opts: WebpackEnvArgumentsV2): Promise<Configuration> => {
          throw new Error('Missing html plugin');
      }
- 
+
 -    const rewrites: any[] = [];
 -    // @ts-ignore
 -    config.devServer.historyApiFallback.rewrites = rewrites;
 -
      const originalTemplateParameters = htmlPlugin.userOptions.templateParameters as { [key: string]: any };
- 
+
      const { pages, hreflangs } = await pagesPromise;
- 
+
 -    pages.forEach(({ rewrite }) => {
 -        rewrites.push(rewrite);
 -    });
@@ -62,32 +61,33 @@ index 2cd919188c..5ef859b4c9 100644
 --
 
 diff --git a/applications/vpn-settings/src/app/App.tsx b/applications/vpn-settings/src/app/App.tsx
-index 641bd5ad29..9061e4b46f 100644
+index 7aa9c93f57..951b3202f5 100644
 --- a/applications/vpn-settings/src/app/App.tsx
 +++ b/applications/vpn-settings/src/app/App.tsx
-@@ -4,12 +4,10 @@ import { createBrowserHistory as createHistory } from 'history';
+@@ -5,12 +5,10 @@ import { LocationThemeSync } from 'proton-account/src/app/content/theme/Location
  import { PublicAppThemeProvider } from 'proton-account/src/app/content/theme/PublicAppThemeProvider';
- 
+
  import * as bootstrap from '@proton/account/bootstrap';
 -import { initStandaloneSession } from '@proton/account/bootstrap/standaloneSession';
  import { ApiProvider, AuthenticationProvider, ErrorBoundary, ProtonApp, StandardErrorPage } from '@proton/components';
  import useInstance from '@proton/hooks/useInstance';
- import { ProtonStoreProvider } from '@proton/redux-shared-store';
+ import { ProtonStoreProvider } from '@proton/redux-shared-store/sharedProvider';
  import createApi from '@proton/shared/lib/api/createApi';
 -import type { PersistedSession } from '@proton/shared/lib/authentication/SessionInterface';
  import { handleLogoutFromURL } from '@proton/shared/lib/authentication/handleLogoutFromURL';
  import { getLoginPath } from '@proton/shared/lib/authentication/loginPath';
  import { replaceUrl } from '@proton/shared/lib/helpers/browser';
-@@ -18,7 +16,6 @@ import initLogicalProperties from '@proton/shared/lib/logical/logical';
+@@ -18,7 +16,7 @@ import { initSafariFontFixClassnames } from '@proton/shared/lib/helpers/initSafa
  import { telemetry } from '@proton/shared/lib/telemetry';
- 
+
  import PrivateApp from './PrivateApp';
 -import PublicApp, { publicRoutes } from './PublicApp';
++import PublicApp from './PublicApp';
  import config from './config';
  import locales from './locales';
  import { extendStore, setupStore } from './store/store';
-@@ -33,20 +30,8 @@ const bootstrapApp = () => {
-     initLogicalProperties();
+@@ -32,20 +30,7 @@ const bootstrapApp = () => {
+     bootstrap.init({ config, authentication, locales });
      initSafariFontFixClassnames();
      extendStore({ authentication, api, history, config });
 -    let session: PersistedSession | undefined = undefined;
@@ -104,9 +104,8 @@ index 641bd5ad29..9061e4b46f 100644
 -        session = initStandaloneSession({ authentication, api });
 -    }
 -    const privateApp = Boolean(session);
-+
 +    const privateApp = Boolean(authentication.UID);
- 
+
      if (!privateApp) {
          telemetry.init({ config, uid: authentication.UID });
 --
@@ -118,7 +117,7 @@ index c75b6faf9a..6b4aecd088 100644
 @@ -5,6 +5,8 @@ import '@proton/polyfill';
  import App from './App';
  import './style';
- 
+
 +window.sessionStorage.setItem("electron_mail:proton_app_name", "proton-vpn-settings");
 +
  const container = document.querySelector('.app-root');
@@ -126,25 +125,35 @@ index c75b6faf9a..6b4aecd088 100644
  root.render(<App />);
 --
 
-diff --git a/applications/vpn-settings/src/app/MainContainer.tsx b/applications/vpn-settings/src/app/MainContainer.tsx
-index 911e5745ca..34dffeb5b8 100644
---- a/applications/vpn-settings/src/app/MainContainer.tsx
-+++ b/applications/vpn-settings/src/app/MainContainer.tsx
-@@ -85,6 +85,7 @@ import {
-     useModalState,
-     useRecoveryNotification,
-     useToggle,
-+    AppsDropdown,
- } from '@proton/components';
- import SSODomainUnverifiedBanner from '@proton/components/containers/account/sso/SSODomainUnverifiedBanner';
- import { getIsSectionAvailable, getRoutePaths, getSectionPath } from '@proton/components/containers/layout/helper';
-@@ -246,7 +247,7 @@ const MainContainer: FunctionComponent = () => {
-     const sidebar = (
+diff --git a/applications/vpn-settings/src/app/VPNSidebar.tsx b/applications/vpn-settings/src/app/VPNSidebar.tsx
+index 3fe92c6ca9..dc375074f8 100644
+--- a/applications/vpn-settings/src/app/VPNSidebar.tsx
++++ b/applications/vpn-settings/src/app/VPNSidebar.tsx
+@@ -2,7 +2,7 @@ import type { RefObject } from 'react';
+ import { useLocation } from 'react-router-dom';
+
+ import type { SectionConfig, SidebarConfig } from '@proton/components';
+-import { MainLogo } from '@proton/components';
++import { AppsDropdown, MainLogo } from '@proton/components';
+ import Loader from '@proton/components/components/loader/Loader';
+ import SettingsListItem from '@proton/components/components/sidebar/SettingsListItem';
+ import Sidebar from '@proton/components/components/sidebar/Sidebar';
+@@ -43,7 +43,7 @@ export const VPNSidebar = ({
+         return (
+             <Sidebar
+                 app={APPS.PROTONVPN_SETTINGS}
+-                appsDropdown={null}
++                appsDropdown={<AppsDropdown app={APPS.PROTONDRIVE} />}
+                 logo={<MainLogo to="/" />}
+                 expanded={sidebarExpanded}
+                 onToggleExpand={onSidebarToggle}
+@@ -59,7 +59,7 @@ export const VPNSidebar = ({
+     return (
          <Sidebar
              app={APPS.PROTONVPN_SETTINGS}
 -            appsDropdown={null}
-+            appsDropdown={<AppsDropdown app={app} />}
-             logo={logo}
-             expanded={expanded}
-             onToggleExpand={onToggleExpand}
++            appsDropdown={<AppsDropdown app={APPS.PROTONDRIVE} />}
+             logo={<MainLogo to="/" />}
+             expanded={sidebarExpanded}
+             onToggleExpand={onSidebarToggle}
 --

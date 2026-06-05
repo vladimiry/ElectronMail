@@ -1,9 +1,9 @@
 diff --git a/applications/mail/src/app/components/list/banners/auto-delete/variations/AutoDeleteFreeBanner.tsx b/applications/mail/src/app/components/list/banners/auto-delete/variations/AutoDeleteFreeBanner.tsx
-index 5daa32c0a6..6314fc5668 100644
+index 0b47b64327..036d4d2a57 100644
 --- a/applications/mail/src/app/components/list/banners/auto-delete/variations/AutoDeleteFreeBanner.tsx
 +++ b/applications/mail/src/app/components/list/banners/auto-delete/variations/AutoDeleteFreeBanner.tsx
-@@ -4,6 +4,10 @@ import { Button } from '@proton/atoms';
- import { AutoDeleteUpsellModal, PromotionBanner, useModalState } from '@proton/components';
+@@ -6,6 +6,10 @@ import AutoDeleteUpsellModal from '@proton/components/components/upsell/modals/A
+ import { PromotionBanner } from '@proton/components/containers/banner/PromotionBanner';
 
  const AutoDeleteFreeBanner = () => {
 +    if (___ELECTRON_MAIL_PROTON_SUPPRESS_UPSELL_ADS_PLACEHOLDER___) {
@@ -50,21 +50,21 @@ index caa1609454..723bf63519 100644
 +++ b/packages/components/components/topnavbar/TopNavbarUpsell.tsx
 @@ -22,6 +22,7 @@ const LazyTopNavbarUpsellInner = lazy(
  );
- 
+
  const TopNavbarUpsell = ({ app, offerProps }: Props) => {
 +    if (___ELECTRON_MAIL_PROTON_SUPPRESS_UPSELL_ADS_PLACEHOLDER___) return null;
      const [subscription] = useSubscription();
      const [organization] = useOrganization();
      const [userSettings, loadingUserSettings] = useUserSettings();
 
-diff --git a/applications/drive/src/app/components/layout/sidebar/SidebarStorageUpsell.tsx b/applications/drive/src/app/components/layout/sidebar/SidebarStorageUpsell.tsx
-index ec235827b2..2f0524cab5 100644
---- a/applications/drive/src/app/components/layout/sidebar/SidebarStorageUpsell.tsx
-+++ b/applications/drive/src/app/components/layout/sidebar/SidebarStorageUpsell.tsx
-@@ -105,6 +105,10 @@ const getStorageUpsell = ({ app, user }: { app: APP_NAMES; user: UserModel }) =>
+diff --git a/applications/drive/src/app/legacy/components/layout/sidebar/SidebarStorageUpsell.tsx b/applications/drive/src/app/legacy/components/layout/sidebar/SidebarStorageUpsell.tsx
+index f7770e8be8..5466339c46 100644
+--- a/applications/drive/src/app/legacy/components/layout/sidebar/SidebarStorageUpsell.tsx
++++ b/applications/drive/src/app/legacy/components/layout/sidebar/SidebarStorageUpsell.tsx
+@@ -107,6 +107,10 @@ const getStorageUpsell = ({ app, user }: { app: APP_NAMES; user: UserModel }) =>
          };
      }
- 
+
 +    // by putting this "ads supressing" here, after the Danger ads got processed
 +    // we suppressing only non-Danger ads below (“Danger” indicates 100% full storage and likely requires user action)
 +    if (___ELECTRON_MAIL_PROTON_SUPPRESS_UPSELL_ADS_PLACEHOLDER___) return null;
@@ -72,9 +72,9 @@ index ec235827b2..2f0524cab5 100644
      if (details.drive.type === SpaceState.Warning && details.base.type === SpaceState.Warning) {
          const result = app === APPS.PROTONDRIVE ? getDriveWarning() : getBaseWarning();
          return {
-@@ -179,6 +183,7 @@ const SidebarStorageUpsell = ({ app, storageRef }: Props) => {
+@@ -181,6 +185,7 @@ const SidebarStorageUpsell = ({ app, storageRef }: Props) => {
      );
- 
+
      if (!upsellOutsideOfDrive) {
 +        if (___ELECTRON_MAIL_PROTON_SUPPRESS_UPSELL_ADS_PLACEHOLDER___) return null;
          const hasDriveSpecificUpsell =
@@ -82,13 +82,13 @@ index ec235827b2..2f0524cab5 100644
              app === APPS.PROTONDRIVE && (user.Subscribed === PRODUCT_BIT.DRIVE || user.Subscribed === 0);
 
 diff --git a/packages/components/containers/payments/subscription/SidebarStorageUpsell.tsx b/packages/components/containers/payments/subscription/SidebarStorageUpsell.tsx
-index 8e1ec16c81..620da0ac56 100644
+index 6f1b8f13b8..7057cc4aa1 100644
 --- a/packages/components/containers/payments/subscription/SidebarStorageUpsell.tsx
 +++ b/packages/components/containers/payments/subscription/SidebarStorageUpsell.tsx
-@@ -99,6 +99,10 @@ const getStorageUpsell = ({ app, user }: { app: APP_NAMES; user: UserModel }) =>
+@@ -101,6 +101,10 @@ const getStorageUpsell = ({ app, user }: { app: APP_NAMES; user: UserModel }) =>
          };
      }
- 
+
 +    // by putting this "ads supressing" here, after the Danger ads got processed
 +    // we suppressing only non-Danger ads below (“Danger” indicates 100% full storage and likely requires user action)
 +    if (___ELECTRON_MAIL_PROTON_SUPPRESS_UPSELL_ADS_PLACEHOLDER___) return null;
@@ -96,23 +96,24 @@ index 8e1ec16c81..620da0ac56 100644
      if (details.drive.type === SpaceState.Warning && details.base.type === SpaceState.Warning) {
          const result = app === APPS.PROTONDRIVE ? getDriveWarning() : getBaseWarning();
          return {
-@@ -158,6 +162,7 @@ const SidebarStorageUpsell = ({ app }: Props) => {
-     );
- 
-     if (!data) {
-+        if (___ELECTRON_MAIL_PROTON_SUPPRESS_UPSELL_ADS_PLACEHOLDER___) return null;
-         const hasDriveSpecificUpsell =
-             // Drive specific upsell if subscribed to a drive plan or free plan.
-             // Warning: changing these conditions might break UI in DriveSidebar.tsx
+@@ -174,6 +178,8 @@ const SidebarStorageUpsell = ({ app }: Props) => {
+         return null;
+     }
+
++    if (___ELECTRON_MAIL_PROTON_SUPPRESS_UPSELL_ADS_PLACEHOLDER___) return null;
++
+     return (
+         <div className="p-4 pt-3">
+             <div className="mb-2 flex justify-space-between">
 
 diff --git a/packages/components/containers/payments/subscription/YourStorageSection.tsx b/packages/components/containers/payments/subscription/YourStorageSection.tsx
-index 6b7b1dea34..624b5a25c6 100644
+index 66901a80b9..0683398ed4 100644
 --- a/packages/components/containers/payments/subscription/YourStorageSection.tsx
 +++ b/packages/components/containers/payments/subscription/YourStorageSection.tsx
 @@ -170,6 +170,10 @@ const YourStorageSection = ({ app }: Props) => {
                          return getBaseDanger();
                      }
- 
+
 +                    // by putting this "ads supressing" here, after the Danger ads got processed
 +                    // we suppressing only non-Danger ads below (“Danger” indicates 100% full storage and likely requires user action)
 +                    if (___ELECTRON_MAIL_PROTON_SUPPRESS_UPSELL_ADS_PLACEHOLDER___) return null;
@@ -120,15 +121,23 @@ index 6b7b1dea34..624b5a25c6 100644
                      if (details.drive.type === SpaceState.Warning && details.base.type === SpaceState.Warning) {
                          return app === APPS.PROTONDRIVE ? getDriveWarning() : getBaseWarning();
                      }
+@@ -206,6 +210,7 @@ const YourStorageSection = ({ app }: Props) => {
+                 if (!data || !user.canPay) {
+                     return null;
+                 }
++                if (___ELECTRON_MAIL_PROTON_SUPPRESS_UPSELL_ADS_PLACEHOLDER___) return null;
+                 return (
+                     <div className="mb-6 mt-4">
+                         <PromotionBanner
 
 diff --git a/packages/components/containers/topBanners/StorageTopBanner/SplitStorageLimitTopBanner.tsx b/packages/components/containers/topBanners/StorageTopBanner/SplitStorageLimitTopBanner.tsx
-index f72d934842..86bf52cd1b 100644
+index 2e7aa48e47..2c19c097c0 100644
 --- a/packages/components/containers/topBanners/StorageTopBanner/SplitStorageLimitTopBanner.tsx
 +++ b/packages/components/containers/topBanners/StorageTopBanner/SplitStorageLimitTopBanner.tsx
 @@ -60,6 +60,10 @@ export const SplitStorageLimitTopBanner = ({
          return null;
      }
- 
+
 +    // by putting this "ads supressing" here, after the Danger ads got processed
 +    // we suppressing only non-Danger ads below (“Danger” indicates 100% full storage and likely requires user action)
 +    if (___ELECTRON_MAIL_PROTON_SUPPRESS_UPSELL_ADS_PLACEHOLDER___) return null;
@@ -193,8 +202,8 @@ index f3df722c46..c353629215 100644
  }: Optional<Omit<Props, 'tooltipText' | 'buttonContent'>, 'onClick'>) => {
 +    if (___ELECTRON_MAIL_PROTON_SUPPRESS_UPSELL_ADS_PLACEHOLDER___) {
 +        return null;
-+    }    
++    }
      const { toggleDrawerApp } = useDrawer();
      const isVPNDrawerEnabled = useVPNDrawer();
- 
+
 --

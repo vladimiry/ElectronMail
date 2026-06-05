@@ -1,3 +1,65 @@
+diff --git a/packages/encrypted-search/lib/esIDB/indexedDB.ts b/packages/encrypted-search/lib/esIDB/indexedDB.ts
+index 9b7df06f08..3686f75065 100644
+--- a/packages/encrypted-search/lib/esIDB/indexedDB.ts
++++ b/packages/encrypted-search/lib/esIDB/indexedDB.ts
+@@ -33,16 +33,7 @@ async function cleanupESDB(esDB: IDBPDatabase<EncryptedSearchDB>, userID: string
+  * @param userID
+  * @returns true if the IDB exists, false otherwise
+  */
+-export const hasESDB = async (userID: string) => {
+-    try {
+-        const dbName = getDBName(userID);
+-        // indexedDB.databases() is unsupported on Firefox < 126
+-        const databases = await indexedDB.databases();
+-        return databases.some(({ name }) => name === dbName);
+-    } catch {
+-        return false;
+-    }
+-};
++export const hasESDB = async (userID: string) => false;
+
+ /**
+  * Open an existing IDB for the given user. If the DB hadn't already existed,
+--
+diff --git a/packages/shared/lib/helpers/browser.ts b/packages/shared/lib/helpers/browser.ts
+index d3d162fbea..c7948d03ec 100644
+--- a/packages/shared/lib/helpers/browser.ts
++++ b/packages/shared/lib/helpers/browser.ts
+@@ -224,30 +224,9 @@ export const openNewTab = (url: string) => {
+ export const doesNotSupportEarlyAccessVersion = () => isSafari() && Number(ua.browser.major) < 14;
+
+ export async function detectStorageCapabilities(): Promise<{ isAccessible: boolean; hasIndexedDB: boolean }> {
+-    // Check for IndexedDB API
+-    const hasIndexedDB = 'indexedDB' in globalThis;
+-
+-    // Attempt to open a test database
+-    const testDB = async () => {
+-        try {
+-            const request = indexedDB.open('_test');
+-            await new Promise((resolve, reject) => {
+-                request.onerror = () => reject(request.error);
+-                request.onsuccess = () => {
+-                    request.result.close();
+-                    indexedDB.deleteDatabase('_test');
+-                    resolve(true);
+-                };
+-            });
+-            return true;
+-        } catch (e) {
+-            return false;
+-        }
+-    };
+-
+     return {
+-        hasIndexedDB,
+-        isAccessible: await testDB(),
++        hasIndexedDB: false,
++        isAccessible: false,
+     };
+ }
+
+--
+
 diff --git a/packages/shared/lib/helpers/desktop.ts b/packages/shared/lib/helpers/desktop.ts
 index 46e37be189..6b61a03912 100644
 --- a/packages/shared/lib/helpers/desktop.ts
@@ -5,7 +67,7 @@ index 46e37be189..6b61a03912 100644
 @@ -14,7 +14,7 @@ export const SUPPORTED_ELECTRON_APP: APP_NAMES[] = [
      APPS.PROTONMEET,
  ];
- 
+
 -export const isElectronApp = /electron/i.test(ua.ua);
 +export const isElectronApp = false;
  export const isElectronOnMac = isElectronApp && isMac();
@@ -22,20 +84,19 @@ index 46e37be189..6b61a03912 100644
 --
 
 diff --git a/packages/shared/lib/helpers/browser.ts b/packages/shared/lib/helpers/browser.ts
-index 5a82fb1e2c..6bc1d54ca6 100644
+index d3d162fbea..e5079afb51 100644
 --- a/packages/shared/lib/helpers/browser.ts
 +++ b/packages/shared/lib/helpers/browser.ts
-@@ -3,6 +3,23 @@ import UAParser from 'ua-parser-js';
- import { Version } from '@proton/shared/lib/helpers/version';
- 
+@@ -6,6 +6,22 @@ import noop from '@proton/utils/noop';
  const uaParser = new UAParser();
-+
+ const ua = uaParser.getResult();
+
 +{
 +    const platform = String(navigator.platform);
 +    const userAgents = {
-+        linux: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
-+        windows: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
-+        macos: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
++        linux: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
++        windows: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
++        macos: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
 +    } as const;
 +    uaParser.setUA(
 +        platform.startsWith("Linux")
@@ -46,10 +107,10 @@ index 5a82fb1e2c..6bc1d54ca6 100644
 +    );
 +}
 +
- const ua = uaParser.getResult();
- 
  export const hasModulesSupport = () => {
-@@ -205,13 +222,12 @@ export const requireDirectAction = () => isSafari() || isFirefox() || isEdgeChro
+     const script = document.createElement('script');
+     return 'noModule' in script;
+@@ -210,13 +226,12 @@ export const requireDirectAction = () => isSafari() || isFirefox() || isEdgeChro
   * @links { https://mathiasbynens.github.io/rel-noopener/}
   */
  export const openNewTab = (url: string) => {
@@ -67,8 +128,9 @@ index 5a82fb1e2c..6bc1d54ca6 100644
 +        ),
 +    );
  };
- 
+
  // On safari < 14 the Version cookie is sent for index.html file but
+--
 
 diff --git a/packages/components/components/link/SettingsLink.tsx b/packages/components/components/link/SettingsLink.tsx
 index 5081c4003..cde37c0cb 100644
@@ -98,11 +160,11 @@ index 36bd0c712..c2fb3681c 100644
      }
 
 diff --git a/packages/components/containers/app/StandaloneApp.tsx b/packages/components/containers/app/StandaloneApp.tsx
-index 69e6172ef0..a032bc484b 100644
+index dc3c738b1e..94d2acfe58 100644
 --- a/packages/components/containers/app/StandaloneApp.tsx
 +++ b/packages/components/containers/app/StandaloneApp.tsx
 @@ -16,7 +16,7 @@ import useInstance from '@proton/hooks/useInstance';
- import { ProtonStoreProvider } from '@proton/redux-shared-store';
+ import { ProtonStoreProvider } from '@proton/redux-shared-store/sharedProvider';
  import { ignoredActions, ignoredPaths } from '@proton/redux-shared-store/sharedSerializable';
  import createApi from '@proton/shared/lib/api/createApi';
 -import { APPS } from '@proton/shared/lib/constants';
@@ -111,9 +173,9 @@ index 69e6172ef0..a032bc484b 100644
  import type { ProtonConfig } from '@proton/shared/lib/interfaces';
  import { createUnauthenticatedApi } from '@proton/shared/lib/unauthApi/unAuthenticatedApi';
 @@ -25,7 +25,7 @@ import noop from '@proton/utils/noop';
- 
+
  import '@proton/styles/scss/_proton-account.scss';
- 
+
 -const config = { APP_NAME: APPS.PROTONACCOUNT, APP_VERSION: '5.0.999.999', API_URL: '/api' } as ProtonConfig;
 +const config = { APP_NAME: APPS.PROTONACCOUNT, APP_VERSION: '5.0.999.999', API_URL: '___ELECTRON_MAIL_PROTON_API_ENTRY_URL_PLACEHOLDER___' } as ProtonConfig;
  const api = createApi({ config });
@@ -142,7 +204,7 @@ index 8562025c49..55cbbd7842 100644
 --- a/packages/components/containers/login/MinimalLoginContainer.tsx
 +++ b/packages/components/containers/login/MinimalLoginContainer.tsx
 @@ -5,8 +5,6 @@ import { c } from 'ttag';
- 
+
  import { Button } from '@proton/atoms/Button/Button';
  import { CircleLoader } from '@proton/atoms/CircleLoader/CircleLoader';
 -import Checkbox from '@proton/components/components/input/Checkbox';
@@ -218,7 +280,7 @@ index c72145327e..bd29c31242 100644
  export default useLoad;
 
 diff --git a/packages/shared/lib/apps/apps.ts b/packages/shared/lib/apps/apps.ts
-index 457052b361..a724666553 100644
+index 1220f80854..ebfba7166b 100644
 --- a/packages/shared/lib/apps/apps.ts
 +++ b/packages/shared/lib/apps/apps.ts
 @@ -1,4 +1,4 @@
@@ -227,22 +289,24 @@ index 457052b361..a724666553 100644
  import { isElectronMail } from '../helpers/desktop';
  import type { OrganizationExtended, User } from '../interfaces';
  import { getIsExternalUserWithoutProtonAddressCreation, getIsGlobalSSOAccount, getIsSSOVPNOnlyAccount } from '../keys';
-@@ -93,7 +93,7 @@ export const getAvailableApps = (
-     const availableAppsByOrganization = getAvailableAppsByOrganization(options);
-     return allApps.filter((app) => {
-         return !removeApps.has(app) && availableAppsByUser.has(app) && availableAppsByOrganization.has(app);
+@@ -126,7 +126,7 @@ export const getAvailableApps = (
+             availableAppsByOrganization.has(app) &&
+             !forbiddenApps.has(app)
+         );
 -    });
-+    }).filter((value) => ELECTRON_MAIL_APPS.includes(value as typeof ELECTRON_MAIL_APPS[number]));
++    }).filter((app) => ELECTRON_MAIL_APPS.includes(app as typeof ELECTRON_MAIL_APPS[number]));
  };
- 
+
  export const appSupportsSSO = (appName?: APP_NAMES) => {
 
-diff --git a/applications/drive/src/app/store/_documents/useDriveDocsFeatureFlag.ts b/applications/drive/src/app/store/_documents/useDriveDocsFeatureFlag.ts
-index a085c6868f..5647645b59 100644
---- a/applications/drive/src/app/store/_documents/useDriveDocsFeatureFlag.ts
-+++ b/applications/drive/src/app/store/_documents/useDriveDocsFeatureFlag.ts
-@@ -1,14 +1,8 @@
--import { useFlag } from '@proton/unleash';
+--
+
+diff --git a/applications/drive/src/app/legacy/store/_documents/useDriveDocsFeatureFlag.ts b/applications/drive/src/app/legacy/store/_documents/useDriveDocsFeatureFlag.ts
+index 9b2c8e19c9..8e25ebed16 100644
+--- a/applications/drive/src/app/legacy/store/_documents/useDriveDocsFeatureFlag.ts
++++ b/applications/drive/src/app/legacy/store/_documents/useDriveDocsFeatureFlag.ts
+@@ -1,14 +1,6 @@
+-import { useFlag } from '@proton/unleash/useFlag';
 -
  /**
   * Contains logic relating to the availability of Proton Docs.
@@ -252,10 +316,31 @@ index a085c6868f..5647645b59 100644
 -
 -    const isDocsEnabled = !disabled;
 -
-     return {
+-    return {
 -        isDocsEnabled,
-+        isDocsEnabled: false,
-     };
+-    };
++    return {isDocsEnabled:false};
+ };
+
+diff --git a/packages/drive-store/store/_documents/useDriveDocsFeatureFlag.ts b/packages/drive-store/store/_documents/useDriveDocsFeatureFlag.ts
+index 9b2c8e19c9..8e25ebed16 100644
+--- a/packages/drive-store/store/_documents/useDriveDocsFeatureFlag.ts
++++ b/packages/drive-store/store/_documents/useDriveDocsFeatureFlag.ts
+@@ -1,14 +1,6 @@
+-import { useFlag } from '@proton/unleash/useFlag';
+-
+ /**
+  * Contains logic relating to the availability of Proton Docs.
+  */
+ export const useDriveDocsFeatureFlag = () => {
+-    const disabled = useFlag('DriveDocsDisabled');
+-
+-    const isDocsEnabled = !disabled;
+-
+-    return {
+-        isDocsEnabled,
+-    };
++    return {isDocsEnabled:false};
  };
 
 diff --git a/packages/components/containers/topBanners/DesktopNotificationTopBanner.tsx b/packages/components/containers/topBanners/DesktopNotificationTopBanner.tsx

@@ -1,33 +1,29 @@
 diff --git a/package.json b/package.json
-index 0195dc8bea..a16225db6d 100644
+index cb439a93b1..27fefb7381 100644
 --- a/package.json
 +++ b/package.json
-@@ -3,13 +3,9 @@
+@@ -3,9 +3,8 @@
      "private": true,
      "license": "GPL-3.0",
      "workspaces": [
 -        "applications/*",
+         "applications/lumo/src/app/lib/lumo-api-client",
 -        "applications/pass-desktop/native",
 +        "applications/mail",
          "packages/*",
          "packages/wasm/*",
--        "tests",
--        "tests/mail-renderer",
--        "tests/packages/*",
-         "utilities/*",
-         "vendor/*/*"
-     ],
+         "packages/pass/docs/starlight",
 --
 
 diff --git a/applications/mail/package.json b/applications/mail/package.json
-index 01087d2bfb..5f3401dfc0 100644
+index f4717b138e..471b305b36 100644
 --- a/applications/mail/package.json
 +++ b/applications/mail/package.json
 @@ -7,7 +7,6 @@
      "main": "index.js",
      "scripts": {
          "analyze": "yarn build:web --analyze",
--        "build:web": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --appMode=sso --logical",
+-        "build:web": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --appMode=sso",
          "check-types": "tsc",
          "i18n:extract:web": "proton-i18n extract",
          "i18n:getlatest": "proton-i18n upgrade",
@@ -54,7 +50,7 @@ index d26f7a814a..4a6f898a86 100644
 @@ -36,14 +36,6 @@ const result = (opts: WebpackEnvArguments): Configuration => {
              perf_hooks: path.resolve(__dirname, './perf_hooks_polyfill.ts'),
          };
- 
+
 -        // The order is important so that the unsupported file is loaded after
 -        config.entry = mergeEntry(config.entry, {
 -            ['eo-index']: [path.resolve('./src/app/eo.tsx'), getSupportedEntry()],
@@ -83,10 +79,10 @@ index d26f7a814a..4a6f898a86 100644
 -                inject: 'body',
 -            })
 -        );
- 
+
          config.experiments = { asyncWebAssembly: true };
      });
--- 
+--
 
 diff --git a/packages/shared/lib/api/auth.ts b/packages/shared/lib/api/auth.ts
 index efbf28b89f..432f24b303 100644
@@ -122,7 +118,7 @@ index 409ff52c4c..f8ea946a6a 100644
 --- a/packages/mail/store/messages/messagesTypes.ts
 +++ b/packages/mail/store/messages/messagesTypes.ts
 @@ -20,12 +20,12 @@ export interface OutsideKey {
- 
+
  export interface PublicPrivateKey {
      type: 'publicPrivate';
 -    decryptionKeys: PrivateKeyReference[];
@@ -130,10 +126,10 @@ index 409ff52c4c..f8ea946a6a 100644
      encryptionKey: PrimaryAddressKeyForEncryption;
      signingKeys: PrimaryAddressKeysForSigning;
  }
- 
+
 -export type MessageKeys = PublicPrivateKey | OutsideKey;
 +/*<electron-mail-mark>*/export type MessageKeys = PublicPrivateKey | OutsideKey;/*</electron-mail-mark>*/
- 
+
  export interface MessageErrors {
      network?: Error[];
 @@ -101,7 +101,7 @@ export interface MessageVerification {
@@ -143,7 +139,7 @@ index 409ff52c4c..f8ea946a6a 100644
 -    verifyingKeys: PublicKeyReference[] | undefined;
 +    /*<electron-mail-mark>*/verifyingKeys: PublicKeyReference[] | undefined;/*</electron-mail-mark>*/
  }
- 
+
  export interface AbstractMessageImage {
 --
 
@@ -163,7 +159,7 @@ index 50a1bd0b27..af00b9eed3 100644
 @@ -73,9 +73,9 @@ export const queryMessageMetadata = ({
      },
  });
- 
+
 -export const queryMessageCount = ({ AddressID, OnlyInInboxForCategories }: CountParams) => ({
 +export const queryMessageCount = ({ AddressID, OnlyInInboxForCategories }: CountParams) => ({ // track signature
      method: 'get',
@@ -171,7 +167,7 @@ index 50a1bd0b27..af00b9eed3 100644
 +    url: 'mail/v4/messages/count', // url used by "buildMessagesCountApiUrlTester" in src/electron-preload/webview/primary/provider-api/index.ts
      params: { AddressID, OnlyInInboxForCategories },
  });
- 
+
 --
 
 diff --git a/packages/shared/lib/api/interface.ts b/packages/shared/lib/api/interface.ts
@@ -181,7 +177,7 @@ index 3da116f255..918d5bde86 100644
 @@ -3,7 +3,9 @@ export interface PaginationParams {
      PageSize?: number;
  }
- 
+
 -export interface CountParams {
 -    AddressID?: string;
 -    OnlyInInboxForCategories: 1 | 0 | undefined;
@@ -193,20 +189,19 @@ index 3da116f255..918d5bde86 100644
 +} // track
 +// </electron-mail-mark>
 --
- 
+
 diff --git a/applications/mail/src/app/router/RouterLabelContainer.tsx b/applications/mail/src/app/router/RouterLabelContainer.tsx
-index 5c6bcc4537..c2702a8b5d 100644
+index c4aca9e193..56b82c7302 100644
 --- a/applications/mail/src/app/router/RouterLabelContainer.tsx
 +++ b/applications/mail/src/app/router/RouterLabelContainer.tsx
-@@ -177,7 +177,7 @@ export const RouterLabelContainer = ({
-         <div
+@@ -251,6 +251,7 @@ export const RouterLabelContainer = ({
              ref={elementRef}
              tabIndex={-1}
--            className="flex flex-1 flex-nowrap outline-none relative"
-+            className="flex flex-1 flex-nowrap outline-none relative electron-mail-mailbox-container-component"
-             data-testid="mailbox"
-         >
-             <ResizableWrapper
+             className={clsx(
++                'electron-mail-mailbox-container-component',
+                 'outline-none relative',
+                 shouldSeeWideToolbars ? 'flex flex-column flex-1 flex-nowrap' : 'flex flex-1 flex-nowrap'
+             )}
 
 diff --git a/applications/mail/src/app/helpers/attachment/attachmentLoader.ts b/applications/mail/src/app/helpers/attachment/attachmentLoader.ts
 index 92c8a131f2..dd3593d6e9 100644
@@ -215,7 +210,7 @@ index 92c8a131f2..dd3593d6e9 100644
 @@ -55,6 +55,7 @@ export const getRequest = ({ ID = '' }: Attachment = {}, api: Api, messageKeys:
      return api(getAttachment(ID));
  };
- 
+
 +/* <electron-mail-mark> 1) track signature/args 2) track "verification" props use ("verifyingKeys" prop only at the moment) */
  export const getDecryptedAttachment = async (
      attachment: Attachment,
@@ -227,20 +222,20 @@ index 92c8a131f2..dd3593d6e9 100644
 -                verification?.verifyingKeys
 +                verification?.verifyingKeys // tracking that only "verifyingKeys" prop is used from "verification"
              );
- 
+
              const verificationStatus = getVerificationStatusFromKeys(
                  decryptedAttachment,
 -                verification?.verifyingKeys || []
 +                verification?.verifyingKeys || [] // tracking that only "verifyingKeys" prop is used from "verification"
              );
- 
+
              return {
 @@ -116,6 +117,7 @@ export const getDecryptedAttachment = async (
          throw newError;
      }
  };
 +/* </electron-mail-mark> */
- 
+
  export const getAndVerifyAttachment = async (
      attachment: Attachment = {},
 
@@ -266,7 +261,7 @@ index 090195038b..199317aba7 100644
 --- a/packages/shared/lib/interfaces/VerificationPreferences.ts
 +++ b/packages/shared/lib/interfaces/VerificationPreferences.ts
 @@ -4,7 +4,7 @@ import type { KeyTransparencyVerificationResult } from './KeyTransparency';
- 
+
  export interface VerificationPreferences {
      isOwnAddress: boolean;
 -    verifyingKeys: PublicKeyReference[];
@@ -298,7 +293,7 @@ index 9ae89d95b2..0d3e293926 100644
 @@ -29,15 +29,17 @@ const binaryToString = (data: Uint8Array<ArrayBuffer>) =>
          // nbsp can be contained in message body and "crash" DOMPurify
          .replace(/\u00A0/g, ' ');
- 
+
 +/* <electron-mail-mark> */
  export interface DecryptMessageResult {
 -    decryptedBody: string;
@@ -313,7 +308,7 @@ index 9ae89d95b2..0d3e293926 100644
      mimetype?: MIME_TYPES;
  }
 +/* </electron-mail-mark> */
- 
+
  const decryptMimeMessage = async (
      message: Message,
 @@ -98,11 +100,11 @@ const decryptMimeMessage = async (
@@ -340,11 +335,11 @@ index 6360a876f1..e0c9287e45 100644
 @@ -7,7 +7,7 @@ import type { Message } from '@proton/shared/lib/interfaces/mail/Message';
  export type GetMessageKeys = (message: Pick<Message, 'AddressID'>) => Promise<PublicPrivateKey>;
  export type UseGetMessageKeys = () => GetMessageKeys;
- 
+
 -export const useGetMessageKeys: UseGetMessageKeys = () => {
 +export const useGetMessageKeys: UseGetMessageKeys = (/* <electron-mail-mark> signature tracking */) => {
      const getAddressKeysByUsage = useGetAddressKeysByUsage();
- 
+
      return useCallback(
 
 diff --git a/packages/components/hooks/useApi.ts b/packages/components/hooks/useApi.ts
@@ -454,39 +449,38 @@ index 2aaa779d3..487f54ff3 100644
  };
 
 diff --git a/applications/mail/src/app/components/drawer/MailQuickSettings.tsx b/applications/mail/src/app/components/drawer/MailQuickSettings.tsx
-index d7d0b0cc55..b8dcbabc67 100644
+index 34fa7f78fd..52cfdd344c 100644
 --- a/applications/mail/src/app/components/drawer/MailQuickSettings.tsx
 +++ b/applications/mail/src/app/components/drawer/MailQuickSettings.tsx
-@@ -63,7 +63,6 @@ import { useCanReplayOnboarding } from 'proton-mail/hooks/useCanReplayOnboarding
- 
- import { QuickSettingsRemoveCategoriesBadge } from '../categoryView/categoryBadge/QuickSettingsRemoveCategoriesBadge';
+@@ -61,7 +61,6 @@ import { useCanReplayOnboarding } from 'proton-mail/hooks/useCanReplayOnboarding
+
+ import { DebugMailStoreButton } from '../debug/DebugMailStoreButton';
  import ClearBrowserDataModal from '../header/ClearBrowserDataModal';
 -import MailDefaultHandlerModal from '../header/MailDefaultHandlerModal';
- 
+
  interface QuickSettingsSelectOption {
      value: any;
-@@ -457,7 +456,6 @@ const MailQuickSettings = () => {
+@@ -454,7 +453,6 @@ const MailQuickSettings = () => {
              </QuickSettingsButtonSection>
- 
+
              {ElectronDefaultAppPrompt}
 -            <MailDefaultHandlerModal {...mailDefaultHandlerProps} />
              <ClearBrowserDataModal {...clearBrowserDataProps} />
              <MailShortcutsModal {...mailShortcutsProps} />
              <KeyTransparencyDetailsModal {...keyTransparencyDetailsModalProps} />
---
 
 diff --git a/applications/mail/src/app/components/header/MailDefaultHandlerModal.tsx b/applications/mail/src/app/components/header/MailDefaultHandlerModal.tsx
 deleted file mode 100644
-index ff8545d6d6..0000000000
+index 59806648ea..0000000000
 --- a/applications/mail/src/app/components/header/MailDefaultHandlerModal.tsx
 +++ /dev/null
 @@ -1,43 +0,0 @@
 -import { c } from 'ttag';
 -
--import { Href } from '@proton/atoms/Href/Href';
 -import { Button } from '@proton/atoms/Button/Button';
--import type { ModalProps } from '@proton/components';
--import { Prompt } from '@proton/components';
+-import { Href } from '@proton/atoms/Href/Href';
+-import type { ModalProps } from '@proton/components/components/modalTwo/Modal';
+-import Prompt from '@proton/components/components/prompt/Prompt';
 -import { MAIL_APP_NAME } from '@proton/shared/lib/constants';
 -import { getKnowledgeBaseUrl } from '@proton/shared/lib/helpers/url';
 -
@@ -524,278 +518,6 @@ index ff8545d6d6..0000000000
 -};
 -
 -export default MailDefaultHandlerModal;
---
-
-diff --git a/applications/mail/src/app/components/header/search/MailSearch.tsx b/applications/mail/src/app/components/header/search/MailSearch.tsx
-index 3037dfe782..06a6ff849c 100644
---- a/applications/mail/src/app/components/header/search/MailSearch.tsx
-+++ b/applications/mail/src/app/components/header/search/MailSearch.tsx
-@@ -114,8 +114,7 @@ const MailSearch = ({ labelID, location, columnMode }: Props) => {
-             )}
-             <SearchOverlay id={uid} isOpen={isOpen} anchorRef={anchorRef} onClose={close}>
-                 <AdvancedSearch
--                    // We hide ES on mobile
--                    showEncryptedSearch={!isMobile()}
-+                    showEncryptedSearch={false}
-                     onClose={close}
-                     esIndexingProgressState={esIndexingProgressState}
-                     showMore={showMore}
---
-
-diff --git a/applications/mail/src/app/components/header/search/AdvancedSearch.tsx b/applications/mail/src/app/components/header/search/AdvancedSearch.tsx
-index 001007076f..5c81d6169e 100644
---- a/applications/mail/src/app/components/header/search/AdvancedSearch.tsx
-+++ b/applications/mail/src/app/components/header/search/AdvancedSearch.tsx
-@@ -28,7 +28,6 @@ import AddressInput from 'proton-mail/components/composer/addresses/AddressInput
- import { useEncryptedSearchContext } from '../../../containers/EncryptedSearchProvider';
- import { extractSearchParameters, filterFromUrl, keywordToString, setFilterInUrl } from '../../../helpers/mailboxUrl';
- import AddressesInput from '../../composer/addresses/AddressesInput';
--import EncryptedSearchField from './AdvancedSearchFields/EncryptedSearchField';
- import LocationField from './AdvancedSearchFields/LocationField';
- import SearchField from './AdvancedSearchFields/SearchField';
- 
-@@ -253,7 +252,6 @@ const AdvancedSearch = ({
-                 />
-             </div>
-             <div className="pt-4 px-5 pb-0">
--                {showEncryptedSearch && <EncryptedSearchField esIndexingProgressState={esIndexingProgressState} />}
-                 <div>
-                     <LocationField
-                         value={model.labelID}
---
-
-diff --git a/applications/mail/src/app/components/header/search/AdvancedSearchFields/EncryptedSearchField.tsx b/applications/mail/src/app/components/header/search/AdvancedSearchFields/EncryptedSearchField.tsx
-deleted file mode 100644
-index 843a923365..0000000000
---- a/applications/mail/src/app/components/header/search/AdvancedSearchFields/EncryptedSearchField.tsx
-+++ /dev/null
-@@ -1,226 +0,0 @@
--import type { ReactNode } from 'react';
--
--import { add } from 'date-fns';
--import { c, msgid } from 'ttag';
--
--import { Button } from '@proton/atoms/Button/Button';
--import { Tooltip } from '@proton/atoms/Tooltip/Tooltip';
--import { Info, Label, Progress, Toggle, useModalState } from '@proton/components';
--import type { ESIndexingState } from '@proton/encrypted-search';
--import { useIndexedDBSupport } from '@proton/encrypted-search/lib/hooks/useIndexedDBSupport';
--import clsx from '@proton/utils/clsx';
--
--import { useEncryptedSearchContext } from '../../../../containers/EncryptedSearchProvider';
--import { formatSimpleDate } from '../../../../helpers/date';
--import EnableEncryptedSearchModal from '../AdvancedSearchFields/EnableEncryptedSearchModal';
--
--interface Props {
--    esIndexingProgressState: ESIndexingState;
--}
--
--const EncryptedSearchField = ({ esIndexingProgressState }: Props) => {
--    const { enableContentSearch, esStatus, progressRecorderRef, pauseContentIndexing, toggleEncryptedSearch } =
--        useEncryptedSearchContext();
--
--    const {
--        isEnablingContentSearch,
--        esEnabled,
--        isDBLimited,
--        isRefreshing,
--        isEnablingEncryptedSearch,
--        isContentIndexingPaused,
--        contentIndexingDone,
--        lastContentTime,
--    } = esStatus;
--
--    const { esProgress, totalIndexingItems, estimatedMinutes, currentProgressValue } = esIndexingProgressState;
--
--    const [enableESModalProps, setEnableESModalOpen, renderEnableESModal] = useModalState();
--
--    /* Perhaps in Lockdown mode, the browser does not support IndexedDB, so we need to check for that */
--    const { isSupported: isIndexedDBSupported, error } = useIndexedDBSupport();
--
--    // Switches
--    const showProgress = isEnablingContentSearch || isContentIndexingPaused || (contentIndexingDone && isRefreshing);
--    const showSubTitleSection = contentIndexingDone && !isRefreshing && isDBLimited && !isEnablingEncryptedSearch;
--    let isEstimating = estimatedMinutes === 0 && (totalIndexingItems === 0 || esProgress !== totalIndexingItems);
--    const showToggle = isEnablingContentSearch || isContentIndexingPaused || contentIndexingDone;
--
--    // ES progress
--    const progressFromBuildEvent = isRefreshing
--        ? 0
--        : Math.ceil((progressRecorderRef.current[0] / progressRecorderRef.current[1]) * 100);
--    const progressValue = isEstimating ? progressFromBuildEvent : currentProgressValue;
--
--    // Header
--    const esTitle = <span className="mr-2">{c('Action').t`Search message content`}</span>;
--    // Remove one day from limit because the last day in IndexedDB might not be complete
--    const oldestDate = formatSimpleDate(add(new Date(lastContentTime), { days: 1 }));
--    const subTitleSection = (
--        // translator: the variable is a date, which is already localised
--        <span className="color-weak mr-2">{c('Info').jt`For messages newer than ${oldestDate}`}</span>
--    );
--
--    let esToggleTooltip = c('Info').t`Activation in progress`;
--    if (contentIndexingDone && !isEnablingContentSearch) {
--        esToggleTooltip = esEnabled
--            ? c('Info')
--                  .t`Turn off to search only by date, name, email address, or subject line. To disable search message content (and delete messages downloaded to enable this feature), go to Settings.`
--            : c('Info').t`Turn on to search the content of your messages`;
--    }
--
--    const esActivationTooltip = c('Info').t`The local database is being prepared`;
--    const esActivationLoading = isEnablingEncryptedSearch;
--    const esActivationButton = (
--        <>
--            {error && <Info className="color-danger mr-2" title={error} />}
--            <Button
--                onClick={() => setEnableESModalOpen(true)}
--                loading={esActivationLoading}
--                disabled={!isIndexedDBSupported}
--                data-testid="encrypted-search:activate"
--            >
--                {esActivationLoading ? c('Action').t`Downloading` : c('Action').t`Enable`}
--            </Button>
--        </>
--    );
--
--    const esCTA = showToggle ? (
--        <Tooltip title={esToggleTooltip}>
--            <span>
--                <Toggle
--                    id="es-toggle"
--                    className="ml-auto shrink-0"
--                    checked={contentIndexingDone && esEnabled && !isEnablingContentSearch}
--                    onChange={toggleEncryptedSearch}
--                    disabled={showProgress}
--                />
--            </span>
--        </Tooltip>
--    ) : esActivationLoading ? (
--        <Tooltip title={esActivationTooltip}>
--            <span>{esActivationButton}</span>
--        </Tooltip>
--    ) : (
--        esActivationButton
--    );
--    const info = (
--        <Info
--            questionMark
--            title={c('Info').t`Search option that lets you securely search for keywords in the body of email messages.`}
--        />
--    );
--    const esHeader = showToggle ? (
--        <Label htmlFor="es-toggle" className="text-bold p-0 pr-4 flex flex-1 items-center w-full">
--            {esTitle}
--            {info}
--        </Label>
--    ) : (
--        <div className="text-bold p-0 pr-4 flex flex-1 items-center">
--            {esTitle}
--            {info}
--        </div>
--    );
--
--    // Progress indicator
--    const totalProgress = progressRecorderRef.current[1];
--    const currentProgress = Math.min(esProgress, totalProgress);
--    isEstimating ||= currentProgress === 0;
--    let progressStatus: ReactNode = '';
--    if (isContentIndexingPaused) {
--        progressStatus = c('Info').t`Downloading paused`;
--    } else if (isEstimating) {
--        progressStatus = c('Info').t`Estimating time remaining...`;
--    } else if (isRefreshing) {
--        progressStatus = c('Info').t`Updating message content search...`;
--    } else {
--        // translator: currentProgress is a number representing the current message being fetched, totalProgress is the total number of message in the mailbox
--        progressStatus = (
--            <>
--                <span>{c('Info').t`Message download status:`}</span>
--                <span className="ml-2">
--                    {c('Info').ngettext(
--                        msgid`${currentProgress} out of ${totalProgress}`,
--                        `${currentProgress} out of ${totalProgress}`,
--                        totalProgress
--                    )}
--                </span>
--            </>
--        );
--    }
--
--    const etaMessage =
--        estimatedMinutes <= 1
--            ? c('Info').t`Estimated time remaining: Less than a minute`
--            : // translator: the variable is a positive integer (written in digits) always strictly bigger than 1
--              c('Info').ngettext(
--                  msgid`Estimated time remaining: ${estimatedMinutes} minute`,
--                  `Estimated time remaining: ${estimatedMinutes} minutes`,
--                  estimatedMinutes
--              );
--    const progressBar = (
--        <Progress
--            value={progressValue || 0}
--            aria-describedby="timeRemaining"
--            className={clsx(['my-4 flex-1', isContentIndexingPaused ? 'progress-bar--disabled' : undefined])}
--        />
--    );
--    const disablePauseResumeButton = contentIndexingDone && !isEnablingContentSearch;
--    const showPauseResumeButton = showProgress && (!contentIndexingDone || isEnablingContentSearch) && !isRefreshing;
--    const pauseResumeButton = isContentIndexingPaused ? (
--        <Button
--            shape="solid"
--            color="norm"
--            className="ml-4"
--            onClick={() => enableContentSearch()}
--            disabled={disablePauseResumeButton}
--        >
--            {c('Action').t`Resume`}
--        </Button>
--    ) : (
--        <Button className="ml-4" onClick={pauseContentIndexing} disabled={disablePauseResumeButton}>
--            {c('Action').t`Pause`}
--        </Button>
--    );
--
--    return (
--        <div className="pt-0">
--            <div className="flex flex-column">
--                <div className="flex flex-nowrap items-center mb-4">
--                    {esHeader}
--                    {esCTA}
--                </div>
--            </div>
--            {showSubTitleSection && <div className="mb-4">{subTitleSection}</div>}
--            {showProgress && (
--                <div className="mt-2 mb-4 flex flex-column">
--                    <span
--                        className="color-weak relative advanced-search-progress-status"
--                        aria-live="polite"
--                        aria-atomic="true"
--                    >
--                        {progressStatus}
--                    </span>
--                    <div className="flex justify-space-between">
--                        {progressBar}
--                        {showPauseResumeButton && pauseResumeButton}
--                    </div>
--                    <span
--                        id="timeRemaining"
--                        aria-live="polite"
--                        aria-atomic="true"
--                        className={clsx([
--                            'color-weak relative advanced-search-time-remaining',
--                            isEstimating || isContentIndexingPaused ? 'visibility-hidden' : undefined,
--                        ])}
--                    >
--                        {etaMessage}
--                    </span>
--                </div>
--            )}
--            {renderEnableESModal && <EnableEncryptedSearchModal {...enableESModalProps} />}
--        </div>
--    );
--};
--
--export default EncryptedSearchField;
 
 diff --git a/packages/encrypted-search/lib/constants.ts b/packages/encrypted-search/lib/constants.ts
 index ebdf5ee22..28adf6c62 100644
@@ -852,6 +574,6 @@ index 5a68c1fd67..2f392dea49 100644
 -    );
 +    return null;
  };
- 
+
  export default AssistantIframe;
 --

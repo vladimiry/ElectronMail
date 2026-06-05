@@ -6,7 +6,7 @@ index 17d4080dbd..7eea01f246 100644
 @@ -191,13 +191,6 @@ export const getSecondLevelDomain = (hostname: string) => {
      return hostname.slice(hostname.indexOf('.') + 1);
  };
- 
+
 -export const getRelativeApiHostname = (hostname: string) => {
 -    const idx = hostname.indexOf('.');
 -    const first = hostname.slice(0, idx);
@@ -20,7 +20,7 @@ index 17d4080dbd..7eea01f246 100644
 @@ -226,28 +219,8 @@ export const getIsConvertHostname = (hostname: string) => {
      return hostname === 'join.protonvpn.com';
  };
- 
+
 -const doesHostnameLookLikeIP = (hostname: string) => {
 -    // Quick helper function to tells us if hostname string seems to be IP address or DNS name.
 -    // Relies on a fact, that no TLD ever will probably end with a digit. So if last char is
@@ -49,7 +49,7 @@ index 17d4080dbd..7eea01f246 100644
  };
 @@ -318,7 +291,13 @@ export const getShopURL = () => {
  };
- 
+
  export const getDownloadUrl = (path: string) => {
 -    return `https://proton.me/download${path}`;
 +    const origin = ((): string => {
@@ -60,17 +60,17 @@ index 17d4080dbd..7eea01f246 100644
 +    })();
 +    return `${origin}/download${path}`;
  };
- 
+
  export const getSupportContactURL = (params: { [key: string]: string | string[] | undefined }) => {
 
 diff --git a/packages/shared/lib/fetch/helpers.ts b/packages/shared/lib/fetch/helpers.ts
-index e4089d876a..d4a820f06f 100644
+index 370acf1c5d..9389481309 100644
 --- a/packages/shared/lib/fetch/helpers.ts
 +++ b/packages/shared/lib/fetch/helpers.ts
 @@ -23,6 +23,7 @@ const appendQueryParams = (url: URL, params: { [key: string]: any }) => {
      });
  };
- 
+
 +// <electron-mail-mark>
  export const createUrl = (urlString: string, params: { [key: string]: any } = {}, origin?: string) => {
      let url: URL;
@@ -80,9 +80,9 @@ index e4089d876a..d4a820f06f 100644
      return url;
  };
 +// </electron-mail-mark>
- 
- export const getDateHeader = (headers?: Headers) => {
-     const dateHeader = headers?.get?.('date');
+
+ const getValidDate = (dateHeader: string | null | undefined) => {
+     if (!dateHeader) {
 --
 
 diff --git a/packages/shared/lib/api.ts b/packages/shared/lib/api.ts
@@ -92,7 +92,7 @@ index 9b839440b5..3d1591d32b 100644
 @@ -42,6 +42,101 @@ export function configureApi({
          ...otherDefaultHeaders,
      };
- 
+
 +    const processResponse = (() => {
 +        const rewriteUrlProps = (() => {
 +            const rewriteUrl = (() => {
@@ -198,6 +198,6 @@ index 9b839440b5..3d1591d32b 100644
 -        });
 +        }).then(processResponse);
      };
- 
+
      Object.defineProperties(cb, {
 --

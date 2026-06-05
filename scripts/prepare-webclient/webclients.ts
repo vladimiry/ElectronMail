@@ -205,7 +205,7 @@ async function executeBuildFlow(
                     },
                 }]);
             } else {
-                await execShell(["yarn", ["install"], {cwd: repoDir}], {printStdOut: false});
+                await execShell(["yarn", ["install", "--network-timeout", "100000"], {cwd: repoDir}], {printStdOut: true});
             }
 
             for (
@@ -280,7 +280,7 @@ async function executeBuildFlow(
                         "--no-sri",
                         `--api=${PROTON_API_URL_PLACEHOLDER}`,
                         `--appMode=standalone`,
-                        ...(repoType == "proton-drive" ? ["--handleSupportAndErrors", "--optimizeAssets"] : ["--logical"]),
+                        ...(repoType == "proton-drive" ? ["--handleSupportAndErrors", "--optimizeAssets", "--noLogicalScss"] : []),
                     ], {
                         cwd: repoDir,
                         env: {

@@ -10,13 +10,7 @@ import {spy as sinonSpy} from "sinon";
 import {APP_DIR_PATH, CONF, ENV, MAIN_SCRIPT_FILE, ROOT_DIR_PATH} from "src/e2e/lib/const";
 import {asyncDelay} from "src/shared/util";
 import {
-    BINARY_NAME,
-    LOCAL_WEBCLIENT_ORIGIN,
-    ONE_SECOND_MS,
-    PACKAGE_NAME,
-    PACKAGE_VERSION,
-    PRODUCT_NAME,
-    RUNTIME_ENV_USER_DATA_DIR,
+    BINARY_NAME, LOCAL_WEBCLIENT_ORIGIN, ONE_SECOND_MS, PACKAGE_NAME, PACKAGE_VERSION, PRODUCT_NAME, RUNTIME_ENV_USER_DATA_DIR,
 } from "src/shared/const";
 import {buildWorkflow} from "./workflow";
 import {mainProcessEvaluationFunctions} from "src/e2e/lib/util";
@@ -74,14 +68,14 @@ export const initAppWithTestContext = async (
         }
     })();
 
+    await asyncDelay(CONF.timeouts.encryption);
+
     expect(
         (await app.evaluate(
             mainProcessEvaluationFunctions.testMainProcessSpecificStuff, // eslint-disable-line @typescript-eslint/unbound-method
             {initial: options.initial, resolveBrowserWindowStringified: mainProcessEvaluationFunctions.resolveBrowserWindow.toString()},
         )).initial,
     ).toStrictEqual(options.initial);
-
-    await asyncDelay(CONF.timeouts.encryption);
 
     try {
         await callback(testContext);

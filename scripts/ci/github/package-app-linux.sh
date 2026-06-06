@@ -76,8 +76,3 @@ for PACKAGE_TYPE in $PACKAGE_TYPES; do
   rm -rf ./dist/*.yaml
 done
 echo "::endgroup::"
-
-echo "::group::hash & upload"
-pnpm run scripts/dist-packages/print-hashes
-pnpm run scripts/dist-packages/upload
-echo "::endgroup::"

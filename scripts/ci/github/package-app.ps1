@@ -56,8 +56,3 @@ echo "::group::package"
 Run -cmd "pnpm run build:electron-builder-hooks"
 Run -cmd "pnpm run electron-builder:dist"
 echo "::endgroup::"
-
-echo "::group::hash & upload"
-Run -cmd "pnpm run scripts/dist-packages/print-hashes"
-Run -cmd "pnpm run scripts/dist-packages/upload"
-echo "::endgroup::"

@@ -138,7 +138,14 @@ const bareMakeExec = async (cwd: string, ...args: string[]): Promise<void> => {
     };
     await execShell(
         ["pnpm", ["exec", "bare-make", ...args, "--verbose"], {cwd, env: {...process.env, ...extraEnvVars}}],
-        {printEnvWhitelist: [...Object.values(ENV_VAR_NAMES), ...Object.keys(extraEnvVars), ...MSVS_HEADERS_ON_GITHUB_ACTIONS]},
+        {
+            printEnvWhitelist: [
+                ...Object.values(ENV_VAR_NAMES),
+                ...Object.keys(extraEnvVars),
+                ...MSVS_HEADERS_ON_GITHUB_ACTIONS,
+                "LD_LIBRARY_PATH",
+            ],
+        },
     );
 };
 

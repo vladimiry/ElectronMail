@@ -90,6 +90,22 @@ jobs:
         if: matrix.os == 'macos-latest'
         run: ./scripts/ci/github/package-app-osx.sh
         env: { ELECTRON_MAIL_NODE_DEST_ARCH: 'arm64' }
+      - name: hash app packages
+        run: pnpm run scripts/dist-packages/print-hashes
+      - uses: actions/create-github-app-token@v3
+        continue-on-error: true
+        id: upload-to-gh-draft-release___token
+        with:
+          client-id: ${{ secrets.APP___ELECTRONMAIL_UPLOAD_RELEASE_ASSET___CLIENT_ID }}
+          private-key: ${{ secrets.APP___ELECTRONMAIL_UPLOAD_RELEASE_ASSET___PRIVATE_KEY }}
+      - name: upload app packages (primary)
+        if: steps.upload-to-gh-draft-release___token.outcome == 'success'
+        run: pnpm run scripts/dist-packages/upload-to-gh-draft-release
+        env:
+          GITHUB_TOKEN: ${{ steps.upload-to-gh-draft-release___token.outputs.token }}
+      - name: upload app packages (fallback)
+        if: steps.upload-to-gh-draft-release___token.outcome != 'success'
+        run: pnpm run scripts/dist-packages/upload
       - name: upload e2e output
         if: ${{ always() }}
         uses: actions/upload-artifact@v7

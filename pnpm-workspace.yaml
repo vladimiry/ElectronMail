@@ -34,3 +34,6 @@ updateConfig:
     - 'ndx-query'
     - 'ngx-bootstrap'
     - 'pureimage'
+overrides:
+  'cmake-runtime': '4.1.1' # pin binary compatible with old Linux (used by "bare-make" to compile "sodium-native")
+  'ninja-runtime': '1.13.1' # pin binary compatible with old Linux (used by "bare-make" to compile "sodium-native")

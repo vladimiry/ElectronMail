@@ -29,13 +29,13 @@ if (typeof fetch !== "function") {
     throw new Error(`Unexpected "${nameof(fetch)}" type: ${typeof fetch}`);
 }
 
-export const makeConsoleTextYellow = (value: string): string => {
+export const colorConsoleText = (value: string): string => {
     return /*reset:*/ "\x1b[0m" + /*yellow:*/ "\x1b[33m" + value + /*reset:*/ "\x1b[0m";
 };
 
 export const CONSOLE_LOG: typeof console.log = (...args) => {
     return console.log( // eslint-disable-line no-console
-        makeConsoleTextYellow(">>>"),
+        colorConsoleText(">>>"),
         ...args,
     );
 };
@@ -77,7 +77,7 @@ export async function execShell(
         const optionsPart = stringifiedOptions !== "{}"
             ? ` (options: ${stringifiedOptions})`
             : "";
-        CONSOLE_LOG(`Executing Shell command${optionsPart}: ${makeConsoleTextYellow([command, ...(args ?? [])].join(" "))}`);
+        CONSOLE_LOG(`Executing Shell command${optionsPart}: ${colorConsoleText([command, ...(args ?? [])].join(" "))}`);
     }
 
     const spawnPromise = spawnAsync(command, args, {

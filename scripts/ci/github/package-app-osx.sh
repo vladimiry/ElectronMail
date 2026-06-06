@@ -38,8 +38,3 @@ echo "::group::package"
 pnpm run build:electron-builder-hooks
 pnpm run electron-builder:dist --${ELECTRON_MAIL_NODE_DEST_ARCH}
 echo "::endgroup::"
-
-echo "::group::hash & upload"
-pnpm run scripts/dist-packages/print-hashes
-pnpm run scripts/dist-packages/upload
-echo "::endgroup::"

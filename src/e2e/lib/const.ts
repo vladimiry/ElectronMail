@@ -17,7 +17,7 @@ export const CONF = {
     timeouts: {
         element: ONE_SECOND_MS,
         elementTouched: ONE_SECOND_MS * (IS_CI ? 1.5 : 0.3),
-        encryption: ONE_SECOND_MS * (IS_CI ? 10 : 1.5),
+        encryption: ONE_SECOND_MS * (IS_CI ? 7 : 1.5),
         transition: ONE_SECOND_MS * (IS_CI ? 3 : 0.3),
         logout: ONE_SECOND_MS * (IS_CI ? 20 : 8),
         loginFilledOnce: ONE_SECOND_MS * (IS_CI ? 60 : 15),

@@ -17,5 +17,5 @@ export async function listInstallationPackageFiles(dir: string): Promise<string[
         deep: 1,
         onlyFiles: true,
         stats: false,
-    });
+    }).then((values) => values.filter((value) => !value.endsWith(".blockmap")));
 }

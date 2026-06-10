@@ -284,7 +284,7 @@ export class OptionsEffects {
                                 ) {
                                     _logger.error(error, {cause: String((error as DecryptionError).cause)});
                                     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                                    error.message = "Failed to decrypt the settings storage";
+                                    error.message = "Failed to decrypt the settings storage. Make sure the entered password is correct.";
                                 }
                                 return of(
                                     NOTIFICATION_ACTIONS.ErrorSkipLogging(

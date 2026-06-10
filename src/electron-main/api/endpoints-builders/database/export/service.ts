@@ -84,35 +84,35 @@ const formatExportedAttachmentContent = (attachmentContent: DeepReadonly<DbExpor
 const formatEmlAttachment = (
     attachments: readonly File[],
     boundaryString: string,
+    contentDispositionFilter?: "attachment" | "inline",
     attachmentsContent?: DeepReadonly<DbExportMailAttachmentItem[]>,
 ): string => {
     validateAttachmentsCount({downloaded: attachmentsContent?.length, declared: attachments.length});
 
-    return attachments.reduce((accumulator, {mimeType, name, id}, currentIndex) => {
-        const base64Name = `=?UTF-8?B?${Base64.encode(name)}?=`;
-        // TODO throw error of "attachment content" is falsy
-        const attachmentContent = attachmentsContent && attachmentsContent[currentIndex];
-        const contentDispositionType = (attachmentContent && attachmentContent.Headers["content-disposition"]) || "attachment";
-        const contentId = (attachmentContent && attachmentContent.Headers["content-id"]) || id;
+    return attachments.reduce((previousValue, attachment, currentIndex) => {
+        const base64Name = `=?UTF-8?B?${Base64.encode(attachment.name)}?=`;
+        const content = attachmentsContent && attachmentsContent[currentIndex];
+        const contentId = content?.Headers["content-id"] ?? attachment.id;
+        const contentDispositionHeader = content?.Headers["content-disposition"] ?? "attachment";
 
-        return accumulator
-            + [
-                `--${boundaryString}`,
-                eol,
-                `Content-Type: ${mimeType || "application/octet-stream"}; filename="${base64Name}"; name="${base64Name}"`,
-                eol,
-                "Content-Transfer-Encoding: base64",
-                eol,
-                `Content-Disposition: ${contentDispositionType}; filename=${base64Name}`,
-                eol,
-                `Content-ID: ${contentId}`,
-                eol,
-                eol,
-                (attachmentContent
-                    ? formatExportedAttachmentContent(attachmentContent)
-                    // TODO throw error of "attachment content" is falsy
-                    : "") + eol,
-            ].join("");
+        return contentDispositionFilter && contentDispositionHeader !== contentDispositionFilter
+            ? previousValue
+            : previousValue
+                + [
+                    `--${boundaryString}`,
+                    eol,
+                    `Content-Type: ${attachment.mimeType || "application/octet-stream"}; filename="${base64Name}"; name="${base64Name}"`,
+                    eol,
+                    "Content-Transfer-Encoding: base64",
+                    eol,
+                    `Content-Disposition: ${contentDispositionHeader}; filename=${base64Name}`,
+                    eol,
+                    `Content-ID: ${contentId}`,
+                    eol,
+                    eol,
+                    content ? formatExportedAttachmentContent(content) : "",
+                    eol,
+                ].join("");
     }, "");
 };
 
@@ -208,14 +208,14 @@ const contentBuilders: Record<
                     ...(
                         // to prevent duplication if no attachment content set then we write stub attachments only once in "mixed" boundary
                         attachmentsContent
-                            // inline attachments ("related" boundary)
-                            ? formatEmlAttachment(mail.attachments, relatedBoundary, attachmentsContent)
+                            ? formatEmlAttachment(mail.attachments, relatedBoundary, "inline", attachmentsContent)
                             : []
                     ),
                     `--${relatedBoundary}--`,
                     eol,
                 ],
-                ...formatEmlAttachment(mail.attachments, mixedBoundary, attachmentsContent), // attachments ("mixed" boundary)
+                // if no attachment content set then all attachment file names get listed here, so no need to pass "content-disposition"
+                ...formatEmlAttachment(mail.attachments, mixedBoundary, attachmentsContent ? "attachment" : undefined, attachmentsContent),
                 `--${mixedBoundary}--`,
             ],
             eol,

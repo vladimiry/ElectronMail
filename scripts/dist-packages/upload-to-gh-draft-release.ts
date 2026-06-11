@@ -36,21 +36,17 @@ async function uploadToDraftRelease(
     const resolvedFilePath = path.resolve(filePath);
     const assetFileName = path.basename(resolvedFilePath);
 
-    if (!GITHUB_TOKEN || !OWNER || !REPO) {
-        throw new Error("Missing required environment variables: GITHUB_TOKEN / OWNER / REPO");
-    }
-    if (!fs.existsSync(resolvedFilePath)) {
-        throw new Error(`File not found at path: ${resolvedFilePath}`);
-    }
+    if (!GITHUB_TOKEN || !OWNER || !REPO) throw new Error("Missing required environment variables: GITHUB_TOKEN / OWNER / REPO");
+    if (!fs.existsSync(resolvedFilePath)) throw new Error(`File not found at path: ${resolvedFilePath}`);
 
-    const {id: releaseId, upload_url: releaseUploadUrl, draft: releaseDraft} = await (async () => {
+    const {id: releaseId, upload_url: releaseUploadUrl, draft: releaseDraftFlag} = await (async () => {
         type Release = {id: number; name: string; upload_url: string; draft: boolean};
         consoleLog(`List existing releases to pick draft one with "${tag}" name...`);
         const releasesResponse = await fetch(`${API_BASE_URL}/repos/${OWNER}/${REPO}/releases`, {method: "GET", headers: API_HEADERS});
         const releases = await parseResponse<Array<Release>>(releasesResponse, "Failed to list releases");
         const existingRelease: Release | undefined = releases.find(({name}) => name === tag);
         if (existingRelease) {
-            consoleLog(`Found existing release (ID: ${existingRelease.id}).`);
+            consoleLog("Found existing release.");
             return existingRelease;
         }
         consoleLog("Existing release not found. Creating a new one...");
@@ -60,13 +56,11 @@ async function uploadToDraftRelease(
             body: JSON.stringify({tag_name: tag, name: tag, draft: true}),
         });
         const newRelease = await parseResponse<Release>(newReleaseResponse, "Failed to create release");
-        consoleLog(`Created new release (ID: ${newRelease.id}).`);
+        consoleLog("Created new release.");
         return newRelease;
     })();
 
-    if (!releaseDraft) {
-        throw new Error(`Resolved release with "${tag}" name for further processing, but not "draft" type`);
-    }
+    if (!releaseDraftFlag) throw new Error(`Resolved release with "${tag}" name for uploading asset, but not "draft" type`);
 
     await (async () => {
         const response = await fetch(`${API_BASE_URL}/repos/${OWNER}/${REPO}/releases/${releaseId}/assets`, {
@@ -77,14 +71,12 @@ async function uploadToDraftRelease(
         const existing = assets.find(({name}) => name === assetFileName);
         if (!existing) return;
         if (!overwriting) throw new Error(`File "${assetFileName}" already exists on the release and overwriting is disabled.`);
-        consoleLog(`File "${assetFileName}" already exists. Deleting the old asset...`);
+        consoleLog(`File "${assetFileName}" already exists - deleting it...`);
         const deleteResponse = await fetch(`${API_BASE_URL}/repos/${OWNER}/${REPO}/releases/assets/${existing.id}`, {
             method: "DELETE",
             headers: API_HEADERS,
         });
-        if (!deleteResponse.ok) {
-            throw new Error(`Failed to delete asset: ${deleteResponse.status} ${deleteResponse.statusText}`);
-        }
+        if (!deleteResponse.ok) throw new Error(`Failed to delete asset: ${deleteResponse.status} ${deleteResponse.statusText}`);
         consoleLog("Deleted old asset successfully.");
     })();
 
@@ -105,17 +97,13 @@ async function uploadToDraftRelease(
         },
     );
     const uploadedAsset = await parseResponse<{browser_download_url: string}>(uploadResponse, "Failed to upload release asset");
-    const downloadUrl = uploadedAsset.browser_download_url;
+    consoleLog(`The "${assetFileName}" file has been successfully uploaded to the "${tag}" draft release.`);
 
-    consoleLog(`The "${assetFileName}" file asset successfully uploaded to the "${tag}" draft release. Asset URL: ${downloadUrl}`);
-
-    return {downloadUrl};
+    return {downloadUrl: uploadedAsset.browser_download_url};
 }
 
 async function parseResponse<T>(response: Response, errorMessage: string): Promise<T> {
-    if (response.ok) {
-        return response.json() as T;
-    }
+    if (response.ok) return response.json() as T;
     type ErrorType = Record<keyof Pick<typeof response, "status" | "body">, unknown>;
     const error = new Error(`${errorMessage}: ${response.status} ${response.statusText}`) as unknown as ErrorType;
     error.status = response.status;

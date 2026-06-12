@@ -1,5 +1,5 @@
 import {Actions, createEffect} from "@ngrx/effects";
-import {concatMap, delay, first, map, mergeMap, withLatestFrom} from "rxjs/operators";
+import {concatMap, first, map, mergeMap, withLatestFrom} from "rxjs/operators";
 import {inject, Injectable} from "@angular/core";
 import {merge, of, race, throwError, timer} from "rxjs";
 import {produce} from "immer";
@@ -32,7 +32,8 @@ export class AccountsEffects {
                 withLatestFrom(this.store.pipe(select(AccountsSelectors.FEATURED.accounts))),
                 mergeMap(([{payload}, accounts]) => {
                     const accountConfigs = accounts.map(({accountConfig}) => accountConfig);
-                    const componentDestroyingTimeoutMs = ONE_SECOND_MS;
+                    const componentDestroyingTimeoutMs = ONE_SECOND_MS / 2;
+                    const unloadLogins = new Set([payload.login]);
                     return merge(
                         of(
                             ACCOUNTS_ACTIONS.DeSelect({login: payload.login}),
@@ -40,13 +41,15 @@ export class AccountsEffects {
                         of(
                             ACCOUNTS_ACTIONS.WireUpConfigs({
                                 accountConfigs: produce(accountConfigs, (draftState) => {
-                                    const account = draftState.find(({login}) => login === payload.login);
-                                    if (!account) {
+                                    const item = draftState.find(({login}) => login === payload.login);
+                                    if (!item) {
                                         throw new Error("Failed to resolve account by login");
                                     }
-                                    // making the component disabled in order for it to get unloaded
-                                    account.disabled = true;
+                                    // making the component disabled in order for it to get "unloaded" - UI component gets destroyed
+                                    // original value gets back with below/consequent WireUpConfigs call - fresh UI component gets created
+                                    item.disabled = true;
                                 }),
+                                notSelectableLogins: unloadLogins,
                             }),
                         ),
                         race(
@@ -61,9 +64,14 @@ export class AccountsEffects {
                                 ),
                             ),
                         ).pipe(
-                            delay(ONE_SECOND_MS / 4),
                             // restoring the original data
-                            mergeMap(() => of(ACCOUNTS_ACTIONS.WireUpConfigs({accountConfigs}))),
+                            mergeMap(() =>
+                                of(ACCOUNTS_ACTIONS.WireUpConfigs({
+                                    accountConfigs,
+                                    notSelectableLogins: unloadLogins,
+                                    loginsToResetEnabledAccountsBy: unloadLogins,
+                                }))
+                            ),
                         ),
                     );
                 }),

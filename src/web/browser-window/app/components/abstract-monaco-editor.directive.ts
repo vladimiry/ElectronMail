@@ -15,8 +15,8 @@ import {State} from "src/web/browser-window/app/store/reducers/root";
 type MonacoModule = typeof import("monaco-editor");
 
 const resolveMonacoModule = async (): Promise<MonacoModule> => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    Object.keys(Object(MONACO_EDITOR_LAZY_CHUNK_NAME)); // preserve import from being tree-shaked as "webpackChunkName" needs it
+    // preserve import from being tree-shaked as "webpackChunkName" magic comment needs it
+    ((_) => {})(MONACO_EDITOR_LAZY_CHUNK_NAME); // eslint-disable-line @typescript-eslint/no-unused-vars
     const monaco = await import(/* webpackChunkName: MONACO_EDITOR_LAZY_CHUNK_NAME */ "monaco-editor");
     return monaco;
 };

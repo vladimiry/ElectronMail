@@ -29,16 +29,13 @@ const resolveAccountByLogin = <T extends boolean>(
     accounts: WebAccount[],
     filterCriteria: LoginFieldContainer,
     strict: T,
-): typeof strict extends true ? WebAccount : WebAccount | undefined => {
+): T extends true ? WebAccount : WebAccount | undefined => {
     const filterPredicate = accountPickingPredicate(filterCriteria);
-    const webAccount: ReturnType<typeof resolveAccountByLogin> = accounts.find(({accountConfig}) => filterPredicate(accountConfig));
-
-    if (!webAccount && strict) {
+    const webAccount = accounts.find(({accountConfig}) => filterPredicate(accountConfig));
+    if (strict && !webAccount) {
         throw new Error("Failed to resolve account");
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
-    return webAccount as any;
+    return webAccount as T extends true ? WebAccount : WebAccount | undefined;
 };
 
 export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_ACTIONS> | UnionOf<typeof NAVIGATION_ACTIONS>): State {
@@ -50,54 +47,51 @@ export function reducer(state = initialState, action: UnionOf<typeof ACCOUNTS_AC
 
     return produce(state, (draftState) => {
         ACCOUNTS_ACTIONS.match(action, {
-            WireUpConfigs({accountConfigs}) {
-                const webAccounts = accountConfigs
-                    .filter((accountConfig) => !accountConfig.disabled)
-                    .reduce((accounts: WebAccount[], accountConfig) => {
-                        const account = resolveAccountByLogin(draftState.accounts, accountConfig, false);
-
-                        if (account) {
-                            account.accountConfig = accountConfig;
-                            if (!account.accountConfig.database) {
-                                delete account.databaseView;
-                            }
-                            accounts.push(account);
-                        } else {
-                            const webAccount: WebAccount = {
+            WireUpConfigs({accountConfigs, notSelectableLogins = new Set(), loginsToResetEnabledAccountsBy = new Set()}) {
+                const enabledAccounts = accountConfigs
+                    .filter(({disabled}) => !disabled)
+                    .reduce((items: WebAccount[], accountConfig) => {
+                        const existingItem = !loginsToResetEnabledAccountsBy.has(accountConfig.login)
+                            ? resolveAccountByLogin(draftState.accounts, accountConfig, false)
+                            : undefined;
+                        if (existingItem) {
+                            existingItem.accountConfig = accountConfig;
+                            if (!existingItem.accountConfig.database) delete existingItem.databaseView;
+                        }
+                        return [
+                            ...items,
+                            existingItem ?? <WebAccount> {
                                 accountIndex: -1,
                                 accountConfig,
                                 progress: {},
                                 notifications: {unread: 0, loggedIn: false},
                                 dbExportProgress: [],
-                                webviewSrcValues: {
-                                    primary: "",
-                                },
-                            };
-
-                            accounts.push(webAccount);
-                        }
-
-                        return accounts;
+                                webviewSrcValues: {primary: ""},
+                            },
+                        ];
                     }, []);
+                const selectableLogins = new Set(
+                    enabledAccounts
+                        .filter((item) => (
+                            // not "delayed" account
+                            !(item.loginDelayedUntilSelected || typeof item.loginDelayedSeconds === "number")
+                            // "delayed" account can be "selectable" if its webview has already been "navigated" with some "src"
+                            || Object.values(item.webviewSrcValues).some(Boolean)
+                        ))
+                        .map(({accountConfig: {login}}) => login),
+                ).difference(notSelectableLogins);
 
-                if (
-                    typeof draftState.selectedLogin === "undefined"
-                    || !webAccounts
-                        .map(({accountConfig: {login}}) => login)
-                        .includes(draftState.selectedLogin)
-                ) { // setting new "selected login" value
-                    const webAccountToSelect = webAccounts.find((webAccount) => {
-                        return (
-                            !webAccount.loginDelayedUntilSelected
-                            && !webAccount.loginDelayedSeconds
-                        );
-                    });
-                    draftState.selectedLogin = webAccountToSelect && webAccountToSelect.accountConfig.login;
+                // ensure "selected login" is filled with valid value
+                if (!selectableLogins.size) {
+                    delete draftState.selectedLogin;
+                } else if (typeof draftState.selectedLogin !== "string" || !selectableLogins.has(draftState.selectedLogin)) {
+                    [draftState.selectedLogin] = selectableLogins; // take first "selectable" value
                 }
 
-                webAccounts.forEach((webAccount, index) => webAccount.accountIndex = index);
+                // recalc indexes since number of accounts migh change dynamically
+                enabledAccounts.forEach((item, index) => item.accountIndex = index);
 
-                draftState.accounts = webAccounts;
+                draftState.accounts = enabledAccounts;
                 draftState.initialized = true;
             },
             Select({login}) {

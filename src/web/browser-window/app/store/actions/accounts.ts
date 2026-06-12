@@ -39,7 +39,9 @@ export const ACCOUNTS_ACTIONS = propsRecordToActionsRecord(
         SetupCommonNotificationChannel: props<{account: WebAccount; webView: Electron.WebviewTag; finishPromise: Promise<void>}>(),
         SetupMailNotificationChannel: props<{account: WebAccount; webView: Electron.WebviewTag; finishPromise: Promise<void>}>(),
         SetupCalendarNotificationChannel: props<{account: WebAccount; webView: Electron.WebviewTag; finishPromise: Promise<void>}>(),
-        WireUpConfigs: props<DeepReadonly<{accountConfigs: AccountConfig[]}>>(),
+        WireUpConfigs: props<
+            DeepReadonly<{accountConfigs: AccountConfig[]; notSelectableLogins?: Set<string>; loginsToResetEnabledAccountsBy?: Set<string>}>
+        >(),
         PatchGlobalProgress: props<{patch: State["globalProgress"]}>(),
         SelectMailOnline: props<
             {pk: WebAccountPk} & Omit<ProtonPrimaryMailApiScan["ApiImplArgs"]["selectMailOnline"][0], "accountIndex">

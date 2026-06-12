@@ -1,14 +1,13 @@
 {
   "extends": "../../../tsconfig.json",
   "compilerOptions": {
-    "target": "ES2021"
+    "typeRoots": [
+      "../../../node_modules/@types",
+      "../../../src/@types",
+      "../../../src/web/@types",
+      "./@types"
+    ]
   },
-  "typeRoots": [
-    "../../../node_modules/@types",
-    "../../../src/@types",
-    "../../../src/web/@types",
-    "./@types"
-  ],
   "exclude": [
     "./**/*.spec.ts"
   ],

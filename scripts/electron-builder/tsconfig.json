@@ -1,7 +1,7 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "module": "CommonJS",
+    "module": "esnext",
     "importHelpers": true,
     "declaration": false,
     "sourceMap": false,

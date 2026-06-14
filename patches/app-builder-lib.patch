@@ -282,7 +282,7 @@ index 300ef3dd699d0f5a081b1934fcc22dbe12025bdb..4dd7a4f79c62689125b60184482b67ce
 @@ -194,7 +194,7 @@
        !insertmacro cleanupOldMenuDirectory
        !insertmacro createMenuDirectory
- 
+
 -      CreateShortCut "$newStartMenuLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
 +      CreateShortCut "$newStartMenuLink" "$appExe" "--js-flags=$\"--max-old-space-size=12288$\"" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
        # clear error (if shortcut already exists)
@@ -306,3 +306,18 @@ index 300ef3dd699d0f5a081b1934fcc22dbe12025bdb..4dd7a4f79c62689125b60184482b67ce
            ClearErrors
            WinShell::SetLnkAUMI "$newDesktopLink" "${APP_ID}"
          ${endIf}
+diff --git a/out/targets/snap/snapcraftBuilder.js b/out/targets/snap/snapcraftBuilder.js
+index 4f226dc2b395ec761775ab39df336fa990487bdc..94110c75465be3114a4be063be88d329770bf42d 100644
+--- a/out/targets/snap/snapcraftBuilder.js
++++ b/out/targets/snap/snapcraftBuilder.js
+@@ -179,6 +179,10 @@ async function buildSnap(options) {
+     }
+     // Config validation — throws InvalidConfigurationError, no build artifacts exist yet.
+     validateSnapcraftConfig(snapcraftConfig);
++    {
++        const {stdout} = await execAsync("node ./scripts/electron-builder/hook-before-snapcraft-validation.cjs ./dist/__snap-amd64/snap ./dist/__snap-amd64/snap/../app");
++        builder_util_1.log.info({stdout}, "");
++    }
+     try {
+         await validateSnapcraftYamlWithCLI(stageDir);
+     }

@@ -69,6 +69,7 @@ jobs:
       - { name: assets, run: 'yarn assets', env: { ELECTRON_MAIL_SHOULD_FAIL_ON_BUILD: 'true' } }
       - { name: print ./app files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./app }
       - { name: build, if: runner.os == 'Windows', run: ./scripts/ci/github/package-app.ps1 }
+      - { name: setup lxd, if: runner.os == 'Linux', uses: canonical/setup-lxd@main }
       - name: build native deps using "ubuntu:20.04" docker image
         if: runner.os == 'Linux'
         run: |

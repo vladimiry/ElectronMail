@@ -4,12 +4,10 @@ set -ev
 
 echo "::group::tweak the system"
 sudo apt-get update
-# - snapcraft: for snap tweaking
 # - squashfs-tools: for snap tweaking
 # - libarchive-tools: includes bsdtar for pacman builds
 # - desktop-file-utils: needed for AppImage packaging
 sudo apt-get install --yes --no-install-recommends \
-  snapcraft \
   squashfs-tools \
   libarchive-tools \
   desktop-file-utils
@@ -68,11 +66,16 @@ pnpm run build:electron-builder-hooks
 if [ "$(uname -m)" != "x86_64" ]; then
   PACKAGE_TYPES="pacman deb rpm"
 else
-  PACKAGE_TYPES="pacman snap appimage deb rpm freebsd"
+  PACKAGE_TYPES="snap pacman deb rpm appimage freebsd"
 fi
+# enable extended pattern matching + case-insensitive globs
+shopt -s extglob nocaseglob
 for PACKAGE_TYPE in $PACKAGE_TYPES; do
+  if [ "$PACKAGE_TYPE" = "snap" ]; then
+    sudo snap install snapcraft --classic
+  fi
   pnpm run "electron-builder:dist:linux:${PACKAGE_TYPE}"
-  rm -rf ./dist/linux-unpacked
-  rm -rf ./dist/*.yaml
+  # delete all except prepared packages (case-insensitive)
+  rm -rf ./dist/!(*.@(${PACKAGE_TYPES// /|}))
 done
 echo "::endgroup::"

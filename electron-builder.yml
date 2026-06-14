@@ -49,15 +49,17 @@ linux:
   executableArgs:
     - '--js-flags="--max-old-space-size=12288"'
 
-snap:
-  confinement: strict
-  stagePackages:
-    - default
-  plugs:
-    - default
-    - password-manager-service
-  environment:
-    DISABLE_WAYLAND: 1
+snapcraft:
+  base: core24
+  core24:
+    confinement: strict
+    plugs:
+      - browser-support
+      - desktop
+      - desktop-legacy
+      - network
+      - password-manager-service
+    useLXD: true
 
 win:
   artifactName: ${name}-${version}-windows-${arch}.${ext}

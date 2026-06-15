@@ -5,6 +5,7 @@
 name: 'GitHub Actions CI'
 on: { push: { branches: [master] }, pull_request: { branches: [master] } }
 env: { ELECTRON_MAIL_NODE_VERSION: 24, PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 }
+permissions: { contents: read }
 jobs:
   build-proton-clients:
     if: github.event_name == 'push'
@@ -12,12 +13,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - &common-step_checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # (v6) 2026-06-02
+        with:
+          persist-credentials: false
       - &common-step_setup-pnpm
-        uses: pnpm/action-setup@v6
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # (v6) 2026-05-12
         with: { version: 'latest' }
       - &common-step_setup-node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # (v6) 2026-04-20
         with: { node-version: '${{ env.ELECTRON_MAIL_NODE_VERSION }}', cache: 'pnpm' }
       - &common-step_envinfo
         name: envinfo
@@ -26,7 +29,7 @@ jobs:
         name: install node modules
         run: 'pnpm install --frozen-lockfile --reporter=append-only'
       - name: cache artifact
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # (v5) 2026-04-13
         with:
           path: |
             ./output/git/backup
@@ -36,7 +39,7 @@ jobs:
       - { name: build, run: ./scripts/ci/prepare-webclients.sh }
       - { name: print ./output/git/backup files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./output/git/backup }
       - { name: tar artifact, run: tar -cvf proton-clients-artifact.tar ./output/git/backup ./app/assets/db-search-monaco-editor }
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # (v7) 2026-04-10
         with: { name: proton-clients-artifact, path: ./proton-clients-artifact.tar, if-no-files-found: error }
   build-app:
     strategy: { matrix: { os: [ubuntu-22.04, windows-2022, macos-latest] }, fail-fast: false }
@@ -49,7 +52,7 @@ jobs:
       - *common-step_install-node-modules
       - { name: build, run: 'npm exec --package=npm-run-all -- npm-run-all lint build' }
       - { name: print ./app files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./app }
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # (v7) 2026-04-10
         with: { name: 'app-artifact-${{ runner.os }}', path: ./app, if-no-files-found: error }
   package-app:
     if: github.event_name == 'push'
@@ -63,13 +66,19 @@ jobs:
       - *common-step_setup-node
       - *common-step_envinfo
       - *common-step_install-node-modules
-      - { name: download proton clients artifact, uses: actions/download-artifact@v8, with: { name: proton-clients-artifact } }
+      - name: download proton clients artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # (v8) 2026-03-11
+        with: { name: proton-clients-artifact }
       - { name: unpack proton clients artifact, shell: bash, run: tar -xvf ./proton-clients-artifact.tar }
-      - { name: download app artifact, uses: actions/download-artifact@v8, with: { name: 'app-artifact-${{ runner.os }}', path: ./app } }
+      - name: download app artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # (v8) 2026-03-11
+        with: { name: 'app-artifact-${{ runner.os }}', path: ./app }
       - { name: assets, run: 'yarn assets', env: { ELECTRON_MAIL_SHOULD_FAIL_ON_BUILD: 'true' } }
       - { name: print ./app files, shell: bash, run: ./scripts/ci/list-fs-content.sh ./app }
       - { name: build, if: runner.os == 'Windows', run: ./scripts/ci/github/package-app.ps1 }
-      - { name: setup lxd, if: runner.os == 'Linux', uses: canonical/setup-lxd@main }
+      - name: setup lxd
+        if: runner.os == 'Linux'
+        uses: canonical/setup-lxd@da2ac84e727dc534215fd14cd088b9209d65893b # (main) 2026-05-29
       - name: build native deps using "ubuntu:20.04" docker image
         if: runner.os == 'Linux'
         run: |
@@ -93,7 +102,7 @@ jobs:
         env: { ELECTRON_MAIL_NODE_DEST_ARCH: 'arm64' }
       - name: hash app packages
         run: pnpm run scripts/dist-packages/print-hashes
-      - uses: actions/create-github-app-token@v3
+      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # (v3) 2026-05-12
         continue-on-error: true
         id: upload-to-gh-draft-release___token
         with:
@@ -109,5 +118,5 @@ jobs:
         run: pnpm run scripts/dist-packages/upload
       - name: upload e2e output
         if: ${{ always() }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # (v7) 2026-04-10
         with: { name: 'output-e2e-artifact-${{ matrix.os }}', path: ./output/e2e }

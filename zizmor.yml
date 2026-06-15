@@ -1,0 +1,5 @@
+rules:
+  github-app:
+    ignore:
+      # the App linked to "actions/create-github-app-token" is locked down to "contents: write" in GH settings
+      - main.yml

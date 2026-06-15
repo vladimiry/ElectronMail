@@ -1,4 +1,4 @@
-import {Directive, Injector, Input, inject} from "@angular/core";
+import {Directive, inject, Injector, Input} from "@angular/core";
 import {distinctUntilChanged, map, mergeMap, switchMap, take} from "rxjs/operators";
 import {EMPTY, lastValueFrom} from "rxjs";
 import type {Observable} from "rxjs";

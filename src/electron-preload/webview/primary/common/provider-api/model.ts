@@ -1,6 +1,6 @@
 import {AddInitializedProp, DefineObservableValue} from "src/electron-preload/webview/primary/lib/provider-api/model";
-import {WEBVIEW_PRIMARY_INTERNALS_KEYS} from "./const";
 import {PROVIDER_REPO_MAP, PROVIDER_REPO_STANDARD_SETUP_WEBPACK_INDEX_ENTRY_ITEMS} from "src/shared/const/proton-apps";
+import {WEBVIEW_PRIMARY_INTERNALS_KEYS} from "./const";
 
 export type Keys = StrictExclude<
     | (typeof PROVIDER_REPO_MAP)["proton-mail"]["protonPack"]["webpackIndexEntryItems"][number]

@@ -1,14 +1,6 @@
 import _logger from "electron-log";
 import {
-    app,
-    BrowserWindow,
-    clipboard,
-    Menu,
-    MenuItemConstructorOptions,
-    screen,
-    Session,
-    webContents as electronWebContents,
-    WebPreferences,
+    app, BrowserWindow, clipboard, Menu, MenuItemConstructorOptions, screen, Session, webContents as electronWebContents, WebPreferences,
 } from "electron";
 import {first} from "rxjs/operators";
 import {inspect} from "util";

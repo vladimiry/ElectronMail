@@ -1,15 +1,6 @@
 import {
-    EnumDeclaration,
-    Identifier,
-    ImportDeclaration,
-    InterfaceDeclaration,
-    Node,
-    Project,
-    SourceFile,
-    SyntaxKind,
-    TypeAliasDeclaration,
-    TypeElement,
-    TypeNode,
+    EnumDeclaration, Identifier, ImportDeclaration, InterfaceDeclaration, Node, Project, SourceFile, SyntaxKind, TypeAliasDeclaration,
+    TypeElement, TypeNode,
 } from "ts-morph";
 import fs from "fs";
 import fsExtra from "fs-extra";

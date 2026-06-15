@@ -2,10 +2,10 @@ import {combineLatest} from "rxjs";
 import {distinctUntilChanged, map} from "rxjs/operators";
 
 import {curryFunctionMembers} from "src/shared/util";
-import {WEBVIEW_PRIMARY_INTERNALS_KEYS} from "./const";
 import {resolveProviderInternals} from "./internals";
 import {resolveStandardSetupPublicApi} from "src/electron-preload/webview/primary/lib/provider-api/standart-setup-internals";
 import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
+import {WEBVIEW_PRIMARY_INTERNALS_KEYS} from "./const";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, __filename);
 

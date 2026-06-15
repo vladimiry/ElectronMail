@@ -16,5 +16,8 @@
   },
   "keepUnused": [
     ".*"
+  ],
+  "excludeGlob": [
+    "/{node_modules,app,app-dev,dist,output}/**/*"
   ]
 }

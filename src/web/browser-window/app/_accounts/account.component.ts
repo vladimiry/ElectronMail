@@ -2,17 +2,7 @@ import type {Action} from "@ngrx/store";
 import {BehaviorSubject, combineLatest, Subject, timer} from "rxjs";
 import {Component, ComponentRef, ElementRef, HostBinding, inject, Input, NgZone, ViewChild, ViewContainerRef} from "@angular/core";
 import {
-    distinctUntilChanged,
-    filter,
-    first,
-    map,
-    mergeMap,
-    pairwise,
-    startWith,
-    switchMap,
-    take,
-    takeUntil,
-    withLatestFrom,
+    distinctUntilChanged, filter, first, map, mergeMap, pairwise, startWith, switchMap, take, takeUntil, withLatestFrom,
 } from "rxjs/operators";
 import type {OnDestroy, OnInit} from "@angular/core";
 import {select, Store} from "@ngrx/store";

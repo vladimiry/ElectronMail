@@ -1,5 +1,5 @@
 import type {AfterViewInit, OnDestroy} from "@angular/core";
-import {Directive, ElementRef, QueryList, ViewChildren, inject} from "@angular/core";
+import {Directive, ElementRef, inject, QueryList, ViewChildren} from "@angular/core";
 import {filter, map, pairwise} from "rxjs/operators";
 import {FormControl, Validators} from "@angular/forms";
 import {Observable, Subscription} from "rxjs";

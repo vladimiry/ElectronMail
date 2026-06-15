@@ -1,9 +1,6 @@
 import _logger from "electron-log";
 import {
-    OnBeforeRequestListenerDetails,
-    OnBeforeSendHeadersListenerDetails,
-    OnCompletedListenerDetails,
-    OnErrorOccurredListenerDetails,
+    OnBeforeRequestListenerDetails, OnBeforeSendHeadersListenerDetails, OnCompletedListenerDetails, OnErrorOccurredListenerDetails,
     OnHeadersReceivedListenerDetails,
 } from "electron";
 import {pick} from "remeda";

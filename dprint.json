@@ -3,8 +3,8 @@
   "useTabs": false,
   "indentWidth": 4,
   "lineWidth": 140,
+  "newLineKind": "lf",
   "typescript": {
-    "newLineKind": "lf",
     "semiColons": "prefer",
     "quoteStyle": "alwaysDouble",
     "arrowFunction.useParentheses": "force",
@@ -16,16 +16,21 @@
     "spaceSurroundingProperties": false,
     "spaceAround": false
   },
-  "prettier": {
-    "newLineKind": "lf",
+  "yaml": {
     "indentWidth": 2,
-    "yml.tabWidth": 2,
-    "yaml.tabWidth": 2,
-    "yml.singleQuote": true,
-    "yaml.singleQuote": true,
-    "associations": [
-      "**/*.{yaml,yml}"
-    ]
+    "lineBreak": "lf",
+    "quotes": "preferSingle",
+    "trailingComma": true,
+    "formatComments": false,
+    "indentBlockSequenceInMap": true,
+    "braceSpacing": true,
+    "bracketSpacing": true,
+    "dashSpacing": "oneSpace",
+    "preferSingleLine": true,
+    "trimTrailingWhitespaces": true,
+    "trimTrailingZero": false,
+    "proseWrap": "preserve",
+    "ignoreCommentDirective": "pretty-yaml-ignore"
   },
   "json": {
     "indentWidth": 2,
@@ -45,7 +50,7 @@
   ],
   "plugins": [
     "https://plugins.dprint.dev/json-0.21.3.wasm",
-    "https://plugins.dprint.dev/prettier-0.70.0.json@c91d4f147eded09b51e1b2d5f8a03940a60278b9b4dc13b23e35b6173742ec08",
-    "https://plugins.dprint.dev/typescript-0.96.0.wasm"
+    "https://plugins.dprint.dev/typescript-0.96.1.wasm",
+    "https://plugins.dprint.dev/g-plane/pretty_yaml-v0.6.0.wasm"
   ]
 }

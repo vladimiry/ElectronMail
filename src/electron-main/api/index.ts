@@ -30,12 +30,14 @@ const logger = curryFunctionMembers(electronLog, __filename);
 export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoints> => {
     const endpoints: IpcMainApiEndpoints = {
         ...await EndpointsBuilders.Account.buildEndpoints(ctx),
+        ...await EndpointsBuilders.Account.buildEndpoints(ctx),
         ...await EndpointsBuilders.Database.buildEndpoints(ctx),
         ...await EndpointsBuilders.FindInPage.buildEndpoints(ctx),
         ...await EndpointsBuilders.General.buildEndpoints(ctx),
         ...await EndpointsBuilders.ProtonSession.buildEndpoints(ctx),
         ...await EndpointsBuilders.TrayIcon.buildEndpoints(ctx),
         ...await EndpointsBuilders.UnreadNotification.buildDbUnreadNotificationEndpoints(ctx),
+        ...await EndpointsBuilders.UpdateCheck.buildEndpoints(ctx),
 
         // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async changeMasterPassword({password, newPassword}) {

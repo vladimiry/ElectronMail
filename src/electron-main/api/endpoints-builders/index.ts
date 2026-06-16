@@ -5,5 +5,6 @@ import * as General from "./general";
 import * as ProtonSession from "./proton-session";
 import * as TrayIcon from "./tray-icon";
 import * as UnreadNotification from "./unread-notification/api";
+import * as UpdateCheck from "./update-check";
 
-export {Account, Database, FindInPage, General, ProtonSession, TrayIcon, UnreadNotification};
+export {Account, Database, FindInPage, General, ProtonSession, TrayIcon, UnreadNotification, UpdateCheck};

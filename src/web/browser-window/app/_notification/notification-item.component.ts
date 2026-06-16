@@ -32,7 +32,7 @@ export class NotificationItemComponent {
             ? (
                 item.data.newReleaseItems
                     .map(({title, url, date}) => {
-                        const hint = `Published at: ${formatDate(date, "medium", this.locale)}`;
+                        const hint = formatDate(date, "medium", this.locale);
                         return url
                             ? `<a href="${url}" title="${hint}">${title}</a>`
                             : `<snap title="${hint}">${title}</snap>`;

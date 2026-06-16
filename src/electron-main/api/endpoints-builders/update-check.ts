@@ -18,6 +18,13 @@ const LOGGER = curryFunctionMembers(electronLog, __filename, API_METHOD_NAME);
 
 const RELEASE_URL_PREFIX = `${PACKAGE_GITHUB_PROJECT_URL}/releases/tag`;
 const TAG_NAME_FILTER_RE = /[^a-z0-9._-]/gi;
+// ---------------------------------------------
+// strip "-*" suffix (e.g., v5.3.7-2 => v5.3.7)
+// ---------------------------------------------
+// "semver/compareVersions" treats versions with "-*" as older than the base version
+// but we make such versions resolved as the same/base versions to avoid "new version" popups
+// since we don't want "new version v5.3.7 available"-like popup to show up to someone who already runs v5.3.7-2
+const PACKAGE_VERSION_BASE_VERSION = PACKAGE_VERSION.split("-")[0]!;
 
 const filterAssetName: (name: string) => boolean = ((): (name: string) => ReturnType<typeof filterAssetName> => {
     const keywordsRe: Readonly<Partial<Record<NodeJS.Platform, readonly string[]>>> = {
@@ -89,11 +96,11 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                     {tag_name: string; published_at: string; prerelease: boolean; assets: Array<{name: string}>}
                 > = await response.json();
 
-                LOGGER.verbose(JSON.stringify({releasesCount: releases.length, PACKAGE_VERSION, PLATFORM}));
+                LOGGER.verbose(JSON.stringify({releasesCount: releases.length, PACKAGE_VERSION, PACKAGE_VERSION_BASE_VERSION, PLATFORM}));
 
                 const newReleaseItems = releases
                     .filter(({prerelease}) => !prerelease)
-                    .filter(({tag_name: tagName}) => compareVersions(tagName, PACKAGE_VERSION) > 0)
+                    .filter(({tag_name: tagName}) => compareVersions(tagName, PACKAGE_VERSION_BASE_VERSION) > 0)
                     .filter(({assets}) => assets.some(({name}) => filterAssetName(name)))
                     .sort((o1, o2) => compareVersions(o1.tag_name, o2.tag_name))
                     .reverse()

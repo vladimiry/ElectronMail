@@ -77,10 +77,11 @@ The [reproducible builds](https://en.wikipedia.org/wiki/Reproducible_builds) ide
     - On `macOS`: `python` and [Xcode](https://developer.apple.com/xcode/download/) need to be installed. You also need to install the `Command Line Tools` via Xcode, can be found under the `Xcode -> Preferences -> Downloads` menu.
 - ProtonMail's [WebClient](https://github.com/ProtonMail/WebClient) requires `yarn` to be available on your system. Additional setup is required if you run Windows, [see](https://github.com/ProtonMail/proton-shared/wiki/setup-windows).
 - [Clone](https://help.github.com/articles/cloning-a-repository/) this project to your local device. If you are going to contribute, consider cloning the [forked](https://help.github.com/articles/fork-a-repo/) into your own GitHub account project.
+- The `Snap` package assembly requires the `Snap` and `LXD` services to be installed and activated on the system. Additionally, the `snapcraft` Snap package needs to be installed via `sudo snap install snapcraft --classic`.
 - Install [pnpm](https://pnpm.io/installation).
 - Install dependencies running `pnpm install --frozen-lockfile` (setting `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` environment variable might speed up the process).
 - Build app running `pnpm run app:dist`.
-- Build a package to install running `pnpm run electron-builder:dist` command to build Windows/Mac OS X package and one of the following commands to build Linux package:
+- Build a package to install running `pnpm run electron-builder:dist` command to build Windows/macOS package and one of the following commands to build Linux package:
     - `pnpm run electron-builder:dist:linux:appimage`
     - `pnpm run electron-builder:dist:linux:deb`
     - `pnpm run electron-builder:dist:linux:freebsd`

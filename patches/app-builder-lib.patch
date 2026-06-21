@@ -1,21 +1,8 @@
-diff --git a/out/targets/FpmTarget.js b/out/targets/FpmTarget.js
-index da2d687fc8d2c4a677a1271fd1cb9ddf6809d9bc..a67d449867fb3290f0356e34826c0c6d5f18f2cc 100644
---- a/out/targets/FpmTarget.js
-+++ b/out/targets/FpmTarget.js
-@@ -325,7 +325,7 @@ class FpmTarget extends core_1.Target {
-                     "(libuuid or libuuid1)" /* since 4.0.0 */,
-                 ];
-             case "pacman":
--                return ["c-ares", "ffmpeg", "gtk3", "http-parser", "libevent", "libvpx", "libxslt", "libxss", "minizip", "nss", "re2", "snappy", "libnotify", "libappindicator-gtk3"];
-+                return ["c-ares", "ffmpeg", "gtk3", "llhttp", "libevent", "libvpx", "libxslt", "libxss", "minizip", "nss", "re2", "snappy", "libnotify", "libappindicator-gtk3"];
-             default:
-                 return [];
-         }
-diff --git a/out/targets/snap/snapcraft.d.ts b/out/targets/snap/snapcraft.d.ts
+diff --git a/dist/targets/linux/snap/snapcraft.d.ts b/dist/targets/linux/snap/snapcraft.d.ts
 new file mode 100644
 index 0000000000000000000000000000000000000000..2ac60e9668a5790e3760db4616daf6db9a250a2a
 --- /dev/null
-+++ b/out/targets/snap/snapcraft.d.ts
++++ b/dist/targets/linux/snap/snapcraft.d.ts
 @@ -0,0 +1,258 @@
 +/**
 + * Latest TypeScript types for snapcraft.yaml
@@ -275,6 +262,19 @@ index 0000000000000000000000000000000000000000..2ac60e9668a5790e3760db4616daf6db
 +  /** Selects a part to inherit metadata from */
 +  "adopt-info"?: string
 +}
+diff --git a/dist/targets/linux/FpmTarget.js b/dist/targets/linux/FpmTarget.js
+index 6137ef9f2d0bcb9873110247663ba39a056a6372..76f7ce07b4c412892c957f2dd5bc125e66f28484 100644
+--- a/dist/targets/linux/FpmTarget.js
++++ b/dist/targets/linux/FpmTarget.js
+@@ -344,7 +344,7 @@ export default class FpmTarget extends Target {
+                     "(libuuid or libuuid1)" /* since 4.0.0 */,
+                 ];
+             case "pacman":
+-                return ["c-ares", "ffmpeg", "gtk3", "http-parser", "libevent", "libvpx", "libxslt", "libxss", "minizip", "nss", "re2", "snappy", "libnotify", "libappindicator-gtk3"];
++                return ["c-ares", "ffmpeg", "gtk3", "llhttp", "libevent", "libvpx", "libxslt", "libxss", "minizip", "nss", "re2", "snappy", "libnotify", "libappindicator-gtk3"];
+             default:
+                 return [];
+         }
 diff --git a/templates/nsis/include/installer.nsh b/templates/nsis/include/installer.nsh
 index 300ef3dd699d0f5a081b1934fcc22dbe12025bdb..4dd7a4f79c62689125b60184482b67ce74f51c3b 100644
 --- a/templates/nsis/include/installer.nsh
@@ -306,18 +306,3 @@ index 300ef3dd699d0f5a081b1934fcc22dbe12025bdb..4dd7a4f79c62689125b60184482b67ce
            ClearErrors
            WinShell::SetLnkAUMI "$newDesktopLink" "${APP_ID}"
          ${endIf}
-diff --git a/out/targets/snap/snapcraftBuilder.js b/out/targets/snap/snapcraftBuilder.js
-index 4f226dc2b395ec761775ab39df336fa990487bdc..94110c75465be3114a4be063be88d329770bf42d 100644
---- a/out/targets/snap/snapcraftBuilder.js
-+++ b/out/targets/snap/snapcraftBuilder.js
-@@ -179,6 +179,10 @@ async function buildSnap(options) {
-     }
-     // Config validation — throws InvalidConfigurationError, no build artifacts exist yet.
-     validateSnapcraftConfig(snapcraftConfig);
-+    {
-+        const {stdout} = await execAsync("node ./scripts/electron-builder/hook-before-snapcraft-validation.cjs ./dist/__snap-amd64/snap ./dist/__snap-amd64/snap/../app");
-+        builder_util_1.log.info({stdout}, "");
-+    }
-     try {
-         await validateSnapcraftYamlWithCLI(stageDir);
-     }

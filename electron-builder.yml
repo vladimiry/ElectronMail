@@ -5,8 +5,9 @@ executableName: 'electron-mail'
 publish: null
 forceCodeSigning: false
 
-# native dependencies compiling gets triggered in ./scripts/prepare-native-deps.ts
-npmRebuild: false
+nativeModules:
+  # native dependencies compiling gets triggered in ./scripts/prepare-native-deps.ts
+  npmRebuild: false
 
 directories:
   output: ./dist
@@ -18,11 +19,11 @@ files:
   - '!node_modules/**/bin/**/*.node'
   - '!node_modules/**/*.bare'
   - '!node_modules/sodium-native/{build,extensions}'
+  - '!node_modules/msgpackr-extract/bin/download-prebuilds.js'
 compression: normal
-asar: true
-asarUnpack:
-  - 'node_modules/{keytar,msgpackr-extract,sodium-native}'
-afterPack: './scripts/electron-builder/hook-after-pack.cjs'
+asar:
+  unpack:
+    - 'node_modules/{keytar,msgpackr-extract,sodium-native}'
 
 mac:
   icon: ./app/assets/icons/mac/icon.icns
@@ -44,7 +45,6 @@ linux:
   packageCategory: Office
   desktop:
     entry:
-      StartupWMClass: electron-mail
       GenericName: Unofficial ProtonMail Desktop App
   executableArgs:
     - '--js-flags="--max-old-space-size=12288"'

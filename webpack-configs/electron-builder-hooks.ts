@@ -13,14 +13,15 @@ const tsConfigFile = path.join(hooksDir, "tsconfig.json");
 
 export default async (): Promise<Configuration[]> => {
     const fileNamePrefix = "hook-";
+    const srcFilesScanPattern = `${hooksDir}/${fileNamePrefix}*.ts`;
     const hookSrcFiles = await fastGlob(
-        sanitizeFastGlobPattern(`${hooksDir}/${fileNamePrefix}*.ts`),
+        sanitizeFastGlobPattern(srcFilesScanPattern),
         {deep: 1, onlyFiles: true, stats: false},
     );
 
     CONSOLE_LOG(`Delected hook src files: ${JSON.stringify(hookSrcFiles, null, 2)}`);
 
-    return hookSrcFiles.map((hookSrcFile) => {
+    const configs = hookSrcFiles.map((hookSrcFile) => {
         const entryKey = path.basename(hookSrcFile, ".ts");
         const hookName = toCamelCase(entryKey.split(fileNamePrefix).pop()!);
         const definePluginValue = mapValues(
@@ -42,6 +43,13 @@ export default async (): Promise<Configuration[]> => {
             plugins: [new webpack.DefinePlugin(definePluginValue)],
         }, {tsConfigFile});
     });
+
+    if (!configs.length) {
+        CONSOLE_LOG(`Hooks source files not resolved by the "${srcFilesScanPattern}" pattern, skipping the respective Webpack build ...`);
+        process.exit(0);
+    }
+
+    return configs;
 };
 
 function toCamelCase(str: string): string {

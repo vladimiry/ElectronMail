@@ -81,8 +81,8 @@ export async function buildMail(
                 type: "body-decrypting",
                 appVersion: PACKAGE_VERSION,
                 date: Date.now(),
-                errorMessage: String((error as Error).message), // eslint-disable-line @typescript-eslint/no-unsafe-member-access
-                errorStack: String((error as Error).stack), // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+                errorMessage: String((error as Error).message),
+                errorStack: String((error as Error).stack),
             };
         }
     } else {

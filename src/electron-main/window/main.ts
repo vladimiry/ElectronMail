@@ -10,7 +10,7 @@ import {DEFAULT_WEB_PREFERENCES} from "./constants";
 import {initialConfig} from "src/shared/util/config";
 import {ONE_SECOND_MS, PRODUCT_NAME} from "src/shared/const";
 import {readConfigSync, resolveDefaultAppSession} from "src/electron-main/util";
-import {syncFindInPageBrowserViewSize} from "src/electron-main/window/find-in-page";
+import {syncFindInPageViewSize} from "src/electron-main/window/find-in-page";
 
 const logger = curryFunctionMembers(_logger, __filename);
 
@@ -83,7 +83,7 @@ async function keepBrowserWindowState(ctx: Context, browserWindow: Electron.Brow
         return (): void => {
             clearTimeout(timeoutId);
             timeoutId = setTimeout(saveWindowStateHandler, ONE_SECOND_MS / 2);
-            syncFindInPageBrowserViewSize(ctx); // eslint-disable-line @typescript-eslint/no-floating-promises
+            syncFindInPageViewSize(ctx); // eslint-disable-line @typescript-eslint/no-floating-promises
         };
     })();
 
@@ -158,7 +158,7 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
             });
         }
 
-        return (event as typeof event & {returnValue: boolean}).returnValue; // eslint-disable-line @typescript-eslint/no-unsafe-return
+        return (event as typeof event & {returnValue: boolean}).returnValue;
     });
 
     browserWindow.setMenu(null);

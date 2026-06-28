@@ -36,19 +36,19 @@ export const buildDbPatch = async (
         } = {
             mails: {
                 updatesArrayPropName: "Messages",
-                updatesMappedByEntityId: new Map(), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+                updatesMappedByEntityId: new Map(),
                 remove: [],
                 upsertIds: [],
             },
             folders: {
                 updatesArrayPropName: "Labels",
-                updatesMappedByEntityId: new Map(), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+                updatesMappedByEntityId: new Map(),
                 remove: [],
                 upsertIds: [],
             },
             contacts: {
                 updatesArrayPropName: "Contacts",
-                updatesMappedByEntityId: new Map(), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+                updatesMappedByEntityId: new Map(),
                 remove: [],
                 upsertIds: [],
             },

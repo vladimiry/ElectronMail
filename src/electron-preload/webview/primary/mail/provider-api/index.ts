@@ -27,7 +27,7 @@ const attachLoggingBeforeCall = (api: ProviderApi, logger: Logger): void => {
             }
             group[groupMemberProp] = (...args: unknown[]) => {
                 logger.verbose(`calling provider api function: ${groupProp}.${groupMemberProp}`);
-                return groupMember(...args); // eslint-disable-line @typescript-eslint/no-unsafe-return
+                return groupMember(...args); // eslint-disable-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
             };
         }
     }

@@ -68,6 +68,8 @@ export const buildUrlOriginsFailedMsgTester = (
 ): (url: string) => null | string => {
     const originsWhitelist = allowedOriginsOrUrls.map(parseUrlOriginWithNullishCheck);
     const originsWhitelistStr = JSON.stringify(
+        // TODO provide a compare function that depends on "String.localeCompare", to reliably sort elements alphabetically
+        // eslint-disable-next-line sonarjs/no-alphabetical-sort
         [...originsWhitelist].map((value) => value.split("").reverse().join("")).sort().map((value) => value.split("").reverse().join("")),
         null,
         2,

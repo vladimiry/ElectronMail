@@ -23,7 +23,7 @@ class Birthday extends Entity implements Model.Birthday {
     month!: Model.Birthday["month"];
 
     @IsOptional() @IsString()
-    year?: Model.Birthday["year"];
+    year: Model.Birthday["year"];
 }
 
 class ContactMailAddress extends Entity implements Model.ContactMailAddress {
@@ -73,13 +73,13 @@ export class Contact extends Entity implements Model.Contact {
     lastName!: Model.Contact["lastName"];
 
     @IsOptional() @IsString()
-    nickname?: Model.Contact["nickname"];
+    nickname: Model.Contact["nickname"];
 
     @IsString()
     role!: Model.Contact["role"];
 
     @IsOptional() @IsString()
-    title?: Model.Contact["title"];
+    title: Model.Contact["title"];
 
     @ValidateNested() @IsArray() @Type(() => ContactAddress)
     addresses!: ContactAddress[];

@@ -88,9 +88,9 @@ export const sanitizeProtonApiError = (error: unknown): typeof error extends Pro
                 }
             }
         }
-        return result as any; // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
+        return result;
     }
-    return error as any; // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
+    return error;
 };
 
 export const resolveIpcMainApi = (
@@ -110,7 +110,8 @@ export const resolveCachedConfig: resolveCachedConfigType = (() => {
         if (value) {
             return value;
         }
-        return value = await resolveIpcMainApi({logger})("readConfig")();
+        value = await resolveIpcMainApi({logger})("readConfig")();
+        return value;
     };
     return result;
 })();

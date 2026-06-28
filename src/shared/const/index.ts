@@ -56,7 +56,7 @@ export const LOCAL_WEBCLIENT_ORIGIN = `${LOCAL_WEBCLIENT_SCHEME_NAME}://${LOCAL_
 
 export const WEB_CLIENTS_BLANK_HTML_FILE_NAME = "blank.html";
 
-export const LOG_LEVELS: Readonly<LogLevel[]> = Object.keys(((stub: Record<LogLevel, null>) => stub)({ // eslint-disable-line @typescript-eslint/explicit-module-boundary-types, max-len
+export const LOG_LEVELS: Readonly<LogLevel[]> = Object.keys(((stub: Record<LogLevel, null>) => stub)({
     error: null,
     warn: null,
     info: null,
@@ -106,6 +106,8 @@ export const WEB_PROTOCOL_SCHEME = "web";
 
 export const WEB_PROTOCOL_DIR = WEB_PROTOCOL_SCHEME;
 
+export const WEB_DATAURL_PROTOCOL_SCHEME = "web-data-url";
+
 export const BROWSER_WINDOW_RELATIVE_DESKTOP_NOTIFICATION_ICON = "browser-window/desktop-notification-icon.png";
 
 export const ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN = "$URL";
@@ -119,6 +121,6 @@ export const RUNTIME_ENV_USER_DATA_DIR_BASED_KEYCHAIN_RECORD = "USER_DATA_DIR_BA
 
 // protonmail account to login during e2e tests running
 export const RUNTIME_ENV_E2E_PROTONMAIL_LOGIN = "ELECTRON_MAIL_E2E_PROTONMAIL_LOGIN";
-export const RUNTIME_ENV_E2E_PROTONMAIL_PASSWORD = "ELECTRON_MAIL_E2E_PROTONMAIL_PASSWORD";
+export const RUNTIME_ENV_E2E_PROTONMAIL_PASSWORD = "ELECTRON_MAIL_E2E_PROTONMAIL_PASSWORD"; // eslint-disable-line sonarjs/no-hardcoded-passwords, max-len
 export const RUNTIME_ENV_E2E_PROTONMAIL_2FA_CODE = "ELECTRON_MAIL_E2E_PROTONMAIL_2FA_CODE";
 export const RUNTIME_ENV_E2E_PROTONMAIL_UNREAD_MIN = "ELECTRON_MAIL_E2E_PROTONMAIL_UNREAD_MIN";

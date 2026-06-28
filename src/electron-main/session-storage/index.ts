@@ -57,7 +57,8 @@ export class SessionStorage {
         {login, apiEndpointOrigin, session}: LoginFieldContainer & ApiEndpointOriginFieldContainer & {session: AccountPersistentSession},
     ): Promise<void> {
         this.logger.info(nameof(SessionStorage.prototype.saveSession)); // eslint-disable-line @typescript-eslint/unbound-method
-        (this.entity.instance[login] ??= {})[verifyUrlOriginValue(apiEndpointOrigin)] = session;
+        this.entity.instance[login] ??= {};
+        this.entity.instance[login][verifyUrlOriginValue(apiEndpointOrigin)] = session;
         await this.saveToFile();
     }
 
@@ -65,7 +66,8 @@ export class SessionStorage {
         {login, apiEndpointOrigin, __cookieStore__}: LoginFieldContainer & ApiEndpointOriginFieldContainer & {__cookieStore__: string},
     ): Promise<void> {
         this.logger.info(nameof(SessionStorage.prototype.saveSessionStoragePatch)); // eslint-disable-line @typescript-eslint/unbound-method
-        (this.entity.sessionStoragePatchInstance[login] ??= {})[verifyUrlOriginValue(apiEndpointOrigin)] = {__cookieStore__};
+        this.entity.sessionStoragePatchInstance[login] ??= {};
+        this.entity.sessionStoragePatchInstance[login][verifyUrlOriginValue(apiEndpointOrigin)] = {__cookieStore__};
         await this.saveToFile();
     }
 

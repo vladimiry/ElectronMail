@@ -15,7 +15,8 @@ const resolveApiCallParameters = (input: Readonly<{level: LogLevel; args: unknow
 };
 
 const log = (level: LogLevel, ...args: unknown[]): void => {
-    const apiCall = (apiClient ??= resolveIpcMainApi({timeoutMs: ONE_SECOND_MS * 3}))("log");
+    apiClient ??= resolveIpcMainApi({timeoutMs: ONE_SECOND_MS * 3});
+    const apiCall = apiClient("log");
 
     apiCall(resolveApiCallParameters({level, args})).catch(async () => {
         // TODO re-call only if the "An object could not be cloned"-like error occurred

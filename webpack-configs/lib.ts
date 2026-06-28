@@ -9,8 +9,8 @@ import {merge as webpackMerge} from "webpack-merge";
 import {BuildEnvVars} from "./model";
 import {CONSOLE_LOG} from "scripts/lib";
 
-export const ENVIRONMENT: BuildEnvVars["BUILD_ENVIRONMENT"] = (() => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types, max-len
-    const NODE_ENV = process.env.NODE_ENV as Exclude<BuildEnvVars["BUILD_ENVIRONMENT"], "production"> | undefined;
+export const ENVIRONMENT: BuildEnvVars["BUILD_ENVIRONMENT"] = (() => {
+    const NODE_ENV = process.env.NODE_ENV as Extract<BuildEnvVars["BUILD_ENVIRONMENT"], "development" | "test" | "e2e"> | undefined;
     return NODE_ENV === "development" || NODE_ENV === "test" || NODE_ENV === "e2e"
         ? NODE_ENV
         : "production";

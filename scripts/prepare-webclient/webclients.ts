@@ -24,15 +24,15 @@ function resolveWebpackConfigPatchingCode(
         Object.assign(
             ${webpackConfigVarName}.optimization,
             {
-                minimize: ${!disableMinimizing /* eslint-disable-line @typescript-eslint/restrict-template-expressions */},
+                minimize: ${!disableMinimizing},
                 moduleIds: "named",
 
                 // allows resolving individual modules from "window.webpackJsonp"
-                concatenateModules: ${!disableMangling /* eslint-disable-line @typescript-eslint/restrict-template-expressions */},
+                concatenateModules: ${!disableMangling},
 
                 // allows preserving in the bundle some constants we reference in the provider api code
                 // TODO proton v4: figure how to apply "usedExports: false" to specific files only
-                usedExports: ${!disableMangling /* eslint-disable-line @typescript-eslint/restrict-template-expressions */},
+                usedExports: ${!disableMangling},
             },
         );
 
@@ -184,7 +184,7 @@ async function executeBuildFlow(
                 }
             }
 
-            // eslint-disable-next-line import/no-relative-parent-imports
+            // eslint-disable-next-line import-x/no-relative-parent-imports
             for (const patchFileName of (await import("../../patches/protonmail/meta.json", {with: {type: "json"}})).default[repoType]) {
                 await applyPatch({patchFile: path.join(CWD_ABSOLUTE_DIR, "./patches/protonmail", patchFileName), cwd: repoDir});
             }
@@ -209,7 +209,7 @@ async function executeBuildFlow(
             }
 
             for (
-                const patchFileName of // eslint-disable-next-line import/no-relative-parent-imports
+                const patchFileName of // eslint-disable-next-line import-x/no-relative-parent-imports
                 (await import("../../patches/protonmail/after_node_modules_installed/meta.json", {with: {type: "json"}}))
                     .default[repoType]
             ) {

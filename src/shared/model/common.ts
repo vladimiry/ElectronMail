@@ -7,7 +7,7 @@ export interface EntryUrlItem {
     title: string;
 }
 
-export type NumberString = string;
+export type NumberString = string; // eslint-disable-line sonarjs/redundant-type-aliases
 
 export type Logger = Pick<typeof logger, ILogLevel>;
 

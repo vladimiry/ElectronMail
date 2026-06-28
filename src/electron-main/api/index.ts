@@ -39,7 +39,6 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
         ...await EndpointsBuilders.UnreadNotification.buildDbUnreadNotificationEndpoints(ctx),
         ...await EndpointsBuilders.UpdateCheck.buildEndpoints(ctx),
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async changeMasterPassword({password, newPassword}) {
             const result = await ctx.settingsStoreQueue.q(async () => {
                 const readStore = ctx.settingsStore.clone({adapter: await buildSettingsAdapter(ctx, password)});
@@ -63,7 +62,6 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
             return result.newData;
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async staticInit() {
             const fsPromise = await import("fs/promises");
             const monacoEditorExtraLibArgs: IpcMainServiceScan["ApiImplReturns"]["staticInit"]["monacoEditorExtraLibArgs"] = {
@@ -82,7 +80,6 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
             return {electronLocations: ctx.locations, monacoEditorExtraLibArgs, os: {platform: PLATFORM}};
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async init() {
             let hasSavedPassword: boolean | undefined;
 
@@ -91,7 +88,6 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
                 ctx.keytarSupport = true;
             } catch (error) {
                 // log only one-line message in "error" mode so it doesn't affect the e2e tests
-                // eslint-disable-next-line  @typescript-eslint/no-unsafe-member-access
                 logger.error(
                     nameof(endpoints.init),
                     `"keytar" module is unsupported by the system: `,
@@ -102,7 +98,6 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
 
                 ctx.keytarSupport = false;
 
-                // eslint-disable-next-line  @typescript-eslint/no-unsafe-member-access
                 const errorMessage = String((Object(error) as {message?: string}).message).toLowerCase();
 
                 ctx.snapPasswordManagerServiceHint = errorMessage.includes("snap")
@@ -123,7 +118,6 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
             };
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async logout({skipKeytarProcessing}) {
             if (!skipKeytarProcessing && ctx.keytarSupport) {
                 await deletePassword();
@@ -142,7 +136,6 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
             IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.SignedInStateChange({signedIn: false}));
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async patchBaseConfig(patch) {
             const {updated: updatedConfig, previous: previousConfig} = await ctx.configStoreQueue.q(async () => {
                 const previous = await ctx.configStore.readExisting();
@@ -187,14 +180,11 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
             return updatedConfig;
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async readConfig() {
             return await ctx.configStore.read()
                 ?? ctx.configStoreQueue.q(async () => ctx.configStore.write(ctx.initialStores.config));
         },
 
-        // TODO update "readSettings" api method test ("no password provided" case, keytar support)
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async readSettings({password, savePassword}) {
             // trying to auto-login
             if (!password) {
@@ -245,7 +235,6 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
             return settings;
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async reEncryptSettings({encryptionPreset, password}) {
             // update the config first (as the consequent actions require it to be updated)
             await ctx.configStoreQueue.q(async () => {
@@ -268,8 +257,6 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
             return result;
         },
 
-        // TODO move to "src/electron-main/api/endpoints-builders/database"
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async loadDatabase({accounts}) {
             logger.info(nameof(endpoints.loadDatabase), "start");
 
@@ -359,7 +346,6 @@ export const initApiEndpoints = async (ctx: Context): Promise<IpcMainApiEndpoint
             logger.info(nameof(endpoints.loadDatabase), "end");
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async settingsExists() {
             return ctx.settingsStore.readable();
         },

@@ -134,11 +134,10 @@ const formatEmlAttachment = (
     }, "");
 };
 
-const formatAddresses = (prop: string, addresses: readonly MailAddress[]): ReadonlyArray<string> | string[] => {
+const formatAddresses = (prop: string, addresses: readonly MailAddress[]): ReadonlyArray<string> => {
     if (!addresses.length) {
         return emptyArray;
     }
-
     return [
         `${prop}: `,
         addresses.reduce((items: string[], {name, address}) => items.concat([name ? `"${name}" <${address}>` : address]), []).join(", "),

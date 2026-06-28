@@ -93,7 +93,7 @@ function initLocations(storeFs: StoreModel.StoreFs, paths?: ContextInitOptionsPa
         trayIconFont: appRelativePath("./assets/fonts/tray-icon/roboto-derivative.ttf"),
         browserWindowPage: formatFileUrl(appRelativePath(WEB_PROTOCOL_DIR, WEBPACK_WEB_CHUNK_NAMES["browser-window"], "index.html")),
         aboutBrowserWindowPage: appRelativePath(WEB_PROTOCOL_DIR, WEBPACK_WEB_CHUNK_NAMES.about, "index.html"),
-        searchInPageBrowserViewPage: appRelativePath(
+        searchInPageWebContentsViewPage: appRelativePath(
             WEB_PROTOCOL_DIR,
             WEBPACK_WEB_CHUNK_NAMES["search-in-page-browser-view"],
             "index.html",
@@ -101,7 +101,7 @@ function initLocations(storeFs: StoreModel.StoreFs, paths?: ContextInitOptionsPa
         preload: {
             aboutBrowserWindow: appRelativePath("./electron-preload/about/index.js"),
             browserWindow: appRelativePath(`./electron-preload/browser-window/index${BUILD_ENVIRONMENT === "e2e" ? "-e2e" : ""}.js`),
-            searchInPageBrowserView: appRelativePath("./electron-preload/search-in-page-browser-view/index.js"),
+            searchInPageWebContentsView: appRelativePath("./electron-preload/search-in-page-browser-view/index.js"),
             fullTextSearchBrowserWindow: appRelativePath("./electron-preload/database-indexer/index.js"),
             primary: formatFileUrl(
                 appRelativePath(`./electron-preload/webview/primary/index${BUILD_ENVIRONMENT === "e2e" ? "-e2e" : ""}.js`),
@@ -122,13 +122,14 @@ function isProperLockfileError(value: unknown): value is ProperLockfileError {
         && Boolean((value as ProperLockfileError).file));
 }
 
-function wrapProperLockfileError(error: ProperLockfileError): ProperLockfileError {
+function wrapProperLockfileError(error: ProperLockfileError): Error {
     const extendedMessage = [
         `. Related data file: "${error.file}".`,
         "Normally, this error indicates that the app was abnormally closed or a power loss has taken place.",
         "Please restart the app to restore its functionality (stale lock files will be removed automatically).",
     ].join(" ");
-    return Object.assign(error, {message: `${error.message} ${extendedMessage}`});
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
+    return new Error(String(Object.assign(error, {message: `${error.message} ${extendedMessage}`})));
 }
 
 export function initContext({storeFs = StoreFs.Fs.fs, ...options}: ContextInitOptions = {}): NoExtraProps<Context> {

@@ -27,7 +27,6 @@ export const buildEndpoints = async (
     >
 > => {
     const endpoints: Unpacked<ReturnType<typeof buildEndpoints>> = {
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async resolveSavedProtonClientSession({login, apiEndpointOrigin}) {
             const savedSession = ctx.sessionStorage.getSession({login, apiEndpointOrigin});
 
@@ -44,7 +43,6 @@ export const buildEndpoints = async (
             return {sessionStorage: savedSession.sessionStorage, windowName};
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async saveProtonSession({login, apiEndpointOrigin, clientSession}) {
             const session = resolveInitializedAccountSession({login, entryUrl: apiEndpointOrigin});
             const requestUrlPrimaryDomainName = resolvePrimaryDomainNameFromUrlHostname(new URL(apiEndpointOrigin).hostname);
@@ -69,12 +67,10 @@ export const buildEndpoints = async (
             await ctx.sessionStorage.saveSession(dataToSave);
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async resetSavedProtonSession({login, apiEndpointOrigin}) {
             await ctx.sessionStorage.clearSession({login, apiEndpointOrigin});
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async applySavedProtonBackendSession({login, apiEndpointOrigin}) {
             const savedSession = ctx.sessionStorage.getSession({login, apiEndpointOrigin});
 
@@ -101,17 +97,14 @@ export const buildEndpoints = async (
             return true;
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async saveSessionStoragePatch({login, apiEndpointOrigin, sessionStorageItem: {__cookieStore__}}) {
             await ctx.sessionStorage.saveSessionStoragePatch({login, apiEndpointOrigin, __cookieStore__});
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async resolvedSavedSessionStoragePatch(arg) {
             return ctx.sessionStorage.getSessionStoragePatch(arg);
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async resetProtonBackendSession({login, apiEndpointOrigin}) {
             {
                 const session = resolveInitializedAccountSession({login, entryUrl: apiEndpointOrigin});

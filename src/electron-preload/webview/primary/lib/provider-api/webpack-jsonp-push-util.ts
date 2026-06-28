@@ -64,8 +64,7 @@ export const plainChunkItemHandler = <T, RI extends {value: Record<string, unkno
         assertTypeOf({value: webpack_exports[key], expectedType: typeof valueStub}, "Failed to locate expected value type");
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
-    (resultItem as Mutable<typeof resultItem>).value = webpack_exports as any;
+    (resultItem as Mutable<typeof resultItem>).value = webpack_exports;
 
     markInternalsRecordAsInitialized();
 
@@ -97,6 +96,7 @@ export const overridePushMethodGlobally = <T>(
             const [/* chunkItemsIdx */, chunkItemsRecord] = firstArg;
 
             for (const resultKey of resultKeys) {
+                // eslint-disable-next-line sonarjs/different-types-comparison
                 const [chunkItemKey, chunkItemValue] = Object.entries(chunkItemsRecord).find(([key]) => key === resultKey)
                     ?? [null, null] as const;
 
@@ -123,13 +123,14 @@ export const overridePushMethodGlobally = <T>(
         return result;
     };
 
+    // eslint-disable-next-line sonarjs/no-nested-assignment
     (window as WebpackJsonpPropAwareWindow).webpackJsonp = new Proxy((window as WebpackJsonpPropAwareWindow).webpackJsonp ??= [], {
         set(webpackJsonp, prop, value) {
             if (prop !== "push") {
                 Object.defineProperty(
                     webpackJsonp,
                     prop,
-                    {value}, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+                    {value},
                 );
                 return true;
             }
@@ -205,9 +206,7 @@ export const handleObservableValue = <R, T extends PickObservableValues<R>, K ex
 
         const itemCallResultCustom = itemCallResultHandler
             && itemCallResultHandler(itemCallResult as ReturnType<typeof item>, (notification) => {
-                result[resultKey].value$.next(
-                    notification as any, // eslint-disable-line @typescript-eslint/no-explicit-any
-                );
+                result[resultKey].value$.next(notification);
             }, markAsInitialized);
 
         return itemCallResultCustom ?? itemCallResult;

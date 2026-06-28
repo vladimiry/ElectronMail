@@ -8,6 +8,7 @@ patchedDependencies:
   'class-transformer-validator': patches/class-transformer-validator.patch
   'keytar': patches/keytar.patch
   'msgpackr-extract': patches/msgpackr-extract.patch
+  ngx-bootstrap: patches/ngx-bootstrap.patch
   'pureimage': patches/pureimage.patch
   'sodium-native': patches/sodium-native.patch
   'tough-cookie-web-storage-store': patches/tough-cookie-web-storage-store.patch
@@ -19,16 +20,12 @@ allowBuilds:
   'esbuild': true
   'keytar': false
   'msgpackr-extract': false
+  unrs-resolver: true
 updateConfig:
   ignoreDependencies:
     - '@types/node'
     - '@types/react'
-    - '@typescript-eslint/eslint-plugin'
-    - '@typescript-eslint/parser'
     - 'bootstrap'
-    - 'eslint'
-    - 'eslint-plugin-import'
-    - 'eslint-plugin-sonarjs'
     - 'font-awesome'
     - 'ndx'
     - 'ndx-query'
@@ -37,3 +34,15 @@ updateConfig:
 overrides:
   'cmake-runtime': '4.1.1' # pin binary compatible with old Linux (used by "bare-make" to compile "sodium-native")
   'ninja-runtime': '1.13.1' # pin binary compatible with old Linux (used by "bare-make" to compile "sodium-native")
+minimumReleaseAgeExclude:
+  - '@typescript-eslint/eslint-plugin@8.62.1'
+  - '@typescript-eslint/parser@8.62.1'
+  - '@typescript-eslint/project-service@8.62.1'
+  - '@typescript-eslint/scope-manager@8.62.1'
+  - '@typescript-eslint/tsconfig-utils@8.62.1'
+  - '@typescript-eslint/type-utils@8.62.1'
+  - '@typescript-eslint/types@8.62.1'
+  - '@typescript-eslint/typescript-estree@8.62.1'
+  - '@typescript-eslint/utils@8.62.1'
+  - '@typescript-eslint/visitor-keys@8.62.1'
+  - typescript-eslint@8.62.1

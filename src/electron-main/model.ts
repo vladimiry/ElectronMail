@@ -42,7 +42,7 @@ export interface UIContext {
     readonly browserWindow: Electron.BrowserWindow;
     aboutBrowserWindow?: Electron.BrowserWindow;
     fullTextSearchBrowserWindow?: Electron.BrowserWindow;
-    findInPageBrowserView?: Electron.BrowserView & {
+    findInPageView?: Electron.WebContentsView & {
         // TODO TS / electron v11: drop custom "BrowserView.isDestroyed/destroy" methods declarations
         //      https://github.com/electron/electron/pull/25112
         //      https://github.com/electron/electron/issues/26929

@@ -11,7 +11,6 @@ export async function buildDbUnreadNotificationEndpoints(
     ctx: Context,
 ): Promise<Pick<IpcMainApiEndpoints, "resolveUnreadNotificationMessage" | "executeUnreadNotificationShellCommand">> {
     const endpoints: Unpacked<ReturnType<typeof buildDbUnreadNotificationEndpoints>> = {
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async resolveUnreadNotificationMessage({login, alias, code}) {
             logger.info(nameof(endpoints.resolveUnreadNotificationMessage));
             const account = ctx.db.getAccount({login});
@@ -20,7 +19,6 @@ export async function buildDbUnreadNotificationEndpoints(
             }
             return service.resolveUnreadNotificationMessage(account, {login, title: alias}, code);
         },
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async executeUnreadNotificationShellCommand({login, alias, code}) {
             logger.info(nameof(endpoints.executeUnreadNotificationShellCommand));
             const account = ctx.db.getAccount({login});

@@ -119,11 +119,11 @@ export class HoveredHrefHighlightElement extends HTMLElement {
         if (this.notification$) {
             return this.notification$;
         }
-
-        return this.notification$ = resolveIpcMainApi({logger: this.logger})("notification", {
+        this.notification$ = resolveIpcMainApi({logger: this.logger})("notification", {
             finishPromise: this.releaseApiClientDeferred.promise,
             timeoutMs: ONE_SECOND_MS * 3,
         })();
+        return this.notification$;
     }
 }
 

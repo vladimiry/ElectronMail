@@ -50,7 +50,6 @@ const resolveState: resolveStateType = (() => {
 
 export async function buildEndpoints(ctx: DeepReadonly<Context>): Promise<Pick<IpcMainApiEndpoints, "updateOverlayIcon">> {
     return {
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async updateOverlayIcon({hasLoggedOut, unread}) {
             const {browserWindow, tray} = (ctx.uiContext && await ctx.uiContext) ?? {};
 

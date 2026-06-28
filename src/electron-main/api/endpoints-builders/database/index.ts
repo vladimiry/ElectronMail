@@ -47,7 +47,6 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
         ...await buildDbIndexingEndpoints(ctx),
         ...await buildDbSearchEndpoints(ctx),
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async dbPatch({login, metadata: metadataPatch, patch: entityUpdatesPatch}) {
             const logger = curryFunctionMembers(_logger, nameof(endpoints.dbPatch));
 
@@ -149,7 +148,6 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             return account.metadata;
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async dbGetAccountBootstrapOldestRawMailMetadata({login}) {
             const oldestBootstrappedMail = Object.values(ctx.db.getAccount({login})?.mails || {}).filter(({failedDownload}) =>
                 failedDownload?.type === "bootstrap-fetch"
@@ -160,7 +158,6 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                 : null;
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async dbGetAccountBootstrapRawMailIds({login}) {
             return Object.values(ctx.db.getAccount({login})?.mails || {}).filter(({failedDownload}) =>
                 failedDownload?.type === "bootstrap-fetch"
@@ -168,7 +165,6 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
                 .map(parseProtonRestModel).map(({ID}) => ({ID}));
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async dbResetDbMetadata({reset}) {
             if (reset) {
                 for (const {account: {metadata}} of ctx.db) {
@@ -181,7 +177,6 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             });
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async dbGetAccountMetadata({login}) {
             _logger.info(nameof(endpoints.dbGetAccountMetadata));
 
@@ -190,7 +185,6 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             return account ? account.metadata : null;
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async dbGetAccountDataView({login}) {
             _logger.info(nameof(endpoints.dbGetAccountDataView));
 
@@ -206,7 +200,6 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             return {folders: prepareFoldersView(account, !disableSpamNotifications)};
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async dbGetAccountFoldersView({login}) {
             _logger.info(nameof(endpoints.dbGetAccountFoldersView));
 
@@ -224,7 +217,6 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
             return {folders: {system: system.map(folderMapper), custom: custom.map(folderMapper)}};
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async dbGetAccountMail({login, pk}) {
             _logger.info(nameof(endpoints.dbGetAccountMail));
 

@@ -10,7 +10,7 @@ import {curryFunctionMembers} from "src/shared/util";
 import {DEFAULT_WEB_PREFERENCES} from "./constants";
 import {injectVendorsAppCssIntoHtmlFile, resolveDefaultAppSession, resolveUiContextStrict} from "src/electron-main/util";
 import {
-    PACKAGE_DESCRIPTION, PACKAGE_GITHUB_PROJECT_URL, PACKAGE_LICENSE, PACKAGE_VERSION, PRODUCT_NAME, WEB_PROTOCOL_SCHEME,
+    PACKAGE_DESCRIPTION, PACKAGE_GITHUB_PROJECT_URL, PACKAGE_LICENSE, PACKAGE_VERSION, PRODUCT_NAME, WEB_DATAURL_PROTOCOL_SCHEME,
     ZOOM_FACTOR_DEFAULT,
 } from "src/shared/const";
 import {WEBPACK_WEB_CHUNK_NAMES} from "src/shared/const/webpack";
@@ -52,6 +52,8 @@ const resolveContent = async (ctx: Context): Promise<Unpacked<ReturnType<typeof 
     const pageLocation = ctx.locations.aboutBrowserWindowPage;
     const injection = await injectVendorsAppCssIntoHtmlFile(pageLocation, ctx.locations);
 
+    // TODO simplify this regular expression
+    // eslint-disable-next-line sonarjs/super-linear-regex
     injection.html = injection.html.replace(/(.*)#MAIN_PROCESS_INJECTION_POINTCUT#(.*)/i, `$1${htmlInjection}$2`);
 
     if (!injection.html.includes(htmlInjection)) {
@@ -107,9 +109,8 @@ export async function showAboutBrowserWindow(ctx: Context): Promise<BrowserWindo
     uiContext.aboutBrowserWindow = browserWindow;
 
     const {html} = await resolveContent(ctx);
-
-    await browserWindow.webContents.loadURL(`data:text/html,${html}`, {
-        baseURLForDataURL: `${WEB_PROTOCOL_SCHEME}:/${WEBPACK_WEB_CHUNK_NAMES.about}/`,
+    await browserWindow.webContents.loadURL(`data:text/html,${encodeURIComponent(html)}`, {
+        baseURLForDataURL: `${WEB_DATAURL_PROTOCOL_SCHEME}://${WEBPACK_WEB_CHUNK_NAMES.about}/`,
     });
 
     if (BUILD_ENVIRONMENT === "development") {

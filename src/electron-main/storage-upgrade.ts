@@ -1,5 +1,5 @@
 // TODO drop eslint disabling
-/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment */
 
 import _logger from "electron-log";
 import {compareVersions} from "compare-versions";
@@ -466,7 +466,7 @@ export const upgradeSettings: upgradeSettingsType = ((): upgradeSettingsType => 
                     `Backup file saved: ${backupFile} (please consider removing it manually).`,
                 ].join(" ");
 
-                ctx.settingsStore.fs._impl.copyFileSync(originalFile, backupFile);
+                ctx.settingsStore.fs._impl.copyFileSync(originalFile, backupFile); // eslint-disable-line @typescript-eslint/no-unsafe-call
 
                 IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.InfoMessage({message}));
 

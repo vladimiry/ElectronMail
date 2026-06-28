@@ -14,7 +14,7 @@ class MailAddress extends Entity implements Model.MailAddress {
 
 class File extends Entity implements Model.File {
     @IsOptional() @IsString()
-    mimeType?: Model.File["mimeType"];
+    mimeType: Model.File["mimeType"];
 
     @IsString() @IsNotEmpty()
     name!: Model.File["name"];

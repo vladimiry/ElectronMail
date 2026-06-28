@@ -9,7 +9,7 @@ export type Keys = StrictExclude<
     typeof PROVIDER_REPO_STANDARD_SETUP_WEBPACK_INDEX_ENTRY_ITEMS[number]
 >;
 
-export type LazyKeys = never;
+export type LazyKeys = never; // eslint-disable-line sonarjs/redundant-type-aliases
 
 export type ImmediateKeys = StrictExclude<Keys, LazyKeys>;
 

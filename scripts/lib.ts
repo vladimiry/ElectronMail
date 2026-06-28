@@ -46,7 +46,7 @@ export function resolveGitOutputBackupDir(
     return path.join(GIT_CLONE_ABSOLUTE_DIR, "./backup", repoType, `./${tag}${suffix ? ("-" + suffix) : ""}`);
 }
 
-export function formatStreamChunk( // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
+export function formatStreamChunk(
     chunk: any, // eslint-disable-line @typescript-eslint/no-explicit-any
 ): string {
     return Buffer.from(
@@ -118,16 +118,16 @@ export async function execShell(
             const omitProps: Array<keyof typeof error> = ["output", "stderr", "stdout"];
             omitProps.forEach((omitProp) => {
                 if (omitProp in error) {
-                    delete error[omitProp]; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+                    delete error[omitProp];
                 }
             });
         })();
-        throw error;
+        throw new Error(JSON.stringify(error, null, 2));
     }
 }
 
 export async function fetchUrl(...[url, options]: Parameters<typeof fetch>): ReturnType<typeof fetch> {
-    CONSOLE_LOG(`Downloading ${String(url)}`);
+    CONSOLE_LOG(`Downloading ${typeof url === "string" ? url : url.url}`);
     const response = await fetch(url, options);
     if (!response.ok) {
         throw new Error(`Downloading failed: ${JSON.stringify(pick(response, ["status", "statusText"]))}`);

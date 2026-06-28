@@ -64,7 +64,6 @@ const resolveRequestData = ((): (ctx: Context) => Promise<Readonly<{session: Ses
 
 export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpoints, "updateCheck">> {
     const endpoints: Unpacked<ReturnType<typeof buildEndpoints>> = {
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         updateCheck: (() => {
             return async (): Promise<IpcMainServiceScan["ApiImplReturns"]["updateCheck"]> => {
                 const {releasesUrl, session} = await resolveRequestData(ctx);
@@ -91,7 +90,6 @@ export async function buildEndpoints(ctx: Context): Promise<Pick<IpcMainApiEndpo
 
                 // TODO use some GitHub Rest API interaction library with built-in response format runtime validation
                 //      rather than doing blind/dev-time-only casting
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 const releases: ReadonlyArray<
                     {tag_name: string; published_at: string; prerelease: boolean; assets: Array<{name: string}>}
                 > = await response.json();

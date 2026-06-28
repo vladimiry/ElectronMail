@@ -1,6 +1,6 @@
 import {concatMap, delay, retryWhen} from "rxjs/operators";
 import {CookieJar} from "tough-cookie";
-import {from, Observable, of, ReplaySubject, throwError} from "rxjs";
+import {from, MonoTypeOperatorFunction, Observable, of, ReplaySubject, throwError} from "rxjs";
 import {omit} from "remeda";
 import WebStorageCookieStore from "tough-cookie-web-storage-store";
 
@@ -78,13 +78,12 @@ export async function submitTotpToken(
     }
 }
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
 export function buildDbPatchRetryPipeline<T>(
     preprocessError: (rawError: unknown) => {error: Error; retriable: boolean; skippable: boolean},
     metadata: DeepReadonly<FsDbAccount["metadata"]> | null,
     logger: Logger,
     {retriesDelay = ONE_SECOND_MS * 5, retriesLimit = 3}: {retriesDelay?: number; retriesLimit?: number} = {},
-) {
+): MonoTypeOperatorFunction<T> {
     const errorResult = (error: Error): ReturnType<typeof throwError> => {
         logger.error(nameof(buildDbPatchRetryPipeline), error);
         return throwError(error);
@@ -198,7 +197,7 @@ export const fetchEvents = async (
             logger.error(`Events API indicates that there is a next event in the queue but responded with the same "next event id".`);
             break;
         }
-    } while (true); // eslint-disable-line no-constant-condition
+    } while (true);
 
     logger.info(`fetched ${events.length} missed events`);
 

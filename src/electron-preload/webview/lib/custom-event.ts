@@ -29,6 +29,6 @@ export const setupProtonOpenNewTabEventHandler = (logger: Logger): void => {
     const openExternal = resolveIpcMainApi({logger})("openExternal");
 
     window.addEventListener(ProtonOpenNewTabEvent.eventType, async ({detail: {url}}) => {
-        await openExternal({url}); // eslint-disable-line @typescript-eslint/no-floating-promises
+        await openExternal({url});
     });
 };

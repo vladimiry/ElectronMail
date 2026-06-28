@@ -29,6 +29,7 @@ const entityClassesMap = {
     contacts: Entities.Contact,
 } as const;
 
+// eslint-disable-next-line sonarjs/function-return-type
 function flattenValidationError(rawError: Error): Error | string {
     if (!Array.isArray(rawError)) {
         return rawError;
@@ -79,7 +80,7 @@ export async function validateEntity<T extends Entity>(entityType: keyof FsDbDat
             IPC_MAIN_API_NOTIFICATION_ACTIONS.ErrorMessage({
                 message: "Local database entity validation error has occurred: " + JSON.stringify({
                     entityType,
-                    ...(() => { // eslint-disable-line @typescript-eslint/explicit-function-return-type
+                    ...(() => {
                         if (entityType === "mails") {
                             return {sentDate: (entity as unknown as Mail).sentDate, subject: (entity as unknown as Mail).subject};
                         }

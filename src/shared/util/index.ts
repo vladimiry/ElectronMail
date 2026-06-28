@@ -10,7 +10,7 @@ import {StatusCodeError} from "src/shared/model/error";
 // TODO split ./src/shared/util.ts to smaller utility files in subfolder
 
 export const accountPickingPredicate: (criteria: LoginFieldContainer) => (account: AccountConfig) => boolean = ({login: criteriaLogin}) => {
-    return ({login}) => login === criteriaLogin; // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
+    return ({login}) => login === criteriaLogin;
 };
 
 export const pickAccountStrict = (accounts: AccountConfig[], criteria: LoginFieldContainer): AccountConfig => {
@@ -31,7 +31,7 @@ export const asyncDelay = async <T>(pauseTimeMs: number, resolveAction?: () => P
     });
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/ban-types
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function curryFunctionMembers<T extends object | ((...a: any[]) => any)>(
     src: T,
     ...args: any[] // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -67,7 +67,7 @@ export function isEntityUpdatesPatchNotEmpty({conversationEntries, folders, mail
 
 export function walkConversationNodesTree(
     rootNodes: View.ConversationNode[],
-    fn: (arg: {node: View.ConversationNode; mail?: View.ConversationNode["mail"]}) => void | "break",
+    fn: (arg: {node: View.ConversationNode; mail: View.ConversationNode["mail"]}) => void | "break",
 ): void {
     const state: {nodes: View.ConversationNode[]} = {nodes: [...rootNodes]};
     while (state.nodes.length) {
@@ -105,7 +105,7 @@ export function mailDateComparatorDefaultsToDesc(o1: View.Mail, o2: View.Mail, o
 }
 
 // TODO consider using https://github.com/cedx/enum.js instead
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function buildEnumBundle<M extends Record<string, unknown>, K extends keyof M, V extends Extract<M[keyof M], string | number>>(
     nameValueMap: M,
 ) {
@@ -136,7 +136,7 @@ export function buildEnumBundle<M extends Record<string, unknown>, K extends key
 
     const resolveNameByValue: ResolveNameByValue = (
         value: V,
-        strict: boolean = true, // eslint-disable-line @typescript-eslint/no-inferrable-types
+        strict: boolean = true,
     ) => {
         if (strict && !isValidValue(value)) {
             throw new Error(`Failed to parse "${String(value)}" value from the "${JSON.stringify(nameValueMap)}" map`);
@@ -157,7 +157,7 @@ export function buildEnumBundle<M extends Record<string, unknown>, K extends key
 
     const parseValue: ParseValue = (
         rawValue: any, // eslint-disable-line @typescript-eslint/no-explicit-any
-        strict: boolean = true, // eslint-disable-line @typescript-eslint/no-inferrable-types
+        strict: boolean = true,
     ) => {
         const name = resolveNameByValue(rawValue, strict); // eslint-disable-line @typescript-eslint/no-unsafe-argument
         if (typeof name === "undefined") {
@@ -186,14 +186,15 @@ export function isDatabaseBootstrapped(
 export function getRandomInt(min: number, max: number): number {
     min = Math.ceil(min);
     max = Math.floor(max);
-    return min + Math.floor(Math.random() * (max - min)); // the maximum is exclusive and the minimum is inclusive
+    // the maximum is exclusive and the minimum is inclusive
+    return min + Math.floor(Math.random() * (max - min)); // eslint-disable-line sonarjs/pseudo-random
 }
 
 type validateLoginDelaySecondsRangeType = (
     loginDelaySecondsRange: string,
 ) => {validationError: string} | Required<AccountConfig>["loginDelaySecondsRange"];
 
-export const validateLoginDelaySecondsRange: validateLoginDelaySecondsRangeType = (() => { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types, max-len
+export const validateLoginDelaySecondsRange: validateLoginDelaySecondsRangeType = (() => {
     const re = /^(\d+)-(\d+)$/;
     const result: validateLoginDelaySecondsRangeType = (loginDelaySecondsRange) => {
         const match = re.exec(loginDelaySecondsRange) || [];
@@ -229,7 +230,7 @@ export const consumeMemoryRateLimiter = async (
         if (typeof error === "object" && typeof error.msBeforeNext === "number") {
             return {waitTimeMs: error.msBeforeNext};
         }
-        throw error;
+        throw new Error(String(error));
     }
 };
 
@@ -265,7 +266,7 @@ export const buildInitialVendorsAppCssLinks = (hrefs: ReadonlyArray<string>, sho
 
 export const getPlainErrorProps = <T extends unknown>( // eslint-disable-line @typescript-eslint/no-unnecessary-type-constraint
     value: T,
-): T | {code?: string; name?: string; message?: string; stack?: string} => {
+): T | {code?: string; name?: string; message?: string; stack?: string} => { // eslint-disable-line sonarjs/function-return-type
     if (value === null) {
         return {message: `stringified "null"`};
     }

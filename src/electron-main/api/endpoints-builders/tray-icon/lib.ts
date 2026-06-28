@@ -16,10 +16,10 @@ import {PLATFORM} from "src/electron-main/constants";
 const pureimageUInt32: Readonly<{
     getBytesBigEndian(rgba: ReturnType<Bitmap["getPixelRGBA"]>): readonly [number, number, number, number]; // rgba
     fromBytesBigEndian(
-        ...args: ReturnType<typeof pureimageUInt32["getBytesBigEndian"]> // eslint-disable-line  @typescript-eslint/no-use-before-define
+        ...args: ReturnType<typeof pureimageUInt32["getBytesBigEndian"]>
     ): ReturnType<Bitmap["getPixelRGBA"]>;
     // TODO TS: import "pureimage/src/uint32" using ES import syntax
-}> = require("pureimage/src/uint32"); // eslint-disable-line @typescript-eslint/no-var-requires
+}> = require("pureimage/src/uint32"); // eslint-disable-line @typescript-eslint/no-require-imports
 
 const buildCircle: (rad: number, color: string) => Bitmap = (rad, color) => {
     const bitmap = make(rad * 2, rad * 2, null);
@@ -51,7 +51,7 @@ const encodePNGToBuffer: (input: Bitmap) => Promise<Buffer> = async (input) => {
         const data: number[] = [];
 
         stream.on("data", (chunk: typeof data) => data.push(...chunk)).on("error", (error) => reject(error)).on("end", () => {
-            encodingPromise // eslint-disable-line @typescript-eslint/no-use-before-define
+            encodingPromise
                 .then(() => resolve(Buffer.from(data))).catch(reject);
         });
 
@@ -215,7 +215,7 @@ export async function unreadNative(
         });
 
         // TODO TS drop "pureimage" type casting on assigning "context.font"
-        ctx.font = `${size}pt ${fontFamily}` as unknown as typeof ctx.font;
+        ctx.font = `${size}pt ${fontFamily}`;
         ctx.fillStyle = config.textColor;
         ctx.fillText(text, x, y);
 

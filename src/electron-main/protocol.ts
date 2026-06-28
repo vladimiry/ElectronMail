@@ -15,7 +15,9 @@ import {AccountSessionAppData, Context} from "src/electron-main/model";
 import {assertEntryUrl} from "src/electron-main/util";
 import {Config} from "src/shared/model/options";
 import {curryFunctionMembers} from "src/shared/util";
-import {LOCAL_WEBCLIENT_DIR_NAME, LOCAL_WEBCLIENT_SCHEME_NAME, WEB_PROTOCOL_DIR, WEB_PROTOCOL_SCHEME} from "src/shared/const";
+import {
+    LOCAL_WEBCLIENT_DIR_NAME, LOCAL_WEBCLIENT_SCHEME_NAME, WEB_DATAURL_PROTOCOL_SCHEME, WEB_PROTOCOL_DIR, WEB_PROTOCOL_SCHEME,
+} from "src/shared/const";
 import {
     PROTON_API_URL_PLACEHOLDER, PROTON_APP_MAIL_LOGIN_PATHNAME, PROTON_SUPPRESS_UPSELL_ADS_PLACEHOLDER,
 } from "src/shared/const/proton-url";
@@ -26,27 +28,44 @@ const logger = curryFunctionMembers(_logger, __filename);
 
 const fsAsync = {stat: promisify(fs.stat), readFile: promisify(fs.readFile)} as const;
 
-export const registerStandardSchemes = (): void => {
-    // WARN: "protocol.registerStandardSchemes" needs to be called once, see https://github.com/electron/electron/issues/15943
-    protocol.registerSchemesAsPrivileged([{
-        scheme: LOCAL_WEBCLIENT_SCHEME_NAME,
-        privileges: {corsEnabled: true, secure: true, standard: true, supportFetchAPI: true, allowServiceWorkers: true},
-    }]);
-};
+export const registerStandardSchemes: () => void = (
+    () => {
+        let called = false;
+        return (): void => {
+            if (called) {
+                // WARN: "protocol.registerStandardSchemes" needs to be called once, see https://github.com/electron/electron/issues/15943
+                throw new Error(`The "protocol.registerSchemesAsPrivileged" call can't happen more than one time`);
+            }
+            protocol.registerSchemesAsPrivileged([
+                {
+                    scheme: LOCAL_WEBCLIENT_SCHEME_NAME,
+                    privileges: {corsEnabled: true, secure: true, standard: true, supportFetchAPI: true, allowServiceWorkers: true},
+                },
+                {
+                    scheme: WEB_DATAURL_PROTOCOL_SCHEME,
+                    privileges: {standard: true},
+                },
+            ]);
+            called = true;
+        };
+    }
+)();
 
 // TODO electron: get rid of "baseURLForDataURL" workaround, see https://github.com/electron/electron/issues/20700
-export function registerWebFolderFileProtocol(ctx: Context, session: Session): void {
+export function registerWebFolderFileProtocols(ctx: Context, session: Session): void {
     const directory = path.join(ctx.locations.appDir, WEB_PROTOCOL_DIR);
 
-    session.protocol.handle(WEB_PROTOCOL_SCHEME, async (request) => {
-        const url = new URL(request.url);
-        const resource = path.normalize(path.join(directory, url.host, url.pathname));
-        if (!pathIsInside(resource, directory)) {
-            throw new Error(`Forbidden file system resource "${resource}"`);
-        }
-        const resourceUrl = pathToFileURL(resource).toString();
-        return net.fetch(resourceUrl, {bypassCustomProtocolHandlers: true});
-    });
+    for (const scheme of [WEB_PROTOCOL_SCHEME, WEB_DATAURL_PROTOCOL_SCHEME] as const) {
+        session.protocol.handle(scheme, async (request) => {
+            const url = new URL(request.url);
+            const resource = path.normalize(path.join(directory, url.host, url.pathname));
+            if (!pathIsInside(resource, directory)) {
+                throw new Error(`Forbidden file system resource "${resource}"`);
+            }
+            const resourceUrl = pathToFileURL(resource).toString();
+            return net.fetch(resourceUrl, {bypassCustomProtocolHandlers: true});
+        });
+    }
 }
 
 const resolveResourcePathname: (requestPathname: string) => string | undefined = (() => {
@@ -167,10 +186,6 @@ export async function registerAccountSessionProtocols(
         // TODO tweak e2e test: navigate to "/drive" (requires to be signed-in into the mail account)
         //      so the scope misconfiguration-related error get printed to "log.log" file and the test gets failed then
         if (resourceLocation.startsWith(path.join(directory, PROVIDER_REPO_MAP["proton-drive"].basePath, "downloadSW."))) {
-            /* eslint-disable max-len */
-            // https://github.com/ProtonMail/proton-drive/blob/04d30ae6c9fbfbc33cfc91499831e2e6458a99b1/src/.htaccess#L42-L45
-            // https://github.com/ProtonMail/WebClients/blob/38397839bdf9c14f7c0c8af5cef46122ec399cb2/applications/drive/src/.htaccess#L36
-            /* eslint-enable max-len */
             response.headers.append("Service-Worker-Allowed", "/");
             response.headers.append("Service-Worker", "script");
         }

@@ -23,7 +23,7 @@ export type ElectronContextLocations = Readonly<
         appDir: string;
         browserWindowPage: string;
         aboutBrowserWindowPage: string;
-        searchInPageBrowserViewPage: string;
+        searchInPageWebContentsViewPage: string;
         icon: string;
         trayIconFont: string;
         trayIcon: string;
@@ -33,7 +33,7 @@ export type ElectronContextLocations = Readonly<
             {
                 aboutBrowserWindow: string;
                 browserWindow: string;
-                searchInPageBrowserView: string;
+                searchInPageWebContentsView: string;
                 fullTextSearchBrowserWindow: string;
                 primary: string;
             }

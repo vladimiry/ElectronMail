@@ -15,13 +15,16 @@ echo "::group::setup system packages"
 apt-get update
 # libsecret-1-dev: for "keytar" compiling
 apt-get install --yes --no-install-recommends \
-  wget lsb-release build-essential python3 git libtool automake \
+  ca-certificates curl gnupg wget lsb-release build-essential python3 git libtool automake \
   libsecret-1-dev
 echo "::endgroup::"
 
 echo "::group::setup gcc12"
 apt-get install --yes --no-install-recommends software-properties-common gnupg2
-add-apt-repository ppa:ubuntu-toolchain-r/test -y
+# previously: add-apt-repository ppa:ubuntu-toolchain-r/test -y
+# late June 2026: GH CI blocks "ppa:ubuntu-toolchain-r/test" PPA lookup, so switching to manual "apt-key + sources.list" as a workaround
+apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 1E9377A2BA9EF27F
+echo "deb http://ppa.launchpad.net/ubuntu-toolchain-r/test/ubuntu focal main" > /etc/apt/sources.list.d/toolchain.list
 apt-get update -o Acquire::Languages=none
 if apt-get install --yes --no-install-recommends gcc-12 g++-12 >/dev/null 2>&1; then
   update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 120 --slave /usr/bin/g++ g++ /usr/bin/g++-12
@@ -41,7 +44,6 @@ rm llvm.sh
 echo "::endgroup::"
 
 echo "::group::setup nodejs & pnpm"
-apt-get install --yes --no-install-recommends ca-certificates curl gnupg
 mkdir -p /etc/apt/keyrings
 curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
   | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg

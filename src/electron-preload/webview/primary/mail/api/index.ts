@@ -224,12 +224,14 @@ export function registerApi(
                     return notificationReceived$.pipe(
                         buffer(notificationReceived$.pipe(debounceTime(ONE_SECOND_MS * 1.5))),
                         concatMap((events) => from(buildDbPatch(providerApi, {events, parentLogger: innerLogger}, true))),
-                        concatMap((patch) => {
+                        concatMap((patch) => { // eslint-disable-line sonarjs/function-return-type
                             if (!isEntityUpdatesPatchNotEmpty(patch)) {
                                 return EMPTY;
                             }
                             for (const key of (Object.keys(patch) as Array<keyof typeof patch>)) {
-                                innerLogger.verbose(`upsert/remove ${key}: ${patch[key].upsert.length}/${patch[key].remove.length}`);
+                                innerLogger.verbose(
+                                    `upsert/remove ${String(key)}: ${patch[key].upsert.length}/${patch[key].remove.length}`,
+                                );
                             }
                             notification.batchEntityUpdatesCounter++;
                             return [notification];

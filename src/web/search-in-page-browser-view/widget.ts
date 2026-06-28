@@ -1,10 +1,14 @@
 import asap from "asap-es";
 import {debounceTime, filter, switchMap} from "rxjs/operators";
 import {from, fromEvent, Subscription} from "rxjs";
+import type {TeardownLogic} from "rxjs";
 
 import {ONE_SECOND_MS} from "src/shared/const";
 
 export class SearchInPageWidget {
+    private readonly queryQueue = new asap();
+    private readonly subscription = new Subscription();
+
     private readonly apiClient = __ELECTRON_EXPOSURE__.buildIpcMainClient({options: {timeoutMs: ONE_SECOND_MS}});
     private readonly apiMethods = {
         findInPage: this.apiClient("findInPage"),
@@ -12,6 +16,7 @@ export class SearchInPageWidget {
         findInPageDisplay: this.apiClient("findInPageDisplay"),
         findInPageNotification: this.apiClient("findInPageNotification"),
     };
+
     private readonly els: {
         readonly root: HTMLElement;
         readonly input: HTMLInputElement;
@@ -20,8 +25,6 @@ export class SearchInPageWidget {
         readonly findNext: HTMLButtonElement;
         readonly close: HTMLButtonElement;
     };
-    private readonly queryQueue = new asap();
-    private readonly subscription = new Subscription();
 
     private requestId?: number;
     private activeIdx?: number;
@@ -68,7 +71,7 @@ export class SearchInPageWidget {
     }
 
     protected initEvents(): void {
-        this.subscription.add(
+        this.subscribe(
             fromEvent<KeyboardEvent>(this.els.input, "keydown").pipe(
                 debounceTime(150),
                 // tslint:disable-next-line ban
@@ -76,27 +79,18 @@ export class SearchInPageWidget {
             ).subscribe(async () => {
                 // setTimeout(() => this.els.input.focus());
             }),
-        );
-
-        this.subscription.add(
             fromEvent(this.els.findPrev, "click").subscribe(async () => {
                 await this.find(false);
             }),
-        );
-
-        this.subscription.add(
+            fromEvent(this.els.findPrev, "click").subscribe(async () => {
+                await this.find(false);
+            }),
             fromEvent(this.els.findNext, "click").subscribe(async () => {
                 await this.find(true);
             }),
-        );
-
-        this.subscription.add(
             fromEvent(this.els.close, "click").subscribe(async () => {
                 await this.close();
             }),
-        );
-
-        this.subscription.add(
             fromEvent<KeyboardEvent>(this.els.root, "keydown").pipe(filter((event) => event.key === "Escape" || event.key === "Esc"))
                 .subscribe(async () => {
                     await this.close();
@@ -105,35 +99,29 @@ export class SearchInPageWidget {
     }
 
     protected initFoundNotification(): void {
-        this.subscription.add(
+        this.subscribe(
             this.apiMethods.findInPageNotification().subscribe((result) => {
                 if (!result.requestId || result.requestId !== this.requestId) {
                     return;
                 }
-
                 this.activeIdx = result.activeMatchOrdinal;
                 this.maxIdx = result.matches;
-
                 this.syncElements();
             }),
         );
     }
 
     protected isSearching(): boolean {
-        return (this.requestId !== null
-            && typeof this.query === "string");
+        return typeof this.requestId !== "undefined" && typeof this.query === "string";
     }
 
     protected async startFind(query: string): Promise<void> {
         const result = await this.apiMethods.findInPage({query});
-
         if (!result) {
             return this.close();
         }
-
         this.requestId = result.requestId;
         this.query = query;
-
         delete this.activeIdx;
         delete this.maxIdx;
     }
@@ -142,37 +130,33 @@ export class SearchInPageWidget {
         if (!this.isSearching()) {
             throw new Error(`Search has not been started yet`);
         }
-
         const result = await this.apiMethods.findInPage({query: this.query || "", options});
-
         if (!result) {
             return this.close();
         }
-
         this.requestId = result.requestId;
     }
 
     protected async stopFind(): Promise<void> {
         this.els.input.value = "";
-
         delete this.requestId;
         delete this.query;
         delete this.activeIdx;
         delete this.maxIdx;
-
         this.syncElements();
-
         await this.apiMethods.findInPageStop();
     }
 
     protected syncElements(): void {
         const disabledButtons = typeof this.maxIdx !== "number" || this.maxIdx < 2;
         const {els} = this;
-
         els.findPrev.disabled = disabledButtons;
         els.findNext.disabled = disabledButtons;
-
         els.status.classList[this.query ? "remove" : "add"]("d-none");
         els.status.innerText = this.query ? `${String(this.activeIdx)}/${String(this.maxIdx)}` : "";
+    }
+
+    protected subscribe(...teardowns: Array<TeardownLogic>): void {
+        for (const teardown of teardowns) this.subscription.add(teardown);
     }
 }

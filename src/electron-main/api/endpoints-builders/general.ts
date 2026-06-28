@@ -40,12 +40,10 @@ export async function buildEndpoints(
     ctx: Context,
 ): Promise<Pick<IpcMainApiEndpoints, Methods> & Pick<IpcMainServiceScan["ApiImpl"], ContextAwareMethods>> {
     const endpoints: Unpacked<ReturnType<typeof buildEndpoints>> = {
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async openAboutWindow() {
             await showAboutBrowserWindow(ctx);
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async openExternal({url}) {
             if (!isWebUri(url)) {
                 throw new Error(`Forbidden url "${url}" opening has been prevented`);
@@ -54,7 +52,6 @@ export async function buildEndpoints(
             await shell.openExternal(url, {activate: true});
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async openSettingsFolder() {
             const timeoutMs = ONE_SECOND_MS * 2;
             // TODO get back plaing "await shell.openPath" call vs calling via "race"
@@ -81,12 +78,10 @@ export async function buildEndpoints(
             );
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async quit() {
             app.exit();
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async activateBrowserWindow(browserWindow) {
             browserWindow ??= ((ctx.uiContext && await ctx.uiContext) ?? {}).browserWindow;
 
@@ -116,7 +111,6 @@ export async function buildEndpoints(
             IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.ActivateBrowserWindow());
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async toggleBrowserWindow(arg) {
             const {browserWindow} = (ctx.uiContext && await ctx.uiContext) ?? {};
 
@@ -134,7 +128,6 @@ export async function buildEndpoints(
             }
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async selectAccount(args) {
             const prevSelectedAccount = ctx.selectedAccount;
             const newSelectedAccount = "reset" in args
@@ -191,7 +184,6 @@ export async function buildEndpoints(
             }));
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async hotkey({type}) {
             const methodContext = this; // eslint-disable-line @typescript-eslint/no-this-alias
 
@@ -220,7 +212,6 @@ export async function buildEndpoints(
             }
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async toggleControls(arg) {
             IPC_MAIN_API_NOTIFICATION$.next(IPC_MAIN_API_NOTIFICATION_ACTIONS.ConfigUpdated(
                 await ctx.configStoreQueue.q(async () => {
@@ -232,7 +223,6 @@ export async function buildEndpoints(
             ));
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async toggleLocalDbMailsListViewMode() {
             return ctx.configStoreQueue.q(async () => {
                 const config = await ctx.configStore.readExisting();
@@ -246,7 +236,6 @@ export async function buildEndpoints(
             });
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         notification() {
             return IPC_MAIN_API_NOTIFICATION$.asObservable().pipe(
                 startWith(IPC_MAIN_API_NOTIFICATION_ACTIONS.NativeTheme({shouldUseDarkColors: nativeTheme.shouldUseDarkColors})),

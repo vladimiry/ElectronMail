@@ -352,10 +352,11 @@ export const buildWorkflow = (testContext: TestContext) => {
         async getLocationHash(hiddenWindow?: boolean): Promise<string> {
             const url = await testContext.app.evaluate(
                 (electron, options: {resolveFocusedWindow: boolean; resolveBrowserWindowStringified: string}) => {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, sonarjs/code-eval
                     const resolveBrowserWindow: typeof mainProcessEvaluationFunctions.resolveBrowserWindow = eval(
                         options.resolveBrowserWindowStringified.toString(),
                     );
+                    // eslint-disable-next-line sonarjs/code-eval
                     return resolveBrowserWindow(electron, options).webContents.getURL();
                 },
                 {

@@ -230,7 +230,7 @@
                     >
                     <div
                         *ngIf="controls.externalContentProxyUrlPattern.invalid && controls.externalContentProxyUrlPattern.errors?.errorMsg"
-                        [innerText]="controls.externalContentProxyUrlPattern.errors?.errorMsg"
+                        [innerText]="controls.externalContentProxyUrlPattern.errors.errorMsg"
                         class="invalid-feedback"
                     ></div>
                 </div>
@@ -264,7 +264,7 @@
                     >
                     <div
                         *ngIf="controls.loginDelaySecondsRange.invalid && controls.loginDelaySecondsRange.errors?.errorMsg"
-                        [innerText]="controls.loginDelaySecondsRange.errors?.errorMsg"
+                        [innerText]="controls.loginDelaySecondsRange.errors.errorMsg"
                         class="invalid-feedback"
                     ></div>
                 </div>

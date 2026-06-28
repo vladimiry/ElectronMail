@@ -64,7 +64,7 @@ echo "::endgroup::"
 echo "::group::package"
 pnpm run build:electron-builder-hooks
 if [ "$(uname -m)" != "x86_64" ]; then
-  PACKAGE_TYPES="pacman deb rpm"
+  PACKAGE_TYPES="snap pacman deb rpm"
 else
   PACKAGE_TYPES="snap pacman deb rpm appimage freebsd"
 fi

@@ -47,8 +47,7 @@ export const preprocessError: preprocessErrorType = (() => {
                     || strings.networkConnectionErrorNames.includes(error.name.toLocaleLowerCase())
                 ));
         return {
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-            error: sanitizeProtonApiError(error) as unknown as Error,
+            error: sanitizeProtonApiError(error) as Error,
             retriable,
             skippable: onRateLimitedMethodCall || retriable,
         };

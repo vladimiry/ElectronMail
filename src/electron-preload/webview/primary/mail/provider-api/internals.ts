@@ -17,6 +17,7 @@ export const resolveProviderInternals = async (): Promise<ProviderInternals> => 
         const result: ProviderInternals = {
             "./src/app/components/layout/PrivateLayout.tsx": {
                 value$: new BehaviorSubject(
+                    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
                     {privateScope: null} as Unpacked<ProviderInternals["./src/app/components/layout/PrivateLayout.tsx"]["value$"]>,
                 ),
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment

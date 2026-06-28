@@ -1,4 +1,4 @@
-export type Id = string;
+export type Id = string; // eslint-disable-line sonarjs/redundant-type-aliases
 
 export interface QueryParams {
     Page?: number;

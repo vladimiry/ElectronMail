@@ -153,7 +153,8 @@ export const buildSerializer: (
                             for (const [login, account] of Object.entries(inputDb.accounts)) {
                                 for (const [mailPk, mail] of Object.entries(account.mails)) {
                                     mailsPortion.portionSizeCounter++;
-                                    (mailsPortion.bufferDb[login] ??= Database.buildEmptyAccount()).mails[mailPk] = mail;
+                                    mailsPortion.bufferDb[login] ??= Database.buildEmptyAccount();
+                                    mailsPortion.bufferDb[login].mails[mailPk] = mail;
 
                                     if (mailsPortion.portionSizeCounter === mailsPortion.portionSizeLimit) {
                                         await writeMailsPortion(); // serializing mails portion

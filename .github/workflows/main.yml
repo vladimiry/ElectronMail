@@ -138,6 +138,8 @@ jobs:
       - name: setup lxd
         if: runner.os == 'Linux'
         uses: canonical/setup-lxd@da2ac84e727dc534215fd14cd088b9209d65893b # (main) 2026-05-29
+        with:
+          channel: '5.21/stable' # pin to secure, stable LTS track to bypass snapd 6.9 process bug
       - name: build native deps using "ubuntu:20.04" docker image
         if: runner.os == 'Linux'
         run: |

@@ -33,7 +33,6 @@ export async function buildEndpoints(
     >
 > {
     const endpoints: Unpacked<ReturnType<typeof buildEndpoints>> = {
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async addAccount(
             {
                 login,
@@ -94,7 +93,6 @@ export async function buildEndpoints(
             return result;
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async updateAccount(
             {
                 login,
@@ -184,12 +182,10 @@ export async function buildEndpoints(
             });
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async enableNetworkEmulationForAccountSessions({login, value}) {
             enableNetworkEmulationToAllAccountSessions({login}, value);
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async changeAccountOrder({login, index: moveToIndex}) {
             return ctx.settingsStoreQueue.q(async () => {
                 const settings = await ctx.settingsStore.readExisting();
@@ -212,7 +208,6 @@ export async function buildEndpoints(
             });
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async toggleAccountDisabling({login}) {
             return ctx.settingsStoreQueue.q(async () => {
                 const settings = await ctx.settingsStore.readExisting();
@@ -224,7 +219,6 @@ export async function buildEndpoints(
             });
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async removeAccount({login}) {
             return ctx.settingsStoreQueue.q(async () => {
                 const settings = await ctx.settingsStore.readExisting();

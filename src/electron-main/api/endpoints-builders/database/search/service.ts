@@ -124,7 +124,7 @@ export const secondSearchStep = async (
                 }
                 return objHandle;
             }
-            return context.newString(String(value));
+            return context.newString(String(value)); // eslint-disable-line @typescript-eslint/no-base-to-string
         }
         runtime.setInterruptHandler(shouldInterruptAfterDeadline(Date.now() + ONE_MINUTE_MS * 10));
         return {

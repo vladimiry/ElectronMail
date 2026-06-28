@@ -18,12 +18,10 @@ export async function buildDbExportEndpoints(
     ctx: Context,
 ): Promise<Pick<IpcMainApiEndpoints, "dbExport" | "dbExportMailAttachmentsNotification">> {
     const endpoints: Unpacked<ReturnType<typeof buildDbExportEndpoints>> = {
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async dbExportMailAttachmentsNotification(payload) {
             MAIL_ATTACHMENTS_EXPORT_NOTIFICATION$.next(payload);
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         dbExport({exportDir, fileType, login, mailPks, includingAttachments}) {
             const logger = curryFunctionMembers(logger_, nameof(endpoints.dbExport));
 

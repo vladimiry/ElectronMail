@@ -27,14 +27,13 @@ type createSessionUtilType = {
 };
 
 export const createSessionUtil: createSessionUtilType = (() => {
-    type ResultType = createSessionUtilType;
     const existingPartitions: Set<string> = new Set();
     const persistentSessionErrorMessage = "Persistent sessions are not allowed.";
-    const createdBefore: ResultType["createdBefore"] = (partition) => {
+    const createdBefore: createSessionUtilType["createdBefore"] = (partition) => {
         _logger.info(nameof.full(createSessionUtil.createdBefore));
         return existingPartitions.has(partition);
     };
-    const fromPartition: ResultType["fromPartition"] = (partition) => {
+    const fromPartition: createSessionUtilType["fromPartition"] = (partition) => {
         _logger.info(nameof.full(createSessionUtil.fromPartition));
         const session = electronSession.fromPartition(partition, {cache: false});
         if (!existingPartitions.has(partition)) {
@@ -42,7 +41,7 @@ export const createSessionUtil: createSessionUtilType = (() => {
         }
         return session;
     };
-    const create: ResultType["create"] = (partition) => {
+    const create: createSessionUtilType["create"] = (partition) => {
         _logger.info(nameof.full(createSessionUtil.create));
 
         if (String(partition).trim().toLowerCase().startsWith("persist:")) {

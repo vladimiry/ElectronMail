@@ -6,7 +6,6 @@ import {select, Store} from "@ngrx/store";
 
 import {AccountConfig} from "src/shared/model/account";
 import {LABEL_TYPE, View} from "src/shared/model/database";
-import {MONACO_EDITOR_LAZY_CHUNK_NAME} from "src/shared/const/webpack";
 import {NgChangesObservableDirective} from "src/web/browser-window/app/components/ng-changes-observable.directive";
 import {ONE_SECOND_MS} from "src/shared/const";
 import {OptionsSelectors} from "src/web/browser-window/app/store/selectors";
@@ -15,9 +14,8 @@ import {State} from "src/web/browser-window/app/store/reducers/root";
 type MonacoModule = typeof import("monaco-editor");
 
 const resolveMonacoModule = async (): Promise<MonacoModule> => {
-    // preserve import from being tree-shaked as "webpackChunkName" magic comment needs it
-    ((_) => {})(MONACO_EDITOR_LAZY_CHUNK_NAME); // eslint-disable-line @typescript-eslint/no-unused-vars
-    const monaco = await import(/* webpackChunkName: MONACO_EDITOR_LAZY_CHUNK_NAME */ "monaco-editor");
+    // WARN make sure "monaco-editor" folder name matches MONACO_EDITOR_ASSETS_SUBFOLDER constant
+    const monaco = await import(/* webpackChunkName: "monaco-editor/editor" */ "monaco-editor");
     return monaco;
 };
 

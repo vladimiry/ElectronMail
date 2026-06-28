@@ -108,5 +108,5 @@ async function parseResponse<T>(response: Response, errorMessage: string): Promi
     const error = new Error(`${errorMessage}: ${response.status} ${response.statusText}`) as unknown as ErrorType;
     error.status = response.status;
     error.body = await response.text().catch(() => "");
-    throw error;
+    throw error; // eslint-disable-line @typescript-eslint/only-throw-error
 }

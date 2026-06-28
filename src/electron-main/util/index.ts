@@ -22,7 +22,8 @@ type resolveDefaultAppSessionType = () => Session;
 export const resolveDefaultAppSession: resolveDefaultAppSessionType = (() => {
     let session: Session | undefined;
     const result: resolveDefaultAppSessionType = () => {
-        return session ??= createSessionUtil.create("partition/default-app-session");
+        session ??= createSessionUtil.create("partition/default-app-session");
+        return session;
     };
     return result;
 })();
@@ -38,6 +39,8 @@ export async function injectVendorsAppCssIntoHtmlFile(
     const pageContent = fs.readFileSync(pageLocation).toString();
     const baseURLForDataURL = formatFileUrl(`${path.dirname(pageLocation)}${path.sep}`);
     const htmlInjection = buildInitialVendorsAppCssLinks(vendorsAppCssLinkHrefs, nativeTheme.shouldUseDarkColors);
+    // TODO simplify this regular expression
+    // eslint-disable-next-line sonarjs/super-linear-regex
     const html = pageContent.replace(/(.*)(<head>)(.*)/i, `$1$2${htmlInjection}$3`);
 
     if (!html.includes(htmlInjection)) {

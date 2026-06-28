@@ -6,7 +6,7 @@ type MatchPropName = "match";
 
 type TypedAction<T extends string> = {readonly type: T};
 
-type RawObject = object; // eslint-disable-line @typescript-eslint/ban-types
+type RawObject = object;
 
 type PropsRecord = { [T in string]: ActionCreatorProps<RawObject> | null } & { [K in MatchPropName]?: never };
 
@@ -17,7 +17,7 @@ type ActionsRecord<P extends PropsRecord = PropsRecord> = {
 };
 
 // @ts-expect-error // TODO get rid of "ts-expect-error" thing
-export type UnionOf<T extends ActionsRecord> = Exclude<ReturnType<ValueOf<Omit<Omit<T, MatchPropName>, symbol | number>>>, boolean>; // eslint-disable-line @typescript-eslint/ban-types, max-len
+export type UnionOf<T extends ActionsRecord> = Exclude<ReturnType<ValueOf<Omit<Omit<T, MatchPropName>, symbol | number>>>, boolean>; // eslint-disable-line max-len
 
 export type UnionOfRecord<P extends PropsRecord, T extends ActionsRecord<P> = ActionsRecord<P>> = {
     [K in Exclude<keyof T, MatchPropName>]: ReturnType<T[K]>;
@@ -83,7 +83,7 @@ export const propsRecordToActionsRecord = <P extends PropsRecord>(value: P, {pre
                     ? [value.payload]
                     : []
             );
-            return matcher( // eslint-disable-line @typescript-eslint/no-unsafe-return
+            return matcher(
                 // @ts-expect-error eslint-disable-line @typescript-eslint/ban-ts-comment
                 ...args, // eslint-disable-line @typescript-eslint/no-unsafe-argument
             );

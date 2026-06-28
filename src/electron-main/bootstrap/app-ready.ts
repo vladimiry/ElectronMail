@@ -9,7 +9,7 @@ import {initMainBrowserWindow} from "src/electron-main/window/main";
 import {initNativeThemeNotification} from "src/electron-main/native-theme";
 import {initTray} from "src/electron-main/tray";
 import {initWebContentsCreatingHandlers} from "src/electron-main/web-contents";
-import {registerWebFolderFileProtocol} from "src/electron-main/protocol";
+import {registerWebFolderFileProtocols} from "src/electron-main/protocol";
 import {resolveDefaultAppSession} from "src/electron-main/util";
 import {RUNTIME_ENV_ALLOW_MULTIPLE_INSTANCES} from "src/shared/const";
 import {setUpPowerMonitorNotification} from "src/electron-main/power-monitor";
@@ -21,7 +21,7 @@ export async function appReadyHandler(ctx: Context): Promise<void> {
         return endpoints;
     })();
 
-    registerWebFolderFileProtocol(ctx, resolveDefaultAppSession());
+    registerWebFolderFileProtocols(ctx, resolveDefaultAppSession());
 
     await initApiEndpoints(ctx);
 

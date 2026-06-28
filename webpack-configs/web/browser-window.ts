@@ -1,6 +1,6 @@
 import AngularBabelLinkerPlugin from "@angular/compiler-cli/linker/babel";
 import {AngularWebpackPlugin, AngularWebpackPluginOptions} from "@ngtools/webpack";
-import {CompilerOptions, readConfiguration} from "@angular/compiler-cli";
+import {CompilerOptions, readConfiguration} from "@angular/compiler-cli"; // eslint-disable-line import-x/named
 
 import {browserWindowAppPath, browserWindowPath, buildBaseWebConfig, cssRuleSetRules, sassLoaderRuleSetRules} from "./lib";
 import {BuildAngularCompilationFlags, BuildEnvVars} from "webpack-configs/model";
@@ -165,8 +165,7 @@ const mainWebpackConfig = buildBaseWebConfig({
                     return {
                         ...accumulator,
                         [`styles-${name}`]: {
-                            // eslint-disable-next-line no-useless-escape
-                            test: new RegExp(`src/web/${value}`.replace(/\//g, "(\|\\\\|/)"), "g"),
+                            test: new RegExp(`src/web/${value}`.replace(/\//g, "[|\\\\/]"), "g"),
                             name,
                             chunks: "all",
                             enforce: true,
@@ -191,7 +190,7 @@ const monacoWorkersWebpackConfig = buildBaseConfig({
     output: {
         path: outputRelativePath("./web", chunkName, MONACO_EDITOR_ASSETS_SUBFOLDER),
         publicPath: "auto",
-        libraryTarget: "module",
+        // libraryTarget: "module",
     },
     entry: {
         [monacoEditorWorkers.editor.asset]: monacoEditorWorkers.editor.src,

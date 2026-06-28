@@ -18,7 +18,6 @@ export async function buildDbSearchEndpoints(
     ctx: DeepReadonly<Context>,
 ): Promise<Pick<IpcMainApiEndpoints, "dbSearchRootConversationNodes" | "dbFullTextSearch">> {
     const endpoints: Unpacked<ReturnType<typeof buildDbSearchEndpoints>> = {
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async dbSearchRootConversationNodes({login, folderIds, ...restOptions}) {
             logger.info(nameof(endpoints.dbSearchRootConversationNodes));
 
@@ -37,7 +36,6 @@ export async function buildDbSearchEndpoints(
             return service.searchRootConversationNodes(account, {folderIds, mailPks}, !disableSpamNotifications);
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async dbFullTextSearch({query, ...searchCriteria}) {
             logger.info(nameof(endpoints.dbFullTextSearch));
 

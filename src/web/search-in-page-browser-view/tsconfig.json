@@ -1,8 +1,10 @@
 {
   "extends": "../../../tsconfig.json",
-  "typeRoots": [
-    "../../../node_modules/@types",
-    "../../../src/@types",
-    "../../../src/web/@types"
-  ]
+  "compilerOptions": {
+    "typeRoots": [
+      "../../../node_modules/@types",
+      "../../../src/@types",
+      "../../../src/web/@types"
+    ]
+  }
 }

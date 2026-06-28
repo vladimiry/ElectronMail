@@ -1,5 +1,5 @@
 import {Actions, createEffect} from "@ngrx/effects";
-import {concatMap, first, map, mergeMap, withLatestFrom} from "rxjs/operators";
+import {concatMap, delay, first, map, mergeMap, withLatestFrom} from "rxjs/operators";
 import {inject, Injectable} from "@angular/core";
 import {merge, of, race, throwError, timer} from "rxjs";
 import {produce} from "immer";
@@ -64,6 +64,7 @@ export class AccountsEffects {
                                 ),
                             ),
                         ).pipe(
+                            delay(ONE_SECOND_MS / 4),
                             // restoring the original data
                             mergeMap(() =>
                                 of(ACCOUNTS_ACTIONS.WireUpConfigs({

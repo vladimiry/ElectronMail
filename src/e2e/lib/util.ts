@@ -28,10 +28,11 @@ export const mainProcessEvaluationFunctions = {
         electron: typeof import("electron"),
         options: NoExtraProps<{initial: boolean; resolveBrowserWindowStringified: string}>,
     ): Promise<typeof options> {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, sonarjs/code-eval
         const resolveBrowserWindow: typeof mainProcessEvaluationFunctions.resolveBrowserWindow = eval(
             options.resolveBrowserWindowStringified.toString(),
         );
+        // eslint-disable-next-line sonarjs/code-eval
         const firstWindow = resolveBrowserWindow(electron, {resolveFocusedWindow: false});
         if (firstWindow.webContents.isDevToolsOpened()) {
             throw new Error("dev tools should be closed");

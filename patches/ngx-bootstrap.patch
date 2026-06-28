@@ -1,0 +1,13 @@
+diff --git a/component-loader/types/ngx-bootstrap-component-loader.d.ts b/component-loader/types/ngx-bootstrap-component-loader.d.ts
+index b077da8330e024ef3074593e0b18147e835fc463..fb21528cd6b6692c09a6499b5d8807ab3b741177 100644
+--- a/component-loader/types/ngx-bootstrap-component-loader.d.ts
++++ b/component-loader/types/ngx-bootstrap-component-loader.d.ts
+@@ -1,6 +1,7 @@
+ import * as i0 from '@angular/core';
+ import { TemplateRef, ViewContainerRef, EventEmitter, ComponentRef, EmbeddedViewRef, Renderer2, ElementRef, Injector, EnvironmentInjector, ApplicationRef, Type, StaticProvider, ViewRef } from '@angular/core';
+-import { PositioningService, PositioningOptions } from 'ngx-bootstrap/positioning';
++import { PositioningService } from 'ngx-bootstrap/positioning';
++import { PositioningOptions } from '../../positioning/types/ngx-bootstrap-positioning';
+ 
+ declare class BsComponentRef<T> {
+     templateRef?: TemplateRef<T>;

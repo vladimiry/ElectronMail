@@ -163,7 +163,7 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
         );
         webContents.on(
             "did-fail-provisional-load",
-            (...[/*event*/, errorCode, errorDescription, validatedURL, isMainFrame, frameProcessId, frameRoutingId]) => { // eslint-disable-line sonarjs/no-identical-functions, max-len
+            (...[/*event*/, errorCode, errorDescription, validatedURL, isMainFrame, frameProcessId, frameRoutingId]) => {
                 logger.error(
                     JSON.stringify({
                         type: "did-fail-provisional-load",

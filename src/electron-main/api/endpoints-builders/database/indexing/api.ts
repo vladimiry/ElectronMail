@@ -18,7 +18,6 @@ export async function buildDbIndexingEndpoints(
     ctx: Context, // TODO make argument "DeepReadonly"
 ): Promise<Pick<IpcMainApiEndpoints, "dbIndexerOn" | "dbIndexerNotification">> {
     const endpoints: Unpacked<ReturnType<typeof buildDbIndexingEndpoints>> = {
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         async dbIndexerOn(action) {
             logger.info(nameof(endpoints.dbIndexerOn), `action.type: ${action.type}`);
 
@@ -73,7 +72,6 @@ export async function buildDbIndexingEndpoints(
             });
         },
 
-        // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
         dbIndexerNotification() {
             return IPC_MAIN_API_DB_INDEXER_REQUEST$.asObservable().pipe(startWith(IPC_MAIN_API_DB_INDEXER_REQUEST_ACTIONS.Bootstrap()));
         },

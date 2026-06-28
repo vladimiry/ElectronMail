@@ -41,7 +41,7 @@ export const protonApiUrlsUtil = {
                 continue;
             }
             responseHeaders[headerName] = headerValues.map((headerValue) => {
-                return headerValue.replace(/(frame-ancestors|report-uri|report-to)[\s]+([^;]*)[;]?/gi, "");
+                return headerValue.replace(/(frame-ancestors|report-uri|report-to)\s+([^;]*);?/gi, "");
             });
         }
 
@@ -54,10 +54,8 @@ export const protonApiUrlsUtil = {
             return false;
         }
 
-        /* eslint-disable max-len */
         // https://github.com/ProtonMail/WebClients/blob/b80250c0e785b594d2a0c83711c0f787f5f9b2ef/packages/shared/lib/constants.ts#L54
         // https://github.com/ProtonMail/WebClients/blob/b80250c0e785b594d2a0c83711c0f787f5f9b2ef/packages/shared/lib/fetch/headers.ts#L23
-        /* eslint-enable max-len */
         const clientID = "web-account";
         const appVersion = String(PROVIDER_REPO_MAP["proton-account"].tag.split("@").pop());
 
@@ -106,8 +104,8 @@ export const processProtonCookieRecord = <T extends string | ElectronCookie>(
                 cookie.secure = true;
                 cookie.sameSite = "no_restriction";
                 return {
-                    get _cookie_() { // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-                        return cookie as ElectronCookie;
+                    get _cookie_() {
+                        return cookie;
                     },
                     setDomain: (value: string): unknown => cookie.domain = value,
                     setPath: (value: string): unknown => cookie.path = value,

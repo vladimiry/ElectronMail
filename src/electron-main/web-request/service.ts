@@ -130,6 +130,7 @@ export const resolveCorsProxy = (
     allowedOrigins: readonly string[],
 ): CorsProxy | null => {
     const originHeader = (String(resourceType).toLowerCase() === "xhr"
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string
         || String(getHeader(requestHeaders, HEADERS.request.contentType)).includes("application/json")
         || Boolean(getHeader(requestHeaders, HEADERS.request.accessControlRequestHeaders))
         || Boolean(getHeader(requestHeaders, HEADERS.request.accessControlRequestMethod)))

@@ -1,0 +1,229 @@
+diff --git a/packages/pack/webpack/plugins.js b/packages/pack/webpack/plugins.js
+index 1ce1fbc057..63daa8ebc4 100644
+--- a/packages/pack/webpack/plugins.js
++++ b/packages/pack/webpack/plugins.js
+@@ -15,7 +15,7 @@ const PostCssLogicalWebpackPlugin = require('./postcss-logical-webpack-plugin').
+ const WriteWebpackPlugin = require('./write-webpack-plugin').default;
+ const HtmlEditWebpackPlugin = require('./html-edit-webpack-plugin').default;
+ const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+-const SriWebpackPlugin = require('./sri-webpack-plugin').default;
++// const SriWebpackPlugin = require('./sri-webpack-plugin').default;
+ const WebpackInvalidationPlugin = require('./benchmark-apps-build/WebpackInvalidation').WebpackInvalidation;
+
+ const defaultFaviconConfig = require('./favicon.config');
+@@ -44,11 +44,6 @@ module.exports = ({
+ }) => {
+     let WebpackCollectMetricsPlugin;
+
+-    if (CI) {
+-        // eslint-disable-next-line import/no-extraneous-dependencies
+-        WebpackCollectMetricsPlugin = require('@proton/collect-metrics').WebpackCollectMetricsPlugin;
+-    }
+-
+     return [
+         ...(isProduction
+             ? []
+@@ -212,7 +207,7 @@ module.exports = ({
+               ]
+             : []),
+
+-        new SriWebpackPlugin(),
++        // new SriWebpackPlugin(),
+
+         new HtmlEditWebpackPlugin((tag) => {
+             // Remove the favicon.ico tag that the FaviconsWebpackPlugin generates because:
+@@ -263,7 +258,6 @@ module.exports = ({
+                 excludeAssets: `assets/static/locales`,
+             }),
+
+-        CI && new WebpackCollectMetricsPlugin(buildData),
+         benchmarkBuild && new WebpackInvalidationPlugin(),
+     ].filter(Boolean);
+ };
+--
+
+diff --git a/packages/pack/scripts/validate.sh b/packages/pack/scripts/validate.sh
+index 1a2ea64..bae388c 100755
+--- a/packages/pack/scripts/validate.sh
++++ b/packages/pack/scripts/validate.sh
+@@ -58,7 +58,7 @@ function main {
+   fi;
+
+   if [ "$hasSourceMap" -eq 0 ]; then
+-    hasError=true;
++    #hasError=true;
+     echo "[error] no SourceMaps found inside the directory: $OUTPUT_DIR";
+   fi;
+
+diff --git a/packages/pack/bin/protonPack.js b/packages/pack/bin/protonPack.js
+index b2609db4df..b26003fcff 100755
+--- a/packages/pack/bin/protonPack.js
++++ b/packages/pack/bin/protonPack.js
+@@ -8,13 +8,6 @@ const { styleText } = require('node:util');
+
+ const program = new Command();
+
+-const getApi = (value) => {
+-    if (value.startsWith('http') || value.startsWith('/api')) {
+-        return value;
+-    }
+-    throw new Error('--api must start with http or /api');
+-};
+-
+ const getPort = (basePort) => {
+     portfinder.basePort = basePort;
+     return portfinder.getPortPromise();
+@@ -27,7 +20,7 @@ const addGlobalOptions = (program) => {
+         .option('--optimizeAssets', '')
+         .option('--babelLoader', '')
+         .option('--featureFlags <featureFlags>', '')
+-        .option('--api <api>', '', (api) => getApi(api), '')
++        .option('--api <api>', '')
+         .option('--sso <sso>', '')
+         .option('--no-api-proxy', '')
+         .option('--inline-icons', false)
+@@ -69,7 +62,7 @@ addGlobalOptions(program.command('build').description('create an optimized produ
+         const outputPath = path.resolve('./dist');
+         await commandWithLog(`rm -rf ${outputPath}`);
+         await commandWithLog(
+-            `${require.resolve('webpack-cli/bin/cli.js')} --progress --output-path=${outputPath} ${webpackArgs}`,
++            `${require.resolve('webpack-cli/bin/cli.js')} --output-path=${outputPath} ${webpackArgs}`,
+             {
+                 stdio: 'inherit',
+             }
+--
+
+diff --git a/packages/pack/webpack/entries.ts b/packages/pack/webpack/entries.ts
+index cb4e29cb41..42527cbae1 100644
+--- a/packages/pack/webpack/entries.ts
++++ b/packages/pack/webpack/entries.ts
+@@ -49,24 +49,14 @@ export const mergeEntry = (originalEntry: any, entry: any) => {
+ };
+
+ export const addDevEntry = (config: any) => {
+-    if (config.mode === 'production') {
+-        return;
+-    }
+     // @ts-ignore
+-    config.entry.dev = [require.resolve('@proton/components/containers/app/StandaloneApp.tsx')];
++    config.entry.login = [require.resolve('@proton/components/containers/app/StandaloneApp.tsx')];
+     config.plugins.push(
+         new HtmlWebpackPlugin({
+             filename: 'login.html',
+             templateContent: `<html><body><div class="app-root"></div></body></html>`,
+-            chunks: ['dev'],
++            chunks: ['login'],
+             inject: 'body',
+         })
+     );
+-    // @ts-ignore
+-    config.devServer.historyApiFallback.rewrites = config.devServer.historyApiFallback.rewrites || [];
+-    // @ts-ignore
+-    config.devServer.historyApiFallback.rewrites.push({
+-        from: '/login',
+-        to: '/login.html',
+-    });
+ };
+
+diff --git a/packages/pack/lib/config.ts b/packages/pack/lib/config.ts
+index 9ae8dd8722..58810332b5 100644
+--- a/packages/pack/lib/config.ts
++++ b/packages/pack/lib/config.ts
+@@ -76,6 +76,13 @@ export const getWebpackOptions = (envArguments: WebpackEnvArguments, extra: Extr
+
+     const protonPackOptions: Partial<ProtonPackOptions> = JSON.parse(envArguments.protonPackOptions);
+
++    if (protonPackOptions.api !== "___ELECTRON_MAIL_PROTON_API_ENTRY_URL_PLACEHOLDER___") {
++        throw new Error(`Unexpected "protonPackOptions.api" value: ${JSON.stringify(protonPackOptions.api)}`);
++    }
++    if (protonPackOptions.apiProxy) {
++        throw new Error(`Unexpected "protonPackOptions.apiProxy" value: ${JSON.stringify(protonPackOptions.apiProxy)}`);
++    }
++
+     const appData: WebpackOptions['appData'] = {
+         api: protonPackOptions.api || `https://${appName.replaceAll(/proton-|-settings/g, '')}.proton.black`,
+         apiProxy: protonPackOptions.apiProxy || false,
+
+diff --git a/packages/shared/lib/webpack.constants.ts b/packages/shared/lib/webpack.constants.ts
+index 585466a9bc..caf6bf358b 100644
+--- a/packages/shared/lib/webpack.constants.ts
++++ b/packages/shared/lib/webpack.constants.ts
+@@ -7,6 +7,8 @@ export const APP_MODE = typeof WEBPACK_APP_MODE === 'undefined' ? '' : WEBPACK_A
+
+ export type AppMode = 'sso' | 'standalone';
+ export const appMode: AppMode = APP_MODE === 'sso' ? 'sso' : 'standalone';
+-
++if (appMode !== 'standalone') {
++    throw new Error(`Unexpected "APP_MODE" value: ${JSON.stringify(APP_MODE)}`);
++}
+ declare const WEBPACK_PUBLIC_PATH: string;
+ export const PUBLIC_PATH = typeof WEBPACK_PUBLIC_PATH === 'undefined' ? '' : WEBPACK_PUBLIC_PATH;
+
+diff --git a/.browserslistrc b/.browserslistrc
+index 3531d7fdad..6a0a6e8edf 100644
+--- a/.browserslistrc
++++ b/.browserslistrc
+@@ -1,12 +1,7 @@
+ # Default browserlist target for production, should not be overriden
+
+ [production]
+-> 0.5%
+-not IE 11
+-Firefox ESR
+-Safari 14
+-iOS 14
+-Chrome 80
++Chrome 148
+
+ [electron-applications]
+ Chrome 142
+diff --git a/packages/pack/webpack.config.ts b/packages/pack/webpack.config.ts
+index ad214e907f..bd8af642e3 100644
+--- a/packages/pack/webpack.config.ts
++++ b/packages/pack/webpack.config.ts
+@@ -1,3 +1,4 @@
++import fs from 'fs';
+ import browserslist from 'browserslist';
+ import path from 'path';
+ import type { Configuration } from 'webpack';
+@@ -30,7 +31,22 @@ export const getConfig = (webpackOptions: WebpackOptions): Configuration => {
+         webpackOptions.browserslist ?? browserslist(null, { env: webpackOptions.browserslistEnv }).join(', ');
+     const loaderOptions = { ...webpackOptions, browserslist: browserslistQuery };
+
+-    return {
++    const postConfigFn: (value: Configuration) => Configuration = (() => {
++        const file = path.resolve("./proton.config.js");
++        if (fs.existsSync(file)) {
++            console.log(
++                /*reset:*/"\x1b[0m" +
++                /*yellow:*/"\x1b[33m" +
++                ">>>" +
++                /*reset:*/"\x1b[0m",
++                `Found ${file}, extend the config`,
++            )
++            return eval("require")(file);
++        }
++        return (value: Configuration) => value;
++    })();
++
++    return postConfigFn({
+         bail: webpackOptions.isProduction,
+         devServer: {
+             allowedHosts: 'all',
+@@ -133,6 +149,7 @@ export const getConfig = (webpackOptions: WebpackOptions): Configuration => {
+                 : `${assetsFolder}/[name].css`,
+         }),
+         resolve: {
++            // tsconfig: path.resolve(__dirname, "./../../packages/pack/tsconfig.json"),
+             extensions: ['.js', '.tsx', '.ts'],
+             fallback: {
+                 assert: false,
+@@ -152,7 +169,7 @@ export const getConfig = (webpackOptions: WebpackOptions): Configuration => {
+             aggregateTimeout: 600,
+             ignored: /dist|node_modules|locales|\.(gif|jpeg|jpg|ico|png|svg)/,
+         },
+-    };
++    });
+ };
+
+ export default getConfig;

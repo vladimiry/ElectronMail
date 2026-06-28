@@ -449,18 +449,18 @@ index 2aaa779d3..487f54ff3 100644
  };
 
 diff --git a/applications/mail/src/app/components/drawer/MailQuickSettings.tsx b/applications/mail/src/app/components/drawer/MailQuickSettings.tsx
-index 34fa7f78fd..52cfdd344c 100644
+index e73ee8f7ee..839dd7a28c 100644
 --- a/applications/mail/src/app/components/drawer/MailQuickSettings.tsx
 +++ b/applications/mail/src/app/components/drawer/MailQuickSettings.tsx
-@@ -61,7 +61,6 @@ import { useCanReplayOnboarding } from 'proton-mail/hooks/useCanReplayOnboarding
-
+@@ -64,7 +64,6 @@ import { useCanReplayOnboarding } from 'proton-mail/hooks/useCanReplayOnboarding
+ import { CategoriesQuickSettings } from '../categoryView/CategoriesQuickSettings';
  import { DebugMailStoreButton } from '../debug/DebugMailStoreButton';
  import ClearBrowserDataModal from '../header/ClearBrowserDataModal';
 -import MailDefaultHandlerModal from '../header/MailDefaultHandlerModal';
 
  interface QuickSettingsSelectOption {
      value: any;
-@@ -454,7 +453,6 @@ const MailQuickSettings = () => {
+@@ -459,7 +458,6 @@ const MailQuickSettings = () => {
              </QuickSettingsButtonSection>
 
              {ElectronDefaultAppPrompt}

@@ -11,7 +11,7 @@ import {WEBVIEW_PRIMARY_INTERNALS_APP_TYPES} from "./common/provider-api/const";
 // The following Proton sources also get patched:
 //   - "detectStorageCapabilities" fn in "packages/shared/lib/helpers/browser.ts"
 //   - "hasESDB" fn in "packages/encrypted-search/lib/esIDB/indexedDB.ts"
-// Some reasoning for having browser-specific storages disabled or used in "in-memory mode only" listed in:
+// Some reasoning for having browser-specific storages disabled or used in "in-memory mode only" listed in (still to list more issues here):
 //   - https://github.com/vladimiry/ElectronMail/issues/750#issuecomment-3401025527
 Object.defineProperty(window, "indexedDB", {
     get: () => {

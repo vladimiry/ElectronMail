@@ -84,7 +84,7 @@ index 30244e7176..0621735420 100644
 --
 
 diff --git a/applications/drive/src/app/index.tsx b/applications/drive/src/app/index.tsx
-index 0a9d3cf8bf..a60e5a30b5 100644
+index 6cc3bfcc82..219d40458f 100644
 --- a/applications/drive/src/app/index.tsx
 +++ b/applications/drive/src/app/index.tsx
 @@ -9,6 +9,8 @@ import '@proton/polyfill';
@@ -94,8 +94,8 @@ index 0a9d3cf8bf..a60e5a30b5 100644
 +window.sessionStorage.setItem("electron_mail:proton_app_name", "proton-drive");
 +
  initDriveWebVitalsReporting(false);
-
- ReactDOM.render(<App />, document.querySelector('.app-root'));
+ const container = document.querySelector('.app-root');
+ // Starting React 18 createRoot requires a non-null Element; the React docs recommend this pattern since .app-root is always present in the HTML template
 --
 
 diff --git a/applications/drive/src/.htaccess b/applications/drive/src/.htaccess
@@ -230,4 +230,42 @@ index e5c1a520a9..31de1eb84b 100644
      }
 
      /** @internal Reset singleton state — only for use in tests. */
+--
+
+diff --git a/packages/drive/modules/thumbnails/encryptedThumbnailCache/internal/encryptedThumbnailCache.ts b/packages/drive/modules/thumbnails/encryptedThumbnailCache/internal/encryptedThumbnailCache.ts
+index 84697f23a4..5548d87926 100644
+--- a/packages/drive/modules/thumbnails/encryptedThumbnailCache/internal/encryptedThumbnailCache.ts
++++ b/packages/drive/modules/thumbnails/encryptedThumbnailCache/internal/encryptedThumbnailCache.ts
+@@ -44,14 +44,23 @@ export const initEncryptedThumbnailCache = ({ getUserKeys, userId }: InitParams)
+         return initPromise;
+     }
+
+-    // No IndexedDB (e.g. unsupported browser, private mode, locked-down webview):
+-    // leave the cache disabled silently. Real open/runtime failures are still
+-    // reported by the try/catch below.
+-    if (typeof indexedDB === 'undefined') {
+-        currentUserId = userId;
+-        ready = undefined;
+-        initPromise = Promise.resolve();
+-        return initPromise;
++    {
++        // No IndexedDB (e.g. unsupported browser, private mode, locked-down webview):
++        // leave the cache disabled silently. Real open/runtime failures are still
++        // reported by the try/catch below.
++        const dbAccessible = (() => {
++            try {
++                return typeof indexedDB !== 'undefined'
++            } catch {
++                return false
++            }
++        })();
++        if (!dbAccessible) {
++            currentUserId = userId;
++            ready = undefined;
++            initPromise = Promise.resolve();
++            return initPromise;
++        }
+     }
+
+     const previous = ready;
 --

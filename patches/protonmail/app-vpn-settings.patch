@@ -61,7 +61,7 @@ index 2cd919188c..5ef859b4c9 100644
 --
 
 diff --git a/applications/vpn-settings/src/app/App.tsx b/applications/vpn-settings/src/app/App.tsx
-index 7aa9c93f57..951b3202f5 100644
+index 0a38580c0d..8a0c6cca7d 100644
 --- a/applications/vpn-settings/src/app/App.tsx
 +++ b/applications/vpn-settings/src/app/App.tsx
 @@ -5,12 +5,10 @@ import { LocationThemeSync } from 'proton-account/src/app/content/theme/Location
@@ -107,7 +107,7 @@ index 7aa9c93f57..951b3202f5 100644
 +    const privateApp = Boolean(authentication.UID);
 
      if (!privateApp) {
-         telemetry.init({ config, uid: authentication.UID });
+         telemetry.init({
 --
 
 diff --git a/applications/vpn-settings/src/app/index.tsx b/applications/vpn-settings/src/app/index.tsx

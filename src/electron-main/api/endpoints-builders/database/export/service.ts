@@ -10,6 +10,7 @@ import {DbExportMailAttachmentItem} from "src/electron-main/api/endpoints-builde
 import {File, Mail, MailAddress} from "src/shared/model/database";
 import {PACKAGE_NAME} from "src/shared/const";
 import {parseProtonRestModel, readMailBody} from "src/shared/util/entity";
+import {ProtonAttachmentHeadersProp} from "src/shared/model/proton";
 
 const eol = "\r\n";
 
@@ -81,21 +82,38 @@ const formatExportedAttachmentContent = (attachmentContent: DeepReadonly<DbExpor
     ).toString("base64");
 };
 
+const getHeaderValue = (headers: ProtonAttachmentHeadersProp["Headers"] | undefined, key: string): string | null => {
+    if (typeof headers === "undefined") return null;
+    const lowerCased = key.toLowerCase();
+    const foundKey = Object.keys(headers).find((k) => k.toLowerCase() === lowerCased);
+    return foundKey /* just type narrowing: */ && foundKey in headers ? headers[foundKey] ?? null : null;
+};
+
 const formatEmlAttachment = (
     attachments: readonly File[],
     boundaryString: string,
-    contentDispositionFilter?: "attachment" | "inline",
+    attachmentTypeFilter?: "not-inline" | "inline",
     attachmentsContent?: DeepReadonly<DbExportMailAttachmentItem[]>,
 ): string => {
     validateAttachmentsCount({downloaded: attachmentsContent?.length, declared: attachments.length});
 
+    // resolve it once here at the top level, not in the below "reduce" loop (small optimization)
+    const skipAttachmentFn: (attachmentTypeLowerCased?: string) => boolean = !attachmentTypeFilter
+        // not filtering attachments, keep all attachments
+        ? () => false
+        : attachmentTypeFilter === "inline"
+        // skip "non inline" attachments with "inline" filter
+        ? (attachmentTypeLowerCased) => attachmentTypeLowerCased !== attachmentTypeFilter
+        // skip "inline" attachments with "not-inline" filter
+        : (attachmentTypeLowerCased) => attachmentTypeLowerCased === "inline";
+
     return attachments.reduce((previousValue, attachment, currentIndex) => {
         const base64Name = `=?UTF-8?B?${Base64.encode(attachment.name)}?=`;
         const content = attachmentsContent && attachmentsContent[currentIndex];
-        const contentId = content?.Headers["content-id"] ?? attachment.id;
-        const contentDispositionHeader = content?.Headers["content-disposition"] ?? "attachment";
+        const contentId = getHeaderValue(content?.Headers, "content-id")?.replace(/^<|>$/g, "") ?? attachment.id;
+        const attachmentType = getHeaderValue(content?.Headers, "content-disposition")?.split(";")[0]?.trim() ?? "attachment";
 
-        return contentDispositionFilter && contentDispositionHeader !== contentDispositionFilter
+        return skipAttachmentFn(attachmentType.toLowerCase())
             ? previousValue
             : previousValue
                 + [
@@ -105,9 +123,9 @@ const formatEmlAttachment = (
                     eol,
                     "Content-Transfer-Encoding: base64",
                     eol,
-                    `Content-Disposition: ${contentDispositionHeader}; filename=${base64Name}`,
+                    `Content-Disposition: ${attachmentType}; filename="${base64Name}"`,
                     eol,
-                    `Content-ID: ${contentId}`,
+                    `Content-ID: <${contentId}>`,
                     eol,
                     eol,
                     content ? formatExportedAttachmentContent(content) : "",
@@ -206,16 +224,27 @@ const contentBuilders: Record<
                         eol,
                     ],
                     ...(
-                        // to prevent duplication if no attachment content set then we write stub attachments only once in "mixed" boundary
                         attachmentsContent
-                            ? formatEmlAttachment(mail.attachments, relatedBoundary, "inline", attachmentsContent)
+                            ? formatEmlAttachment(
+                                mail.attachments,
+                                relatedBoundary,
+                                // to prevent duplication if no attachment content set
+                                // then we write stub attachments only once in "mixed" boundary
+                                "inline",
+                                attachmentsContent,
+                            )
                             : []
                     ),
                     `--${relatedBoundary}--`,
                     eol,
                 ],
-                // if no attachment content set then all attachment file names get listed here, so no need to pass "content-disposition"
-                ...formatEmlAttachment(mail.attachments, mixedBoundary, attachmentsContent ? "attachment" : undefined, attachmentsContent),
+                ...formatEmlAttachment(
+                    mail.attachments,
+                    mixedBoundary,
+                    // if no attachment content set then all attachment file names get listed here - so we pass "undefined" for this case
+                    attachmentsContent ? "not-inline" : undefined,
+                    attachmentsContent,
+                ),
                 `--${mixedBoundary}--`,
             ],
             eol,

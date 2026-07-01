@@ -2,7 +2,7 @@
   "name": "electron-mail",
   "desktopName": "electron-mail",
   "description": "Unofficial ProtonMail Desktop App",
-  "version": "5.3.8",
+  "version": "5.3.9",
   "author": "Vladimir Yakovlev <desktop-app@protonmail.ch>",
   "license": "GPL-3.0",
   "homepage": "https://github.com/vladimiry/ElectronMail",

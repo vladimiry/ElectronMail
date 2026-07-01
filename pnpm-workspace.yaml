@@ -34,15 +34,3 @@ updateConfig:
 overrides:
   'cmake-runtime': '4.1.1' # pin binary compatible with old Linux (used by "bare-make" to compile "sodium-native")
   'ninja-runtime': '1.13.1' # pin binary compatible with old Linux (used by "bare-make" to compile "sodium-native")
-minimumReleaseAgeExclude:
-  - '@typescript-eslint/eslint-plugin@8.62.1'
-  - '@typescript-eslint/parser@8.62.1'
-  - '@typescript-eslint/project-service@8.62.1'
-  - '@typescript-eslint/scope-manager@8.62.1'
-  - '@typescript-eslint/tsconfig-utils@8.62.1'
-  - '@typescript-eslint/type-utils@8.62.1'
-  - '@typescript-eslint/types@8.62.1'
-  - '@typescript-eslint/typescript-estree@8.62.1'
-  - '@typescript-eslint/utils@8.62.1'
-  - '@typescript-eslint/visitor-keys@8.62.1'
-  - typescript-eslint@8.62.1

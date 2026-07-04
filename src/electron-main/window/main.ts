@@ -8,7 +8,7 @@ import {Context} from "src/electron-main/model";
 import {curryFunctionMembers} from "src/shared/util";
 import {DEFAULT_WEB_PREFERENCES} from "./constants";
 import {initialConfig} from "src/shared/util/config";
-import {ONE_SECOND_MS, PRODUCT_NAME} from "src/shared/const";
+import {ONE_SECOND_MS, PRODUCT_NAME, RUNTIME_ARG_FORCE_HIDDEN_START} from "src/shared/const";
 import {readConfigSync, resolveDefaultAppSession} from "src/electron-main/util";
 import {syncFindInPageViewSize} from "src/electron-main/window/find-in-page";
 
@@ -130,10 +130,13 @@ export async function initMainBrowserWindow(ctx: Context): Promise<BrowserWindow
         browserWindow.setBounds(boundsToRestore);
 
         if (
-            BUILD_DISABLE_START_HIDDEN_FEATURE
-            || !(await lastValueFrom(ctx.config$.pipe(first()))).startHidden
-            // always showing the window when the settings is still not configured/saved
-            || !(await ctx.settingsStore.readable())
+            !app.commandLine.hasSwitch(RUNTIME_ARG_FORCE_HIDDEN_START)
+            && (
+                BUILD_DISABLE_START_HIDDEN_FEATURE
+                || !(await lastValueFrom(ctx.config$.pipe(first()))).startHidden
+                // always showing the window when the settings is still not configured/saved
+                || !(await ctx.settingsStore.readable())
+            )
         ) {
             await (await ctx.deferredEndpoints.promise).activateBrowserWindow(browserWindow);
         }

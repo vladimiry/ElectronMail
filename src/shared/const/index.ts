@@ -112,6 +112,8 @@ export const BROWSER_WINDOW_RELATIVE_DESKTOP_NOTIFICATION_ICON = "browser-window
 
 export const ACCOUNT_EXTERNAL_CONTENT_PROXY_URL_REPLACE_PATTERN = "$URL";
 
+export const RUNTIME_ARG_FORCE_HIDDEN_START = "force-hidden-start";
+
 // user data dir, defaults to app.getPath("userData")
 export const RUNTIME_ENV_USER_DATA_DIR = "ELECTRON_MAIL_USER_DATA_DIR";
 

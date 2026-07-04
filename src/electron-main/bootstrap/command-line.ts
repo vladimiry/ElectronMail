@@ -1,14 +1,10 @@
 import {app} from "electron";
 import type {DeepPartial} from "ts-essentials";
 
-import {Config} from "src/shared/model/options";
-import {Context} from "src/electron-main/model";
+import type {Config} from "src/shared/model/options";
+import type {Context} from "src/electron-main/model";
 import {INITIAL_STORES} from "src/electron-main/constants";
 import {readConfigSync} from "src/electron-main/util";
-
-const appendSwitch = (args: readonly [switchName: string, switchValue?: string]): void => {
-    app.commandLine.appendSwitch(...args);
-};
 
 // WARN needs to be called before app is ready, function is synchronous
 export function bootstrapCommandLine(ctx: Context): void {
@@ -24,9 +20,9 @@ export function bootstrapCommandLine(ctx: Context): void {
     for (const commandLineSwitch of commandLineSwitches) {
         const args: readonly unknown[] | null = typeof commandLineSwitch === "string"
             ? [commandLineSwitch]
-            : Array.isArray(commandLineSwitch)
-            ? commandLineSwitch
-            : null;
+            : (Array.isArray(commandLineSwitch)
+                ? commandLineSwitch
+                : null);
 
         if (!args) {
             throw new Error(`Invalid "commandLineSwitch" value detected`);
@@ -36,16 +32,16 @@ export function bootstrapCommandLine(ctx: Context): void {
 
         if (
             typeof switchNameParamArg !== "string"
-            || (typeof switchValueArg !== "string"
-                && typeof switchValueArg !== "undefined")
+            || (typeof switchValueArg !== "string" && typeof switchValueArg !== "undefined")
         ) {
             throw new Error(`Invalid "commandLineSwitch" name/value detected`);
         }
 
-        appendSwitch(
-            typeof switchValueArg === "string"
+        {
+            const appendSwitchArgs: [the_switch: string, value?: string] = typeof switchValueArg === "string"
                 ? [switchNameParamArg, switchValueArg]
-                : [switchNameParamArg],
-        );
+                : [switchNameParamArg];
+            app.commandLine.appendSwitch(...appendSwitchArgs);
+        }
     }
 }

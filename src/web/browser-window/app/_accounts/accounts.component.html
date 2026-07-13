@@ -1,95 +1,94 @@
 <button type="button" class="btn-stub"></button>
-<div *ngIf="initialized$ | async" [attr.class]="'wrapper layout-mode-' + (layoutMode$ | async)">
-    <div *ngIf="accounts$ | async; let accounts" [ngClass]="{'d-none': hideControls$ | async}" class="accounts-block px-2 pt-2">
-        <div class="controls">
-            <div class="btn-group" container="body" dropdown (onShown)="onDropdownShown()">
-                <button (click)="openSettingsView()" class="btn btn-sm btn-secondary" id="optionsMenuItem" title="Options" type="button">
-                    <i class="fa fa-cog"></i>
-                </button>
-                <button class="btn btn-sm btn-secondary dropdown-toggle dropdown-toggle-split" dropdownToggle type="button">
-                    <span class="caret"></span>
-                </button>
-                <ul *dropdownMenu class="dropdown-menu" role="menu">
-                    <li role="menuitem">
-                        <a (click)="$event.preventDefault(); openSettingsFolder();" class="dropdown-item" href="{{ userDataDir }}">
-                            Open Settings Folder
-                        </a>
-                    </li>
-                    <li class="divider dropdown-divider"></li>
-                    <li role="menuitem">
-                        <button (click)="openAboutWindow()" class="dropdown-item" type="button">
-                            About
+@if (initialized$ | async) {
+    <div [attr.class]="'wrapper layout-mode-' + (layoutMode$ | async)">
+        @if (accounts$ | async; as _accounts) {
+            <div class="accounts-block px-2 pt-2" [ngClass]="{'d-none': hideControls$ | async}">
+                <div class="controls">
+                    <div class="btn-group" container="body" dropdown (onShown)="onDropdownShown()">
+                        <button (click)="openSettingsView()" class="btn btn-sm btn-secondary" id="optionsMenuItem"
+                            title="Options" type="button">
+                            <i class="fa fa-cog"></i>
                         </button>
-                    </li>
-                    <li class="divider dropdown-divider"></li>
-                    <li role="menuitem">
-                        <button (click)="logout()" class="dropdown-item" id="logoutMenuItem" type="button">
-                            <i class="fa fa-sign-out"></i>
-                            Log Out
+                        <button class="btn btn-sm btn-secondary dropdown-toggle dropdown-toggle-split" dropdownToggle
+                            type="button">
+                            <span class="caret"></span>
                         </button>
-                    </li>
-                    <li role="menuitem">
-                        <button (click)="quit()" class="dropdown-item text-danger" id="exitMenuItem" type="button">
-                            <i class="fa fa-times"></i>
-                            Exit
-                        </button>
-                    </li>
+                        <ul *dropdownMenu class="dropdown-menu" role="menu">
+                            <li role="menuitem">
+                                <a (click)="$event.preventDefault(); openSettingsFolder();" class="dropdown-item"
+                                    href="{{ userDataDir }}">
+                                    Open Settings Folder
+                                </a>
+                            </li>
+                            <li class="divider dropdown-divider"></li>
+                            <li role="menuitem">
+                                <button (click)="openAboutWindow()" class="dropdown-item" type="button">
+                                    About
+                                </button>
+                            </li>
+                            <li class="divider dropdown-divider"></li>
+                            <li role="menuitem">
+                                <button (click)="logout()" class="dropdown-item" id="logoutMenuItem" type="button">
+                                    <i class="fa fa-sign-out"></i>
+                                    Log Out
+                                </button>
+                            </li>
+                            <li role="menuitem">
+                                <button (click)="quit()" class="dropdown-item text-danger" id="exitMenuItem" type="button">
+                                    <i class="fa fa-times"></i>
+                                    Exit
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="btn-group accounts-list d-lg-none" dropdown placement="bottom right"
+                    [ngStyle]="!_accounts.length ? {'visibility': 'hidden'} : {}">
+                    @if (unreadSummary && _accounts.length > 1) {
+                        <div class="unread-summary">
+                            <electron-mail-unread-badge [alwaysRenderTheValue]="true"
+                                [value]="unreadSummary"></electron-mail-unread-badge>
+                        </div>
+                    }
+                    @for (_account of _accounts; track trackAccountByLogin($index, _account)) {
+                        @if (_account.accountConfig.login == (selectedLogin$ | async)) {
+                            <electron-mail-account-title (click)="cancelEvent($event)" [account]="_account" [highlighting]="false"
+                                dropdownToggle></electron-mail-account-title>
+                        }
+                    }
+                    <ul *dropdownMenu class="dropdown-menu dropdown-menu-right" role="menu">
+                        @for (_account of _accounts; track trackAccountByLogin($index, _account)) {
+                            <li role="menuitem">
+                                <electron-mail-account-title (click)="activateAccountByLogin($event, _account.accountConfig.login)"
+                                    [account]="_account"></electron-mail-account-title>
+                            </li>
+                        }
+                    </ul>
+                </div>
+                <ul class="list-group accounts-list d-none d-lg-flex">
+                    @for (_account of _accounts; track trackAccountByLogin($index, _account)) {
+                        <electron-mail-account-title (click)="activateAccountByLogin($event, _account.accountConfig.login)"
+                            [account]="_account"></electron-mail-account-title>
+                    }
                 </ul>
             </div>
-        </div>
-        <div
-            [ngStyle]="!accounts.length ? {'visibility': 'hidden'} : {}" class="btn-group accounts-list d-lg-none" dropdown
-            placement="bottom right"
-        >
-            <div *ngIf="unreadSummary && accounts.length > 1" class="unread-summary">
-                <electron-mail-unread-badge
-                    *ngIf="unreadSummary && accounts.length > 1"
-                    [alwaysRenderTheValue]="true"
-                    [value]="unreadSummary"
-                ></electron-mail-unread-badge>
+        }
+        @if (loginsDistinctAccountCountChange$ | async; as _logins) {
+            <div class="account-block">
+                @if (_logins.length) {
+                    @for (_login of _logins; track _login) {
+                        <electron-mail-account [login]="_login"
+                            [ngClass]="{'d-none': _login != (selectedLogin$ | async)}"></electron-mail-account>
+                    }
+                } @else {
+                    <div class="d-flex justify-content-center align-items-center p-3 no-accounts-block">
+                        <button (click)="openAddingAccountView()" class="btn btn-primary btn-lg" type="button">
+                            <i class="fa fa-plus"></i>
+                            Add Account
+                        </button>
+                    </div>
+                }
             </div>
-            <ng-container *ngFor="let account of accounts; trackBy: trackAccountByLogin">
-                <electron-mail-account-title
-                    (click)="cancelEvent($event)"
-                    *ngIf="account.accountConfig.login == (selectedLogin$ | async)"
-                    [account]="account"
-                    [highlighting]="false"
-                    dropdownToggle
-                ></electron-mail-account-title>
-            </ng-container>
-            <ul *dropdownMenu class="dropdown-menu dropdown-menu-right" role="menu">
-                <li *ngFor="let account of accounts; trackBy: trackAccountByLogin" role="menuitem">
-                    <electron-mail-account-title
-                        (click)="activateAccountByLogin($event, account.accountConfig.login)"
-                        [account]="account"
-                    ></electron-mail-account-title>
-                </li>
-            </ul>
-        </div>
-        <ul class="list-group accounts-list d-none d-lg-flex">
-            <electron-mail-account-title
-                (click)="activateAccountByLogin($event, account.accountConfig.login)"
-                *ngFor="let account of accounts; trackBy: trackAccountByLogin"
-                [account]="account"
-            ></electron-mail-account-title>
-        </ul>
+        }
     </div>
-    <div *ngIf="loginsDistinctAccountCountChange$ | async; let logins" class="account-block">
-        <div *ngIf="logins.length; then accountsDefined else accountsUndefined"></div>
-        <ng-template #accountsDefined>
-            <electron-mail-account
-                *ngFor="let login of logins"
-                [login]="login"
-                [ngClass]="{'d-none': login != (selectedLogin$ | async)}"
-            ></electron-mail-account>
-        </ng-template>
-        <ng-template #accountsUndefined>
-            <div class="d-flex justify-content-center align-items-center p-3 no-accounts-block">
-                <button (click)="openAddingAccountView()" class="btn btn-primary btn-lg" type="button">
-                    <i class="fa fa-plus"></i>
-                    Add Account
-                </button>
-            </div>
-        </ng-template>
-    </div>
-</div>
+}

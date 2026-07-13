@@ -1,5 +1,5 @@
-<ng-ccontainer *ngIf="state$ | async; let state">
-    <ng-container *ngIf="state?.contextMenuOpen">
+@if (state$ | async; as _state) {
+    @if (_state.contextMenuOpen) {
         <ul class="dropdown-menu px-0 py-1" role="menu" style="display: block">
             <li role="menuitem">
                 <button
@@ -12,46 +12,63 @@
                 </button>
             </li>
             <li role="menuitem">
-                <button (click)="unloadContextMenuAction($event)" class="dropdown-item d-flex" type="button">
+                <button
+                    (click)="unloadContextMenuAction($event)"
+                    class="dropdown-item d-flex"
+                    type="button"
+                >
                     <i class="fa fa-times text-danger"></i>
                     <span class="ml-1">Unload</span>
                 </button>
             </li>
         </ul>
-    </ng-container>
-</ng-ccontainer>
-<div
-    *ngIf="state$ | async; let state"
-    [ngClass]="{'selected': state.selected, 'stored': state.stored, 'login-filled-once': state.account.loginFilledOnce}"
-    class="btn-group"
-    [title]="state.account.progress.syncProgress || ''"
->
-    <a class="btn btn-sm btn-secondary" href="mailto:{{ state.account.accountConfig.login }}">
-        <electron-mail-unread-badge
-            *ngIf="state.account.notifications.unread"
-            [value]="state.account.notifications.unread"
-            class="mr-1 letters"
-        ></electron-mail-unread-badge>
-        <i [class]="state.account.notifications.loggedIn ? 'd-flex fa fa-unlock' : 'd-flex fa fa-lock'"></i>
-        <div *ngIf="state.loginDelayed" class="d-flex mr-1 login-delay">
-            <i *ngIf="state.account.loginDelayedUntilSelected" class="fa fa-hand-pointer-o"></i>
-            <span class="letters" *ngIf="state.account.loginDelayedSeconds; let remainingSeconds">{{ remainingSeconds }}</span>
-        </div>
-        <div class="d-flex flex-grow-1 letters login">{{ state.title }}</div>
-    </a>
-    <button
-        (click)="toggleViewMode($event)"
-        *ngIf="state.stored"
-        class="btn btn-sm btn-secondary"
-        title="Toggle online/database view mode"
+    }
+    <div
+        class="btn-group"
+        [ngClass]="{
+            'selected': _state.selected,
+            'stored': _state.stored,
+            'login-filled-once': _state.account.loginFilledOnce
+        }"
+        [title]="_state.account.progress.syncProgress || ''"
     >
-        <i
-            [ngClass]="{
-                'syncing': state.account.progress.syncing,
-                'fa-database': state.account.databaseView,
-                'fa-plug': !state.account.databaseView
-            }"
-            class="fa"
-        ></i>
-    </button>
-</div>
+        <a class="btn btn-sm btn-secondary" href="mailto:{{ _state.account.accountConfig.login }}">
+            @if (_state.account.notifications.unread) {
+                <electron-mail-unread-badge
+                    [value]="_state.account.notifications.unread"
+                    class="mr-1 letters"
+                ></electron-mail-unread-badge>
+            }
+            <i [class]="_state.account.notifications.loggedIn ? 'd-flex fa fa-unlock' : 'd-flex fa fa-lock'"></i>
+            @if (_state.loginDelayed) {
+                <div class="d-flex mr-1 login-delay">
+                    @if (_state.account.loginDelayedUntilSelected) {
+                        <i class="fa fa-hand-pointer-o"></i>
+                    }
+                    @if (_state.account.loginDelayedSeconds; as remainingSeconds) {
+                        <span class="letters">{{ remainingSeconds }}</span>
+                    }
+                </div>
+            }
+            <div class="d-flex flex-grow-1 letters login">
+                {{ _state.title }}
+            </div>
+        </a>
+        @if (_state.stored) {
+            <button
+                (click)="toggleViewMode($event)"
+                class="btn btn-sm btn-secondary"
+                title="Toggle online/database view mode"
+            >
+                <i
+                    class="fa"
+                    [ngClass]="{
+                        'syncing': _state.account.progress.syncing,
+                        'fa-database': _state.account.databaseView,
+                        'fa-plug': !_state.account.databaseView
+                    }"
+                ></i>
+            </button>
+        }
+    </div>
+}

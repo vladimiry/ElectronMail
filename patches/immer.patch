@@ -1,0 +1,16 @@
+diff --git a/dist/immer.d.ts b/dist/immer.d.ts
+index 89902f0c5a557a5c8115e646414065aa9e132ee8..d15859997ae18fe3945e02f08604afd60fc1167f 100644
+--- a/dist/immer.d.ts
++++ b/dist/immer.d.ts
+@@ -206,11 +206,6 @@ declare function current<T>(value: Draft<T>): T;
+ 
+ declare function enablePatches(): void;
+ 
+-declare global {
+-    var Iterator: undefined | {
+-        from<T, TReturn>(iterable: Iterator<T, TReturn>): IterableIterator<T>;
+-    };
+-}
+ declare function enableMapSet(): void;
+ 
+ /**

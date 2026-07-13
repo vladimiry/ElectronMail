@@ -6,6 +6,7 @@ patchedDependencies:
   '@ghostery/url-parser': patches/@ghostery__url-parser.patch
   'app-builder-lib': patches/app-builder-lib.patch
   'class-transformer-validator': patches/class-transformer-validator.patch
+  immer: patches/immer.patch
   'keytar': patches/keytar.patch
   'msgpackr-extract': patches/msgpackr-extract.patch
   ngx-bootstrap: patches/ngx-bootstrap.patch

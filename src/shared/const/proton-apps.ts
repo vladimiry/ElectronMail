@@ -1,5 +1,6 @@
 import {
-    WEBVIEW_PRIMARY_INTERNALS_APP_TYPES, WEBVIEW_PRIMARY_INTERNALS_KEYS,
+    WEBVIEW_PRIMARY_INTERNALS_APP_TYPES,
+    WEBVIEW_PRIMARY_INTERNALS_KEYS,
 } from "src/electron-preload/webview/primary/common/provider-api/const";
 
 export const PROVIDER_APP_NAMES = [
@@ -27,7 +28,7 @@ export const PROVIDER_REPO_MAP = {
         basePath: "",
         apiSubdomain: "mail-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-mail@5.0.121.3",
+        tag: "proton-mail@5.0.122.6",
         protonPack: {
             webpackIndexEntryItems: [
                 // immediate
@@ -54,14 +55,14 @@ export const PROVIDER_REPO_MAP = {
         basePath: "account",
         apiSubdomain: "account-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-account@5.0.394.0",
+        tag: "proton-account@5.0.397.0",
         protonPack: {},
     },
     [PROVIDER_APP_NAMES[2]]: {
         basePath: "calendar",
         apiSubdomain: "calendar-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-calendar@5.0.120.4",
+        tag: "proton-calendar@5.0.122.4",
         protonPack: {
             webpackIndexEntryItems: [
                 // immediate
@@ -74,7 +75,7 @@ export const PROVIDER_REPO_MAP = {
         basePath: "drive",
         apiSubdomain: "drive-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-drive@5.2.0+61e12958",
+        tag: "proton-drive@5.2.0+97383a46",
         protonPack: {
             webpackIndexEntryItems: [
                 // immediate
@@ -87,7 +88,7 @@ export const PROVIDER_REPO_MAP = {
         basePath: "account/vpn",
         apiSubdomain: "account-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-vpn-settings@5.0.343.0",
+        tag: "proton-vpn-settings@5.0.346.0",
         protonPack: {},
     },
 } as const;

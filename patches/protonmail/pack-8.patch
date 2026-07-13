@@ -177,8 +177,9 @@ index 3531d7fdad..6a0a6e8edf 100644
 
  [electron-applications]
  Chrome 142
+
 diff --git a/packages/pack/webpack.config.ts b/packages/pack/webpack.config.ts
-index ad214e907f..bd8af642e3 100644
+index ad214e907f..199cbf704d 100644
 --- a/packages/pack/webpack.config.ts
 +++ b/packages/pack/webpack.config.ts
 @@ -1,3 +1,4 @@
@@ -186,7 +187,7 @@ index ad214e907f..bd8af642e3 100644
  import browserslist from 'browserslist';
  import path from 'path';
  import type { Configuration } from 'webpack';
-@@ -30,7 +31,22 @@ export const getConfig = (webpackOptions: WebpackOptions): Configuration => {
+@@ -30,7 +31,21 @@ export const getConfig = (webpackOptions: WebpackOptions): Configuration => {
          webpackOptions.browserslist ?? browserslist(null, { env: webpackOptions.browserslistEnv }).join(', ');
      const loaderOptions = { ...webpackOptions, browserslist: browserslistQuery };
 
@@ -205,20 +206,20 @@ index ad214e907f..bd8af642e3 100644
 +        }
 +        return (value: Configuration) => value;
 +    })();
-+
 +    return postConfigFn({
          bail: webpackOptions.isProduction,
          devServer: {
              allowedHosts: 'all',
-@@ -133,6 +149,7 @@ export const getConfig = (webpackOptions: WebpackOptions): Configuration => {
-                 : `${assetsFolder}/[name].css`,
-         }),
-         resolve: {
-+            // tsconfig: path.resolve(__dirname, "./../../packages/pack/tsconfig.json"),
-             extensions: ['.js', '.tsx', '.ts'],
-             fallback: {
-                 assert: false,
-@@ -152,7 +169,7 @@ export const getConfig = (webpackOptions: WebpackOptions): Configuration => {
+@@ -147,12 +162,15 @@ export const getConfig = (webpackOptions: WebpackOptions): Configuration => {
+                 stream: false,
+             },
+         },
+-        target: `browserslist:${webpackOptions.browserslistEnv}`,
++        target: [
++            `browserslist:${webpackOptions.browserslistEnv}`,
++            ...(process.env.ELECTRON_MAIL_ALLOW_MONKEY_PATCHING ? ["es5"]: []),
++        ],
+         watchOptions: {
              aggregateTimeout: 600,
              ignored: /dist|node_modules|locales|\.(gif|jpeg|jpg|ico|png|svg)/,
          },
@@ -227,3 +228,26 @@ index ad214e907f..bd8af642e3 100644
  };
 
  export default getConfig;
+diff --git a/packages/pack/webpack/js.loader.js b/packages/pack/webpack/js.loader.js
+index 9a7b64c7b4..052c635606 100644
+--- a/packages/pack/webpack/js.loader.js
++++ b/packages/pack/webpack/js.loader.js
+@@ -10,7 +10,7 @@ const UNSUPPORTED_JS_LOADER = [
+         options: {
+             cacheDirectory: true,
+             cacheCompression: true,
+-            compact: true,
++            compact: process.env.ELECTRON_MAIL_ALLOW_MONKEY_PATCHING ? false : true,
+             presets: [
+                 [
+                     require('@babel/preset-env').default,
+@@ -39,7 +39,7 @@ const getBabelLoader = ({ browserslist, isProduction = false, hasReactRefresh =
+         options: {
+             cacheDirectory: true,
+             cacheCompression: isProduction,
+-            compact: isProduction,
++            compact: process.env.ELECTRON_MAIL_ALLOW_MONKEY_PATCHING ? false : isProduction,
+             babelrc: false,
+             configFile: false,
+             presets: [
+--

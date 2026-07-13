@@ -1,0 +1,229 @@
+diff --git a/packages/shared/lib/helpers/sentry.ts b/packages/shared/lib/helpers/sentry.ts
+index 6a2619c716..61d1fe0dd9 100644
+--- a/packages/shared/lib/helpers/sentry.ts
++++ b/packages/shared/lib/helpers/sentry.ts
+@@ -1,15 +1,10 @@
+ import type { BrowserOptions, SeverityLevel, Span } from '@sentry/browser';
+ import {
+-    Integrations as SentryIntegrations,
+     addBreadcrumb,
+     captureException,
+     configureScope,
+-    init,
+-    makeFetchTransport,
+     captureMessage as sentryCaptureMessage,
+-    startInactiveSpan as sentryStartInactiveSpan,
+ } from '@sentry/browser';
+-import type { BrowserTransportOptions } from '@sentry/browser/types/transports/types';
+ import type { Breadcrumb } from '@sentry/types/types/breadcrumb';
+ import type { ErrorEvent, EventHint } from '@sentry/types/types/event';
+
+@@ -20,7 +15,6 @@ import { VPN_HOSTNAME } from '../constants';
+ import { ApiError } from '../fetch/ApiError';
+ import { getUIDHeaders } from '../fetch/headers';
+ import type { ProtonConfig } from '../interfaces';
+-import { isElectronApp } from './desktop';
+
+ export { spanToJSON } from '@sentry/core';
+ export type { Span, SeverityLevel } from '@sentry/browser';
+@@ -81,21 +75,6 @@ export const getContentTypeHeaders = (input: FirstFetchParameter): HeadersInit =
+     return {};
+ };
+
+-const sentryFetch: typeof fetch = (input, init?) => {
+-    return globalThis.fetch(input, {
+-        ...init,
+-        headers: {
+-            ...init?.headers,
+-            ...getContentTypeHeaders(input),
+-            ...context.authHeaders,
+-        },
+-    });
+-};
+-
+-const makeProtonFetchTransport = (options: BrowserTransportOptions) => {
+-    return makeFetchTransport(options, sentryFetch);
+-};
+-
+ const isLocalhost = (host: string) => host.startsWith('localhost');
+ export const isProduction = (host: string) =>
+     host.endsWith('.proton.me') || host.endsWith('.protonvpn.com') || host === VPN_HOSTNAME;
+@@ -193,126 +172,7 @@ function main({
+     UID,
+     beforeSendIgnore,
+     setupIgnore = ({ host }) => isLocalhost(host),
+-}: SentryOptions) {
+-    const { SENTRY_DSN, SENTRY_DESKTOP_DSN, APP_VERSION } = config;
+-    const sentryDSN = isElectronApp ? SENTRY_DESKTOP_DSN || SENTRY_DSN : SENTRY_DSN;
+-    const { host, release, environment } = sentryConfig;
+-
+-    // No need to configure it if we don't load the DSN
+-    if (!sentryDSN || setupIgnore(sentryConfig)) {
+-        return;
+-    }
+-
+-    setUID(UID);
+-
+-    // Assumes sentryDSN is: https://111b3eeaaec34cae8e812df705690a36@sentry/11
+-    // To get https://111b3eeaaec34cae8e812df705690a36@protonmail.com/api/core/v4/reports/sentry/11
+-    const dsn = sentryDSN.replace('sentry', `${host}/api/core/v4/reports/sentry`);
+-
+-    init({
+-        dsn,
+-        release,
+-        environment,
+-        normalizeDepth: 5,
+-        transport: makeProtonFetchTransport,
+-        autoSessionTracking: sessionTracking,
+-        // do not log calls to console.log, console.error, etc.
+-        integrations: [
+-            new SentryIntegrations.Breadcrumbs({
+-                console: false,
+-            }),
+-        ],
+-        // Disable client reports. Client reports are used by sentry to retry events that failed to send on visibility change.
+-        // Unfortunately Sentry does not use the custom transport for those, and thus fails to add the headers the API requires.
+-        sendClientReports: false,
+-        beforeSend(event, hint) {
+-            if (beforeSendIgnore?.(event, hint)) {
+-                return null;
+-            }
+-
+-            const error = hint?.originalException as any;
+-            const stack = typeof error === 'string' ? error : error?.stack;
+-            // Filter out broken ferdi errors
+-            if (stack && stack.match(/ferdi|franz/i)) {
+-                return null;
+-            }
+-
+-            // Not interested in uncaught API errors, or known errors
+-            if (error instanceof ApiError || error?.trace === false) {
+-                return null;
+-            }
+-
+-            if (!context.enabled) {
+-                return null;
+-            }
+-
+-            // Remove the hash from the request URL and navigation breadcrumbs to avoid
+-            // leaking the search parameters of encrypted searches
+-            if (event.request && event.request.url) {
+-                [event.request.url] = event.request.url.split(/#|%23/i);
+-            }
+-            // keys/all endpoint accepts Email as parameter which is PII.
+-            if (event.request && event.request.url) {
+-                [event.request.url] = event.request.url.toLowerCase().split('email');
+-            }
+-            if (event.breadcrumbs) {
+-                event.breadcrumbs = event.breadcrumbs.map((breadcrumb) => {
+-                    if (breadcrumb.category === 'navigation' && breadcrumb.data) {
+-                        [breadcrumb.data.from] = breadcrumb.data.from.split(/#|%23/i);
+-                        [breadcrumb.data.to] = breadcrumb.data.to.split(/#|%23/i);
+-                    }
+-
+-                    if (breadcrumb.category === 'fetch' && breadcrumb.data) {
+-                        // Redact email addresses in breadcrumb messages
+-                        breadcrumb.message = breadcrumb.data.url.replace(/Email=[^&]+/, 'Email=[Filtered]');
+-                    }
+-
+-                    // Button titles may contain accidental PII
+-                    if (
+-                        breadcrumb.category === 'ui.click' &&
+-                        breadcrumb.message &&
+-                        breadcrumb.message.startsWith('button')
+-                    ) {
+-                        breadcrumb.message = breadcrumb.message.replace(/\[title=".+?"\]/g, '[title="(Filtered)"]');
+-                    }
+-
+-                    return breadcrumb;
+-                });
+-            }
+-
+-            // Anything after a hash may be sensitive (e.g. a public share password, Ex:
+-            // https://drive.proton.dev/urls/TBYS1295RG#[password]), so always redact it.
+-            if (event.exception && event.exception.values) {
+-                event.exception.values = event.exception.values.map((error) => {
+-                    if (error.value) {
+-                        error.value = error.value.replace(/(?:#|%23).*$/is, '#[Filtered]');
+-                    }
+-
+-                    return error;
+-                });
+-            }
+-
+-            // This should help provide more context for Promise rejections that throw an Event object instead of an Error object.
+-            if (hint && hint.originalException instanceof Event) {
+-                event.extra = event.extra || {};
+-                event.extra.originalEvent = {
+-                    type: hint.originalException.type,
+-                    target: String(hint.originalException.target),
+-                };
+-            }
+-
+-            return event;
+-        },
+-        // Some ignoreErrors and denyUrls are taken from this gist: https://gist.github.com/Chocksy/e9b2cdd4afc2aadc7989762c4b8b495a
+-        // This gist is suggested in the Sentry documentation: https://docs.sentry.io/clients/javascript/tips/#decluttering-sentry
+-        ignoreErrors,
+-        denyUrls,
+-    });
+-
+-    configureScope((scope) => {
+-        scope.setTag('appVersion', APP_VERSION);
+-    });
+-}
++}: SentryOptions) {}
+
+ export const setSentryTags = (tags: Record<string, any>) => {
+     configureScope((scope) => {
+@@ -421,17 +281,7 @@ export const traceInitiativeError = (
+     initiative: SentryInitiative,
+     error: CaptureExceptionArgs[0],
+     context?: InitiativeContext
+-) => {
+-    if (!isLocalhost(self.location.host)) {
+-        captureException(error, {
+-            ...context,
+-            tags: {
+-                ...context?.tags,
+-                initiative,
+-            },
+-        });
+-    }
+-};
++) => console.error(initiative, error, context);
+
+ /**
+  * Capture message with an additional initiative tag
+@@ -440,26 +290,14 @@ export const captureInitiativeMessage = (
+     initiative: SentryInitiative,
+     message: string,
+     context?: InitiativeContext
+-) => {
+-    captureMessage(message, {
+-        ...context,
+-        tags: {
+-            ...context?.tags,
+-            initiative,
+-        },
+-    });
+-};
++) => console.log(initiative, message, context);
++
+
+ export const startInactiveSpan = (
+     name: string,
+     initiative: SentryInitiative,
+     tags?: Record<string, string>
+-): Span | undefined => {
+-    return sentryStartInactiveSpan({
+-        name,
+-        op: initiative,
+-        tags,
+-    });
+-};
++): Span | undefined => console.log(name, initiative, tags);
++
+
+ export default main;
+--

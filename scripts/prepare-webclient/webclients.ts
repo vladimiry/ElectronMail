@@ -19,38 +19,40 @@ function resolveWebpackConfigPatchingCode(
     const disableMangling = Boolean(webpackIndexEntryItems);
     const disableMinimizing = true; // disable compression to workaround "heap out of memory" issue of the "github actions" job
     const result = `
-        ${webpackConfigVarName}.devtool = false;
+    ${webpackConfigVarName}.devtool = false;
 
-        Object.assign(
-            ${webpackConfigVarName}.optimization,
-            {
-                minimize: ${!disableMinimizing},
-                moduleIds: "named",
+    Object.assign(
+        ${webpackConfigVarName}.optimization,
+        {
+            minimize: ${!disableMinimizing},
+            moduleIds: "named",
 
-                // allows resolving individual modules from "window.webpackJsonp"
-                concatenateModules: ${!disableMangling},
+            // allows resolving individual modules from "window.webpackJsonp"
+            concatenateModules: ${!disableMangling},
 
-                // allows preserving in the bundle some constants we reference in the provider api code
-                // TODO proton v4: figure how to apply "usedExports: false" to specific files only
-                usedExports: ${!disableMangling},
-            },
-        );
+            // allows preserving in the bundle some constants we reference in the provider api code
+            // TODO proton v4: figure how to apply "usedExports: false" to specific files only
+            usedExports: ${!disableMangling},
+        },
+    );
 
-        Object.assign(
-            ${webpackConfigVarName}.optimization,
-            {
-                chunkIds: "named",
-                ${disableMangling ? "mangleExports: false," : ""}
-            },
-        );
+    Object.assign(
+        ${webpackConfigVarName}.optimization,
+        {
+            chunkIds: "named",
+            ${disableMangling ? "mangleExports: false," : ""}
+        },
+    );
 
-        ${
+    ${
         disableMangling
-            ? `webpackConfig.output.chunkLoadingGlobal = "webpackJsonp";`
+            ? `
+            webpackConfig.output.chunkLoadingGlobal = "webpackJsonp";
+            `
             : ""
     }
 
-        ${
+    ${
         disableMangling
             ? `
             const terserPluginInstance = ${webpackConfigVarName}.optimization.minimizer
@@ -69,52 +71,43 @@ function resolveWebpackConfigPatchingCode(
                 terserPluginInstance.options.terserOptions ?? (terserPluginInstance.options.terserOptions = {}),
                 (terserPluginInstance.options.minimizer ?? (terserPluginInstance.options.minimizer = {options: {}})),
             ].forEach((value) => Object.assign(value, minimizerOptions));
-        `
+            `
             : (disableMinimizing ? `${webpackConfigVarName}.optimization.minimizer = [];` : ``)
     }
 
-        ${
+    ${
         webpackIndexEntryItems
             ? `{
             const items = ${JSON.stringify(webpackIndexEntryItems, null, 2)};
             ${webpackConfigVarName}.entry.index.unshift(...items);
-        }`
+            }`
             : ""
     }
 
-        for (const rule of ${webpackConfigVarName}.module.rules) {
-            const babelLoaderOptions = (
-                typeof rule === "object"
-                &&
-                Array.isArray(rule.use)
-                &&
-                (rule.use.find((item) => item.loader === "babel-loader") || {}).options
-            );
-            if (babelLoaderOptions) {
-                babelLoaderOptions.compact = false;
-            }
+    ${webpackConfigVarName}.plugins = ${webpackConfigVarName}.plugins.filter((plugin) => {
+        switch (plugin.constructor.name) {
+            case "HtmlWebpackPlugin":
+                plugin.userOptions.minify = false;
+                break;
+            case "ImageminPlugin":
+                return false;
+            case "FaviconsWebpackPlugin":
+                return false;
+            case "OptimizeCSSAssetsPlugin":
+                return false;
+            case "OptimizeCssAssetsWebpackPlugin":
+                return false;
+            case "SourceMapDevToolPlugin":
+                return false;
+            case "HashedModuleIdsPlugin":
+                return false;
         }
+        return true;
+    });
 
-        ${webpackConfigVarName}.plugins = ${webpackConfigVarName}.plugins.filter((plugin) => {
-            switch (plugin.constructor.name) {
-                case "HtmlWebpackPlugin":
-                    plugin.userOptions.minify = false;
-                    break;
-                case "ImageminPlugin":
-                    return false;
-                case "FaviconsWebpackPlugin":
-                    return false;
-                case "OptimizeCSSAssetsPlugin":
-                    return false;
-                case "OptimizeCssAssetsWebpackPlugin":
-                    return false;
-                case "SourceMapDevToolPlugin":
-                    return false;
-                case "HashedModuleIdsPlugin":
-                    return false;
-            }
-            return true;
-        });
+    // console.log("======================================================");
+    // console.log(JSON.stringify(webpackConfig, null, 2));
+    // console.log("======================================================");
     `;
 
     return result;
@@ -249,8 +242,7 @@ async function executeBuildFlow(
                 const publicPath: string | undefined = PROVIDER_REPO_MAP[repoType].basePath
                     ? `/${PROVIDER_REPO_MAP[repoType].basePath}/`
                     : undefined;
-
-                {
+                const disableMangling = ((): boolean => {
                     const webpackIndexEntryItems = "webpackIndexEntryItems" in PROVIDER_REPO_MAP[repoType].protonPack
                         ? PROVIDER_REPO_MAP[repoType].protonPack.webpackIndexEntryItems
                         : null;
@@ -263,7 +255,8 @@ async function executeBuildFlow(
                         return webpackConfig;
                         }`,
                     );
-                }
+                    return Boolean(webpackIndexEntryItems);
+                })();
 
                 assertPathIsInCwd(repoDistDir);
                 await execShell(["npx", ["--no", "rimraf", repoDistDir]]);
@@ -281,6 +274,7 @@ async function executeBuildFlow(
                         `--api=${PROTON_API_URL_PLACEHOLDER}`,
                         `--appMode=standalone`,
                         ...(repoType == "proton-drive" ? ["--handleSupportAndErrors", "--optimizeAssets", "--noLogicalScss"] : []),
+                        // ...(disableMangling ? ["--babelLoader"] : []),
                     ], {
                         cwd: repoDir,
                         env: {
@@ -289,6 +283,8 @@ async function executeBuildFlow(
                             NODE_ENV: "production",
                             // picked "build" task of "applications/<app>/package.json", "package.json" patching tracks the change
                             TS_NODE_PROJECT: path.join(repoDir, "tsconfig.webpack.json"),
+                            // force "commonjs"
+                            ...(disableMangling && {ELECTRON_MAIL_ALLOW_MONKEY_PATCHING: "1"}),
                         },
                     }], publicPath ? {printEnvWhitelist: ["PUBLIC_PATH"]} : undefined);
                 }

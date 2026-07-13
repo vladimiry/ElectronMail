@@ -1,9 +1,9 @@
 diff --git a/applications/drive/src/app/modules/search/internal/worker/SharedWorkerAPI.ts b/applications/drive/src/app/modules/search/internal/worker/SharedWorkerAPI.ts
 deleted file mode 100644
-index 4e612efb65..0000000000
+index f852747bfa..0000000000
 --- a/applications/drive/src/app/modules/search/internal/worker/SharedWorkerAPI.ts
 +++ /dev/null
-@@ -1,300 +0,0 @@
+@@ -1,297 +0,0 @@
 -import type { Entry } from '@proton/proton-foundation-search';
 -
 -import type { MainThreadBridge } from '../mainThread/MainThreadBridge';
@@ -92,7 +92,6 @@ index 4e612efb65..0000000000
 -        // Notify all tabs that search has been deactivated.
 -        this.stateChannel?.postMessage({
 -            isUserOptIn: false,
--            isInitialIndexing: false,
 -            isIndexing: false,
 -            isSearchable: false,
 -            permanentError: null,
@@ -120,7 +119,6 @@ index 4e612efb65..0000000000
 -        }
 -
 -        this.stateChannel?.postMessage({
--            isInitialIndexing: false,
 -            isIndexing: false,
 -            isSearchable: false,
 -            permanentError: null,
@@ -263,7 +261,6 @@ index 4e612efb65..0000000000
 -            this.stateChannel.postMessage(this.indexer.getState());
 -            this.indexer.onStateChange((state) => {
 -                this.stateChannel?.postMessage({
--                    isInitialIndexing: state.isInitialIndexing,
 -                    isIndexing: state.isIndexing,
 -                    isSearchable: state.isSearchable,
 -                    permanentError: state.permanentError,
@@ -777,7 +774,7 @@ index ae99f9978d..0000000000
 -}
 diff --git a/applications/drive/src/app/modules/search/internal/worker/indexer/indexPopulators/IndexPopulator.ts b/applications/drive/src/app/modules/search/internal/worker/indexer/indexPopulators/IndexPopulator.ts
 deleted file mode 100644
-index 4e24c9cbf8..0000000000
+index 9248f97093..0000000000
 --- a/applications/drive/src/app/modules/search/internal/worker/indexer/indexPopulators/IndexPopulator.ts
 +++ /dev/null
 @@ -1,491 +0,0 @@
@@ -965,7 +962,7 @@ index 4e24c9cbf8..0000000000
 -                        `${this.getUid()}: TreeRefresh, marking index populator as not done to request new indexing.`
 -                    );
 -                    await this.markAsNotDone(ctx.db);
--                    ctx.enqueueOnce(new IndexPopulatorTask(this, false /* isBootstrap */));
+-                    ctx.enqueueOnce(new IndexPopulatorTask(this));
 -                    // Re-index will bump the generation; entries from the previous
 -                    // generation that aren't revisited become stale.
 -                    ctx.enqueueOnce(new CleanUpStaleIndexEntryTask());
@@ -1706,37 +1703,6 @@ index 146cd6b91b..0000000000
 -        });
 -    }
 -}
-
-diff --git a/applications/drive/src/app/modules/search/internal/worker/SharedWorkerAPI.integration.test.ts b/applications/drive/src/app/modules/search/internal/worker/SharedWorkerAPI.integration.test.ts
-index 18fa671a16..6d14a6b72f 100644
---- a/applications/drive/src/app/modules/search/internal/worker/SharedWorkerAPI.integration.test.ts
-+++ b/applications/drive/src/app/modules/search/internal/worker/SharedWorkerAPI.integration.test.ts
-@@ -18,7 +18,6 @@ import { IndexKind } from '../shared/types';
- import { FakeBroadcastChannel } from '../testing/FakeBroadcastChannel';
- import { FakeMainThreadBridge } from '../testing/FakeMainThreadBridge';
- import { setupRealSearchLibraryWasm } from '../testing/setupRealSearchLibraryWasm';
--import { SharedWorkerAPI } from './SharedWorkerAPI';
-
- setupRealSearchLibraryWasm();
-
-@@ -187,17 +186,11 @@ function expectState(actual: StateMessage, expected: StateMessage) {
- // --- Search helper ---
-
- async function search(
--    api: SharedWorkerAPI,
-+    api: unknown,
-     query: string,
-     filters?: Record<string, string | bigint | boolean>
- ): Promise<SearchResultItem[]> {
--    const results: SearchResultItem[] = [];
--    await api.search({ filename: query, filters }, (event: WorkerSearchResultEvent) => {
--        if (event.type === 'item') {
--            results.push(event);
--        }
--    });
--    return results;
-+    throw new Error("ElectronMail triggered error: this code not supposed to be reachable (SharedWorkerAPI use: search)")
- }
 
  async function getAllIndexedItemsForGeneration(api: SharedWorkerAPI, generation: number): Promise<SearchResultItem[]> {
 diff --git a/applications/drive/src/app/modules/search/internal/worker/search.worker.ts b/applications/drive/src/app/modules/search/internal/worker/search.worker.ts

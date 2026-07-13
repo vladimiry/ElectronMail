@@ -1,5 +1,5 @@
 import {BehaviorSubject, Subscription} from "rxjs";
-import {Component, ElementRef, HostListener, inject, Input} from "@angular/core";
+import {ChangeDetectorRef, Component, ElementRef, HostListener, inject, Input, NgZone} from "@angular/core";
 import {filter, first, map} from "rxjs/operators";
 import type {OnDestroy, OnInit} from "@angular/core";
 import {select, Store} from "@ngrx/store";
@@ -34,6 +34,8 @@ const initialComponentState: DeepReadonly<Omit<ComponentState, "account">> = {
     styleUrls: ["./account-title.component.scss"],
 })
 export class AccountTitleComponent implements OnInit, OnDestroy {
+    private readonly ngZone = inject(NgZone);
+    private readonly cdRef = inject(ChangeDetectorRef);
     private readonly store = inject<Store<State>>(Store);
     private readonly elementRef = inject(ElementRef);
 
@@ -144,6 +146,9 @@ export class AccountTitleComponent implements OnInit, OnDestroy {
     }
 
     private patchState(patch: Partial<ComponentState>): void {
-        this.stateSubject$.next({...this.stateSubject$.value, ...patch});
+        this.ngZone.run(() => {
+            this.stateSubject$.next({...this.stateSubject$.value, ...patch});
+        });
+        this.cdRef.markForCheck(); // then try this.cdr.detectChanges() too
     }
 }

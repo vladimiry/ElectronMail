@@ -44,13 +44,21 @@ export type StandardSetupPublicScope = Unpacked<
 >["publicScope"];
 
 export type StandardSetupProviderInternalsLazy = AddInitializedProp<
-    & { [K in StrictExtract<LazyKeys, "../../packages/components/hooks/useApi.ts">]: {default: () => StandardSetupPublicScope["httpApi"]} }
+    & {
+        [K in StrictExtract<LazyKeys, "../../packages/components/hooks/useApi.ts">]: {
+            useApi: () => StandardSetupPublicScope["httpApi"];
+        };
+    }
     & {
         [K in StrictExtract<LazyKeys, "../../packages/components/hooks/useAuthentication.ts">]: {
             default: () => StandardSetupPublicScope["authentication"];
         };
     }
-    & { [K in StrictExtract<LazyKeys, "../../packages/components/hooks/useCache.ts">]: {default: () => StandardSetupPublicScope["cache"]} }
+    & {
+        [K in StrictExtract<LazyKeys, "../../packages/components/hooks/useCache.ts">]: {
+            useCache: () => StandardSetupPublicScope["cache"];
+        };
+    }
     & {
         [K in StrictExtract<LazyKeys, "../../node_modules/react-router/esm/react-router.js">]: {
             useHistory: () => StandardSetupPublicScope["history"];

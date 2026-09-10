@@ -1,15 +1,15 @@
 diff --git a/packages/components/hooks/useLinkHandler.tsx b/packages/components/hooks/useLinkHandler.tsx
-index e20978f90b..def572b35c 100644
+index 68718d60ca..1072b2d7cd 100644
 --- a/packages/components/hooks/useLinkHandler.tsx
 +++ b/packages/components/hooks/useLinkHandler.tsx
-@@ -11,6 +11,7 @@ import { getSecondLevelDomain, isSubDomain } from '@proton/shared/lib/helpers/ur
+@@ -10,6 +10,7 @@ import { getSecondLevelDomain, isSubDomain } from '@proton/shared/lib/helpers/ur
  import type { MailSettings } from '@proton/shared/lib/interfaces';
  import { CONFIRM_LINK } from '@proton/shared/lib/mail/mailSettings';
  import isTruthy from '@proton/utils/isTruthy';
 +import { openNewTab } from '@proton/shared/lib/helpers/browser';
 
+ import useModalState from '../components/modalTwo/useModalState';
  import LinkConfirmationModal from '../components/notifications/LinkConfirmationModal/LinkConfirmationModal';
- import { openLinkInBrowser } from '../containers/desktop/openExternalLink';
 @@ -118,6 +119,10 @@ export const useLinkHandler: UseLinkHandler = (
              return;
          }

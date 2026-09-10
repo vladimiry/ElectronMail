@@ -1,0 +1,39 @@
+diff --git a/packages/shared/lib/constants.ts b/packages/shared/lib/constants.ts
+index 3e94f21537..176ae05c83 100644
+--- a/packages/shared/lib/constants.ts
++++ b/packages/shared/lib/constants.ts
+@@ -92,6 +92,14 @@ export const APPS = {
+     PROTONSPACES: 'proton-spaces',
+ } as const;
+
++export const ELECTRON_MAIL_APPS = [
++    APPS.PROTONACCOUNT,
++    APPS.PROTONCALENDAR,
++    APPS.PROTONDRIVE,
++    APPS.PROTONMAIL,
++    APPS.PROTONVPN_SETTINGS,
++] as const;
++
+ interface AppConfiguration {
+     publicPath: string;
+     subdomain: string;
+@@ -108,7 +116,7 @@ interface AppConfiguration {
+
+ export const APPS_CONFIGURATION: { [key in APP_NAMES]: AppConfiguration } = {
+     [APPS.PROTONACCOUNT]: {
+-        publicPath: '',
++        publicPath: '/account',
+         subdomain: 'account',
+         name: 'Proton Account',
+         bareName: 'Account',
+@@ -220,8 +228,8 @@ export const APPS_CONFIGURATION: { [key in APP_NAMES]: AppConfiguration } = {
+         product: Product.Pass,
+     },
+     [APPS.PROTONVPN_SETTINGS]: {
+-        publicPath: '',
+-        subdomain: '',
++        publicPath: 'account/vpn',
++        subdomain: 'account',
+         name: VPN_APP_NAME,
+         bareName: VPN_SHORT_APP_NAME,
+         clientID: 'web-vpn-settings',

@@ -45,17 +45,17 @@ index b82b7ae976..0907c85ec6 100644
  };
 
 diff --git a/packages/components/components/topnavbar/TopNavbarUpsell.tsx b/packages/components/components/topnavbar/TopNavbarUpsell.tsx
-index caa1609454..723bf63519 100644
+index bbccd7e7e9..c7e4f955b2 100644
 --- a/packages/components/components/topnavbar/TopNavbarUpsell.tsx
 +++ b/packages/components/components/topnavbar/TopNavbarUpsell.tsx
-@@ -22,6 +22,7 @@ const LazyTopNavbarUpsellInner = lazy(
+@@ -20,6 +20,7 @@ const LazyTopNavbarUpsellInner = lazy(
  );
 
  const TopNavbarUpsell = ({ app, offerProps }: Props) => {
 +    if (___ELECTRON_MAIL_PROTON_SUPPRESS_UPSELL_ADS_PLACEHOLDER___) return null;
-     const [subscription] = useSubscription();
-     const [organization] = useOrganization();
      const [userSettings, loadingUserSettings] = useUserSettings();
+
+     // don't upsell during B2B trial
 
 diff --git a/applications/drive/src/app/legacy/components/layout/sidebar/SidebarStorageUpsell.tsx b/applications/drive/src/app/legacy/components/layout/sidebar/SidebarStorageUpsell.tsx
 index f7770e8be8..5466339c46 100644

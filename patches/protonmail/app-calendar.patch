@@ -1,15 +1,14 @@
 diff --git a/package.json b/package.json
-index cb439a93b1..0c368c2bd6 100644
+index 1ebe6c6f35..74975baee6 100644
 --- a/package.json
 +++ b/package.json
-@@ -3,15 +3,11 @@
+@@ -3,14 +3,10 @@
      "private": true,
      "license": "GPL-3.0",
      "workspaces": [
 -        "applications/*",
-+        "applications/calendar",
-         "applications/lumo/src/app/lib/lumo-api-client",
 -        "applications/pass-desktop/native",
++        "applications/calendar",
          "packages/*",
          "packages/wasm/*",
          "packages/pass/docs/starlight",
@@ -22,17 +21,18 @@ index cb439a93b1..0c368c2bd6 100644
 --
 
 diff --git a/applications/calendar/package.json b/applications/calendar/package.json
-index 102bb25bad..859e351c48 100644
+index c37b0ca90f..5ee4af6dd7 100644
 --- a/applications/calendar/package.json
 +++ b/applications/calendar/package.json
-@@ -6,7 +6,6 @@
+@@ -5,7 +5,6 @@
+     "license": "GPL-3.0",
      "author": "test",
-     "main": "index.js",
      "scripts": {
 -        "build:web": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --appMode=sso",
          "check-types": "tsc",
          "i18n:extract:web": "proton-i18n extract",
          "i18n:upgrade": "proton-i18n extract --verbose && proton-i18n crowdin --verbose",
+--
 
 diff --git a/applications/calendar/src/app/index.tsx b/applications/calendar/src/app/index.tsx
 index b4d841c7cd..00ce66f767 100644

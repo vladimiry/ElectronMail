@@ -10,7 +10,13 @@ import {spy as sinonSpy} from "sinon";
 import {APP_DIR_PATH, CONF, ENV, MAIN_SCRIPT_FILE, ROOT_DIR_PATH} from "src/e2e/lib/const";
 import {asyncDelay} from "src/shared/util";
 import {
-    BINARY_NAME, LOCAL_WEBCLIENT_ORIGIN, ONE_SECOND_MS, PACKAGE_NAME, PACKAGE_VERSION, PRODUCT_NAME, RUNTIME_ENV_USER_DATA_DIR,
+    BINARY_NAME,
+    LOCAL_WEBCLIENT_ORIGIN,
+    ONE_SECOND_MS,
+    PACKAGE_NAME,
+    PACKAGE_VERSION,
+    PRODUCT_NAME,
+    RUNTIME_ENV_USER_DATA_DIR,
 } from "src/shared/const";
 import {buildWorkflow} from "./workflow";
 import {mainProcessEvaluationFunctions} from "src/e2e/lib/util";
@@ -114,6 +120,10 @@ export const initAppWithTestContext = async (
                             || line.includes("useFlagContext() must be used within a FlagProvider")
                             || line.includes("Error parsing 'integrity' attribute ('__sri_generate__:assets/static/")
                             || line.includes("Unleash: unable to fetch feature toggles StatusCodeError")
+                            || (
+                                line.includes("Uncaught Error: Invalid guestInstanceId:")
+                                && line.includes("node:electron/js2c/sandbox_bundle")
+                            )
                         ) {
                             return;
                         }

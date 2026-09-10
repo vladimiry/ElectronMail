@@ -1,5 +1,5 @@
 diff --git a/packages/shared/lib/helpers/sentry.ts b/packages/shared/lib/helpers/sentry.ts
-index 6a2619c716..61d1fe0dd9 100644
+index 1a42e24a83..1d5eca2a57 100644
 --- a/packages/shared/lib/helpers/sentry.ts
 +++ b/packages/shared/lib/helpers/sentry.ts
 @@ -1,15 +1,10 @@
@@ -24,8 +24,8 @@ index 6a2619c716..61d1fe0dd9 100644
  import type { ProtonConfig } from '../interfaces';
 -import { isElectronApp } from './desktop';
 
+ export type { SeverityLevel, Span } from '@sentry/browser';
  export { spanToJSON } from '@sentry/core';
- export type { Span, SeverityLevel } from '@sentry/browser';
 @@ -81,21 +75,6 @@ export const getContentTypeHeaders = (input: FirstFetchParameter): HeadersInit =
      return {};
  };
@@ -48,7 +48,7 @@ index 6a2619c716..61d1fe0dd9 100644
  const isLocalhost = (host: string) => host.startsWith('localhost');
  export const isProduction = (host: string) =>
      host.endsWith('.proton.me') || host.endsWith('.protonvpn.com') || host === VPN_HOSTNAME;
-@@ -193,126 +172,7 @@ function main({
+@@ -193,129 +172,7 @@ function main({
      UID,
      beforeSendIgnore,
      setupIgnore = ({ host }) => isLocalhost(host),
@@ -119,11 +119,14 @@ index 6a2619c716..61d1fe0dd9 100644
 -                    if (breadcrumb.category === 'navigation' && breadcrumb.data) {
 -                        [breadcrumb.data.from] = breadcrumb.data.from.split(/#|%23/i);
 -                        [breadcrumb.data.to] = breadcrumb.data.to.split(/#|%23/i);
+-                        breadcrumb.data.from = breadcrumb.data.from.replace(/email=[^&]+/i, 'email=[Filtered]');
+-                        breadcrumb.data.to = breadcrumb.data.to.replace(/email=[^&]+/i, 'email=[Filtered]');
 -                    }
 -
 -                    if (breadcrumb.category === 'fetch' && breadcrumb.data) {
 -                        // Redact email addresses in breadcrumb messages
--                        breadcrumb.message = breadcrumb.data.url.replace(/Email=[^&]+/, 'Email=[Filtered]');
+-                        breadcrumb.data.url = breadcrumb.data.url.replace(/email=[^&]+/i, 'email=[Filtered]');
+-                        breadcrumb.message = breadcrumb.data.url;
 -                    }
 -
 -                    // Button titles may contain accidental PII
@@ -176,7 +179,7 @@ index 6a2619c716..61d1fe0dd9 100644
 
  export const setSentryTags = (tags: Record<string, any>) => {
      configureScope((scope) => {
-@@ -421,17 +281,7 @@ export const traceInitiativeError = (
+@@ -425,17 +282,7 @@ export const traceInitiativeError = (
      initiative: SentryInitiative,
      error: CaptureExceptionArgs[0],
      context?: InitiativeContext
@@ -195,7 +198,7 @@ index 6a2619c716..61d1fe0dd9 100644
 
  /**
   * Capture message with an additional initiative tag
-@@ -440,26 +290,14 @@ export const captureInitiativeMessage = (
+@@ -444,26 +291,12 @@ export const captureInitiativeMessage = (
      initiative: SentryInitiative,
      message: string,
      context?: InitiativeContext
@@ -208,8 +211,7 @@ index 6a2619c716..61d1fe0dd9 100644
 -        },
 -    });
 -};
-+) => console.log(initiative, message, context);
-+
++) => console.log(message, context, {...context?.tags, initiative});
 
  export const startInactiveSpan = (
      name: string,
@@ -223,7 +225,6 @@ index 6a2619c716..61d1fe0dd9 100644
 -    });
 -};
 +): Span | undefined => console.log(name, initiative, tags);
-+
 
  export default main;
 --

@@ -17,10 +17,11 @@ apt-get update
 apt-get install --yes --no-install-recommends \
   ca-certificates curl gnupg wget lsb-release build-essential python3 git libtool automake \
   libsecret-1-dev
+# standard tools needed for package verification
+apt-get install --yes --no-install-recommends software-properties-common gnupg2
 echo "::endgroup::"
 
 echo "::group::setup gcc12"
-apt-get install --yes --no-install-recommends software-properties-common gnupg2
 # previously: add-apt-repository ppa:ubuntu-toolchain-r/test -y
 # late June 2026: GH CI blocks "ppa:ubuntu-toolchain-r/test" PPA lookup, so switching to manual "apt-key + sources.list" as a workaround
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 1E9377A2BA9EF27F
@@ -37,10 +38,15 @@ fi
 echo "::endgroup::"
 
 echo "::group::setup clang/ldd"
-wget https://apt.llvm.org/llvm.sh
-chmod +x llvm.sh
-./llvm.sh 20
-rm llvm.sh
+# force IPv4 (-4) to pull the GPG key safely without network timeouts
+wget -4 -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc >/dev/null
+echo "deb https://apt.llvm.org/focal/ llvm-toolchain-focal-20 main" | tee /etc/apt/sources.list.d/llvm.list
+apt-get update -o Acquire::Languages=none
+apt-get install --yes --no-install-recommends clang-20 lldb-20 lld-20
+update-alternatives --install /usr/bin/clang clang /usr/bin/clang-20 200 \
+                    --slave /usr/bin/clang++ clang++ /usr/bin/clang++-20 \
+                    --slave /usr/bin/ld.lld ld.lld /usr/bin/ld.lld-20
+echo "Clang 20 installed successfully"
 echo "::endgroup::"
 
 echo "::group::setup nodejs & pnpm"

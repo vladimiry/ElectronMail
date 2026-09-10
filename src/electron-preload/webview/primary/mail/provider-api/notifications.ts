@@ -16,7 +16,7 @@ type FETCH_NOTIFICATION$_Type = Observable<NoExtraProps<{url: string; responseTe
 export const FETCH_NOTIFICATION$: FETCH_NOTIFICATION$_Type = (() => {
     // WARN: has to be replay subject since the app starts listening for fetch calls with some delay
     const subject = new ReplaySubject<Unpacked<FETCH_NOTIFICATION$_Type>>(100);
-    const originalFetch = window.fetch;
+    const originalFetch = window.fetch; // eslint-disable-line @typescript-eslint/unbound-method
     const overriddenFetch: typeof originalFetch = async function(this: typeof originalFetch, ...args) {
         const [firstArg, configArg] = args;
         const skipNotification = typeof configArg === "object" && FETCH_NOTIFICATION_SKIP_SYMBOL in configArg;

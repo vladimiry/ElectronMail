@@ -34,7 +34,7 @@ export const resolveStandardSetupProviderInternals = async (_logger: Logger): Pr
                             return [
                                 createElement(() => {
                                     const useApiModule = (() => {
-                                        const key = "../../packages/components/hooks/useApi.ts";
+                                        const key = "../../packages/app-context/useApi.ts";
                                         return webpack_require<StandardSetupProviderInternalsLazy[typeof key]>(key);
                                     })();
                                     const useAuthenticationModule = (() => {
@@ -42,7 +42,7 @@ export const resolveStandardSetupProviderInternals = async (_logger: Logger): Pr
                                         return webpack_require<StandardSetupProviderInternalsLazy[typeof key]>(key);
                                     })();
                                     const useCacheModule = (() => {
-                                        const key = "../../packages/components/hooks/useCache.ts";
+                                        const key = "../../packages/app-context/useCache.ts";
                                         return webpack_require<StandardSetupProviderInternalsLazy[typeof key]>(key);
                                     })();
                                     const reactRouterModule = (() => {

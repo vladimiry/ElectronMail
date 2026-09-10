@@ -74,7 +74,6 @@ const mainWebpackConfig = buildBaseWebConfig({
                             compact: false,
                             plugins: [
                                 AngularBabelLinkerPlugin,
-                                "@babel/plugin-syntax-import-assertions",
                                 // always transform async/await to support zone.js thing
                                 "@babel/plugin-transform-async-generator-functions",
                                 "@babel/plugin-transform-async-to-generator",

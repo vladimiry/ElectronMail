@@ -67,6 +67,7 @@ export const attachRateLimiting = async (api: ProviderApi, logger_: Logger): Pro
 
                     for (const promiseMemberName of ["then", "catch"] as const) {
                         assertTypeOf(
+                            // eslint-disable-next-line @typescript-eslint/unbound-method
                             {value: callResult[promiseMemberName], expectedType: "function"},
                             `Rate limited "${logMethodName}()" call result is not a Promise`,
                         );

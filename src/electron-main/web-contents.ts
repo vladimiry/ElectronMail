@@ -1,6 +1,7 @@
 import _logger from "electron-log";
 import {
-    app, BrowserWindow, clipboard, Menu, MenuItemConstructorOptions, screen, Session, webContents as electronWebContents, WebPreferences,
+    app, BrowserWindow, clipboard, ClipboardItem, Menu, MenuItemConstructorOptions, screen, Session, webContents as electronWebContents,
+    WebPreferences,
 } from "electron";
 import {first} from "rxjs/operators";
 import {inspect} from "util";
@@ -214,11 +215,11 @@ export async function initWebContentsCreatingHandlers(ctx: Context): Promise<voi
                 if (linkURL) {
                     menuItems.push({
                         label: isEmailHref(linkURL) ? "Copy Email Address" : "Copy Link Address",
-                        click() {
+                        async click() {
                             if (PLATFORM === "darwin") {
-                                clipboard.writeBookmark(linkText, extractEmailIfEmailHref(linkURL));
+                                await clipboard.write([new ClipboardItem({title: linkText, url: extractEmailIfEmailHref(linkURL)})]);
                             } else {
-                                clipboard.writeText(extractEmailIfEmailHref(linkURL));
+                                await clipboard.writeText(extractEmailIfEmailHref(linkURL));
                             }
                         },
                     });

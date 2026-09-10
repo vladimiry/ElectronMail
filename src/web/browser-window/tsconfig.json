@@ -9,7 +9,14 @@
     ]
   },
   "exclude": [
-    "./**/*.spec.ts"
+    "./**/*.spec.ts",
+    "../../../scripts/**/*",
+    "../../../webpack-configs/*",
+    "../../../webpack-configs/**/*",
+    "../../../src/e2e/**/*",
+    "../../../src/shared/**/*",
+    "../../../src/electron-main/**/*",
+    "../../../src/electron-preload/**/*"
   ],
   "angularCompilerOptions": {
     "strictTemplates": true

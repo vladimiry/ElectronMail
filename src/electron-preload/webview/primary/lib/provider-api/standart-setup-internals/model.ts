@@ -8,9 +8,9 @@ type Keys = typeof PROVIDER_REPO_STANDARD_SETUP_WEBPACK_INDEX_ENTRY_ITEMS[number
 type LazyKeys = StrictExclude<
     StrictExtract<
         Keys,
-        | "../../packages/components/hooks/useApi.ts"
+        | "../../packages/app-context/useApi.ts"
         | "../../packages/components/hooks/useAuthentication.ts"
-        | "../../packages/components/hooks/useCache.ts"
+        | "../../packages/app-context/useCache.ts"
         | "../../node_modules/react-router/esm/react-router.js"
     >,
     never
@@ -45,7 +45,7 @@ export type StandardSetupPublicScope = Unpacked<
 
 export type StandardSetupProviderInternalsLazy = AddInitializedProp<
     & {
-        [K in StrictExtract<LazyKeys, "../../packages/components/hooks/useApi.ts">]: {
+        [K in StrictExtract<LazyKeys, "../../packages/app-context/useApi.ts">]: {
             useApi: () => StandardSetupPublicScope["httpApi"];
         };
     }
@@ -55,7 +55,7 @@ export type StandardSetupProviderInternalsLazy = AddInitializedProp<
         };
     }
     & {
-        [K in StrictExtract<LazyKeys, "../../packages/components/hooks/useCache.ts">]: {
+        [K in StrictExtract<LazyKeys, "../../packages/app-context/useCache.ts">]: {
             useCache: () => StandardSetupPublicScope["cache"];
         };
     }

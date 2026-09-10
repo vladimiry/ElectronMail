@@ -49,8 +49,8 @@
     "/output"
   ],
   "plugins": [
-    "https://plugins.dprint.dev/json-0.22.0.wasm",
-    "https://plugins.dprint.dev/typescript-0.96.1.wasm",
-    "https://plugins.dprint.dev/g-plane/pretty_yaml-v0.6.0.wasm"
+    "npm:@dprint/json@0.23.0",
+    "npm:@dprint/typescript@0.96.1",
+    "npm:dprint-plugin-yaml@0.6.0"
   ]
 }

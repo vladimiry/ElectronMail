@@ -1,0 +1,14 @@
+diff --git a/lib/util/property.js b/lib/util/property.js
+index ea757014ded06827810d056a241b42456c08a986..668c9c306a5ad7ba3447e76ab00bba2a7c4f69ba 100644
+--- a/lib/util/property.js
++++ b/lib/util/property.js
+@@ -83,6 +83,9 @@ const propertyAccess = (properties, start = 0) => {
+ 	let str = "";
+ 	for (let i = start; i < properties.length; i++) {
+ 		const p = properties[i];
++		if (typeof p !== "string") {
++			continue;
++		}
+ 		// Only first chars 0-9, "-", "N", "I" can begin a canonical numeric form
+ 		// (number, NaN, Infinity); skip the Number() round-trip otherwise.
+ 		const c = p.charCodeAt(0);

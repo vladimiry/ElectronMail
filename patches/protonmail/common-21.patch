@@ -1,62 +1,24 @@
-diff --git a/packages/encrypted-search/lib/esIDB/indexedDB.ts b/packages/encrypted-search/lib/esIDB/indexedDB.ts
-index 9b7df06f08..3686f75065 100644
---- a/packages/encrypted-search/lib/esIDB/indexedDB.ts
-+++ b/packages/encrypted-search/lib/esIDB/indexedDB.ts
-@@ -33,16 +33,7 @@ async function cleanupESDB(esDB: IDBPDatabase<EncryptedSearchDB>, userID: string
-  * @param userID
-  * @returns true if the IDB exists, false otherwise
-  */
--export const hasESDB = async (userID: string) => {
--    try {
--        const dbName = getDBName(userID);
--        // indexedDB.databases() is unsupported on Firefox < 126
--        const databases = await indexedDB.databases();
--        return databases.some(({ name }) => name === dbName);
--    } catch {
--        return false;
--    }
--};
-+export const hasESDB = async (userID: string) => false;
+diff --git a/.yarnrc.yml b/.yarnrc.yml
+index e4633d956f..9d35284f58 100644
+--- a/.yarnrc.yml
++++ b/.yarnrc.yml
+@@ -28,17 +28,6 @@ npmPreapprovedPackages:
+     - '@openpgp/*'
+     - '@tpe/*'
 
- /**
-  * Open an existing IDB for the given user. If the DB hadn't already existed,
---
-diff --git a/packages/shared/lib/helpers/browser.ts b/packages/shared/lib/helpers/browser.ts
-index d3d162fbea..c7948d03ec 100644
---- a/packages/shared/lib/helpers/browser.ts
-+++ b/packages/shared/lib/helpers/browser.ts
-@@ -224,30 +224,9 @@ export const openNewTab = (url: string) => {
- export const doesNotSupportEarlyAccessVersion = () => isSafari() && Number(ua.browser.major) < 14;
-
- export async function detectStorageCapabilities(): Promise<{ isAccessible: boolean; hasIndexedDB: boolean }> {
--    // Check for IndexedDB API
--    const hasIndexedDB = 'indexedDB' in globalThis;
+-npmPublishRegistry: 'https://nexus.protontech.ch/repository/web-npm/'
 -
--    // Attempt to open a test database
--    const testDB = async () => {
--        try {
--            const request = indexedDB.open('_test');
--            await new Promise((resolve, reject) => {
--                request.onerror = () => reject(request.error);
--                request.onsuccess = () => {
--                    request.result.close();
--                    indexedDB.deleteDatabase('_test');
--                    resolve(true);
--                };
--            });
--            return true;
--        } catch (e) {
--            return false;
--        }
--    };
+-npmScopes:
+-    proton:
+-        npmRegistryServer: 'https://nexus.protontech.ch/repository/foundation-npm/'
+-    proton-meet:
+-        npmRegistryServer: 'https://nexus.protontech.ch/repository/meet-npm/'
+-    tpe:
+-        npmAuthToken: '${CI_JOB_TOKEN:-}'
+-        npmRegistryServer: 'https://gitlab.protontech.ch/api/v4/projects/4357/packages/npm/'
 -
-     return {
--        hasIndexedDB,
--        isAccessible: await testDB(),
-+        hasIndexedDB: false,
-+        isAccessible: false,
-     };
- }
+ plugins:
+     - path: .yarn/plugin-postinstall.js
 
 --
 
@@ -200,19 +162,10 @@ index dc3c738b1e..94d2acfe58 100644
 --
 
 diff --git a/packages/components/containers/login/MinimalLoginContainer.tsx b/packages/components/containers/login/MinimalLoginContainer.tsx
-index 8562025c49..55cbbd7842 100644
+index d3681ec168..ffa1192467 100644
 --- a/packages/components/containers/login/MinimalLoginContainer.tsx
 +++ b/packages/components/containers/login/MinimalLoginContainer.tsx
-@@ -5,8 +5,6 @@ import { c } from 'ttag';
-
- import { Button } from '@proton/atoms/Button/Button';
- import { CircleLoader } from '@proton/atoms/CircleLoader/CircleLoader';
--import Checkbox from '@proton/components/components/input/Checkbox';
--import Label from '@proton/components/components/label/Label';
- import InputFieldTwo from '@proton/components/components/v2/field/InputField';
- import PasswordInputTwo from '@proton/components/components/v2/input/PasswordInput';
- import useFormErrors from '@proton/components/components/v2/useFormErrors';
-@@ -301,7 +299,7 @@ const LoginForm = ({
+@@ -310,7 +310,7 @@ const LoginForm = ({
      const [loading, withLoading] = useLoading();
      const [username, setUsername] = useState('');
      const [password, setPassword] = useState('');
@@ -221,7 +174,7 @@ index 8562025c49..55cbbd7842 100644
      const challengeRefLogin = useRef<ChallengeRef>();
      const usernameRef = useRef<HTMLInputElement>(null);
      const [challengeLoading, setChallengeLoading] = useState(hasChallenge);
-@@ -329,7 +327,7 @@ const LoginForm = ({
+@@ -338,7 +338,7 @@ const LoginForm = ({
                  </div>
              )}
              <form
@@ -230,7 +183,7 @@ index 8562025c49..55cbbd7842 100644
                  className={challengeLoading ? 'hidden' : undefined}
                  onSubmit={(event) => {
                      event.preventDefault();
-@@ -361,7 +359,7 @@ const LoginForm = ({
+@@ -370,7 +370,7 @@ const LoginForm = ({
                      />
                  )}
                  <InputFieldTwo
@@ -239,7 +192,7 @@ index 8562025c49..55cbbd7842 100644
                      bigger
                      label={c('Label').t`Email or username`}
                      error={validator([requiredValidator(username)])}
-@@ -381,17 +379,6 @@ const LoginForm = ({
+@@ -390,17 +390,6 @@ const LoginForm = ({
                      onValue={setPassword}
                      rootClassName="mt-2"
                  />
@@ -257,7 +210,6 @@ index 8562025c49..55cbbd7842 100644
                  <div className="flex justify-space-between mt-4">
                      {needHelp}
                      <Button color="norm" size="large" type="submit" fullWidth loading={loading} data-cy-login="submit">
---
 
 diff --git a/packages/components/hooks/useLoad.ts b/packages/components/hooks/useLoad.ts
 index c72145327e..bd29c31242 100644
@@ -280,16 +232,18 @@ index c72145327e..bd29c31242 100644
  export default useLoad;
 
 diff --git a/packages/shared/lib/apps/apps.ts b/packages/shared/lib/apps/apps.ts
-index 1220f80854..ebfba7166b 100644
+index 6a45b493e3..1fecd6d0b4 100644
 --- a/packages/shared/lib/apps/apps.ts
 +++ b/packages/shared/lib/apps/apps.ts
-@@ -1,4 +1,4 @@
+@@ -1,6 +1,6 @@
+ import { AccessType } from '../authentication/accessType';
+ import { getAccessType } from '../authentication/getAccessType';
 -import { APPS, type APP_NAMES, USER_ROLES } from '../constants';
 +import { APPS, type APP_NAMES, USER_ROLES, ELECTRON_MAIL_APPS } from '../constants';
  import { isElectronMail } from '../helpers/desktop';
  import type { OrganizationExtended, User } from '../interfaces';
  import { getIsExternalUserWithoutProtonAddressCreation, getIsGlobalSSOAccount, getIsSSOVPNOnlyAccount } from '../keys';
-@@ -126,7 +126,7 @@ export const getAvailableApps = (
+@@ -140,7 +140,7 @@ export const getAvailableApps = (
              availableAppsByOrganization.has(app) &&
              !forbiddenApps.has(app)
          );
@@ -299,13 +253,11 @@ index 1220f80854..ebfba7166b 100644
 
  export const appSupportsSSO = (appName?: APP_NAMES) => {
 
---
-
 diff --git a/applications/drive/src/app/legacy/store/_documents/useDriveDocsFeatureFlag.ts b/applications/drive/src/app/legacy/store/_documents/useDriveDocsFeatureFlag.ts
-index 9b2c8e19c9..8e25ebed16 100644
+index 9b2c8e19c9..5647645b59 100644
 --- a/applications/drive/src/app/legacy/store/_documents/useDriveDocsFeatureFlag.ts
 +++ b/applications/drive/src/app/legacy/store/_documents/useDriveDocsFeatureFlag.ts
-@@ -1,14 +1,6 @@
+@@ -1,14 +1,8 @@
 -import { useFlag } from '@proton/unleash/useFlag';
 -
  /**
@@ -316,36 +268,15 @@ index 9b2c8e19c9..8e25ebed16 100644
 -
 -    const isDocsEnabled = !disabled;
 -
--    return {
+     return {
 -        isDocsEnabled,
--    };
-+    return {isDocsEnabled:false};
- };
-
-diff --git a/packages/drive-store/store/_documents/useDriveDocsFeatureFlag.ts b/packages/drive-store/store/_documents/useDriveDocsFeatureFlag.ts
-index 9b2c8e19c9..8e25ebed16 100644
---- a/packages/drive-store/store/_documents/useDriveDocsFeatureFlag.ts
-+++ b/packages/drive-store/store/_documents/useDriveDocsFeatureFlag.ts
-@@ -1,14 +1,6 @@
--import { useFlag } from '@proton/unleash/useFlag';
--
- /**
-  * Contains logic relating to the availability of Proton Docs.
-  */
- export const useDriveDocsFeatureFlag = () => {
--    const disabled = useFlag('DriveDocsDisabled');
--
--    const isDocsEnabled = !disabled;
--
--    return {
--        isDocsEnabled,
--    };
-+    return {isDocsEnabled:false};
++        isDocsEnabled: false,
+     };
  };
 
 diff --git a/packages/components/containers/topBanners/DesktopNotificationTopBanner.tsx b/packages/components/containers/topBanners/DesktopNotificationTopBanner.tsx
 deleted file mode 100644
-index 988ad7b79f..0000000000
+index 75f0382501..0000000000
 --- a/packages/components/containers/topBanners/DesktopNotificationTopBanner.tsx
 +++ /dev/null
 @@ -1,87 +0,0 @@
@@ -354,7 +285,7 @@ index 988ad7b79f..0000000000
 -import { c } from 'ttag';
 -
 -import { useUserSettings } from '@proton/account/userSettings/hooks';
--import useConfig from '@proton/components/hooks/useConfig';
+-import { useConfig } from '@proton/app-context/useConfig';
 -import { getAppName } from '@proton/shared/lib/apps/helper';
 -import type { APP_NAMES } from '@proton/shared/lib/constants';
 -import { APPS } from '@proton/shared/lib/constants';
@@ -438,18 +369,18 @@ index 988ad7b79f..0000000000
 -export default DesktopNotificationTopBanner;
 
 diff --git a/packages/components/containers/topBanners/TopBanners.tsx b/packages/components/containers/topBanners/TopBanners.tsx
-index ccc208fae7..4757ffbd9a 100644
+index ea033ab907..7344297e68 100644
 --- a/packages/components/containers/topBanners/TopBanners.tsx
 +++ b/packages/components/containers/topBanners/TopBanners.tsx
-@@ -5,7 +5,6 @@ import type { APP_NAMES } from '@proton/shared/lib/constants';
+@@ -6,7 +6,6 @@ import type { APP_NAMES } from '@proton/shared/lib/constants';
  import ErrorBoundary from '../app/ErrorBoundary';
  import AccessTypeTopBanner from './AccessTypeTopBanner';
  import BadAppVersionBanner from './BadAppVersionBanner';
 -import DesktopNotificationTopBanner from './DesktopNotificationTopBanner';
+ import NGCAccessTopBanner from './NGCAccessTopBanner';
  import OnlineTopBanner from './OnlineTopBanner';
  import PendingInvitationTopBanner from './PendingInvitationTopBanner';
- import SessionRecoveryBanners from './SessionRecoveryBanners';
-@@ -30,7 +29,6 @@ const TopBanners = ({ children, app }: Props) => {
+@@ -32,7 +31,6 @@ const TopBanners = ({ children, app }: Props) => {
              <StorageLimitTopBanner app={app} />
              <BadAppVersionBanner />
              <AccessTypeTopBanner />
@@ -457,3 +388,74 @@ index ccc208fae7..4757ffbd9a 100644
              <PendingInvitationTopBanner />
              <SubscriptionEndsBanner app={app} />
              <SessionRecoveryBanners />
+
+diff --git a/packages/encrypted-search/lib/esIDB/indexedDB.ts b/packages/encrypted-search/lib/esIDB/indexedDB.ts
+index 27ef4814d8..45af9040fd 100644
+--- a/packages/encrypted-search/lib/esIDB/indexedDB.ts
++++ b/packages/encrypted-search/lib/esIDB/indexedDB.ts
+@@ -72,16 +72,7 @@ const getMissingObjectStores = (esDB: IDBPDatabase<EncryptedSearchDB>) =>
+  * @param userID
+  * @returns true if the IDB exists, false otherwise
+  */
+-export const hasESDB = async (userID: string) => {
+-    try {
+-        const dbName = getDBName(userID);
+-        // indexedDB.databases() is unsupported on Firefox < 126
+-        const databases = await indexedDB.databases();
+-        return databases.some(({ name }) => name === dbName);
+-    } catch {
+-        return false;
+-    }
+-};
++export const hasESDB = async (userID: string) => false;
+
+ /**
+  * `detectStorageCapabilities()` races a real `indexedDB.databases()` enumeration against a fixed
+
+diff --git a/packages/shared/lib/helpers/browser.ts b/packages/shared/lib/helpers/browser.ts
+index 4f01222178..5856b5a074 100644
+--- a/packages/shared/lib/helpers/browser.ts
++++ b/packages/shared/lib/helpers/browser.ts
+@@ -225,27 +225,7 @@ export const openNewTab = (url: string) => {
+ export const doesNotSupportEarlyAccessVersion = () => isSafari() && Number(ua.browser.major) < 14;
+
+ export async function detectStorageCapabilities(): Promise<{ isAccessible: boolean; hasIndexedDB: boolean }> {
+-    // Check for IndexedDB API. Every supported browser (see .browserslistrc) provides both `indexedDB` and `indexedDB.databases()`.
+-    // If either is missing, treat storage as inaccessible.
+-    const hasIndexedDB = 'indexedDB' in globalThis && globalThis.indexedDB != null;
+-    if (!hasIndexedDB || typeof indexedDB.databases !== 'function') {
+-        return { hasIndexedDB, isAccessible: false };
+-    }
+-
+-    // Probe availability with databases() rather than opening a throwaway database: it exercises the
+-    // IndexedDB backend without creating anything, and rejects when storage is blocked.
+-    const isAccessible = await Promise.race([
+-        indexedDB.databases().then(
+-            () => true,
+-            () => false
+-        ),
+-        // Older Firefox versions (at least 140) are a bit
+-        // fussy with this call in case of blocked connections,
+-        // so this is to ensure we never get an unresolved Promise
+-        new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 1_500)),
+-    ]);
+-
+-    return { hasIndexedDB, isAccessible };
++    return { hasIndexedDB: false, isAccessible: false };
+ }
+
+ export const browserAPI = (globalThis as any)?.browser ?? (globalThis as any)?.chrome;
+
+diff --git a/packages/encrypted-search/lib/constants.ts b/packages/encrypted-search/lib/constants.ts
+index ebdf5ee22..28adf6c62 100644
+--- a/packages/encrypted-search/lib/constants.ts
++++ b/packages/encrypted-search/lib/constants.ts
+@@ -131,7 +131,7 @@ export const defaultESStatus = {
+     isEnablingContentSearch: false,
+     isDBLimited: false,
+     esEnabled: false,
+-    esSupported: true,
++    esSupported: false,
+     isRefreshing: false,
+     isSearchPartial: false,
+     isSearching: false,

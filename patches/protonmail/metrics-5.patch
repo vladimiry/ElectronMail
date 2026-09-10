@@ -1,0 +1,366 @@
+diff --git a/packages/shared/lib/helpers/metrics.ts b/packages/shared/lib/helpers/metrics.ts
+index 2e8a0269ac..36245f8fd8 100644
+--- a/packages/shared/lib/helpers/metrics.ts
++++ b/packages/shared/lib/helpers/metrics.ts
+@@ -1,26 +1,14 @@
+ import {
+     type MaybeFreeSubscription,
+-    getIsB2BAudienceFromSubscription,
+-    getPlanName,
+ } from '@proton/payments/core/subscription/helpers';
+-import { isFreeSubscription } from '@proton/payments/core/type-guards';
+
+-import { getSilentApi } from '../api/helpers/customConfig';
+-import { metrics } from '../api/metrics';
+ import type { TelemetryReport } from '../api/telemetry';
+-import { sendMultipleTelemetryData } from '../api/telemetry';
+ import type { METRICS_LOG } from '../constants';
+ import { SECOND } from '../constants';
+ import type { Api, UserModel, UserSettings } from '../interfaces';
+ import { BatchQueue } from './batchQueue';
+-import { getAccountAgeForDimension, getCycleForDimension } from './metrics.helpers';
+ import { wait } from './promise';
+
+-// Make the metrics false by default to avoid (rare) cases where we could have sendMetricReport or sendTelemetryReport
+-// before setting this metricsEnabled value with the user setting.
+-// In that scenario we would send something but the user might not want this.
+-let metricsEnabled = false;
+-
+ /**
+  * Delay an operation by a random number of seconds between 1 second and the specified
+  * number of seconds. If none is provided, the default is 180 seconds, i.e. 3 minutes
+@@ -32,17 +20,7 @@ export const randomDelay = async (delayInSeconds: number = 180) => {
+ /**
+  * Send metrics report (/metrics endpoint)
+  */
+-export const sendMetricsReport = async (api: Api, Log: METRICS_LOG, Title?: string, Data?: any) => {
+-    if (!metricsEnabled) {
+-        return;
+-    }
+-    // We delay sending the metrics report because this helper is used in some privacy-sensitive
+-    // use-cases, e.g. encrypted search, in which we don't want the server to be able to use the
+-    // metric report as a distinguisher to correlate user actions, e.g. performing an encrypted
+-    // search and fetching an email shortly after
+-    await randomDelay();
+-    void api(metrics({ Log, Title, Data }));
+-};
++export const sendMetricsReport = async (api: Api, Log: METRICS_LOG, Title?: string, Data?: any) => {};
+
+ interface SendTelemetryReportArgs extends TelemetryReport {
+     api: Api;
+@@ -71,39 +49,7 @@ export const sendTelemetryReport = async ({
+     dimensions,
+     silence = true,
+     delay,
+-}: SendTelemetryReportArgs) => {
+-    if (!metricsEnabled) {
+-        return;
+-    }
+-
+-    const possiblySilentApi = silence ? getSilentApi(api) : api;
+-
+-    try {
+-        if (delay) {
+-            // We delay sending the metrics report because this helper is used in some privacy-sensitive
+-            // use-cases, e.g. encrypted search, in which we don't want the server to be able to use the
+-            // metric report as a distinguisher to correlate user actions, e.g. performing an encrypted
+-            // search and fetching an email shortly after
+-            await randomDelay();
+-        }
+-
+-        const telemetryReport: TelemetryReport = { measurementGroup, event, values, dimensions };
+-
+-        if (!telemetryReportsBatchQueue.hasFlushCallback()) {
+-            telemetryReportsBatchQueue.setFlushCallback(async (reports: TelemetryReport[]) => {
+-                await possiblySilentApi(
+-                    sendMultipleTelemetryData({
+-                        reports,
+-                    })
+-                );
+-            });
+-        }
+-
+-        telemetryReportsBatchQueue.add(telemetryReport);
+-    } catch {
+-        // fail silently
+-    }
+-};
++}: SendTelemetryReportArgs) => {};
+
+ interface SendTelemetryReportWithBaseDimensionArgs extends SendTelemetryReportArgs {
+     api: Api;
+@@ -113,43 +59,6 @@ interface SendTelemetryReportWithBaseDimensionArgs extends SendTelemetryReportAr
+     silence?: boolean;
+ }
+
+-/**
+- * Compute the base dimensions used to help get basic knowledge about the user:
+- *   - account_age
+- *   - user_locale
+- *   - subscription
+- *   - cycle
+- *   - audience
+- *   - is_free
+- */
+-export const getBaseTelemetryDimensions = ({
+-    user,
+-    subscription,
+-    userSettings,
+-}: {
+-    user: UserModel;
+-    subscription: MaybeFreeSubscription;
+-    userSettings?: UserSettings;
+-}) => {
+-    const subscriptionName = isFreeSubscription(subscription) ? 'free' : getPlanName(subscription);
+-
+-    let audience = 'free';
+-    if (getIsB2BAudienceFromSubscription(subscription)) {
+-        audience = 'b2b';
+-    } else if (!user.isFree) {
+-        audience = 'b2c';
+-    }
+-
+-    return {
+-        accountAge: getAccountAgeForDimension(user),
+-        userLocale: userSettings?.Locale ?? 'undefined',
+-        subscription: String(subscriptionName),
+-        audience,
+-        isFree: subscriptionName === 'free' ? 'true' : 'false',
+-        cycle: getCycleForDimension(subscription?.Cycle),
+-    };
+-};
+-
+ /**
+  * Send a telemetry report with basic dimensions already setup uses /data/v1/stats endpoint
+  *   - account_age
+@@ -170,20 +79,7 @@ export const sendTelemetryReportWithBaseDimensions = async ({
+     dimensions,
+     delay,
+     silence = true,
+-}: SendTelemetryReportWithBaseDimensionArgs) => {
+-    void sendTelemetryReport({
+-        api,
+-        measurementGroup,
+-        event,
+-        values,
+-        silence,
+-        dimensions: {
+-            ...dimensions,
+-            ...getBaseTelemetryDimensions({ user, subscription, userSettings }),
+-        },
+-        delay,
+-    });
+-};
++}: SendTelemetryReportWithBaseDimensionArgs) => {};
+
+ interface SendMultipleTelemetryReportsArgs {
+     api: Api;
+@@ -198,20 +94,6 @@ export const sendMultipleTelemetryReports = async ({
+     api,
+     reports,
+     silence = true,
+-}: SendMultipleTelemetryReportsArgs) => {
+-    const possiblySilentApi = silence ? getSilentApi(api) : api;
+-
+-    if (!metricsEnabled) {
+-        return;
+-    }
++}: SendMultipleTelemetryReportsArgs) => {};
+
+-    try {
+-        void (await possiblySilentApi(sendMultipleTelemetryData({ reports })));
+-    } catch {
+-        // fail silently
+-    }
+-};
+-
+-export const setMetricsEnabled = (enabled: boolean) => {
+-    metricsEnabled = enabled;
+-};
++export const setMetricsEnabled = (enabled: boolean) => {};
+--
+
+diff --git a/packages/components/containers/payments/subscription/cancelSubscription/CancelSubscriptionSection.tsx b/packages/components/containers/payments/subscription/cancelSubscription/CancelSubscriptionSection.tsx
+index b00ac5549d..aeb406301e 100644
+--- a/packages/components/containers/payments/subscription/cancelSubscription/CancelSubscriptionSection.tsx
++++ b/packages/components/containers/payments/subscription/cancelSubscription/CancelSubscriptionSection.tsx
+@@ -16,7 +16,6 @@ import useCancellationFlow from '../cancellationFlow/useCancellationFlow';
+ import useCancellationTelemetry from '../cancellationFlow/useCancellationTelemetry';
+ import { useFeedbackFirstCancellationFlow } from '../cancellationFlowFeedbackFirst/hooks/useFeedbackFirstCancellationFlow';
+ import { useFeedbackFirstEligibility } from '../cancellationFlowFeedbackFirst/hooks/useFeedbackFirstEligibility';
+-import { useFeedbackFirstTelemetry } from '../cancellationFlowFeedbackFirst/hooks/useFeedbackFirstTelemetry';
+ import { useCancelSubscriptionFlow } from './useCancelSubscriptionFlow';
+
+ export const CancelSubscriptionSection = ({ app }: { app: APP_NAMES }) => {
+@@ -34,8 +33,6 @@ export const CancelSubscriptionSection = ({ app }: { app: APP_NAMES }) => {
+     const [referralInfo] = useReferralInfo();
+     const { referrerRewardAmount } = referralInfo.uiData;
+
+-    const { startCancellation } = useFeedbackFirstTelemetry();
+-
+     if (loadingCancelSubscription) {
+         return null;
+     }
+@@ -45,7 +42,6 @@ export const CancelSubscriptionSection = ({ app }: { app: APP_NAMES }) => {
+             void cancelSubscription({});
+         } else if (feedbackFirstB2BAccess || feedbackFirstB2CAccess) {
+             startFeedbackFirstFlow();
+-            startCancellation();
+         } else if (b2cAccess || b2bAccess) {
+             redirectToCancellationFlow();
+             sendStartCancellationSectionReport();
+
+diff --git a/packages/components/containers/payments/subscription/cancellationFlowFeedbackFirst/FeedbackFirstCancellation.tsx b/packages/components/containers/payments/subscription/cancellationFlowFeedbackFirst/FeedbackFirstCancellation.tsx
+index e79bad9c16..d46be8e0b0 100644
+--- a/packages/components/containers/payments/subscription/cancellationFlowFeedbackFirst/FeedbackFirstCancellation.tsx
++++ b/packages/components/containers/payments/subscription/cancellationFlowFeedbackFirst/FeedbackFirstCancellation.tsx
+@@ -23,7 +23,6 @@ import { MissingFeatureContent } from './content/MissingFeatureContent';
+ import { OfferContent } from './content/OfferContent';
+ import { TemporaryNeedContent } from './content/TemporaryNeedContent';
+ import { useCancellationOffer } from './hooks/useCancellationOffer';
+-import { useFeedbackFirstTelemetry } from './hooks/useFeedbackFirstTelemetry';
+
+ enum CANCELLATION_STEPS {
+     FEEDBACK,
+@@ -49,9 +48,6 @@ export const FeedbackFirstCancellation = ({ onCancelled, ...modalProps }: Props)
+     const offerData = useCancellationOffer();
+     const { cancelSubscriptionRenewal } = useCancelRenewal();
+
+-    const { sendFeedbackReport, sendSecondStepReport, sendConfirmCancellation, sendManagedExternally } =
+-        useFeedbackFirstTelemetry();
+-
+     const closeModal = () => {
+         modalProps.onClose?.();
+     };
+@@ -92,17 +88,14 @@ export const FeedbackFirstCancellation = ({ onCancelled, ...modalProps }: Props)
+
+         const reason = result.Reason as SUBSCRIPTION_CANCELLATION_REASONS;
+         setStep(getNextStepFromFeedback(reason));
+-        sendFeedbackReport(result);
+     };
+
+     const handleContinueToConfirm = () => {
+         setStep(CANCELLATION_STEPS.CONFIRM);
+-        sendSecondStepReport(feedback);
+     };
+
+     const handleConfirmCancellation = async () => {
+         if (subscription && !getAvailableSubscriptionActions(subscription).canCancel) {
+-            sendManagedExternally();
+             setStep(CANCELLATION_STEPS.MANAGED_EXTERNALLY);
+             return;
+         }
+@@ -111,7 +104,6 @@ export const FeedbackFirstCancellation = ({ onCancelled, ...modalProps }: Props)
+             feedback ?? { Reason: '', Feedback: '', ReasonDetails: '', Context: 'mail' },
+             false
+         );
+-        sendConfirmCancellation();
+
+         closeModal();
+         onCancelled();
+
+diff --git a/packages/components/containers/payments/subscription/cancellationFlowFeedbackFirst/hooks/useFeedbackFirstTelemetry.tsx b/packages/components/containers/payments/subscription/cancellationFlowFeedbackFirst/hooks/useFeedbackFirstTelemetry.tsx
+deleted file mode 100644
+index 847e0824f2..0000000000
+--- a/packages/components/containers/payments/subscription/cancellationFlowFeedbackFirst/hooks/useFeedbackFirstTelemetry.tsx
++++ /dev/null
+@@ -1,98 +0,0 @@
+-import { useSubscription } from '@proton/account/subscription/hooks';
+-import { useUser } from '@proton/account/user/hooks';
+-import { useUserSettings } from '@proton/account/userSettings/hooks';
+-import { useApi } from '@proton/app-context/useApi';
+-import { getSilentApi } from '@proton/shared/lib/api/helpers/customConfig';
+-import {
+-    TelemetryAccountCancellationFlowFeedbackEvents,
+-    type TelemetryEvents,
+-    TelemetryMeasurementGroups,
+-    sendTelemetryData,
+-} from '@proton/shared/lib/api/telemetry';
+-import { getBaseTelemetryDimensions } from '@proton/shared/lib/helpers/metrics';
+-
+-import { SUBSCRIPTION_CANCELLATION_REASONS } from '../../content/FeedbackDowngradeContent';
+-import type { FeedbackDowngradeFormData } from '../../content/interface';
+-
+-const serviceProviderMap: Record<string, string> = {
+-    'Microsoft 365': 'microsoft365',
+-    'Google Workspace': 'googleWorkspace',
+-    Gmail: 'gmail',
+-    Outlook: 'outlook',
+-    Yahoo: 'yahoo',
+-    Other: 'other',
+-};
+-
+-const getOtherServiceProvider = (feedback: FeedbackDowngradeFormData) => {
+-    return serviceProviderMap[feedback.ReasonDetails] || 'other';
+-};
+-
+-const SKIPPED_CANCELLATION_REASON = 'SKIPPED';
+-
+-const getCancellationReason = (feedback: FeedbackDowngradeFormData) => {
+-    return feedback.Reason || SKIPPED_CANCELLATION_REASON;
+-};
+-
+-export const useFeedbackFirstTelemetry = () => {
+-    const api = useApi();
+-    const [user] = useUser();
+-    const [subscription] = useSubscription();
+-    const [userSettings] = useUserSettings();
+-
+-    const sendReport = (event: TelemetryEvents, dimensions?: Record<string, string>) => {
+-        const silentApi = getSilentApi(api);
+-
+-        void silentApi(
+-            sendTelemetryData({
+-                MeasurementGroup: TelemetryMeasurementGroups.accountCancellationFeedbackFirst,
+-                Event: event,
+-                Dimensions: {
+-                    ...dimensions,
+-                    couponCode: subscription?.CouponCode || undefined,
+-                    feedbackFirstCancellationEnabled: 'true',
+-                    ...getBaseTelemetryDimensions({ user, subscription, userSettings }),
+-                },
+-            })
+-        );
+-    };
+-
+-    const startCancellation = () => {
+-        sendReport(TelemetryAccountCancellationFlowFeedbackEvents.startCancellation);
+-    };
+-
+-    const sendFeedbackReport = (feedback: FeedbackDowngradeFormData) => {
+-        const cancellationReason = getCancellationReason(feedback);
+-
+-        const dimensions: Record<string, string> = { cancellationReason };
+-        if (cancellationReason === SUBSCRIPTION_CANCELLATION_REASONS.SWITCHING_TO_DIFFERENT_SERVICE) {
+-            dimensions.serviceProvider = getOtherServiceProvider(feedback);
+-        }
+-
+-        sendReport(TelemetryAccountCancellationFlowFeedbackEvents.feedbackStep, dimensions);
+-    };
+-
+-    const sendSecondStepReport = (feedback?: FeedbackDowngradeFormData) => {
+-        if (!feedback) {
+-            return;
+-        }
+-
+-        const cancellationReason = getCancellationReason(feedback);
+-        sendReport(TelemetryAccountCancellationFlowFeedbackEvents.secondStep, { cancellationReason });
+-    };
+-
+-    const sendConfirmCancellation = () => {
+-        sendReport(TelemetryAccountCancellationFlowFeedbackEvents.confirmCancellation);
+-    };
+-
+-    const sendManagedExternally = () => {
+-        sendReport(TelemetryAccountCancellationFlowFeedbackEvents.managedExternally);
+-    };
+-
+-    return {
+-        startCancellation,
+-        sendFeedbackReport,
+-        sendSecondStepReport,
+-        sendConfirmCancellation,
+-        sendManagedExternally,
+-    };
+-};
+

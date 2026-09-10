@@ -1,15 +1,14 @@
 diff --git a/package.json b/package.json
-index cb439a93b1..0c368c2bd6 100644
+index 1ebe6c6f35..74975baee6 100644
 --- a/package.json
 +++ b/package.json
-@@ -3,15 +3,11 @@
+@@ -3,14 +3,10 @@
      "private": true,
      "license": "GPL-3.0",
      "workspaces": [
 -        "applications/*",
-+        "applications/calendar",
-         "applications/lumo/src/app/lib/lumo-api-client",
 -        "applications/pass-desktop/native",
++        "applications/calendar",
          "packages/*",
          "packages/wasm/*",
          "packages/pass/docs/starlight",

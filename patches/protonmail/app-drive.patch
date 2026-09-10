@@ -1,15 +1,14 @@
 diff --git a/package.json b/package.json
-index cb439a93b1..2f7931e464 100644
+index 1ebe6c6f35..13b34304ba 100644
 --- a/package.json
 +++ b/package.json
-@@ -3,15 +3,11 @@
+@@ -3,14 +3,10 @@
      "private": true,
      "license": "GPL-3.0",
      "workspaces": [
 -        "applications/*",
-+        "applications/drive",
-         "applications/lumo/src/app/lib/lumo-api-client",
 -        "applications/pass-desktop/native",
++        "applications/drive",
          "packages/*",
          "packages/wasm/*",
          "packages/pass/docs/starlight",
@@ -21,36 +20,8 @@ index cb439a93b1..2f7931e464 100644
      ],
 --
 
-diff --git a/yarn.lock b/yarn.lock
-index 2fa43fadf7..f709268556 100644
---- a/yarn.lock
-+++ b/yarn.lock
-@@ -11454,13 +11454,6 @@ __metadata:
-   languageName: unknown
-   linkType: soft
-
--"@proton/proton-foundation-search@npm:2.0.0-preview2-job33841442":
--  version: 2.0.0-preview2-job33841442
--  resolution: "@proton/proton-foundation-search@npm:2.0.0-preview2-job33841442"
--  checksum: 10/7c51182275c959fd526f34c160f69af5d115e9e4a390f66984045feca3ef70a36aedfbc40e393dab5552bae69d82fa758de5d880b5902b615af6838c86f7b3e5
--  languageName: node
--  linkType: hard
--
- "@proton/proton-foundation-search@npm:^1.1.2":
-   version: 1.1.2
-   resolution: "@proton/proton-foundation-search@npm:1.1.2"
-@@ -41856,7 +41849,6 @@ __metadata:
-     "@proton/pack": "workspace:^"
-     "@proton/payments": "workspace:^"
-     "@proton/polyfill": "workspace:^"
--    "@proton/proton-foundation-search": "npm:2.0.0-preview2-job33841442"
-     "@proton/raw-images": "workspace:^"
-     "@proton/react-redux-store": "workspace:^"
-     "@proton/redux-shared-store": "workspace:^"
---
-
 diff --git a/applications/drive/package.json b/applications/drive/package.json
-index 35b3bfa0f2..c4e9f67131 100644
+index 77ca5e5074..bea1347a3f 100644
 --- a/applications/drive/package.json
 +++ b/applications/drive/package.json
 @@ -7,7 +7,6 @@
@@ -61,14 +32,15 @@ index 35b3bfa0f2..c4e9f67131 100644
          "check-types": "tsc",
          "i18n:extract:local": "yarn workspace @proton/i18n build && yarn build:web && proton-i18n extract",
          "i18n:extract:web": "proton-i18n extract",
-@@ -44,7 +43,6 @@
+@@ -45,7 +44,6 @@
          "@proton/pack": "workspace:^",
          "@proton/payments": "workspace:^",
          "@proton/polyfill": "workspace:^",
--        "@proton/proton-foundation-search": "2.0.0-preview2-job33841442",
+-        "@proton/proton-foundation-search": "2.0.0-rc1",
          "@proton/raw-images": "workspace:^",
          "@proton/react-redux-store": "workspace:^",
          "@proton/redux-shared-store": "workspace:^",
+--
 
 diff --git a/packages/drive/modules/flags/internal/useFlagsDriveFoundationSearch.ts b/packages/drive/modules/flags/internal/useFlagsDriveFoundationSearch.ts
 index 30244e7176..0621735420 100644
@@ -180,15 +152,14 @@ index 717f393fbe..5b432576aa 100644
  };
 
 diff --git a/applications/drive/src/app/modules/search/internal/mainThread/SearchModule.ts b/applications/drive/src/app/modules/search/internal/mainThread/SearchModule.ts
-index e5c1a520a9..31de1eb84b 100644
+index 83d7896356..518dcac064 100644
 --- a/applications/drive/src/app/modules/search/internal/mainThread/SearchModule.ts
 +++ b/applications/drive/src/app/modules/search/internal/mainThread/SearchModule.ts
-@@ -241,45 +241,7 @@ export class SearchModule {
+@@ -272,44 +272,7 @@ export class SearchModule {
      // TODO: Return a discriminated type instead of true/false to propagate the reason of uncomatibitly
      // TODO: Add some UI to explain better why search is not enabled.
-     static isEnvironmentCompatible(): boolean {
+     static async isEnvironmentCompatible(): Promise<boolean> {
 -        if (isMobile()) {
--            Logger.info('Bad env: Mobile detected');
 -            recordEnvironmentIncompatibilityOnce('mobile');
 -            return false;
 -        }
@@ -205,32 +176,31 @@ index e5c1a520a9..31de1eb84b 100644
 -        if (isSafari()) {
 -            const browser = getBrowser();
 -            if (!browser?.version || !new Version(browser.version).isGreaterThanOrEqual('17')) {
--                Logger.info('Bad env: Obsolete safari unsupported');
 -                recordEnvironmentIncompatibilityOnce('safari_too_old');
 -                return false;
 -            }
 -        }
 -
 -        if (typeof SharedWorker === 'undefined') {
--            Logger.info('Bad env: SharedWorker unsupported');
 -            recordEnvironmentIncompatibilityOnce('shared_worker_unsupported');
 -            return false;
 -        }
 -
 -        if (typeof indexedDB === 'undefined') {
--            Logger.info('Bad env: IndexedDB unsupported');
 -            recordEnvironmentIncompatibilityOnce('indexed_db_unsupported');
 -            return false;
 -        }
 -
--        // TODO: Check for indexedDB real availability by creating/deleting a real dummy DB.
+-        if (!(await isIndexedDBReallyAvailable())) {
+-            recordEnvironmentIncompatibilityOnce('indexed_db_probe_failed');
+-            return false;
+-        }
 -
 -        return true;
 +        return false;
      }
 
      /** @internal Reset singleton state — only for use in tests. */
---
 
 diff --git a/packages/drive/modules/thumbnails/encryptedThumbnailCache/internal/encryptedThumbnailCache.ts b/packages/drive/modules/thumbnails/encryptedThumbnailCache/internal/encryptedThumbnailCache.ts
 index 84697f23a4..5548d87926 100644

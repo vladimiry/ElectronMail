@@ -1,6 +1,5 @@
 import {
-    WEBVIEW_PRIMARY_INTERNALS_APP_TYPES,
-    WEBVIEW_PRIMARY_INTERNALS_KEYS,
+    WEBVIEW_PRIMARY_INTERNALS_APP_TYPES, WEBVIEW_PRIMARY_INTERNALS_KEYS,
 } from "src/electron-preload/webview/primary/common/provider-api/const";
 
 export const PROVIDER_APP_NAMES = [
@@ -16,9 +15,9 @@ export const PROVIDER_REPO_STANDARD_SETUP_WEBPACK_INDEX_ENTRY_ITEMS = [
     "../../packages/components/containers/app/StandardPrivateApp.tsx",
     // lazy/dynamic
     // triggered via "../../packages/components/containers/app/StandardPrivateApp.tsx":
-    "../../packages/components/hooks/useApi.ts",
+    "../../packages/app-context/useApi.ts",
     "../../packages/components/hooks/useAuthentication.ts",
-    "../../packages/components/hooks/useCache.ts",
+    "../../packages/app-context/useCache.ts",
     "../../node_modules/react-router/esm/react-router.js",
 ] as const;
 
@@ -28,7 +27,7 @@ export const PROVIDER_REPO_MAP = {
         basePath: "",
         apiSubdomain: "mail-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-mail@5.0.122.6",
+        tag: "proton-mail@5.0.131.3",
         protonPack: {
             webpackIndexEntryItems: [
                 // immediate
@@ -55,14 +54,14 @@ export const PROVIDER_REPO_MAP = {
         basePath: "account",
         apiSubdomain: "account-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-account@5.0.397.0",
+        tag: "proton-account@5.0.416.0",
         protonPack: {},
     },
     [PROVIDER_APP_NAMES[2]]: {
         basePath: "calendar",
         apiSubdomain: "calendar-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-calendar@5.0.122.4",
+        tag: "proton-calendar@5.0.131.2",
         protonPack: {
             webpackIndexEntryItems: [
                 // immediate
@@ -75,7 +74,7 @@ export const PROVIDER_REPO_MAP = {
         basePath: "drive",
         apiSubdomain: "drive-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-drive@5.2.0+97383a46",
+        tag: "proton-drive@5.2.0+1a309ec1",
         protonPack: {
             webpackIndexEntryItems: [
                 // immediate
@@ -88,7 +87,7 @@ export const PROVIDER_REPO_MAP = {
         basePath: "account/vpn",
         apiSubdomain: "account-api",
         repoRelativeDistDir: "./dist",
-        tag: "proton-vpn-settings@5.0.346.0",
+        tag: "proton-vpn-settings@5.0.357.0",
         protonPack: {},
     },
 } as const;

@@ -1,15 +1,14 @@
 diff --git a/package.json b/package.json
-index cb439a93b1..7c96d8e975 100644
+index deea814544..d5f3cf1389 100644
 --- a/package.json
 +++ b/package.json
-@@ -3,15 +3,11 @@
+@@ -3,14 +3,10 @@
      "private": true,
      "license": "GPL-3.0",
      "workspaces": [
 -        "applications/*",
-+        "applications/account",
-         "applications/lumo/src/app/lib/lumo-api-client",
 -        "applications/pass-desktop/native",
++        "applications/account",
          "packages/*",
          "packages/wasm/*",
          "packages/pass/docs/starlight",
@@ -22,23 +21,38 @@ index cb439a93b1..7c96d8e975 100644
 --
 
 diff --git a/applications/account/package.json b/applications/account/package.json
-index 79af1a2431..74fd3fabbe 100644
+index 9186f9a99a..72e75491f3 100644
 --- a/applications/account/package.json
 +++ b/applications/account/package.json
-@@ -6,7 +6,6 @@
+@@ -5,7 +5,6 @@
+     "license": "GPL-3.0",
      "author": "",
-     "main": "index.js",
      "scripts": {
 -        "build:web": "cross-env NODE_ENV=production TS_NODE_PROJECT=\"../../tsconfig.webpack.json\" proton-pack build --appMode=sso",
          "check-types": "tsc",
          "i18n:extract:web": "proton-i18n extract",
          "i18n:upgrade": "proton-i18n extract --verbose && proton-i18n crowdin --verbose",
+--
 
 diff --git a/applications/account/webpack.config.ts b/applications/account/webpack.config.ts
-index 2582067a9e..890f8a6b93 100644
+index b8cf42a1d6..23c7d414e8 100644
 --- a/applications/account/webpack.config.ts
 +++ b/applications/account/webpack.config.ts
-@@ -75,8 +75,6 @@ const result = async (env: any): Promise<webpack.Configuration> => {
+@@ -1,11 +1,11 @@
+ import HtmlWebpackPlugin from 'html-webpack-plugin';
+-import template from 'lodash/template';
++import template from 'lodash/template.js';
+ import path from 'path';
+ import type webpack from 'webpack';
+ import 'webpack-dev-server';
+
+ import { type WebpackEnvArguments, getWebpackOptions } from '@proton/pack/lib/config';
+-import { addDevEntry, getConfig } from '@proton/pack/webpack.config';
++import { getConfig } from '@proton/pack/webpack.config';
+ import CopyIndexHtmlWebpackPlugin from '@proton/pack/webpack/copy-index-html-webpack-plugin';
+ import { getIndexChunks, getSupportedEntry } from '@proton/pack/webpack/entries';
+
+@@ -81,8 +81,6 @@ const result = async (opts: WebpackEnvArguments): Promise<webpack.Configuration>
              })
          );
 

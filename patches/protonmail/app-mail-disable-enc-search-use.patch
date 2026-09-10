@@ -1,0 +1,136 @@
+# this makes it not to use "@proton/proton-foundation-search"
+
+diff --git a/applications/mail/src/app/MainContainer.tsx b/applications/mail/src/app/MainContainer.tsx
+index d1fa9415ab..4fce574c1d 100644
+--- a/applications/mail/src/app/MainContainer.tsx
++++ b/applications/mail/src/app/MainContainer.tsx
+@@ -72,7 +72,7 @@ const MainContainer: FunctionComponent = () => {
+                     <QuickSettingsRemindersProvider>
+                         <DrawerThemeInjector />
+                         <ChecklistsProvider>
+-                            <EncryptedSearchProvider>
++                            {/* <EncryptedSearchProvider> */}
+                                 <MailContentRefProvider mailContentRef={mailContentRef}>
+                                     <SubscriptionModalProvider app={APP_NAME}>
+                                         <EasySwitchStoreProvider>
+@@ -94,7 +94,7 @@ const MainContainer: FunctionComponent = () => {
+                                         </EasySwitchStoreProvider>
+                                     </SubscriptionModalProvider>
+                                 </MailContentRefProvider>
+-                            </EncryptedSearchProvider>
++                            {/* </EncryptedSearchProvider> */}
+                         </ChecklistsProvider>
+                     </QuickSettingsRemindersProvider>
+                 </AssistantProvider>
+
+diff --git a/applications/mail/src/app/helpers/tests/render.tsx b/applications/mail/src/app/helpers/tests/render.tsx
+index 3ffb83507b..3d145c92ef 100644
+--- a/applications/mail/src/app/helpers/tests/render.tsx
++++ b/applications/mail/src/app/helpers/tests/render.tsx
+@@ -119,13 +119,13 @@ const TestProvider = ({ children, history }: Props) => {
+                                                                         <CheckAllRefProvider>
+                                                                             <Router history={history}>
+                                                                                 <Route path={MAIN_ROUTE_PATH}>
+-                                                                                    <EncryptedSearchProvider>
++                                                                                    {/* <EncryptedSearchProvider> */}
+                                                                                         <LabelActionsContextProvider>
+                                                                                             <MailboxLayoutProvider>
+                                                                                                 {children}
+                                                                                             </MailboxLayoutProvider>
+                                                                                         </LabelActionsContextProvider>
+-                                                                                    </EncryptedSearchProvider>
++                                                                                    {/* </EncryptedSearchProvider> */}
+                                                                                 </Route>
+                                                                             </Router>
+                                                                         </CheckAllRefProvider>
+--
+
+diff --git a/applications/mail/src/app/containers/EncryptedSearchProvider.tsx b/applications/mail/src/app/containers/EncryptedSearchProvider.tsx
+index 8915643092..d7f7e160d6 100644
+--- a/applications/mail/src/app/containers/EncryptedSearchProvider.tsx
++++ b/applications/mail/src/app/containers/EncryptedSearchProvider.tsx
+@@ -26,7 +26,6 @@ import { getItem, removeItem, setItem } from '@proton/shared/lib/helpers/storage
+ import { useFlag } from '@proton/unleash/useFlag';
+
+ import { defaultESContextMail, defaultESMailStatus } from '../constants';
+-import { useContentSearch } from '../contentSearch/integration/useContentSearch';
+ import { convertEventType, getESCallbacks, getESFreeBlobKey, parseSearchParams } from '../helpers/encryptedSearch';
+ import ESDeletedConversationsCache from '../helpers/encryptedSearch/ESDeletedConversationsCache';
+ import { useGetMessageKeys } from '../hooks/message/useGetMessageKeys';
+@@ -82,29 +81,13 @@ const EncryptedSearchProvider = ({ children }: Props) => {
+     });
+
+     const contentIndexingSuccessMessage = c('Success').t`Message content search enabled`;
+-
+-    // Both orchestrators are invoked unconditionally (rules of hooks); the active one is
+-    // selected by the `ContentSearch` flag. `useContentSearch` mirrors `useEncryptedSearch`'s
+-    // API but resolves results from the content-search-v2 index instead of the legacy ES flow.
+-    const isContentSearchEnabled = useFlag('ContentSearch');
+-    const [searchVersion] = useLocalStateSync<'v1' | 'v2'>('v2', 'OVERRIDE_SEARCH_V2');
+-
+     const esLibraryFunctionsV1 = useEncryptedSearch<ESBaseMessage, NormalizedSearchParams, ESMessageContent>({
+         refreshMask: EVENT_ERRORS.MAIL,
+         esCallbacks,
+         contentIndexingSuccessMessage,
+     });
+
+-    const esLibraryFunctionsV2 = useContentSearch({
+-        refreshMask: EVENT_ERRORS.MAIL,
+-        esCallbacks,
+-        contentIndexingSuccessMessage,
+-        // Keep the legacy ES index in sync while v2 is active by forwarding events to its handler
+-        esLibraryFunctionsV1,
+-    });
+-
+-    const esLibraryFunctions =
+-        isContentSearchEnabled && searchVersion === 'v2' ? esLibraryFunctionsV2 : esLibraryFunctionsV1;
++    const esLibraryFunctions = esLibraryFunctionsV1;
+
+     /**
+      * Open the advanced search dropdown
+--
+
+diff --git a/applications/mail/src/app/components/debug/MailDebugModal.tsx b/applications/mail/src/app/components/debug/MailDebugModal.tsx
+index 3b8273e881..df655f5321 100644
+--- a/applications/mail/src/app/components/debug/MailDebugModal.tsx
++++ b/applications/mail/src/app/components/debug/MailDebugModal.tsx
+@@ -16,7 +16,6 @@ import { useConversationCounts } from '@proton/mail/store/counts/conversationCou
+ import { useMessageCounts } from '@proton/mail/store/counts/messageCountsSlice';
+ import { selectCategories } from '@proton/mail/store/labels';
+ import { textToClipboard } from '@proton/shared/lib/helpers/browser';
+-import { useFlag } from '@proton/unleash/useFlag';
+
+ import {
+     contextPages,
+@@ -30,7 +29,6 @@ import {
+     selectSort,
+ } from '../../store/elements/elementsSelectors';
+ import { useMailSelector } from '../../store/hooks';
+-import { DebugContentSearchView } from './DebugContentSearchView';
+ import { DebugModalLogs } from './DebugModalLogs';
+ import { DebugModalLogPerformance } from './logPerformances/DebugModalLogPerformance';
+
+@@ -65,8 +63,6 @@ export const MailDebugModal = ({ ...rest }: Props) => {
+
+     const { createNotification } = useNotifications();
+
+-    const isContentSearchEnabled = useFlag('ContentSearch');
+-
+     const [index, setIndex] = useState(0);
+
+     const data = {
+@@ -121,13 +117,6 @@ export const MailDebugModal = ({ ...rest }: Props) => {
+         },
+     ];
+
+-    if (isContentSearchEnabled) {
+-        tabs.push({
+-            title: 'Content search',
+-            content: <DebugContentSearchView />,
+-        });
+-    }
+-
+     return (
+         <ModalTwo {...rest} onClose={rest.onClose} size="large">
+             <ModalTwoHeader title={c('Label').t`Mail debugging information`} />
+--

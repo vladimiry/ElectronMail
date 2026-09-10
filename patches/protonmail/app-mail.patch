@@ -1,13 +1,12 @@
 diff --git a/package.json b/package.json
-index cb439a93b1..27fefb7381 100644
+index 1ebe6c6f35..e1b5c4b4d6 100644
 --- a/package.json
 +++ b/package.json
-@@ -3,9 +3,8 @@
+@@ -3,8 +3,7 @@
      "private": true,
      "license": "GPL-3.0",
      "workspaces": [
 -        "applications/*",
-         "applications/lumo/src/app/lib/lumo-api-client",
 -        "applications/pass-desktop/native",
 +        "applications/mail",
          "packages/*",
@@ -16,7 +15,7 @@ index cb439a93b1..27fefb7381 100644
 --
 
 diff --git a/applications/mail/package.json b/applications/mail/package.json
-index f4717b138e..471b305b36 100644
+index 67bff56b2f..41b2e60332 100644
 --- a/applications/mail/package.json
 +++ b/applications/mail/package.json
 @@ -7,7 +7,6 @@
@@ -27,6 +26,14 @@ index f4717b138e..471b305b36 100644
          "check-types": "tsc",
          "i18n:extract:web": "proton-i18n extract",
          "i18n:getlatest": "proton-i18n upgrade",
+@@ -45,7 +44,6 @@
+         "@proton/pass": "workspace:^",
+         "@proton/payments": "workspace:^",
+         "@proton/polyfill": "workspace:^",
+-        "@proton/proton-foundation-search": "2.0.0",
+         "@proton/react-redux-store": "workspace:^",
+         "@proton/redux-shared-store": "workspace:^",
+         "@proton/redux-shared-store-types": "workspace:^",
 --
 
 diff --git a/applications/mail/src/app/index.tsx b/applications/mail/src/app/index.tsx
@@ -342,21 +349,20 @@ index 6360a876f1..e0c9287e45 100644
 
      return useCallback(
 
-diff --git a/packages/components/hooks/useApi.ts b/packages/components/hooks/useApi.ts
-index e2baface5..8b4317d5a 100644
---- a/packages/components/hooks/useApi.ts
-+++ b/packages/components/hooks/useApi.ts
-@@ -3,8 +3,8 @@ import { Api } from '@proton/shared/lib/interfaces';
+diff --git a/packages/app-context/useApi.ts b/packages/app-context/useApi.ts
+index b505cacf6e..32e8df5fc0 100644
+--- a/packages/app-context/useApi.ts
++++ b/packages/app-context/useApi.ts
+@@ -4,6 +4,6 @@ import type { Api } from '@proton/shared/lib/interfaces';
 
- import ContextApi from '../containers/api/apiContext';
+ import { ApiContext } from './apiContext';
 
--const useApi = (): Api => {
-+const useApi = (): Api => { /* <electron-mail-mark> */
-     return useContext(ContextApi);
+-export const useApi = (): Api => {
++export const useApi = (): Api => { /* <electron-mail-mark> */
+     return useContext(ApiContext);
 -};
 +}; /* </electron-mail-mark> */
-
- export default useApi;
+--
 
 diff --git a/packages/components/hooks/useAuthentication.ts b/packages/components/hooks/useAuthentication.ts
 index 62cc8ee6bf..533ea5d5a1 100644
@@ -403,27 +409,26 @@ index f092dd0201..f42ecbc0b4 100644
          return editor;
      }, []);
 
-diff --git a/packages/components/hooks/useCache.ts b/packages/components/hooks/useCache.ts
-index 35d7a0aba..352f1c8a3 100644
---- a/packages/components/hooks/useCache.ts
-+++ b/packages/components/hooks/useCache.ts
-@@ -3,7 +3,7 @@ import { useContext } from 'react';
+diff --git a/packages/app-context/useCache.ts b/packages/app-context/useCache.ts
+index de10f04a11..15252046d2 100644
+--- a/packages/app-context/useCache.ts
++++ b/packages/app-context/useCache.ts
+@@ -4,7 +4,7 @@ import type { Cache } from '@proton/shared/lib/helpers/cache';
 
- import Context from '../containers/cache/cacheContext';
+ import { CacheContext } from './cacheContext';
 
--const useCache = <K = string, V = any>() => {
-+const useCache = <K = string, V = any>() => { /* <electron-mail-mark> */
-     const cache = useContext(Context);
+-export const useCache = <K = string, V = any>() => {
++export const useCache = <K = string, V = any>() => { /* <electron-mail-mark> */
+     const cache = useContext(CacheContext);
 
      if (!cache) {
-@@ -11,6 +11,6 @@ const useCache = <K = string, V = any>() => {
+@@ -12,4 +12,4 @@ export const useCache = <K = string, V = any>() => {
      }
 
      return cache as Cache<K, V>;
 -};
 +}; /* </electron-mail-mark> */
-
- export default useCache;
+--
 
 diff --git a/applications/mail/src/app/helpers/url.ts b/applications/mail/src/app/helpers/url.ts
 index 2aaa779d3..487f54ff3 100644
@@ -449,18 +454,18 @@ index 2aaa779d3..487f54ff3 100644
  };
 
 diff --git a/applications/mail/src/app/components/drawer/MailQuickSettings.tsx b/applications/mail/src/app/components/drawer/MailQuickSettings.tsx
-index e73ee8f7ee..839dd7a28c 100644
+index d03bb18992..48338b94ec 100644
 --- a/applications/mail/src/app/components/drawer/MailQuickSettings.tsx
 +++ b/applications/mail/src/app/components/drawer/MailQuickSettings.tsx
-@@ -64,7 +64,6 @@ import { useCanReplayOnboarding } from 'proton-mail/hooks/useCanReplayOnboarding
+@@ -62,7 +62,6 @@ import { useCanReplayOnboarding } from '../../hooks/useCanReplayOnboarding';
  import { CategoriesQuickSettings } from '../categoryView/CategoriesQuickSettings';
- import { DebugMailStoreButton } from '../debug/DebugMailStoreButton';
+ import { MailDebugButton } from '../debug/MailDebugButton';
  import ClearBrowserDataModal from '../header/ClearBrowserDataModal';
 -import MailDefaultHandlerModal from '../header/MailDefaultHandlerModal';
 
  interface QuickSettingsSelectOption {
      value: any;
-@@ -459,7 +458,6 @@ const MailQuickSettings = () => {
+@@ -462,7 +461,6 @@ const MailQuickSettings = () => {
              </QuickSettingsButtonSection>
 
              {ElectronDefaultAppPrompt}
@@ -468,6 +473,7 @@ index e73ee8f7ee..839dd7a28c 100644
              <ClearBrowserDataModal {...clearBrowserDataProps} />
              <MailShortcutsModal {...mailShortcutsProps} />
              <KeyTransparencyDetailsModal {...keyTransparencyDetailsModalProps} />
+--
 
 diff --git a/applications/mail/src/app/components/header/MailDefaultHandlerModal.tsx b/applications/mail/src/app/components/header/MailDefaultHandlerModal.tsx
 deleted file mode 100644
@@ -518,20 +524,6 @@ index 59806648ea..0000000000
 -};
 -
 -export default MailDefaultHandlerModal;
-
-diff --git a/packages/encrypted-search/lib/constants.ts b/packages/encrypted-search/lib/constants.ts
-index ebdf5ee22..28adf6c62 100644
---- a/packages/encrypted-search/lib/constants.ts
-+++ b/packages/encrypted-search/lib/constants.ts
-@@ -131,7 +131,7 @@ export const defaultESStatus = {
-     isEnablingContentSearch: false,
-     isDBLimited: false,
-     esEnabled: false,
--    esSupported: true,
-+    esSupported: false,
-     isRefreshing: false,
-     isSearchPartial: false,
-     isSearching: false,
 
 diff --git a/packages/shared/lib/interfaces/MailSettings.ts b/packages/shared/lib/interfaces/MailSettings.ts
 index d7d70c1d0c..565a2601aa 100644

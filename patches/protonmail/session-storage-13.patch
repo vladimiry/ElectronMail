@@ -1,22 +1,22 @@
 diff --git a/packages/account/bootstrap/index.ts b/packages/account/bootstrap/index.ts
-index d0c59411c4..dcacdd9f59 100644
+index cbd81642a7..149515030d 100644
 --- a/packages/account/bootstrap/index.ts
 +++ b/packages/account/bootstrap/index.ts
-@@ -93,6 +93,7 @@ const handleUID = (UID: string | undefined) => {
+@@ -114,6 +114,7 @@ const handleUID = (UID: string | undefined) => {
      telemetry.setAuthHeaders(UID || '');
  };
- 
+
 +/* <electron-mail-mark> tracking use of: createSecureSessionStorage() */
  export const createAuthentication = (args?: Partial<Parameters<typeof createAuthenticationStore>[0]>) => {
      return createAuthenticationStore({
          store: createSecureSessionStorage(),
-@@ -100,6 +101,7 @@ export const createAuthentication = (args?: Partial<Parameters<typeof createAuth
+@@ -121,6 +122,7 @@ export const createAuthentication = (args?: Partial<Parameters<typeof createAuth
          ...args,
      });
  };
 +/* </electron-mail-mark> */
- 
- export const removeLoaderClassName = () => {
+
+ const removeLoaderClassName = () => {
      document.querySelector('.app-root-loader')?.classList.add('hidden');
 
 diff --git a/packages/shared/lib/authentication/createSecureSessionStorage.ts b/packages/shared/lib/authentication/createSecureSessionStorage.ts
@@ -26,7 +26,7 @@ index 94efa0bf8d..7e9daf350e 100644
 @@ -3,6 +3,7 @@ import debounce from 'lodash/debounce';
  import { load, save } from '../helpers/secureSessionStorage';
  import createStore from '../helpers/store';
- 
+
 +// <electron-mail-mark>
  const createSecureSessionStorage = () => {
      const store = createStore(load());
@@ -34,7 +34,7 @@ index 94efa0bf8d..7e9daf350e 100644
 @@ -10,6 +11,10 @@ const createSecureSessionStorage = () => {
          flush: () => {},
      };
- 
+
 +    window.addEventListener("electron-mail:packages/shared/lib/authentication/createSecureSessionStorage.ts:unloadLike", () => {
 +        save(store.getState())?.();
 +    });
@@ -44,7 +44,7 @@ index 94efa0bf8d..7e9daf350e 100644
          const handleSave = () => {
 @@ -46,3 +51,4 @@ const createSecureSessionStorage = () => {
  export type SecureSessionStorage = ReturnType<typeof createSecureSessionStorage>;
- 
+
  export default createSecureSessionStorage;
 +// </electron-mail-mark>
 --
@@ -56,7 +56,7 @@ index 93faa0d916..9697e2dc88 100644
 @@ -119,6 +119,7 @@ export const separateParts = (data: any) =>
          { share1: {}, share2: {} }
      );
- 
+
 +/* <electron-mail-mark> */
  const SESSION_STORAGE_KEY = 'proton:storage';
  export const save = (data: any) => {
@@ -92,7 +92,7 @@ index 93faa0d916..9697e2dc88 100644
 +            };
 +            return load([MAILBOX_PASSWORD_KEY, UID_KEY]);
 +        }
-+    }    
++    }
      try {
          const serializedShare1 = window.name;
          if (!serializedShare1) {

@@ -52,9 +52,9 @@ export const resolveStandardSetupProviderInternals = async (_logger: Logger): Pr
 
                                     // WARN contexts should be resolved outside of the "useEffect" handler
                                     // TODO validate resolved proton entities (at least test the "typeof" result)
-                                    const httpApi = useApiModule.default();
+                                    const httpApi = useApiModule.useApi();
                                     const authentication = useAuthenticationModule.default();
-                                    const cache = useCacheModule.default();
+                                    const cache = useCacheModule.useCache();
                                     const history = reactRouterModule.useHistory();
 
                                     useEffect(() => {

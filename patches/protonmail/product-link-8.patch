@@ -13,11 +13,11 @@ index 1747c7b29c..348fb75325 100644
                                          <ProductIcon appToLinkTo={appToLinkTo} current={current} />
 
 diff --git a/packages/components/containers/app/ProductLink.tsx b/packages/components/containers/app/ProductLink.tsx
-index f4063f683d..c44af97579 100644
+index 36e158ce56..2974e1db83 100644
 --- a/packages/components/containers/app/ProductLink.tsx
 +++ b/packages/components/containers/app/ProductLink.tsx
-@@ -5,7 +5,7 @@ import AppLink from '@proton/components/components/link/AppLink';
- import SettingsLink from '@proton/components/components/link/SettingsLink';
+@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
+
  import { getAppName } from '@proton/shared/lib/apps/helper';
  import type { APP_NAMES } from '@proton/shared/lib/constants';
 -import { APPS, SETUP_ADDRESS_PATH } from '@proton/shared/lib/constants';
@@ -25,7 +25,7 @@ index f4063f683d..c44af97579 100644
  import { getAppStaticUrl } from '@proton/shared/lib/helpers/url';
  import type { UserModel } from '@proton/shared/lib/interfaces';
  import { getRequiresAddressSetup } from '@proton/shared/lib/keys';
-@@ -60,7 +60,7 @@ const ProductLink = ({
+@@ -64,7 +64,7 @@ const ProductLink = ({
 
      // If a user is passed here, it means the user is signed in (e.g. not viewing a public link)
      // and as such we should not show the static product links

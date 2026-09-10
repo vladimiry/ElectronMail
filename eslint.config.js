@@ -78,6 +78,7 @@ export default tseslint.config(
             "sonarjs/no-nested-conditional": "off",
             "sonarjs/no-nested-functions": "off",
             "sonarjs/todo-tag": "off",
+            "sonarjs/no-networkidle-wait": "off",
         },
     },
     // TODO make sure angular-specific TS code linting works after eslint v8=>v10 upgrade

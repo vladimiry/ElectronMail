@@ -4,7 +4,7 @@ strictPeerDependencies: false
 patchedDependencies:
   '@electron/rebuild': patches/@electron__rebuild.patch
   '@ghostery/url-parser': patches/@ghostery__url-parser.patch
-  'app-builder-lib': patches/app-builder-lib.patch
+  app-builder-lib: patches/app-builder-lib.patch
   'class-transformer-validator': patches/class-transformer-validator.patch
   immer: patches/immer.patch
   'keytar': patches/keytar.patch
@@ -13,6 +13,7 @@ patchedDependencies:
   'pureimage': patches/pureimage.patch
   'sodium-native': patches/sodium-native.patch
   'tough-cookie-web-storage-store': patches/tough-cookie-web-storage-store.patch
+  webpack: patches/webpack.patch
 allowBuilds:
   '@parcel/watcher': false
   'dprint': true
@@ -35,3 +36,4 @@ updateConfig:
 overrides:
   'cmake-runtime': '4.1.1' # pin binary compatible with old Linux (used by "bare-make" to compile "sodium-native")
   'ninja-runtime': '1.13.1' # pin binary compatible with old Linux (used by "bare-make" to compile "sodium-native")
+  'webpack': '5.110.3'

@@ -165,6 +165,7 @@ export type ProviderApi =
                     getMailSettingsModel: () => Promise<{ViewMode: unknown}>;
                     buildEventsApiUrlTester: (options: {entryApiUrl: string}) => (url: string) => boolean;
                     buildMessagesCountApiUrlTester: (options: {entryApiUrl: string}) => (url: string) => boolean;
+                    buildConversationsCountApiUrlTester: (options: {entryApiUrl: string}) => (url: string) => boolean;
                     decryptMessage: (message: RestModel.Message) => Promise<{decryptedSubject?: string; decryptedBody: string}>;
                 }
             >;

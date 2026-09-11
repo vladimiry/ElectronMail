@@ -17,4 +17,5 @@ export interface Event<TypeRecord = typeof EVENT_ACTION._.nameValueMap, A = Type
     ContactEmails?: Array<{Action: A} & Pick<ContactEmail, "ID">>;
     Labels?: Array<{Action: A} & Pick<Label, "ID"> & EventSubMessage>;
     MessageCounts?: Array<{LabelID: string; Unread: number}>;
+    ConversationCounts?: Array<{LabelID: string; Unread: number}>;
 }

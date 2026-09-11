@@ -22,18 +22,19 @@ import {WEBVIEW_LOGGERS} from "src/electron-preload/webview/lib/const";
 
 const _logger = curryFunctionMembers(WEBVIEW_LOGGERS.primary, __filename);
 
-export function registerApi(
-    commonProviderApi: CommonProviderApi,
-    providerApi: ProviderApi,
-): void {
+export function registerApi(commonProviderApi: CommonProviderApi, providerApi: ProviderApi): void {
+    // currenlty it's safe to cache the once resoved value, as "view mode" doesn't change dynamically but only with page reload
+    // but here by not caching the value we make it future-proofed for dynamical vide mode change
+    const isMessagesViewMode = async (): Promise<boolean> => {
+        const mailSettingsModel = await providerApi._custom_.getMailSettingsModel();
+        return mailSettingsModel.ViewMode === providerApi.constants.VIEW_MODE.SINGLE;
+    };
     const endpoints: ProtonPrimaryMailApi = {
         ...buildDbPatchEndpoint(commonProviderApi, providerApi),
 
         async selectMailOnline(input) {
             _logger.info(nameof(endpoints.selectMailOnline), input.accountIndex);
 
-            const mailSettingsModel = await providerApi._custom_.getMailSettingsModel();
-            const messagesViewMode = mailSettingsModel.ViewMode === providerApi.constants.VIEW_MODE.SINGLE;
             const {system: systemMailFolderIds, custom: [customFolderId]} = input.mail.mailFolderIds.reduce((accumulator: {
                 readonly system: typeof input.mail.mailFolderIds; // can't be empty
                 readonly custom: Array<Unpacked<typeof input.mail.mailFolderIds> | undefined>; // can be empty
@@ -53,15 +54,13 @@ export function registerApi(
                 input.selectedFolderId
                 // TODO throw error if mail is not included in the selected folder
                 && input.mail.mailFolderIds.find((id) => id === input.selectedFolderId)
-            )
-                ?? customFolderId
-                ?? systemFolderId;
+            ) ?? customFolderId ?? systemFolderId;
 
             if (!folderId) {
                 throw new Error(`Failed to resolve "folder.id" value`);
             }
 
-            if (messagesViewMode) {
+            if (await isMessagesViewMode()) {
                 await providerApi.history.push({folderId, mailId});
             } else {
                 await providerApi.history.push({folderId, conversationId, mailId});
@@ -160,44 +159,54 @@ export function registerApi(
 
                 // "unread" update signal
                 (() => {
-                    const responseListeners = [{
-                        tester: {test: providerApi._custom_.buildMessagesCountApiUrlTester({entryApiUrl})},
-                        handler: ({Counts}: {Counts?: Array<{LabelID: string; Unread: number}>}) => {
-                            return Counts?.find(({LabelID}) => LabelID === SYSTEM_FOLDER_IDENTIFIERS["Almost All Mail"])?.Unread ?? 0;
-                        },
-                    }, {
-                        tester: {test: providerApi._custom_.buildEventsApiUrlTester({entryApiUrl})},
-                        handler: ({MessageCounts}: RestModel.EventResponse) => {
-                            // WARN: this test is required as we must not process the events without "MessageCounts" value
-                            //       no "unread" change happened and so we should skip such events during "unread" calculation
-                            if (!MessageCounts) {
-                                return;
-                            }
-                            return MessageCounts.find(({LabelID}) => LabelID === SYSTEM_FOLDER_IDENTIFIERS["Almost All Mail"])?.Unread ?? 0;
-                        },
-                    }] as const;
-
+                    type T1 = (arg: {Counts?: Array<{LabelID: string; Unread: number}>}) => number;
+                    type T2 = (arg: RestModel.EventResponse) => number | undefined;
+                    const ALMOST_ALL_MAIL = SYSTEM_FOLDER_IDENTIFIERS["Almost All Mail"];
+                    const resolveResponseListeners = async (): Promise<
+                        readonly [
+                            {testUrl: (arg: string) => boolean; resolveUnreadValue: T1},
+                            {testUrl: (arg: string) => boolean; resolveUnreadValue: T2},
+                        ]
+                    > => {
+                        const messagesViewMode = await isMessagesViewMode();
+                        return [
+                            {
+                                testUrl: messagesViewMode
+                                    ? providerApi._custom_.buildMessagesCountApiUrlTester({entryApiUrl})
+                                    : providerApi._custom_.buildConversationsCountApiUrlTester({entryApiUrl}),
+                                resolveUnreadValue: (...[{Counts}]: Parameters<T1>) => {
+                                    return Counts?.find(({LabelID}) => LabelID === ALMOST_ALL_MAIL)?.Unread ?? 0;
+                                },
+                            },
+                            {
+                                testUrl: providerApi._custom_.buildEventsApiUrlTester({entryApiUrl}),
+                                resolveUnreadValue: (...[{MessageCounts, ConversationCounts}]: Parameters<T2>) => {
+                                    const items = messagesViewMode ? MessageCounts : ConversationCounts;
+                                    // WARN: this test is required as we must not process the events without server signalling with
+                                    //       filled "MessageCounts" or "ConversationCounts" list
+                                    if (!items) return;
+                                    return items.find(({LabelID}) => LabelID === ALMOST_ALL_MAIL)?.Unread ?? 0;
+                                },
+                            },
+                        ] as const;
+                    };
                     return FETCH_NOTIFICATION$.pipe(
                         mergeMap((response) => {
-                            const listeners = responseListeners.filter(({tester}) => tester.test(response.url));
-
-                            if (!listeners.length) {
-                                return EMPTY;
-                            }
-
-                            return from(response.responseTextPromise).pipe(mergeMap((responseText) => {
-                                return listeners.reduce((accumulator, {handler}) => {
-                                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                                    const responseData = JSON.parse(responseText);
-                                    const value = handler(
-                                        responseData, // eslint-disable-line @typescript-eslint/no-unsafe-argument
-                                    );
-
-                                    return typeof value === "number"
-                                        ? accumulator.concat([{unread: value}])
-                                        : accumulator;
-                                }, [] as Array<{unread: number}>);
-                            }));
+                            return from(resolveResponseListeners()).pipe(
+                                mergeMap((responseListeners) => {
+                                    const listeners = responseListeners.filter(({testUrl}) => testUrl(response.url));
+                                    if (!listeners.length) return EMPTY;
+                                    return from(response.responseTextPromise).pipe(mergeMap((responseText) => {
+                                        return listeners.reduce((accumulator, {resolveUnreadValue}) => {
+                                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                                            const responseData = JSON.parse(responseText);
+                                            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+                                            const unread = resolveUnreadValue(responseData);
+                                            return typeof unread === "number" ? accumulator.concat([{unread}]) : accumulator;
+                                        }, [] as Array<{unread: number}>);
+                                    }));
+                                }),
+                            );
                         }),
                         distinctUntilChanged(({unread: prev}, {unread: curr}) => curr === prev),
                     );

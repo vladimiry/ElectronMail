@@ -6,7 +6,7 @@ name: GitHub Actions CI
 'on':
   push:
     branches:
-      - master
+      - wip
   pull_request:
     branches:
       - master

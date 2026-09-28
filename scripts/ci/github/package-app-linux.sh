@@ -72,7 +72,7 @@ fi
 shopt -s extglob nocaseglob
 for PACKAGE_TYPE in $PACKAGE_TYPES; do
   if [ "$PACKAGE_TYPE" = "snap" ]; then
-    sudo snap install snapcraft --classic
+    sudo snap install snapcraft --channel=8.x/stable --classic
   fi
   pnpm run "electron-builder:dist:linux:${PACKAGE_TYPE}"
   # delete all except prepared packages (case-insensitive)

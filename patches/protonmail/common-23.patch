@@ -125,10 +125,10 @@ index 36bd0c712..c2fb3681c 100644
      }
 
 diff --git a/packages/components/containers/app/StandaloneApp.tsx b/packages/components/containers/app/StandaloneApp.tsx
-index dc3c738b1e..94d2acfe58 100644
+index 80f38f6394..a1d0326b4e 100644
 --- a/packages/components/containers/app/StandaloneApp.tsx
 +++ b/packages/components/containers/app/StandaloneApp.tsx
-@@ -16,7 +16,7 @@ import useInstance from '@proton/hooks/useInstance';
+@@ -10,7 +10,7 @@ import useInstance from '@proton/hooks/useInstance';
  import { ProtonStoreProvider } from '@proton/redux-shared-store/sharedProvider';
  import { ignoredActions, ignoredPaths } from '@proton/redux-shared-store/sharedSerializable';
  import createApi from '@proton/shared/lib/api/createApi';
@@ -136,8 +136,8 @@ index dc3c738b1e..94d2acfe58 100644
 +import { APPS, ELECTRON_MAIL_APPS, APPS_CONFIGURATION } from '@proton/shared/lib/constants';
  import { replaceUrl } from '@proton/shared/lib/helpers/browser';
  import type { ProtonConfig } from '@proton/shared/lib/interfaces';
- import { createUnauthenticatedApi } from '@proton/shared/lib/unauthApi/unAuthenticatedApi';
-@@ -25,7 +25,7 @@ import noop from '@proton/utils/noop';
+ import { FlagProvider } from '@proton/unleash/proxy';
+@@ -25,7 +25,7 @@ import StandardPublicApp from './StandardPublicApp';
 
  import '@proton/styles/scss/_proton-account.scss';
 
@@ -146,47 +146,44 @@ index dc3c738b1e..94d2acfe58 100644
  const api = createApi({ config });
  const authentication = createAuthentication();
  const unauthenticatedApi = createUnauthenticatedApi(api);
-@@ -77,7 +77,14 @@ const Component = () => {
+@@ -77,7 +77,12 @@ const Component = () => {
                                                  onStartAuth={() => unauthenticatedApi.startUnAuthFlow()}
                                                  onLogin={async (args) => {
                                                      authentication.login(args.data);
 -                                                    window.location.pathname = '/';
-+
 +                                                    {
 +                                                        const appTypeSetByElectronMail = window.sessionStorage.getItem("electron_mail:proton_app_name");
 +                                                        window.location.pathname = ELECTRON_MAIL_APPS.includes(appTypeSetByElectronMail)
 +                                                            ? APPS_CONFIGURATION[appTypeSetByElectronMail].publicPath
 +                                                            : '/';
 +                                                    }
-+
                                                      return { state: 'complete' };
                                                  }}
                                              />
---
 
 diff --git a/packages/components/containers/login/MinimalLoginContainer.tsx b/packages/components/containers/login/MinimalLoginContainer.tsx
-index d3681ec168..ffa1192467 100644
+index d5cf605fce..79895585c4 100644
 --- a/packages/components/containers/login/MinimalLoginContainer.tsx
 +++ b/packages/components/containers/login/MinimalLoginContainer.tsx
-@@ -310,7 +310,7 @@ const LoginForm = ({
+@@ -282,7 +282,7 @@ const LoginForm = ({
      const [loading, withLoading] = useLoading();
      const [username, setUsername] = useState('');
      const [password, setPassword] = useState('');
 -    const [persistent, setPersistent] = useLocalState(true, 'default-persistent');
 +    const [persistent] = useLocalState(true, 'default-persistent');
-     const challengeRefLogin = useRef<ChallengeRef>();
+     const challengeRefLogin = useRef<ChallengeV4Ref>();
      const usernameRef = useRef<HTMLInputElement>(null);
      const [challengeLoading, setChallengeLoading] = useState(hasChallenge);
-@@ -338,7 +338,7 @@ const LoginForm = ({
-                 </div>
-             )}
-             <form
--                name="loginForm"
-+                name="loginForm" // tracking this
-                 className={challengeLoading ? 'hidden' : undefined}
-                 onSubmit={(event) => {
-                     event.preventDefault();
-@@ -370,7 +370,7 @@ const LoginForm = ({
+@@ -330,7 +330,7 @@ const LoginForm = ({
+                         empty
+                         tabIndex={-1}
+                         challengeRef={challengeRefLogin}
+-                        name="login"
++                        name="login" // tracking this
+                         type={0}
+                         onSuccess={() => {
+                             setChallengeLoading(false);
+@@ -342,7 +342,7 @@ const LoginForm = ({
                      />
                  )}
                  <InputFieldTwo
@@ -195,7 +192,7 @@ index d3681ec168..ffa1192467 100644
                      bigger
                      label={c('Label').t`Email or username`}
                      error={validator([requiredValidator(username)])}
-@@ -390,17 +390,6 @@ const LoginForm = ({
+@@ -362,17 +362,6 @@ const LoginForm = ({
                      onValue={setPassword}
                      rootClassName="mt-2"
                  />
@@ -235,7 +232,7 @@ index c72145327e..bd29c31242 100644
  export default useLoad;
 
 diff --git a/packages/shared/lib/apps/apps.ts b/packages/shared/lib/apps/apps.ts
-index b65f930cdb..99382606a6 100644
+index b2f626b3db..07099690aa 100644
 --- a/packages/shared/lib/apps/apps.ts
 +++ b/packages/shared/lib/apps/apps.ts
 @@ -1,5 +1,5 @@
@@ -253,7 +250,7 @@ index b65f930cdb..99382606a6 100644
 +    }).filter((app) => ELECTRON_MAIL_APPS.includes(app as typeof ELECTRON_MAIL_APPS[number]));
  };
 
- export const appSupportsSSO = (appName?: APP_NAMES) => {
+ export const appSupportsSSO = (appName?: APP_NAMES): boolean => {
 --
 
 diff --git a/applications/drive/src/app/legacy/store/_documents/useDriveDocsFeatureFlag.ts b/applications/drive/src/app/legacy/store/_documents/useDriveDocsFeatureFlag.ts

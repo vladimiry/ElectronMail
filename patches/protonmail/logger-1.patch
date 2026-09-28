@@ -1,0 +1,268 @@
+diff --git a/packages/logger/src/logger.ts b/packages/logger/src/logger.ts
+index 613910ff3c..6d32668227 100644
+--- a/packages/logger/src/logger.ts
++++ b/packages/logger/src/logger.ts
+@@ -1,17 +1,12 @@
+ /* eslint-disable no-console */
+-import { encryptData } from '@protontech/crypto/subtle/aesGcm.ts';
+ import { utf8StringToUint8Array } from '@protontech/crypto/utils';
+
+ import {
+-    CLEANUP_INTERVAL_MS,
+-    DAY,
+     DEFAULT_CONSOLE_LEVELS,
+     DEFAULT_LOGGER_NAME,
+     DEFAULT_MAX_ENTRIES,
+     DEFAULT_RETENTION_DAYS,
+-    MAX_PENDING_LOGS,
+ } from './constants';
+-import { IndexedDBStorage } from './storage';
+ import type { LogLevel, LoggerOptions } from './types';
+ import type { LogReaderOptions } from './worker/LogReader';
+
+@@ -23,28 +18,6 @@ interface PendingLog {
+     timestamp: number;
+ }
+
+-const consoleFor = (level: LogLevel): ((...args: unknown[]) => void) => {
+-    const method = console[level];
+-    return (method ?? console.log).bind(console);
+-};
+-
+-const serializeArg = (arg: unknown): string => {
+-    if (arg instanceof Error) {
+-        return `${arg.name}: ${arg.message}\n${arg.stack}`;
+-    }
+-    if (typeof arg === 'string') {
+-        return arg;
+-    }
+-    try {
+-        return JSON.stringify(arg) ?? String(arg);
+-    } catch {
+-        // Circular references and BigInt would otherwise throw away the whole line.
+-        return String(arg);
+-    }
+-};
+-
+-const timestampedFilename = (prefix: string) => `${prefix}-${new Date().toISOString().replace(/[:.]/g, '-')}.log`;
+-
+ export const downloadLogFile = (contents: string, filename: string): void => {
+     performance.mark(`logger:downloadLogFile:start`);
+     const url = URL.createObjectURL(new Blob([contents], { type: 'text/plain' }));
+@@ -86,8 +59,6 @@ export class Logger {
+
+     private readonly now: () => number;
+
+-    private storage: IndexedDBStorage | null = null;
+-
+     private encryptionKey: LoggerOptions['encryptionKey'] | null = null;
+
+     private encryptionContext: Uint8Array<ArrayBuffer> | null = null;
+@@ -143,7 +114,6 @@ export class Logger {
+         this.name = options.loggerName ?? options.appName;
+         this.loggerID = options.loggerID ?? null;
+         this.encryptionContext = utf8StringToUint8Array(`${options.appName}#${this.name}`);
+-        this.storage = new IndexedDBStorage(this.name, options.loggerID);
+         this.initialized = true;
+
+         this.drainPending();
+@@ -174,185 +144,49 @@ export class Logger {
+         this.emit('info', message, args);
+     }
+
+-    private emit(level: LogLevel, message: string, args: unknown[]): void {
+-        if (process.env.NODE_ENV === 'development' || this.consoleLevels.includes(level)) {
+-            consoleFor(level)(`[${this.name}]`, message, ...args);
+-        }
+-
+-        const entry: PendingLog = { level, message, args, timestamp: this.now() };
+-
+-        if (!this.initialized) {
+-            this.pending.push(entry);
+-            if (this.pending.length > MAX_PENDING_LOGS) {
+-                this.pending.shift();
+-            }
+-            return;
+-        }
+-
+-        this.enqueue(() => this.persist(entry));
+-    }
++    private emit(level: LogLevel, message: string, args: unknown[]): void {}
+
+     /**
+      * Appends to the write chain. Failures are swallowed: losing a diagnostic line is
+      * never worth breaking the caller, and IndexedDB being unavailable is expected.
+      */
+-    private enqueue(task: () => Promise<void>): void {
+-        this.writes = this.writes.then(task).catch((error) => {
+-            console.warn(`[${this.name}] failed to write logs:`, error);
+-        });
+-    }
++    private enqueue(task: () => Promise<void>): void {}
+
+-    private drainPending(): void {
+-        const pending = this.pending;
+-        this.pending = [];
+-        // Already echoed to the console when emitted, so only persistence is replayed.
+-        pending.forEach((entry) => this.enqueue(() => this.persist(entry)));
+-    }
++    private drainPending(): void {}
+
+-    private async persist({ level, message, args, timestamp }: PendingLog): Promise<void> {
+-        if (!this.storage || !this.encryptionKey || !this.encryptionContext) {
+-            return;
+-        }
+-
+-        const payload = JSON.stringify({ message, args: args.map(serializeArg) });
+-
+-        // Kept apart from `storage.store`'s own mark so crypto cost can be told apart from IndexedDB.
+-        performance.mark(`logger-${this.name}:persist:encrypt:start`);
+-        const data = await encryptData(this.encryptionKey, utf8StringToUint8Array(payload), this.encryptionContext);
+-        performance.measure(`logger-${this.name}:persist:encrypt`, `logger-${this.name}:persist:encrypt:start`);
+-
+-        // Fixed-width sequence so the key compares in insertion order. The sequence restarts
+-        // at zero on every page load, so the random suffix keeps a new session from overwriting
+-        // an entry a previous one wrote in the same millisecond.
+-        const sequence = String(this.sequence++).padStart(12, '0');
+-
+-        await this.storage.store({
+-            id: `${timestamp}-${sequence}-${Math.random().toString(36).slice(2, 11)}`,
+-            timestamp,
+-            level,
+-            data: data.toBase64(),
+-        });
+-    }
++    private async persist({ level, message, args, timestamp }: PendingLog): Promise<void> {}
+
+     /** Resolves once every line emitted so far has been written. */
+-    async flush(): Promise<void> {
+-        await this.writes;
+-    }
++    async flush(): Promise<void> {}
+
+     /**
+      * Reads every stored line back, decrypted, oldest first.
+      */
+     async getLogs(): Promise<string> {
+-        if (!this.initialized) {
+-            return '';
+-        }
+-
+-        if (!this.read) {
+-            this.read = this.readLogs().finally(() => {
+-                this.read = null;
+-            });
+-        }
+-
+-        return this.read;
++        return '';
+     }
+
+     /**
+      * Decrypts in a worker, so that reading a large history cannot stall the UI.
+      */
+     private async readLogs(): Promise<string> {
+-        if (!this.loggerID || !this.encryptionKey || !this.encryptionContext) {
+-            return '';
+-        }
+-
+-        performance.mark(`logger-${this.name}:readLogs:waitForWrites:start`);
+-        await this.writes;
+-        performance.measure(
+-            `logger-${this.name}:readLogs:waitForWrites`,
+-            `logger-${this.name}:readLogs:waitForWrites:start`
+-        );
+-
+-        try {
+-            const readLogsInWorker =
+-                this.readLogsInWorker ?? (await import('./worker/readLogsInWorker')).readLogsInWorker;
+-            return await readLogsInWorker({
+-                name: this.name,
+-                loggerID: this.loggerID,
+-                encryptionKey: this.encryptionKey,
+-                encryptionContext: this.encryptionContext.toBase64(),
+-            });
+-        } catch (error) {
+-            console.error(`[${this.name}] failed to read logs in worker:`, error);
+-            return '';
+-        }
++        return '';
+     }
+
+-    async clearLogs(): Promise<void> {
+-        if (!this.storage) {
+-            return;
+-        }
+-
+-        try {
+-            await this.writes;
+-            await this.storage.clear();
+-        } catch (error) {
+-            console.warn(`[${this.name}] failed to clear logs:`, error);
+-        }
+-    }
++    async clearLogs(): Promise<void> {}
+
+-    async downloadLogs(filename?: string): Promise<void> {
+-        const logs = await this.getLogs();
+-        downloadLogFile(logs, filename ?? timestampedFilename(`${this.name}-logs`));
+-    }
++    async downloadLogs(filename?: string): Promise<void> {}
+
+-    private startCleanup(): void {
+-        this.enqueue(() => this.cleanup());
+-        this.cleanupInterval = setInterval(() => this.enqueue(() => this.cleanup()), CLEANUP_INTERVAL_MS);
+-        // Keeps Node test runners from hanging on the interval.
+-        (this.cleanupInterval as unknown as { unref?: () => void }).unref?.();
+-    }
++    private startCleanup(): void {}
+
+     /** Trims by age first, then by count. Runs on the write chain, never per line. */
+-    private async cleanup(): Promise<void> {
+-        if (!this.storage) {
+-            return;
+-        }
+-
+-        performance.mark(`logger-${this.name}:cleanup:start`);
+-        await this.storage.removeOlderThan(this.now() - this.retentionDays * DAY);
+-
+-        const count = await this.storage.count();
+-        if (count > this.maxEntries) {
+-            await this.storage.removeOldest(count - this.maxEntries);
+-        }
+-        performance.measure(`logger-${this.name}:cleanup`, `logger-${this.name}:cleanup:start`);
+-    }
++    private async cleanup(): Promise<void> {}
+
+     isInitialized(): boolean {
+-        return this.initialized;
++        return false;
+     }
+
+-    async destroy(): Promise<void> {
+-        if (this.cleanupInterval) {
+-            clearInterval(this.cleanupInterval);
+-            this.cleanupInterval = null;
+-        }
+-
+-        await this.writes;
+-
+-        try {
+-            await this.storage?.close();
+-        } catch (error) {
+-            console.warn(`[${this.name}] failed to close storage:`, error);
+-        }
+-
+-        this.initialized = false;
+-        this.storage = null;
+-        this.encryptionKey = null;
+-        this.encryptionContext = null;
+-        this.pending = [];
+-        this.read = null;
+-        this.writes = Promise.resolve();
+-    }
++    async destroy(): Promise<void> {}
+ }
+
+ /**
+--

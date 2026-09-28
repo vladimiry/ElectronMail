@@ -198,17 +198,19 @@ index 3da116f255..918d5bde86 100644
 --
 
 diff --git a/applications/mail/src/app/router/RouterLabelContainer.tsx b/applications/mail/src/app/router/RouterLabelContainer.tsx
-index c4aca9e193..56b82c7302 100644
+index 586ed6f9f6..2cea49ec1d 100644
 --- a/applications/mail/src/app/router/RouterLabelContainer.tsx
 +++ b/applications/mail/src/app/router/RouterLabelContainer.tsx
-@@ -251,6 +251,7 @@ export const RouterLabelContainer = ({
+@@ -190,7 +190,7 @@ export const RouterLabelContainer = ({
+         <div
              ref={elementRef}
              tabIndex={-1}
-             className={clsx(
-+                'electron-mail-mailbox-container-component',
-                 'outline-none relative',
-                 shouldSeeWideToolbars ? 'flex flex-column flex-1 flex-nowrap' : 'flex flex-1 flex-nowrap'
-             )}
+-            className="outline-none relative flex flex-column flex-1 flex-nowrap"
++            className="outline-none relative flex flex-column flex-1 flex-nowrap electron-mail-mailbox-container-component"
+             data-testid="mailbox"
+         >
+             <MailToolbar placement="list" actions={actions} elementsData={elementsData} />
+--
 
 diff --git a/applications/mail/src/app/helpers/attachment/attachmentLoader.ts b/applications/mail/src/app/helpers/attachment/attachmentLoader.ts
 index 92c8a131f2..dd3593d6e9 100644

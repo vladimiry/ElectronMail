@@ -1,27 +1,29 @@
 # this makes it not to use "@proton/proton-foundation-search"
 
-diff --git a/applications/mail/src/app/MainContainer.tsx b/applications/mail/src/app/MainContainer.tsx
-index d1fa9415ab..4fce574c1d 100644
---- a/applications/mail/src/app/MainContainer.tsx
-+++ b/applications/mail/src/app/MainContainer.tsx
-@@ -72,7 +72,7 @@ const MainContainer: FunctionComponent = () => {
-                     <QuickSettingsRemindersProvider>
-                         <DrawerThemeInjector />
-                         <ChecklistsProvider>
--                            <EncryptedSearchProvider>
-+                            {/* <EncryptedSearchProvider> */}
-                                 <MailContentRefProvider mailContentRef={mailContentRef}>
-                                     <SubscriptionModalProvider app={APP_NAME}>
-                                         <EasySwitchStoreProvider>
-@@ -94,7 +94,7 @@ const MainContainer: FunctionComponent = () => {
-                                         </EasySwitchStoreProvider>
-                                     </SubscriptionModalProvider>
-                                 </MailContentRefProvider>
--                            </EncryptedSearchProvider>
-+                            {/* </EncryptedSearchProvider> */}
-                         </ChecklistsProvider>
-                     </QuickSettingsRemindersProvider>
-                 </AssistantProvider>
+diff --git a/applications/mail/src/app/helpers/cleanData.ts b/applications/mail/src/app/helpers/cleanData.ts
+index 7876f8cccf..de56697893 100644
+--- a/applications/mail/src/app/helpers/cleanData.ts
++++ b/applications/mail/src/app/helpers/cleanData.ts
+@@ -2,8 +2,6 @@ import { deleteAssistantCachedFiles } from '@proton/llm/lib/downloader';
+ import { logger } from '@proton/logger';
+ import type { PersistedSession } from '@proton/shared/lib/authentication/SessionInterface';
+
+-import { getExistingIndexService } from '../contentSearch/indexation/IndexService';
+-
+ export interface CleanDataOptions {
+     logs?: boolean;
+     /** v2 content search index */
+@@ -28,9 +26,6 @@ export const cleanData = async (userID: string, options: CleanDataOptions) => {
+     if (options.logs && logger.isInitialized()) {
+         cleanups.push(logger.clearLogs());
+     }
+-    if (options.contentSearch) {
+-        cleanups.push(getExistingIndexService(userID)?.deleteIndex());
+-    }
+     if (options.esDelete) {
+         cleanups.push(options.esDelete());
+     }
+--
 
 diff --git a/applications/mail/src/app/helpers/tests/render.tsx b/applications/mail/src/app/helpers/tests/render.tsx
 index 3ffb83507b..3d145c92ef 100644

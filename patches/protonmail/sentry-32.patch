@@ -1,5 +1,5 @@
 diff --git a/packages/shared/lib/helpers/sentry.ts b/packages/shared/lib/helpers/sentry.ts
-index 0af8ee373c..95d06ba8f4 100644
+index 7c0afb7049..b3683ec2c5 100644
 --- a/packages/shared/lib/helpers/sentry.ts
 +++ b/packages/shared/lib/helpers/sentry.ts
 @@ -1,14 +1,10 @@
@@ -25,7 +25,7 @@ index 0af8ee373c..95d06ba8f4 100644
 
  type SentryContext = {
      authHeaders: { [key: string]: string };
-@@ -59,39 +54,6 @@ export const setSentryEnabled = (enabled: boolean) => {
+@@ -125,39 +120,6 @@ export const setSentryEnabled = (enabled: boolean) => {
      context.enabled = enabled;
  };
 
@@ -65,7 +65,7 @@ index 0af8ee373c..95d06ba8f4 100644
  const isLocalhost = (host: string) => host.startsWith('localhost');
  export const isProduction = (host: string) =>
      host.endsWith('.proton.me') || host.endsWith('.protonvpn.com') || host === VPN_HOSTNAME;
-@@ -189,129 +151,7 @@ function main({
+@@ -256,151 +218,7 @@ function main({
      UID,
      beforeSendIgnore,
      setupIgnore = ({ host }) => isLocalhost(host),
@@ -155,6 +155,21 @@ index 0af8ee373c..95d06ba8f4 100644
 -                        breadcrumb.message = breadcrumb.message.replace(/\[title=".+?"\]/g, '[title="(Filtered)"]');
 -                    }
 -
+-                    // The rules above only cover the breadcrumb categories that existed when they
+-                    // were written. Every other breadcrumb has to get the same treatment rather
+-                    // than passing through untouched: `drive.logger`, for instance, carries every
+-                    // Drive log line as a free-form string. Redact generically so that the next
+-                    // category someone adds is covered by default.
+-                    const redactFragment = !breadcrumb.category?.startsWith('ui.');
+-
+-                    if (breadcrumb.message) {
+-                        breadcrumb.message = redactSensitiveString(breadcrumb.message, { redactFragment });
+-                    }
+-
+-                    if (breadcrumb.data) {
+-                        redactSensitiveContainer(breadcrumb.data, { redactFragment });
+-                    }
+-
 -                    return breadcrumb;
 -                });
 -            }
@@ -164,7 +179,7 @@ index 0af8ee373c..95d06ba8f4 100644
 -            if (event.exception && event.exception.values) {
 -                event.exception.values = event.exception.values.map((error) => {
 -                    if (error.value) {
--                        error.value = error.value.replace(/(?:#|%23).*$/is, '#[Filtered]');
+-                        error.value = redactSensitiveString(error.value);
 -                    }
 -
 -                    return error;
@@ -178,6 +193,13 @@ index 0af8ee373c..95d06ba8f4 100644
 -                    type: hint.originalException.type,
 -                    target: String(hint.originalException.target),
 -                };
+-            }
+-
+-            // `extra` is free-form and is never enumerated above, yet it carries raw strings
+-            // (e.g. Drive's `extra.logMessage`, which is the verbatim log line whose copy in
+-            // `event.exception` we do redact). Run last so additions above are covered too.
+-            if (event.extra) {
+-                redactSensitiveContainer(event.extra);
 -            }
 -
 -            return event;
@@ -196,20 +218,7 @@ index 0af8ee373c..95d06ba8f4 100644
 
  export const setSentryTags = (tags: Record<string, any>) => {
      configureScope((scope) => {
-@@ -335,11 +175,7 @@ export const addSentryBreadcrumb = (breadcrumb: Breadcrumb): void => {
-     addBreadcrumb(breadcrumb);
- };
-
--export const captureMessage = (...args: Parameters<typeof sentryCaptureMessage>) => {
--    if (!isLocalhost(self.location.host)) {
--        sentryCaptureMessage(...args);
--    }
--};
-+export const captureMessage = (...args: Parameters<typeof sentryCaptureMessage>) => {}
-
- export const getSentryError = (error: any): any => {
-     if (error instanceof ApiError) {
-@@ -416,17 +252,7 @@ export const traceInitiativeError = (
+@@ -505,17 +323,7 @@ export const traceInitiativeError = (
      initiative: SentryInitiative,
      error: CaptureExceptionArgs[0],
      context?: InitiativeContext
@@ -228,7 +237,7 @@ index 0af8ee373c..95d06ba8f4 100644
 
  /**
   * Capture message with an additional initiative tag
-@@ -435,14 +261,6 @@ export const captureInitiativeMessage = (
+@@ -524,14 +332,6 @@ export const captureInitiativeMessage = (
      initiative: SentryInitiative,
      message: string,
      context?: InitiativeContext
@@ -241,7 +250,7 @@ index 0af8ee373c..95d06ba8f4 100644
 -        },
 -    });
 -};
-+) => {}
++) => {};
 
  export default main;
 --

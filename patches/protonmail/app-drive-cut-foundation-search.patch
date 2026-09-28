@@ -1,9 +1,9 @@
 diff --git a/applications/drive/src/app/modules/search/internal/worker/SharedWorkerAPI.ts b/applications/drive/src/app/modules/search/internal/worker/SharedWorkerAPI.ts
 deleted file mode 100644
-index d22fb88875..0000000000
+index b8dc0bc94a..0000000000
 --- a/applications/drive/src/app/modules/search/internal/worker/SharedWorkerAPI.ts
 +++ /dev/null
-@@ -1,332 +0,0 @@
+@@ -1,402 +0,0 @@
 -import type { Entry } from '@proton/proton-foundation-search';
 -
 -import type { MainThreadBridge } from '../mainThread/MainThreadBridge';
@@ -11,6 +11,8 @@ index d22fb88875..0000000000
 -import { SearchDB } from '../shared/SearchDB';
 -import { SEARCH_LIBRARY_BLOB_VERSION } from '../shared/config';
 -import { SearchDBUserMismatchError, classifyPermanentError } from '../shared/errors';
+-import type { SearchAppVersionChannel } from '../shared/searchAppVersionChannel';
+-import { createSearchAppVersionChannel } from '../shared/searchAppVersionChannel';
 -import { type SearchMetrics, searchMetrics, startSearchTimer } from '../shared/searchMetrics';
 -import type { SearchModuleStateUpdateChannel } from '../shared/searchModuleStateUpdateChannel';
 -import { createSearchModuleStateUpdateChannel } from '../shared/searchModuleStateUpdateChannel';
@@ -52,9 +54,42 @@ index d22fb88875..0000000000
 -    private searcher: SearchQueryExecutor | null = null;
 -    private stateChannel: SearchModuleStateUpdateChannel | null = null;
 -    private searchMetrics: SearchMetrics | null = null;
+-    private appVersionChannel: SearchAppVersionChannel;
+-    private releaseEngineLock: (() => void) | null = null;
 -
--    constructor() {
+-    constructor(
+-        private appVersion: string,
+-        private userId: UserId,
+-        private onShutdown: () => void
+-    ) {
 -        this.clientsCoordinator.subscribeClientChanged(this.handleActiveClientChanged.bind(this));
+-
+-        this.appVersionChannel = createSearchAppVersionChannel(userId);
+-
+-        // Announce our version so other SharedWorker instances for this user (e.g. an older
+-        // deploy still running in another tab) can detect the mismatch.
+-        this.appVersionChannel.postMessage(this.appVersion);
+-
+-        // Each deploy spawns its own SharedWorker, named after its app version, so any other
+-        // version we hear is a different worker still holding the engine lock (see
+-        // acquireEngineLock). We shut ourselves down so only the most recently started worker
+-        // stays alive - even on a rollback to an older version - so compare by inequality, not
+-        // "is theirs newer".
+-        this.appVersionChannel.onmessage = ({ data: theirVersion }) => {
+-            if (theirVersion !== this.appVersion) {
+-                Logger.info(
+-                    `SharedWorkerAPI: search version mismatch (ours: ${this.appVersion}, theirs: ${theirVersion}), shutting down`
+-                );
+-                this.disposeInternals()
+-                    .catch((error: unknown) =>
+-                        searchMetrics.markSearchOtherError({
+-                            error,
+-                            message: 'SharedWorkerAPI: teardown failed during version-mismatch shutdown',
+-                        })
+-                    )
+-                    .finally(() => this.onShutdown());
+-            }
+-        };
 -    }
 -
 -    private async getDb(userId: string) {
@@ -91,7 +126,7 @@ index d22fb88875..0000000000
 -    /** Clear all search data and restart indexing from scratch. */
 -    async reset(): Promise<void> {
 -        Logger.info('SharedWorkerAPI: resetting search data');
--        this.indexer?.stop();
+-        await this.indexer?.stop();
 -        this.indexer = null;
 -        this.searcher = null;
 -
@@ -120,7 +155,7 @@ index d22fb88875..0000000000
 -     */
 -    async rebuild(): Promise<void> {
 -        Logger.info('SharedWorkerAPI: rebuilding search index');
--        this.indexer?.stop();
+-        await this.indexer?.stop();
 -        this.indexer = null;
 -        this.searcher = null;
 -
@@ -224,14 +259,24 @@ index d22fb88875..0000000000
 -
 -    private handleActiveClientChanged(newClientContext: ClientContext | null) {
 -        if (newClientContext) {
--            void this.onClientAvailable(newClientContext);
+-            // onClientAvailable already reports classified errors to stateChannel/Sentry
+-            // internally before re-throwing; this catch only stops that re-throw from
+-            // becoming an unhandled rejection.
+-            this.onClientAvailable(newClientContext).catch((error: unknown) =>
+-                Logger.error('SharedWorkerAPI: onClientAvailable failed', error)
+-            );
 -        } else {
--            this.disposeInternals();
+-            this.disposeInternals().catch((error: unknown) =>
+-                searchMetrics.markSearchOtherError({
+-                    error,
+-                    message: 'SharedWorkerAPI: disposeInternals failed after last client disconnected',
+-                })
+-            );
 -        }
 -    }
 -
--    private disposeInternals() {
--        this.indexer?.stop();
+-    private async disposeInternals(): Promise<void> {
+-        await this.indexer?.stop();
 -        this.indexer = null;
 -        this.searcher = null;
 -        this.stateChannel?.close();
@@ -239,15 +284,24 @@ index d22fb88875..0000000000
 -        this.indexRegistry?.disposeAll();
 -        this.indexRegistry = null;
 -        this.searchMetrics = null;
+-        this.releaseEngineLock?.();
+-        this.releaseEngineLock = null;
 -    }
 -
 -    /**
 -     * Lazily creates the IndexRegistry, resolving the crypto key on first call.
+-     *
+-     * Only one SharedWorker instance for a given user may hold the engine at a time -
+-     * acquiring `search-engine:${userId}` here blocks until any stale worker (e.g. from a
+-     * previous deploy, see appVersionChannel above) has released it, so two engines never
+-     * touch the same IndexedDB blobs concurrently. The lock is released in disposeInternals.
 -     */
 -    private async getRegistry(db: SearchDB, bridge: MainThreadBridge): Promise<IndexRegistry> {
 -        if (this.indexRegistry) {
 -            return this.indexRegistry;
 -        }
+-
+-        await this.acquireEngineLock();
 -
 -        const { cryptoKey } = await SearchIndexKeyManager.getOrCreateKey(db, bridge);
 -        await db.ensureCompatibleBlobVersion(SEARCH_LIBRARY_BLOB_VERSION);
@@ -256,8 +310,24 @@ index d22fb88875..0000000000
 -        return this.indexRegistry;
 -    }
 -
+-    private async acquireEngineLock(): Promise<void> {
+-        if (this.releaseEngineLock) {
+-            return;
+-        }
+-        await new Promise<void>((acquired, rejected) => {
+-            navigator.locks
+-                .request(`search-engine:${this.userId}`, () => {
+-                    acquired();
+-                    return new Promise<void>((release) => {
+-                        this.releaseEngineLock = release;
+-                    });
+-                })
+-                .catch(rejected);
+-        });
+-    }
+-
 -    private async onClientAvailable(clientContext: ClientContext): Promise<void> {
--        this.disposeInternals();
+-        await this.disposeInternals();
 -
 -        // Opened before any of the work below so a startup failure still has a channel to report
 -        // itself on (resolving the search key is the first thing that can fail permanently).
@@ -336,6 +406,7 @@ index d22fb88875..0000000000
 -    Logger.warn(`serializeEntry: unexpected attribute value for <${attributeName}>: type=${typeof raw}`);
 -    return String(raw);
 -}
+
 diff --git a/applications/drive/src/app/modules/search/internal/worker/index/IndexBlobStore.ts b/applications/drive/src/app/modules/search/internal/worker/index/IndexBlobStore.ts
 deleted file mode 100644
 index 38c66b3d0d..0000000000
@@ -1609,12 +1680,13 @@ index 4fea4b7e82..0000000000
 -        return orphanCount;
 -    }
 -}
+
 diff --git a/applications/drive/src/app/modules/search/internal/worker/indexer/tasks/CleanUpTasks/CleanUpStaleIndexEntryTask.ts b/applications/drive/src/app/modules/search/internal/worker/indexer/tasks/CleanUpTasks/CleanUpStaleIndexEntryTask.ts
 deleted file mode 100644
-index 8a639f3b8c..0000000000
+index 0da1b855d7..0000000000
 --- a/applications/drive/src/app/modules/search/internal/worker/indexer/tasks/CleanUpTasks/CleanUpStaleIndexEntryTask.ts
 +++ /dev/null
-@@ -1,195 +0,0 @@
+@@ -1,206 +0,0 @@
 -import type { Entry } from '@proton/proton-foundation-search';
 -
 -import { Logger } from '../../../../shared/Logger';
@@ -1644,6 +1716,9 @@ index 8a639f3b8c..0000000000
 - *  - belong to a populator kind that is no longer active (removed, disabled, unregistered),
 - *  - belong to a tree-event-scope that is no longer active (volume unshared, etc.),
 - *  - are missing one or more of the core classification attributes (unclassifiable).
+- *
+- * Runs in two phases per instance - scan the whole index, then remove - because removing while the
+- * export is still open prevents the blob store from freeing anything (see `cleanupInstance`).
 - */
 -export class CleanUpStaleIndexEntryTask extends BaseTask {
 -    getUid(): string {
@@ -1694,33 +1769,41 @@ index 8a639f3b8c..0000000000
 -            stateByUid.set(state.uid, state);
 -        }
 -
--        let totalRemoved = 0;
--        let pending: string[] = [];
--        const removePendingStaleIndexEntries = async () => {
--            if (pending.length === 0) {
--                return;
--            }
--            const ids = pending;
--            pending = [];
--            totalRemoved += await removeDocumentIds(instance, ids, signal);
--        };
--
+-        // Two phases, deliberately not interleaved: collect every stale id while the export is
+-        // open, then close it before removing anything.
+-        //
+-        // exportEntries holds IndexBlobStore in a "read" state for its entire scan. Committing a
+-        // removal inside that scan would still evict blobs from the 20-slot cache to make room,
+-        // but each evicted blob can't be freed while the store is busy reading, so it lands in the
+-        // unbounded pendingFrees queue instead - held there for the rest of the scan, not just
+-        // until the next commit. Measured on a 10k-document index removing 3k entries: 550
+-        // deferred frees and WASM growing ~200MB -> ~2000MB, versus no growth at all when the
+-        // removals happen after the export is closed. The queue does drain once the scan ends, but
+-        // WASM memory never shrinks (see getWasmMemoryBytes), so that peak becomes the worker's
+-        // permanent floor for the rest of the session and can reach the allocator-abort threshold.
+-        //
+-        // The cost of this shape is holding the stale ids in memory: ~40 bytes each, bounded by the
+-        // number of stale entries rather than by index size.
+-        const staleIds: string[] = [];
 -        let processedSinceYield = 0;
 -        for await (const entry of exportEntries(instance, signal)) {
 -            if (isEntryStale(entry, stateByUid, activePopulatorKinds, activeTreeEventScopeIds)) {
--                pending.push(engineCall('read entry identifier', () => entry.identifier()));
--            }
--            if (pending.length >= DEFAULT_BATCH_SIZE) {
--                await removePendingStaleIndexEntries();
--                processedSinceYield = 0; // removeDocumentIds already relinquished the thread
--                continue;
+-                staleIds.push(engineCall('read entry identifier', () => entry.identifier()));
 -            }
 -            if (++processedSinceYield >= YIELD_EVENT_LOOP_EVERY) {
 -                await yieldToEventLoop();
 -                processedSinceYield = 0;
 -            }
 -        }
--        await removePendingStaleIndexEntries();
+-
+-        Logger.info(`${this.getUid()}: ${staleIds.length} stale entries collected for <${instance.indexKind}>`);
+-
+-        // The export is closed here: deferred frees can drain, and each commit (for each remove operation) below
+-        // frees its own removed blobs immediately.
+-        let totalRemoved = 0;
+-        for (let i = 0; i < staleIds.length; i += DEFAULT_BATCH_SIZE) {
+-            totalRemoved += await removeDocumentIds(instance, staleIds.slice(i, i + DEFAULT_BATCH_SIZE), signal);
+-        }
 -
 -        if (totalRemoved > 0) {
 -            Logger.info(`${this.getUid()}: removed ${totalRemoved} stale entries for <${instance.indexKind}>`);
@@ -1810,6 +1893,7 @@ index 8a639f3b8c..0000000000
 -        return found;
 -    });
 -}
+
 diff --git a/applications/drive/src/app/modules/search/internal/worker/searcher/SearchQueryExecutor.ts b/applications/drive/src/app/modules/search/internal/worker/searcher/SearchQueryExecutor.ts
 deleted file mode 100644
 index 635c679fc7..0000000000
@@ -1931,29 +2015,30 @@ index 635c679fc7..0000000000
 --
 
 diff --git a/applications/drive/src/app/modules/search/internal/worker/search.worker.ts b/applications/drive/src/app/modules/search/internal/worker/search.worker.ts
-index db85991153..1d28c67752 100644
+index 60d0c53fd3..4c80000542 100644
 --- a/applications/drive/src/app/modules/search/internal/worker/search.worker.ts
 +++ b/applications/drive/src/app/modules/search/internal/worker/search.worker.ts
-@@ -1,21 +1,16 @@
+@@ -1,11 +1,9 @@
 -import * as Comlink from 'comlink';
  // Polyfill Uint8Array.fromBase64/toBase64
  import 'core-js/proposals/array-buffer-base64';
  import 'core-js/stable';
 
  import { registerComlinkErrorTransferHandler } from '../shared/comlinkErrorTransferHandler';
+ import { parseSharedWorkerName } from '../shared/sharedWorkerName';
 -import { SharedWorkerAPI } from './SharedWorkerAPI';
 
  // Set-up comlink to propagate errors properly.
  // This must be called on both the main thread and the worker thread.
- registerComlinkErrorTransferHandler();
-
--const api = new SharedWorkerAPI();
--
- // SharedWorker entry point
+@@ -15,9 +13,7 @@ registerComlinkErrorTransferHandler();
  declare const self: SharedWorkerGlobalScope;
+
+ const { appVersion, userId } = parseSharedWorkerName(self.name);
+-const api = new SharedWorkerAPI(appVersion, userId, () => self.close());
 
  self.onconnect = (event: MessageEvent) => {
 -    const port = event.ports[0];
 -    Comlink.expose(api, port);
 +    throw new Error("ElectronMail triggered error: this code not supposed to be reachable (applications/drive/src/app/modules/search/internal/worker/search.worker.ts)")
  };
+--

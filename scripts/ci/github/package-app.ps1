@@ -5,7 +5,9 @@ Write-Host "Building on $arch architecture"
 
 # ARM_BUILD_TWEAK
 if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') {
-    $vsInstallRoot = "C:\Program Files\Microsoft Visual Studio\2022"
+    # September 2026: changed "Microsoft Visual Studio\2022" to "Microsoft Visual Studio\18"
+    # see https://github.com/actions/runner-images/issues/14602
+    $vsInstallRoot = "C:\Program Files\Microsoft Visual Studio\18"
 } else {
     $vsInstallRoot = "C:\Program Files (x86)\Microsoft Visual Studio\2019"
 }

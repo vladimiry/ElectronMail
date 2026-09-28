@@ -84,13 +84,12 @@ function Resolve-VcVarsPath {
     $ErrorActionPreference = "Stop"
     $vcVarsFile = "vcvarsall.bat"
 
-    # On ARM64: VS2022 Enterprise is already present
+    # On ARM64: "2026/18" Enterprise is already present
     # Non-ARM64: fall back to VS2019 Build Tools install logic
 
     Show-VSInfo
 
     if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") {
-        # Enterprise edition under VS2022
         $vcVarsPath = Join-Path $vsInstallRoot "Enterprise\VC\Auxiliary\Build\$vcVarsFile"
         if (Test-Path $vcVarsPath) {
             Write-Host "✅ Found vcvarsall.bat at $vcVarsPath"
